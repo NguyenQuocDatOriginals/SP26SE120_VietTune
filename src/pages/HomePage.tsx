@@ -52,7 +52,7 @@ export default function HomePage() {
               <Link to="/recordings">
                 <Button
                   size="lg"
-                  className="bg-emerald-700 text-white hover:bg-emerald-600 transition-all duration-300 hover:scale-105"
+                  className="bg-emerald-700 text-white hover:bg-green-800 transition-all duration-300 hover:scale-105"
                 >
                   <Music className="h-5 w-5 mr-2" />
                   Explore Recordings
@@ -61,7 +61,7 @@ export default function HomePage() {
               <Link to="/upload">
                 <Button
                   size="lg"
-                  className="bg-emerald-700 text-white hover:bg-emerald-600 transition-all duration-300 hover:scale-105"
+                  className="bg-emerald-700 text-white hover:bg-green-800 transition-all duration-300 hover:scale-105"
                 >
                   <Upload className="h-5 w-5 mr-2" />
                   Contribute
@@ -182,7 +182,7 @@ export default function HomePage() {
           <Link to="/register">
             <Button
               size="lg"
-              className="bg-emerald-700 text-white hover:bg-emerald-600 px-8 transition-all duration-300 hover:scale-105"
+              className="bg-emerald-700 text-white hover:bg-green-800 px-8 transition-all duration-300 hover:scale-105"
             >
               Get Started
             </Button>
