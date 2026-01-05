@@ -17,7 +17,13 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div
+      className="backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 overflow-hidden hover:shadow-2xl transition-shadow"
+      style={{
+        boxShadow:
+          "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+      }}
+    >
       {/* Cover Image */}
       <div className="relative h-48 bg-secondary-200">
         {recording.coverImage ? (

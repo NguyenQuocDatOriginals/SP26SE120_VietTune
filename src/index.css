@@ -79,4 +79,99 @@ body {
   .badge-danger {
     @apply bg-red-100 text-red-800;
   }
+
+  /* Spotlight hover effect for containers */
+  .spotlight-container {
+    @apply relative overflow-hidden;
+  }
+
+  .spotlight-container::before {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none;
+    background: radial-gradient(
+      circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(255, 255, 255, 0.15),
+      transparent 70%
+    );
+    z-index: 1;
+  }
+
+  .spotlight-container:hover::before {
+    @apply opacity-100;
+  }
+
+  .spotlight-container > * {
+    @apply relative z-10;
+  }
+
+  /* Water ripple effect on click - multiple concentric waves */
+  @keyframes water-ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.25;
+    }
+    100% {
+      transform: scale(8);
+      opacity: 0;
+    }
+  }
+
+  .spotlight-container .water-ripple {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    pointer-events: none;
+    animation: water-ripple 1.5s ease-out;
+    z-index: 5;
+  }
+
+  /* Liquid Glass Button Styles */
+  .btn-liquid-glass {
+    @apply relative overflow-hidden;
+    @apply backdrop-blur-xl bg-white/20 border border-white/40 shadow-lg;
+    @apply text-white font-semibold rounded-full;
+    @apply px-6 py-3 transition-all duration-300;
+    @apply hover:bg-white/30 hover:shadow-xl active:scale-95;
+  }
+
+  .btn-liquid-glass::before {
+    content: "";
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none;
+    background: radial-gradient(
+      circle 150px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      rgba(255, 255, 255, 0.2),
+      transparent 70%
+    );
+    z-index: 1;
+  }
+
+  .btn-liquid-glass:hover::before {
+    @apply opacity-100;
+  }
+
+  .btn-liquid-glass > * {
+    @apply relative z-10;
+  }
+
+  /* Liquid Glass Button - Primary (Amber/Green) */
+  .btn-liquid-glass-primary {
+    @apply btn-liquid-glass;
+    @apply bg-amber-700/80 hover:bg-emerald-600/80 active:bg-emerald-700/80;
+  }
+
+  /* Liquid Glass Button - Secondary */
+  .btn-liquid-glass-secondary {
+    @apply btn-liquid-glass;
+    @apply bg-white/10 hover:bg-white/20;
+  }
+
+  /* Liquid Glass Button - Close/Delete (Red) */
+  .btn-liquid-glass-close {
+    @apply btn-liquid-glass;
+    @apply bg-white/20 hover:bg-red-500 active:bg-red-700;
+    @apply text-white;
+  }
 }

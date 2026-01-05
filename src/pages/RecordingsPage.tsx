@@ -45,38 +45,40 @@ export default function RecordingsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-secondary-900 mb-8">Recordings</h1>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-white mb-8">Recordings</h1>
 
-      <div className="mb-8">
-        <SearchBar onSearch={handleSearch} />
-      </div>
+        <div className="mb-8">
+          <SearchBar onSearch={handleSearch} />
+        </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : recordings.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-xl text-secondary-500">No recordings found</p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {recordings.map((recording) => (
-              <RecordingCard key={recording.id} recording={recording} />
-            ))}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <LoadingSpinner size="lg" />
           </div>
+        ) : recordings.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-white">No recordings found</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {recordings.map((recording) => (
+                <RecordingCard key={recording.id} recording={recording} />
+              ))}
+            </div>
 
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-        </>
-      )}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

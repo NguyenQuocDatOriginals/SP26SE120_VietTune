@@ -81,7 +81,13 @@ export default function AudioPlayer() {
   if (!showPlayer || !currentRecording) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-secondary-200 shadow-lg z-50">
+    <div
+      className="fixed bottom-0 left-0 right-0 backdrop-blur-xl bg-white/20 border-t border-white/40 shadow-2xl z-50"
+      style={{
+        boxShadow:
+          "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+      }}
+    >
       <audio
         ref={audioRef}
         src={currentRecording.audioUrl}
@@ -116,14 +122,14 @@ export default function AudioPlayer() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={playPrevious}
-                className="p-2 text-secondary-600 hover:text-primary-600 transition-colors"
+                className="btn-liquid-glass-secondary p-2"
               >
                 <SkipBack className="h-5 w-5" />
               </button>
 
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="p-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+                className="btn-liquid-glass-primary p-3"
               >
                 {isPlaying ? (
                   <Pause className="h-6 w-6" />
@@ -134,7 +140,7 @@ export default function AudioPlayer() {
 
               <button
                 onClick={playNext}
-                className="p-2 text-secondary-600 hover:text-primary-600 transition-colors"
+                className="btn-liquid-glass-secondary p-2"
               >
                 <SkipForward className="h-5 w-5" />
               </button>
@@ -162,11 +168,14 @@ export default function AudioPlayer() {
           {/* Volume & Close */}
           <div className="flex items-center space-x-4 flex-shrink-0">
             <div className="flex items-center space-x-2">
-              <button onClick={() => setVolume(volume === 0 ? 0.7 : 0)}>
+              <button
+                onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
+                className="btn-liquid-glass-secondary p-2"
+              >
                 {volume === 0 ? (
-                  <VolumeX className="h-5 w-5 text-secondary-600" />
+                  <VolumeX className="h-5 w-5" />
                 ) : (
-                  <Volume2 className="h-5 w-5 text-secondary-600" />
+                  <Volume2 className="h-5 w-5" />
                 )}
               </button>
               <input
@@ -182,7 +191,7 @@ export default function AudioPlayer() {
 
             <button
               onClick={() => setShowPlayer(false)}
-              className="p-2 text-secondary-600 hover:text-primary-600 transition-colors"
+              className="btn-liquid-glass-secondary p-2"
             >
               <X className="h-5 w-5" />
             </button>

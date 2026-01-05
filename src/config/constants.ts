@@ -86,10 +86,10 @@ export const RECORDING_TYPE_NAMES = {
   INSTRUMENTAL: "Instrumental",
   VOCAL: "Vocal",
   CEREMONIAL: "Ceremonial",
-  FOLK_SONG: "Folk Song",
+  FOLK_SONG: "Folk song",
   EPIC: "Epic",
   LULLABY: "Lullaby",
-  WORK_SONG: "Work Song",
+  WORK_SONG: "Work song",
   OTHER: "Other",
 };
 

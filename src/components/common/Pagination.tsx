@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { clsx } from "clsx";
 
 interface PaginationProps {
   currentPage: number;
@@ -25,7 +25,7 @@ export default function Pagination({
       pages.push(1);
 
       if (currentPage > 3) {
-        pages.push('...');
+        pages.push("...");
       }
 
       const start = Math.max(2, currentPage - 1);
@@ -36,7 +36,7 @@ export default function Pagination({
       }
 
       if (currentPage < totalPages - 2) {
-        pages.push('...');
+        pages.push("...");
       }
 
       pages.push(totalPages);
@@ -46,11 +46,13 @@ export default function Pagination({
   };
 
   return (
-    <div className={clsx('flex items-center justify-center space-x-2', className)}>
+    <div
+      className={clsx("flex items-center justify-center space-x-2", className)}
+    >
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Previous
       </button>
@@ -58,14 +60,14 @@ export default function Pagination({
       {getPageNumbers().map((page, index) => (
         <button
           key={index}
-          onClick={() => typeof page === 'number' && onPageChange(page)}
-          disabled={page === '...'}
+          onClick={() => typeof page === "number" && onPageChange(page)}
+          disabled={page === "..."}
           className={clsx(
-            'px-3 py-2 text-sm font-medium rounded-lg',
+            "px-3 py-2 text-sm font-medium rounded-full transition-all",
             page === currentPage
-              ? 'bg-primary-600 text-white'
-              : 'text-secondary-700 bg-white border border-secondary-300 hover:bg-secondary-50',
-            page === '...' && 'cursor-default hover:bg-white'
+              ? "btn-liquid-glass-primary"
+              : "btn-liquid-glass-secondary",
+            page === "..." && "cursor-default opacity-50"
           )}
         >
           {page}
@@ -75,7 +77,7 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-lg hover:bg-secondary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Next
       </button>

@@ -1,16 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import Input from "@/components/common/Input";
-import Button from "@/components/common/Button";
 import { RegisterForm } from "@/types";
 import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
+import logo from "@/components/image/VietTune logo.png";
+import TermsAndConditions from "@/components/features/TermsAndConditions";
+import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const cleanupFunctions: (() => void)[] = [];
+    if (formRef.current)
+      cleanupFunctions.push(addSpotlightEffect(formRef.current));
+    return () => cleanupFunctions.forEach((cleanup) => cleanup());
+  }, []);
 
   const {
     register,
@@ -41,7 +52,7 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-3 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-8"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
         backgroundSize: "cover",
@@ -49,33 +60,40 @@ export default function RegisterPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="max-w-md w-full space-y-2">
-        <div>
-          <h2 className="mt-3 text-center text-3xl font-bold text-white">
-            Create your account
-          </h2>
-          <p className="mt-1 text-center text-sm text-white">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="font-medium text-emerald-300 hover:text-emerald-200"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
-
+      <div className="max-w-lg w-full">
         <form
-          className="mt-2 space-y-3 backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40"
+          ref={formRef}
+          className="spotlight-container backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40 space-y-1.5"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
           }}
           onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="space-y-2">
+          <div className="flex flex-col items-center">
+            <img
+              src={logo}
+              alt="VietTune Logo"
+              className="w-16 h-16 object-contain mb-1 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate(-1)}
+            />
+            <h2 className="text-center text-xl font-bold text-white">
+              Create your account
+            </h2>
+            <p className="mt-1 text-center text-sm text-white">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
             <Input
-              label="Full Name"
+              label="Full name"
               {...register("fullName", {
                 required: "Full name is required",
               })}
@@ -121,7 +139,7 @@ export default function RegisterPage() {
             />
 
             <Input
-              label="Confirm Password"
+              label="Confirm password"
               type="password"
               {...register("confirmPassword", {
                 required: "Please confirm your password",
@@ -141,22 +159,30 @@ export default function RegisterPage() {
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-white">
               I agree to the{" "}
-              <a href="#" className="text-emerald-300 hover:text-emerald-200">
+              <button
+                type="button"
+                onClick={() => setShowTerms(true)}
+                className="text-emerald-300 hover:text-emerald-400 active:text-emerald-500 underline transition-colors"
+              >
                 Terms and Conditions
-              </a>
+              </button>
             </label>
           </div>
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            className="w-full bg-emerald-700 hover:bg-emerald-800"
-            isLoading={isLoading}
+            disabled={isLoading}
+            className="btn-liquid-glass-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Create Account
-          </Button>
+            {isLoading ? "Creating account..." : "Create account"}
+          </button>
         </form>
       </div>
+
+      <TermsAndConditions
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+      />
     </div>
   );
 }

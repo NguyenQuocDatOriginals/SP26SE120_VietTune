@@ -1,18 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
-import Button from "@/components/common/Button";
 import { LoginForm } from "@/types";
 import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
+import logo from "@/components/image/VietTune logo.png";
+import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const cleanupFunctions: (() => void)[] = [];
+    if (formRef.current)
+      cleanupFunctions.push(addSpotlightEffect(formRef.current));
+    return () => cleanupFunctions.forEach((cleanup) => cleanup());
+  }, []);
 
   const {
     register,
@@ -43,7 +52,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-3 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-8"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
         backgroundSize: "cover",
@@ -51,31 +60,38 @@ export default function LoginPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="max-w-md w-full space-y-2">
-        <div>
-          <h2 className="mt-3 text-center text-3xl font-bold text-white">
-            Sign in to VietTune Archive
-          </h2>
-          <p className="mt-1 text-center text-sm text-white">
-            Or{" "}
-            <Link
-              to="/register"
-              className="font-medium text-emerald-300 hover:text-emerald-200"
-            >
-              create a new account
-            </Link>
-          </p>
-        </div>
-
+      <div className="max-w-lg w-full">
         <form
-          className="mt-2 space-y-3 backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40"
+          ref={formRef}
+          className="spotlight-container backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40 space-y-1.5"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
           }}
           onSubmit={handleSubmit(onSubmit)}
         >
-          <div className="space-y-2">
+          <div className="flex flex-col items-center">
+            <img
+              src={logo}
+              alt="VietTune Logo"
+              className="w-16 h-16 object-contain mb-1 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate(-1)}
+            />
+            <h2 className="text-center text-xl font-bold text-white">
+              Sign in to VietTune Archive
+            </h2>
+            <p className="mt-1 text-center text-sm text-white">
+              Or{" "}
+              <Link
+                to="/register"
+                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
+              >
+                create a new account
+              </Link>
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
             <Input
               label="Username or Email"
               {...register("usernameOrEmail", {
@@ -117,21 +133,20 @@ export default function LoginPage() {
             <div className="text-sm">
               <a
                 href="#"
-                className="font-medium text-emerald-300 hover:text-emerald-200"
+                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
               >
                 Forgot password?
               </a>
             </div>
           </div>
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            className="w-full bg-emerald-700 hover:bg-emerald-800"
-            isLoading={isLoading}
+            disabled={isLoading}
+            className="btn-liquid-glass-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Sign in
-          </Button>
+            {isLoading ? "Signing in..." : "Sign in"}
+          </button>
         </form>
       </div>
     </div>

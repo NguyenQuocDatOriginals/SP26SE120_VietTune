@@ -18,18 +18,16 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg";
+    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary:
-      "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500",
-    secondary:
-      "bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500",
+    primary: "btn-liquid-glass-primary",
+    secondary: "btn-liquid-glass-secondary",
     outline:
-      "border border-secondary-300 text-secondary-700 hover:bg-secondary-50 focus:ring-secondary-500",
-    ghost: "text-secondary-700 hover:bg-secondary-100 focus:ring-secondary-500",
+      "border border-white/40 text-white hover:bg-white/10 focus:ring-white/50 backdrop-blur-sm rounded-lg",
+    ghost: "text-white hover:bg-white/10 focus:ring-white/50 rounded-lg",
     danger:
-      "bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-500",
+      "bg-red-600/80 text-white hover:bg-red-700/80 focus:ring-red-500 rounded-lg backdrop-blur-sm",
   };
 
   const sizes = {
