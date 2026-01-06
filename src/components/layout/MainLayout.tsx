@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -6,11 +6,21 @@ import AudioPlayer from "../features/AudioPlayer";
 import { initializeButtonSpotlights } from "@/utils/buttonSpotlight";
 
 export default function MainLayout() {
+  const location = useLocation();
+
   useEffect(() => {
     // Initialize spotlight effects for all liquid glass buttons
     const cleanup = initializeButtonSpotlights();
     return cleanup;
   }, []);
+
+  useEffect(() => {
+    // Track last visited page (excluding auth pages)
+    const currentPath = location.pathname;
+    if (currentPath !== "/login" && currentPath !== "/register") {
+      localStorage.setItem("lastVisitedPage", currentPath);
+    }
+  }, [location]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-amber-900 via-emerald-900 to-amber-900">

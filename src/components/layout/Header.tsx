@@ -28,84 +28,84 @@ export default function Header() {
     <header className="sticky top-0 z-50 pt-4 px-4">
       <nav
         ref={headerRef}
-        className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40"
+        className="spotlight-container backdrop-blur-xl bg-white/20 rounded-full shadow-2xl border border-white/40"
         style={{
           boxShadow:
             "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
         }}
       >
-        <div className="px-6 py-4">
+        <div className="px-6 py-2.5">
           <div className="flex justify-between items-center">
             {/* Logo */}
             <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-3">
+              <Link to="/" className="flex items-center space-x-2">
                 <img
                   src={logo}
                   alt="VietTune Logo"
-                  className="h-12 w-12 object-contain rounded-xl"
+                  className="h-9 w-9 object-contain rounded-lg"
                 />
-                <span className="text-2xl font-bold text-white drop-shadow-lg">
+                <span className="text-xl font-bold text-white drop-shadow-lg">
                   {APP_NAME}
                 </span>
               </Link>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-8">
+            <div className="hidden lg:flex lg:items-center lg:space-x-6">
               <Link
                 to="/recordings"
-                className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
                 Recordings
               </Link>
               <Link
                 to="/instruments"
-                className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
                 Traditional instruments
               </Link>
               <Link
                 to="/ethnicities"
-                className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
                 Vietnamese ethnicities
               </Link>
               <Link
                 to="/masters"
-                className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
                 Master musicians
               </Link>
               <Link
                 to="/about"
-                className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
                 About VietTune
               </Link>
             </div>
 
             {/* Right side buttons */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-4">
+            <div className="hidden lg:flex lg:items-center lg:space-x-3">
               <Link
                 to="/search"
                 className="p-2 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
               >
-                <Search className="h-6 w-6" />
+                <Search className="h-5 w-5" />
               </Link>
 
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/upload"
-                    className="btn-liquid-glass-primary inline-flex items-center gap-2"
+                    className="btn-liquid-glass-primary inline-flex items-center gap-1.5 text-sm px-4 py-2"
                   >
-                    <Upload className="h-5 w-5" />
+                    <Upload className="h-4 w-4" />
                     Upload
                   </Link>
                   <div className="relative group">
-                    <button className="btn-liquid-glass-secondary flex items-center gap-2">
-                      <User className="h-5 w-5 text-white" />
-                      <span className="text-sm font-medium text-white">
+                    <button className="btn-liquid-glass-secondary flex items-center gap-1.5 text-sm px-4 py-2">
+                      <User className="h-4 w-4 text-white" />
+                      <span className="text-xs font-medium text-white">
                         {user?.username}
                       </span>
                     </button>
@@ -144,11 +144,14 @@ export default function Header() {
                 <>
                   <Link
                     to="/login"
-                    className="px-5 py-2.5 text-white font-semibold hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                    className="px-4 py-2 text-sm text-white font-semibold hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                   >
                     Login
                   </Link>
-                  <Link to="/register" className="btn-liquid-glass-primary">
+                  <Link
+                    to="/register"
+                    className="btn-liquid-glass-primary text-sm px-4 py-2"
+                  >
                     Register
                   </Link>
                 </>
@@ -159,12 +162,12 @@ export default function Header() {
             <div className="lg:hidden flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors"
+                className="p-1.5 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-7 w-7" />
+                  <X className="h-6 w-6" />
                 ) : (
-                  <Menu className="h-7 w-7" />
+                  <Menu className="h-6 w-6" />
                 )}
               </button>
             </div>

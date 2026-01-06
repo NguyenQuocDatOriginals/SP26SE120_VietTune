@@ -75,7 +75,10 @@ export default function LoginPage() {
               src={logo}
               alt="VietTune Logo"
               className="w-16 h-16 object-contain mb-1 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                const lastPage = localStorage.getItem("lastVisitedPage");
+                navigate(lastPage || "/");
+              }}
             />
             <h2 className="text-center text-xl font-bold text-white">
               Sign in to VietTune Archive
