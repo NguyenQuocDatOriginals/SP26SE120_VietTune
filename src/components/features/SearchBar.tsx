@@ -67,7 +67,7 @@ function CustomDropdown({
 
       {isOpen && (
         <div
-          className="absolute z-50 w-full mt-2 backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+          className="absolute z-[9999] w-full mt-2 backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -144,12 +144,12 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   };
 
   const regionOptions = [
-    { key: "", value: "All regions" },
+    { key: "", value: "Tất cả vùng" },
     ...Object.entries(REGION_NAMES).map(([key, value]) => ({ key, value })),
   ];
 
   const recordingTypeOptions = [
-    { key: "", value: "All types" },
+    { key: "", value: "Tất cả loại" },
     ...Object.entries(RECORDING_TYPE_NAMES).map(([key, value]) => ({
       key,
       value,
@@ -157,16 +157,16 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   ];
 
   const verificationStatusOptions = [
-    { key: "", value: "All status" },
-    { key: "VERIFIED", value: "Verified" },
-    { key: "PENDING", value: "Pending" },
-    { key: "UNDER_REVIEW", value: "Under review" },
+    { key: "", value: "Tất cả trạng thái" },
+    { key: "VERIFIED", value: "Đã xác minh" },
+    { key: "PENDING", value: "Đang chờ" },
+    { key: "UNDER_REVIEW", value: "Đang kiểm duyệt" },
   ];
 
   return (
     <div
       ref={searchBarRef}
-      className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-6"
+      className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-6 overflow-visible"
       style={{
         boxShadow:
           "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -176,7 +176,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Search recordings, instruments, performers, and so on"
+            placeholder="Tìm kiếm bản thu, nhạc cụ, nghệ nhân và hơn thế nữa"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -188,7 +188,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           className="btn-liquid-glass-primary flex items-center justify-center gap-2 whitespace-nowrap"
         >
           <SearchIcon className="h-5 w-5" />
-          Search
+          Tìm kiếm
         </button>
         <button
           onClick={handleClear}
@@ -204,13 +204,13 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         onClick={() => setShowAdvanced(!showAdvanced)}
         className="text-sm text-white hover:text-green-500 active:text-green-700"
       >
-        {showAdvanced ? "Hide" : "Show"} advanced filters
+        {showAdvanced ? "Ẩn" : "Hiện"} bộ lọc nâng cao
       </button>
 
       {showAdvanced && (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-secondary-200">
           <CustomDropdown
-            label="Region"
+            label="Vùng miền"
             value={filters.regions?.[0] || ""}
             options={regionOptions}
             onChange={(value) =>
@@ -219,11 +219,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 regions: value ? [value as Region] : [],
               })
             }
-            placeholder="All regions"
+            placeholder="Tất cả vùng"
           />
 
           <CustomDropdown
-            label="Recording type"
+            label="Loại bản ghi"
             value={filters.recordingTypes?.[0] || ""}
             options={recordingTypeOptions}
             onChange={(value) =>
@@ -232,11 +232,11 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 recordingTypes: value ? [value as RecordingType] : [],
               })
             }
-            placeholder="All types"
+            placeholder="Tất cả loại"
           />
 
           <CustomDropdown
-            label="Verification status"
+            label="Trạng thái"
             value={filters.verificationStatus?.[0] || ""}
             options={verificationStatusOptions}
             onChange={(value) =>
@@ -245,7 +245,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 verificationStatus: value ? [value as VerificationStatus] : [],
               })
             }
-            placeholder="All status"
+            placeholder="Tất cả trạng thái"
           />
         </div>
       )}

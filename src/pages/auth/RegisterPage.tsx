@@ -63,7 +63,7 @@ export default function RegisterPage() {
       <div className="max-w-lg w-full">
         <form
           ref={formRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40 space-y-1.5"
+          className="spotlight-container backdrop-blur-xl bg-white/20 p-3 rounded-2xl shadow-2xl border border-white/40 space-y-0.5"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -74,42 +74,42 @@ export default function RegisterPage() {
             <img
               src={logo}
               alt="VietTune Logo"
-              className="w-16 h-16 object-contain mb-1 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-12 h-12 object-contain mb-0.5 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />
-            <h2 className="text-center text-xl font-bold text-white">
-              Create your account
+            <h2 className="text-center text-lg font-bold text-white">
+              Tạo tài khoản của bạn
             </h2>
-            <p className="mt-1 text-center text-sm text-white">
-              Already have an account?{" "}
+            <p className="mt-0.5 text-center text-sm text-white">
+              Đã có tài khoản?{" "}
               <Link
                 to="/login"
                 className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
               >
-                Sign in
+                Đăng nhập
               </Link>
             </p>
           </div>
 
           <div className="space-y-0.5">
             <Input
-              label="Full name"
+              label="Họ và tên"
               {...register("fullName", {
-                required: "Full name is required",
+                required: "Họ và tên là bắt buộc",
               })}
               error={errors.fullName?.message}
             />
 
             <Input
-              label="Username"
+              label="Tên người dùng"
               {...register("username", {
-                required: "Username is required",
+                required: "Tên người dùng là bắt buộc",
                 minLength: {
                   value: 3,
-                  message: "Username must be at least 3 characters",
+                  message: "Tên người dùng phải có ít nhất 3 ký tự",
                 },
               })}
               error={errors.username?.message}
@@ -119,35 +119,35 @@ export default function RegisterPage() {
               label="Email"
               type="email"
               {...register("email", {
-                required: "Email is required",
+                required: "Email là bắt buộc",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
+                  message: "Địa chỉ email không hợp lệ",
                 },
               })}
               error={errors.email?.message}
             />
 
             <Input
-              label="Password"
+              label="Mật khẩu"
               type="password"
               {...register("password", {
-                required: "Password is required",
+                required: "Mật khẩu là bắt buộc",
                 minLength: {
                   value: 6,
-                  message: "Password must be at least 6 characters",
+                  message: "Mật khẩu phải có ít nhất 6 ký tự",
                 },
               })}
               error={errors.password?.message}
             />
 
             <Input
-              label="Confirm password"
+              label="Xác nhận mật khẩu"
               type="password"
               {...register("confirmPassword", {
-                required: "Please confirm your password",
+                required: "Vui lòng xác nhận mật khẩu",
                 validate: (value) =>
-                  value === password || "Passwords do not match",
+                  value === password || "Mật khẩu không khớp",
               })}
               error={errors.confirmPassword?.message}
             />
@@ -161,13 +161,13 @@ export default function RegisterPage() {
               className="h-4 w-4 bg-white text-blue-600 focus:ring-blue-500 border-2 border-secondary-400 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-white">
-              I agree to the{" "}
+              Tôi đồng ý với{" "}
               <button
                 type="button"
                 onClick={() => setShowTerms(true)}
                 className="text-emerald-300 hover:text-emerald-400 active:text-emerald-500 underline transition-colors"
               >
-                Terms and Conditions
+                Điều khoản và Điều kiện
               </button>
             </label>
           </div>
@@ -177,7 +177,7 @@ export default function RegisterPage() {
             disabled={isLoading}
             className="btn-liquid-glass-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Creating account..." : "Create account"}
+            {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
           </button>
         </form>
       </div>

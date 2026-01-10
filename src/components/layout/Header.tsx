@@ -35,9 +35,9 @@ export default function Header() {
         }}
       >
         <div className="px-6 py-2.5">
-          <div className="flex justify-between items-center">
+          <div className="grid grid-cols-3 items-center">
             {/* Logo */}
-            <div className="flex items-center">
+            <div className="flex items-center justify-start">
               <Link to="/" className="flex items-center space-x-2">
                 <img
                   src={logo}
@@ -51,41 +51,41 @@ export default function Header() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-6">
+            <div className="hidden lg:flex lg:flex-nowrap lg:items-center lg:justify-center lg:space-x-4">
               <Link
-                to="/recordings"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                to="/upload"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Recordings
+                Đóng góp
               </Link>
               <Link
                 to="/instruments"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Traditional instruments
+                Nhạc cụ truyền thống
               </Link>
               <Link
                 to="/ethnicities"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Vietnamese ethnicities
+                Dân tộc Việt Nam
               </Link>
               <Link
                 to="/masters"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Master musicians
+                Nghệ nhân âm nhạc
               </Link>
               <Link
                 to="/about"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                About VietTune
+                Về VietTune
               </Link>
             </div>
 
             {/* Right side buttons */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-3">
+            <div className="hidden lg:flex lg:items-center lg:justify-end lg:space-x-3">
               <Link
                 to="/search"
                 className="p-2 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
@@ -100,7 +100,7 @@ export default function Header() {
                     className="btn-liquid-glass-primary inline-flex items-center gap-1.5 text-sm px-4 py-2"
                   >
                     <Upload className="h-4 w-4" />
-                    Upload
+                    Tải lên
                   </Link>
                   <div className="relative group">
                     <button className="btn-liquid-glass-secondary flex items-center gap-1.5 text-sm px-4 py-2">
@@ -119,14 +119,14 @@ export default function Header() {
                         to="/profile"
                         className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-emerald-100 hover:text-emerald-900 transition-colors"
                       >
-                        Profile
+                        Hồ sơ
                       </Link>
                       {user?.role === "ADMIN" && (
                         <Link
                           to="/admin"
                           className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-emerald-100 hover:text-emerald-900 transition-colors"
                         >
-                          Admin Dashboard
+                          Quản trị hệ thống
                         </Link>
                       )}
                       <div className="border-t border-secondary-200 my-1"></div>
@@ -135,7 +135,7 @@ export default function Header() {
                         className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
-                        Logout
+                        Đăng xuất
                       </button>
                     </div>
                   </div>
@@ -146,13 +146,13 @@ export default function Header() {
                     to="/login"
                     className="px-4 py-2 text-sm text-white font-semibold hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                   >
-                    Login
+                    Đăng nhập
                   </Link>
                   <Link
                     to="/register"
                     className="btn-liquid-glass-primary text-sm px-4 py-2"
                   >
-                    Register
+                    Đăng ký
                   </Link>
                 </>
               )}
@@ -177,46 +177,39 @@ export default function Header() {
           {isMobileMenuOpen && (
             <div className="lg:hidden pt-4 mt-4 space-y-2 border-t border-white/30">
               <Link
-                to="/recordings"
+                to="/upload"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Recordings
+                Đóng góp
               </Link>
               <Link
                 to="/instruments"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Traditional instruments
+                Nhạc cụ truyền thống
               </Link>
               <Link
                 to="/ethnicities"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Vietnamese ethnicities
+                Dân tộc Việt Nam
               </Link>
               <Link
                 to="/masters"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Master musicians
+                Nghệ nhân âm nhạc
               </Link>
               <Link
                 to="/about"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                About VietTune
-              </Link>
-              <Link
-                to="/search"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Search
+                Về VietTune
               </Link>
               {isAuthenticated ? (
                 <>
@@ -225,14 +218,14 @@ export default function Header() {
                     className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Upload
+                    Tải lên
                   </Link>
                   <Link
                     to="/profile"
                     className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Profile
+                    Hồ sơ
                   </Link>
                   {user?.role === "ADMIN" && (
                     <Link
@@ -240,7 +233,7 @@ export default function Header() {
                       className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Admin Dashboard
+                      Quản trị hệ thống
                     </Link>
                   )}
                   <button
@@ -250,7 +243,7 @@ export default function Header() {
                     }}
                     className="w-full text-left px-4 py-3 text-red-300 font-medium hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    Logout
+                    Đăng xuất
                   </button>
                 </>
               ) : (
@@ -260,14 +253,14 @@ export default function Header() {
                     className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Login
+                    Đăng nhập
                   </Link>
                   <Link
                     to="/register"
                     className="block px-4 py-3 text-emerald-300 font-medium hover:bg-white/10 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Register
+                    Đăng ký
                   </Link>
                 </>
               )}

@@ -40,4 +40,4 @@
 - Multi-role dashboard (User, Contributor, Researcher, Moderator, Admin)
 - RESTful API architecture with comprehensive error handling
 
-#### Copyright © 2026 VietTune Archive
+#### Copyright © 2026 VietTune

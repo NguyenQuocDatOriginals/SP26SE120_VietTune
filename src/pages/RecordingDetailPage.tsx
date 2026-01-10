@@ -89,10 +89,10 @@ export default function RecordingDetailPage() {
       <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-2xl font-bold text-white mb-4">
-            Recording not found
+            Không tìm thấy bản thu
           </h1>
-          <Link to="/recordings" className="text-white hover:text-green-300">
-            ← Back to recordings
+          <Link to="/search" className="text-white hover:text-green-300">
+            ← Quay lại danh sách
           </Link>
         </div>
       </div>
@@ -103,10 +103,10 @@ export default function RecordingDetailPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          to="/recordings"
+          to="/search"
           className="text-white hover:text-green-300 mb-6 inline-block"
         >
-          ← Back to recordings
+          ← Quay lại
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -208,9 +208,7 @@ export default function RecordingDetailPage() {
                     "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
                 }}
               >
-                <h2 className="text-xl font-semibold mb-4 text-white">
-                  Description
-                </h2>
+                <h2 className="text-xl font-semibold mb-4 text-white">Mô tả</h2>
                 <p className="text-white whitespace-pre-wrap">
                   {recording.description}
                 </p>
@@ -228,12 +226,14 @@ export default function RecordingDetailPage() {
                 }}
               >
                 <h2 className="text-xl font-semibold mb-4 text-white">
-                  Ethnomusicological details
+                  Thông tin chuyên môn
                 </h2>
                 <dl className="space-y-3">
                   {recording.metadata.tuningSystem && (
                     <div>
-                      <dt className="font-medium text-white">Tuning system</dt>
+                      <dt className="font-medium text-white">
+                        Hệ thống điệu thức
+                      </dt>
                       <dd className="text-white">
                         {recording.metadata.tuningSystem}
                       </dd>
@@ -242,7 +242,7 @@ export default function RecordingDetailPage() {
                   {recording.metadata.modalStructure && (
                     <div>
                       <dt className="font-medium text-white">
-                        Modal structure
+                        Cấu trúc giai điệu
                       </dt>
                       <dd className="text-white">
                         {recording.metadata.modalStructure}
@@ -251,7 +251,9 @@ export default function RecordingDetailPage() {
                   )}
                   {recording.metadata.ritualContext && (
                     <div>
-                      <dt className="font-medium text-white">Ritual context</dt>
+                      <dt className="font-medium text-white">
+                        Ngữ cảnh nghi lễ
+                      </dt>
                       <dd className="text-white">
                         {recording.metadata.ritualContext}
                       </dd>
@@ -260,7 +262,7 @@ export default function RecordingDetailPage() {
                   {recording.metadata.culturalSignificance && (
                     <div>
                       <dt className="font-medium text-white">
-                        Cultural significance
+                        Ý nghĩa văn hóa
                       </dt>
                       <dd className="text-white">
                         {recording.metadata.culturalSignificance}
@@ -282,14 +284,14 @@ export default function RecordingDetailPage() {
                 }}
               >
                 <h2 className="text-xl font-semibold mb-4 text-white">
-                  Lyrics
+                  Lời bài hát
                 </h2>
                 <p className="text-white whitespace-pre-wrap mb-4">
                   {recording.metadata.lyrics}
                 </p>
                 {recording.metadata.lyricsTranslation && (
                   <>
-                    <h3 className="font-medium text-white mb-2">Translation</h3>
+                    <h3 className="font-medium text-white mb-2">Dịch nghĩa</h3>
                     <p className="text-white whitespace-pre-wrap">
                       {recording.metadata.lyricsTranslation}
                     </p>
@@ -315,25 +317,25 @@ export default function RecordingDetailPage() {
               </h3>
               <dl className="space-y-3">
                 <div>
-                  <dt className="text-sm text-white">Ethnicity</dt>
+                  <dt className="text-sm text-white">Dân tộc</dt>
                   <dd className="font-medium text-white">
                     {recording.ethnicity.nameVietnamese}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Region</dt>
+                  <dt className="text-sm text-white">Vùng miền</dt>
                   <dd className="font-medium text-white">
                     {REGION_NAMES[recording.region]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Type</dt>
+                  <dt className="text-sm text-white">Loại hình</dt>
                   <dd className="font-medium text-white">
                     {RECORDING_TYPE_NAMES[recording.recordingType]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Duration</dt>
+                  <dt className="text-sm text-white">Thời lượng</dt>
                   <dd className="font-medium text-white">
                     {Math.floor(recording.duration / 60)}:
                     {(recording.duration % 60).toString().padStart(2, "0")}
@@ -341,14 +343,14 @@ export default function RecordingDetailPage() {
                 </div>
                 {recording.recordedDate && (
                   <div>
-                    <dt className="text-sm text-white">Recorded</dt>
+                    <dt className="text-sm text-white">Ngày thu âm</dt>
                     <dd className="font-medium text-white">
                       {format(new Date(recording.recordedDate), "PP")}
                     </dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm text-white">Uploaded</dt>
+                  <dt className="text-sm text-white">Ngày tải lên</dt>
                   <dd className="font-medium text-white">
                     {format(new Date(recording.uploadedDate), "PP")}
                   </dd>
@@ -367,7 +369,7 @@ export default function RecordingDetailPage() {
                 }}
               >
                 <h3 className="font-semibold text-lg mb-4 text-white">
-                  Instruments
+                  Nhạc cụ
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {recording.instruments.map((instrument) => (
@@ -390,7 +392,7 @@ export default function RecordingDetailPage() {
                 }}
               >
                 <h3 className="font-semibold text-lg mb-4 text-white">
-                  Performers
+                  Nghệ nhân
                 </h3>
                 <ul className="space-y-2">
                   {recording.performers.map((performer) => (
@@ -421,7 +423,7 @@ export default function RecordingDetailPage() {
                     "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
                 }}
               >
-                <h3 className="font-semibold text-lg mb-4 text-white">Tags</h3>
+                <h3 className="font-semibold text-lg mb-4 text-white">Thẻ</h3>
                 <div className="flex flex-wrap gap-2">
                   {recording.tags.map((tag, index) => (
                     <Badge key={index} variant="secondary">
@@ -442,7 +444,7 @@ export default function RecordingDetailPage() {
               }}
             >
               <h3 className="font-semibold text-lg mb-4 text-white">
-                Uploaded by
+                Người tải lên
               </h3>
               <div className="flex items-center">
                 <div className="bg-primary-100 rounded-full w-10 h-10 flex items-center justify-center mr-3">

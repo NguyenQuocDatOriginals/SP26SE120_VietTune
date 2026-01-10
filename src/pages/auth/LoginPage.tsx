@@ -63,7 +63,7 @@ export default function LoginPage() {
       <div className="max-w-lg w-full">
         <form
           ref={formRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 p-4 rounded-2xl shadow-2xl border border-white/40 space-y-1.5"
+          className="spotlight-container backdrop-blur-xl bg-white/20 p-3 rounded-2xl shadow-2xl border border-white/40 space-y-0.5"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -74,43 +74,43 @@ export default function LoginPage() {
             <img
               src={logo}
               alt="VietTune Logo"
-              className="w-16 h-16 object-contain mb-1 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-12 h-12 object-contain mb-0.5 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />
-            <h2 className="text-center text-xl font-bold text-white">
-              Sign in to VietTune Archive
+            <h2 className="text-center text-lg font-bold text-white">
+              Đăng nhập vào VietTune
             </h2>
-            <p className="mt-1 text-center text-sm text-white">
-              Or{" "}
+            <p className="mt-0.5 text-center text-sm text-white">
+              Hoặc{" "}
               <Link
                 to="/register"
                 className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
               >
-                create a new account
+                tạo tài khoản mới
               </Link>
             </p>
           </div>
 
           <div className="space-y-0.5">
             <Input
-              label="Username or Email"
+              label="Tên người dùng hoặc Email"
               {...register("usernameOrEmail", {
-                required: "Username or Email is required",
+                required: "Tên người dùng hoặc Email là bắt buộc",
               })}
               error={errors.usernameOrEmail?.message}
             />
 
             <Input
-              label="Password"
+              label="Mật khẩu"
               type="password"
               {...register("password", {
-                required: "Password is required",
+                required: "Mật khẩu là bắt buộc",
                 minLength: {
                   value: 6,
-                  message: "Password must be at least 6 characters",
+                  message: "Mật khẩu phải có ít nhất 6 ký tự",
                 },
               })}
               error={errors.password?.message}
@@ -129,7 +129,7 @@ export default function LoginPage() {
                 htmlFor="remember-me"
                 className="ml-2 block text-sm text-white"
               >
-                Remember me
+                Ghi nhớ tôi
               </label>
             </div>
 
@@ -138,7 +138,7 @@ export default function LoginPage() {
                 href="#"
                 className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
               >
-                Forgot password?
+                Quên mật khẩu?
               </a>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="btn-liquid-glass-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Signing in..." : "Sign in"}
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
       </div>

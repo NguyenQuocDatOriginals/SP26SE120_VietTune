@@ -36,7 +36,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
           <div className="w-full h-full flex items-center justify-center text-secondary-400">
             <div className="text-center">
               <p className="text-4xl mb-2">🎵</p>
-              <p className="text-sm">No cover image</p>
+              <p className="text-sm">Chưa có ảnh bìa</p>
             </div>
           </div>
         )}
@@ -55,7 +55,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
         {recording.verificationStatus === "VERIFIED" && (
           <div className="absolute top-2 right-2">
             <Badge variant="success" size="sm">
-              Verified
+              Đã xác minh
             </Badge>
           </div>
         )}

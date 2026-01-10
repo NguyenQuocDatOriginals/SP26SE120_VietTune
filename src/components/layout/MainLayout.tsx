@@ -9,13 +9,13 @@ export default function MainLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize spotlight effects for all liquid glass buttons
+    // Khởi tạo hiệu ứng spotlight cho tất cả các nút liquid glass
     const cleanup = initializeButtonSpotlights();
     return cleanup;
   }, []);
 
   useEffect(() => {
-    // Track last visited page (excluding auth pages)
+    // Ghi nhớ trang truy cập cuối cùng (trừ các trang đăng nhập/đăng ký)
     const currentPath = location.pathname;
     if (currentPath !== "/login" && currentPath !== "/register") {
       localStorage.setItem("lastVisitedPage", currentPath);

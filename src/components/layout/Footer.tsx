@@ -25,9 +25,9 @@ export default function Footer() {
             "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
         }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-48">
           {/* About */}
-          <div>
+          <div className="min-w-[350px]">
             <div className="flex items-center space-x-3 mb-4">
               <img
                 src={logo}
@@ -39,23 +39,24 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-white text-sm leading-relaxed drop-shadow">
-              Preserving Vietnam's rich musical heritage through collaborative
-              documentation and intelligent archiving.
+              Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
+              <br />
+              qua nền tảng chia sẻ và lưu trữ cộng đồng
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="font-bold text-lg mb-4 text-white drop-shadow-lg">
-              Quick links
+              Liên kết nhanh
             </h3>
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
-                  to="/recordings"
+                  to="/upload"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Recordings
+                  Đóng góp
                 </Link>
               </li>
               <li>
@@ -63,7 +64,7 @@ export default function Footer() {
                   to="/instruments"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Traditional instruments
+                  Nhạc cụ truyền thống
                 </Link>
               </li>
               <li>
@@ -71,7 +72,7 @@ export default function Footer() {
                   to="/ethnicities"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Vietnamese ethnicities
+                  Dân tộc Việt Nam
                 </Link>
               </li>
               <li>
@@ -79,7 +80,7 @@ export default function Footer() {
                   to="/masters"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Master musicians
+                  Nghệ nhân âm nhạc
                 </Link>
               </li>
             </ul>
@@ -88,7 +89,7 @@ export default function Footer() {
           {/* Resources */}
           <div>
             <h3 className="font-bold text-lg mb-4 text-white drop-shadow-lg">
-              Resources
+              Tài nguyên
             </h3>
             <ul className="space-y-3 text-sm">
               <li>
@@ -96,7 +97,7 @@ export default function Footer() {
                   to="/about"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  About VietTune
+                  Về VietTune
                 </Link>
               </li>
               <li>
@@ -104,7 +105,7 @@ export default function Footer() {
                   to="/upload"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Contribute
+                  Đóng góp
                 </Link>
               </li>
               <li>
@@ -112,7 +113,7 @@ export default function Footer() {
                   href="#"
                   className="text-white font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
                 >
-                  Documentation
+                  Tài liệu
                 </a>
               </li>
               <li>
@@ -129,7 +130,7 @@ export default function Footer() {
           {/* Contact */}
           <div>
             <h3 className="font-bold text-lg mb-4 text-white drop-shadow-lg">
-              Connect
+              Kết nối
             </h3>
             <div className="flex space-x-4 mb-6">
               <a
@@ -167,8 +168,8 @@ export default function Footer() {
 
         <div className="border-t border-white/30 mt-10 pt-8 text-center">
           <p className="text-white text-sm font-medium drop-shadow">
-            Copyright © {new Date().getFullYear()} {APP_NAME}. All rights
-            reserved.
+            Bản quyền © {new Date().getFullYear()} {APP_NAME}. Tất cả quyền được
+            bảo lưu.
           </p>
         </div>
       </div>

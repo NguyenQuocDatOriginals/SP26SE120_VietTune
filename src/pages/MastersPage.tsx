@@ -26,7 +26,9 @@ export default function MastersPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Master musicians</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">
+          Nghệ nhân âm nhạc
+        </h1>
 
         {/* Introduction */}
         <div
@@ -38,24 +40,17 @@ export default function MastersPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Preserving intangible cultural heritage
+            Những người giữ lửa truyền thống
           </h2>
           <p className="text-white leading-relaxed mb-4">
-            Master musicians and tradition bearers are living repositories of
-            irreplaceable knowledge about traditional music, instruments,
-            performance techniques, and ceremonial practices. Many are elderly
-            individuals who learned their craft through decades of oral
-            transmission from previous generations. Their expertise encompasses
-            not just musical performance, but also instrument construction,
-            ritual contexts, linguistic nuances, and cultural meanings embedded
-            in each piece.
+            Các nghệ nhân là kho kiến thức sống về âm nhạc truyền thống. Họ nắm
+            giữ cách làm nhạc cụ, kỹ thuật biểu diễn và ý nghĩa của từng giai
+            điệu - đều được học qua nhiều đời.
           </p>
           <p className="text-white leading-relaxed">
-            Documentation of master musicians is urgent as this generation
-            represents the last direct link to pre-modern musical traditions.
-            VietTune Archive serves as a platform to honor their contributions,
-            preserve their performances, and facilitate knowledge transmission
-            to younger generations before these traditions are lost forever.
+            Việc ghi chép lại công trình của họ là cấp thiết - đây có thể là thế
+            hệ cuối còn kết nối trực tiếp với truyền thống xưa. VietTune là nơi
+            tôn vinh và lưu giữ di sản quý báu này.
           </p>
         </div>
 
@@ -69,78 +64,74 @@ export default function MastersPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Roles of master musicians
+            Vai trò của nghệ nhân âm nhạc
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Ritual specialists and shamans
+                Chuyên gia nghi lễ và thầy cúng
               </h3>
               <p className="leading-relaxed">
-                Among many ethnic groups, master musicians serve dual roles as
-                both performers and spiritual intermediaries. Tày and Nùng{" "}
-                <em>thầy then</em> (then masters) perform healing rituals,
-                communicate with spirits, and maintain community well-being
-                through music. Their knowledge encompasses not only musical
-                techniques but also herbal medicine, divination, and
-                cosmological understanding.
+                Ở nhiều dân tộc, nghệ nhân vừa là người trình diễn vừa là trung
+                gian tâm linh. Thầy <em>thần</em> của người Tày và Nùng thực
+                hiện nghi lễ chữa lành, giao tiếp với thần linh và giữ gìn sức
+                khỏe cộng đồng qua âm nhạc. Kiến thức của họ bao gồm không chỉ
+                kỹ thuật biểu diễn mà còn thảo dược, bói toán và hiểu biết về vũ
+                trụ.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Instrument makers and innovators
+                Thợ làm nhạc cụ và người đổi mới
               </h3>
               <p className="leading-relaxed">
-                Master craftspeople possess specialized knowledge of material
-                selection, construction techniques, tuning systems, and acoustic
-                properties. They understand which bamboo species produce optimal
-                tones, how moon phases affect wood quality, and traditional
-                methods for creating specific timbres. Many also innovate within
-                traditional frameworks, adapting instruments to changing
-                performance contexts.
+                Thợ khéo sở hữu kiến thức chuyên sâu về lựa chọn vật liệu, kỹ
+                thuật chế tác, hệ thống điệu và đặc tính âm học. Họ biết loại
+                tre nào tạo âm thanh tốt nhất, pha mặt trăng ảnh hưởng đến chất
+                lượng gỗ ra sao, và phương pháp truyền thống tạo âm sắc đặc
+                trưng. Nhiều người còn đổi mới trong khuôn khổ truyền thống,
+                thích nghi nhạc cụ với bối cảnh biểu diễn thay đổi.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Epic singers and oral historians
+                Ca sử thi và sử gia truyền miệng
               </h3>
               <p className="leading-relaxed">
-                Epic singers preserve vast bodies of oral literature through
-                performance. These narratives encode historical events,
-                genealogies, migration stories, creation myths, and moral
-                teachings. Masters memorize thousands of verses, understand
-                complex poetic structures, and adapt performances to specific
-                ceremonial contexts and audiences.
+                Ca nhân sử thi giữ gìn kho văn học truyền miệng đồ sộ qua biểu
+                diễn. Các truyện kể này chứa sự kiện lịch sử, phổ hệ, câu chuyện
+                di cư, thần thoại sáng thế và bài học đạo đức. Nghệ nhân nhớ
+                hàng ngàn câu thơ, hiểu cấu trúc thơ ca phức tạp và biết thích
+                nghi biểu diễn theo bối cảnh nghi lễ và khán giả cụ thể.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Gong orchestra leaders
+                Chỉ huy dàn cồng chiêng
               </h3>
               <p className="leading-relaxed">
-                In Central Highlands communities, gong masters coordinate
-                complex ensemble performances, maintain proper ritual protocols,
-                and preserve knowledge about each gong's spiritual significance.
-                They understand intricate polyrhythmic patterns, know
-                appropriate contexts for different compositions, and maintain
-                social cohesion through musical leadership.
+                Ở cộng đồng cao nguyên Trung Bộ, nghệ nhân cồng chiêng điều phối
+                biểu diễn hòa tấu phức tạp, giữ quy trình nghi lễ đúng đắn và
+                bảo tồn kiến thức về ý nghĩa tâm linh của từng chiếc cồng
+                chiêng. Họ hiểu nhịp đa phức hợp tinh vi, biết bối cảnh phù hợp
+                cho từng bản nhạc và duy trì sự gắn kết xã hội qua lãnh đạo âm
+                nhạc.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Teachers and cultural transmitters
+                Giáo viên và người truyền văn hóa
               </h3>
               <p className="leading-relaxed">
-                Beyond performance, master musicians serve as teachers who
-                transmit technical skills, aesthetic values, cultural knowledge,
-                and ethical principles to younger generations. Their pedagogical
-                methods emphasize imitation, oral instruction, and embodied
-                learning within authentic cultural contexts rather than formal
-                notation or classroom settings.
+                Ngoài biểu diễn, nghệ nhân còn là giáo viên truyền kỹ năng kỹ
+                thuật, giá trị thẩm mỹ, kiến thức văn hóa và nguyên tắc đạo đức
+                cho thế hệ trẻ. Phương pháp dạy học của họ nhấn mạnh bắt chước,
+                hướng dẫn truyền miệng và học qua trải nghiệm trong bối cảnh văn
+                hóa chân thực, thay vì phổ nhạc hay lớp học chính thức.
               </p>
             </div>
           </div>
@@ -156,79 +147,73 @@ export default function MastersPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Notable musical traditions and their practitioners
+            Các truyền thống âm nhạc tiêu biểu và nghệ nhân
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Then singing (Tày, Nùng, Thái)
+                Hát thần (Tày, Nùng, Thái)
               </h3>
               <p className="leading-relaxed">
-                <em>Then</em> masters combine musical performance with shamanic
-                practices. They play the <em>đàn tính</em> while singing to
-                communicate with spirits, diagnose illnesses, and perform
-                healing ceremonies. The tradition requires years of
-                apprenticeship, learning hundreds of ritual songs, understanding
-                spiritual protocols, and mastering trance induction techniques.
+                Thầy thần kết hợp biểu diễn âm nhạc với thực hành tâm linh. Họ
+                chơi <em>đàn tính</em> trong khi hát để giao tiếp với thần linh,
+                chẩn đoán bệnh và thực hiện nghi lễ chữa lành. Truyền thống đòi
+                hỏi nhiều năm học việc, học hàng trăm bài hát nghi lễ, hiểu quy
+                trình tâm linh và thành thạo kỹ thuật nhập thần.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Thổi khèn (H'Mông)</h3>
+              <p className="leading-relaxed">
+                Nghệ nhân <em>khèn</em> có thể thực hiện giai điệu đa thanh phức
+                tạp đồng thời với âm trầm kéo dài, tạo không gian âm thanh tinh
+                vi trong lễ hội và nghi lễ tình yêu. Nghệ nhân giỏi hiểu lựa
+                chọn lá sậy, kỹ thuật kiểm soát hơi thở và ý nghĩa văn hóa được
+                mã hóa trong các giai điệu. Nhạc cụ là "tiếng nói" biểu đạt cảm
+                xúc không thể thể hiện bằng lời.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Khèn performance (H'Mông)
+                Hòa tấu cồng chiêng (Cao nguyên Trung Bộ)
               </h3>
               <p className="leading-relaxed">
-                Master <em>khèn</em> players can perform complex polyphonic
-                melodies simultaneously with bass drone tones, creating
-                intricate soundscapes during festivals and courtship rituals.
-                Expert performers understand reed selection, breath control
-                techniques, and the cultural meanings encoded in different
-                melodic patterns. The instrument serves as a "voice" expressing
-                emotions words cannot convey.
+                Nghệ nhân cồng chiêng ở Ê Đê, Ba Na, Gia Rai và các dân tộc Tây
+                Nguyên khác điều phối nhịp đa phức hợp tinh vi qua nhiều cồng
+                chiêng cỡ khác nhau. Mỗi chiếc cồng chiêng là thực thể tâm linh
+                với tên riêng và cá tính riêng. Nghệ nhân biết kỹ thuật gó đúng
+                cách, quy trình nghi lễ, phương pháp điều cồng chiêng và ý nghĩa
+                tâm linh của các chu kỳ nhịp khác nhau.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Gong ensemble performance (Central Highlands)
+                Ca trù (Nhạc cổ điển miền Bắc)
               </h3>
               <p className="leading-relaxed">
-                Gong masters in Ê Đê, Ba Na, Gia Rai, and other Central
-                Highlands groups coordinate intricate polyrhythmic patterns
-                across multiple gong sizes. Each gong is considered a spiritual
-                entity with its own name and personality. Masters know proper
-                striking techniques, ceremonial protocols, gong tuning methods,
-                and the spiritual significance of different rhythmic cycles.
+                Nghệ nhân <em>ca trù</em> giữ gìn truyền thống nhạc tài tử tinh
+                xảo với giọng nữ được đệm bởi <em>đàn đáy</em> (đàn ba dây),{" "}
+                <em>phách</em> (phách gỗ) và <em>trống chầu</em> (trống khen).
+                Đòi hỏi thành thạo trang trí giọng hát phức tạp, lời thơ và cảm
+                thụ thẩm mỹ tinh tế. UNESCO công nhận ca trù là Di sản Văn hóa
+                Phi vật thể cần bảo vệ khẩn cấp.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Ca trù (Northern classical music)
+                Đờn ca tài tử (Nhạc tài tử miền Nam)
               </h3>
               <p className="leading-relaxed">
-                <em>Ca trù</em> masters preserve this sophisticated chamber
-                music tradition featuring female vocalists accompanied by{" "}
-                <em>đàn đáy</em> (three-string lute), <em>phách</em> (wooden
-                clappers), and <em>trống chầu</em> (praise drum). The genre
-                requires mastery of complex vocal ornamentation, poetic lyrics,
-                and refined aesthetic sensibilities. UNESCO recognized ca trù as
-                Intangible Cultural Heritage in need of urgent safeguarding.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">
-                Đờn ca tài tử (Southern chamber music)
-              </h3>
-              <p className="leading-relaxed">
-                Master musicians in the Mekong Delta region perform this amateur
-                music genre featuring improvisation within modal frameworks.
-                Performers play various instruments including <em>đàn tranh</em>{" "}
-                (zither), <em>đàn kim</em> (moon-shaped lute), and{" "}
-                <em>đàn bầu</em> (monochord), demonstrating refined technique
-                and deep understanding of modal theory. UNESCO recognized this
-                tradition in 2013.
+                Nghệ nhân ở vùng Đồng bằng Sông Cửu Long trình diễn thể loại
+                nhạc nghiệp dư này với việc nhắc hứng trong khuôn khổ điệu thức.
+                Nghệ nhân chơi nhiều nhạc cụ như <em>đàn tranh</em> (đàn),{" "}
+                <em>đàn kim</em> (đàn hình mặt trăng) và <em>đàn bầu</em> (đàn
+                một dây), thể hiện kỹ thuật tinh tế và hiểu sâu về lý thuyết
+                điệu thức. UNESCO công nhận truyền thống này năm 2013.
               </p>
             </div>
           </div>
@@ -244,60 +229,56 @@ export default function MastersPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Challenges facing traditional transmission
+            Thách thức của việc truyền thống
           </h2>
           <div className="space-y-4 text-white">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
-                Aging master population
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">Nghệ nhân già cỗ</h3>
               <p className="leading-relaxed">
-                Many master musicians are in their 70s, 80s, or older. As they
-                pass away, irreplaceable knowledge disappears. The oral nature
-                of transmission means that unrecorded performances, techniques,
-                and cultural contexts are permanently lost. Urgent documentation
-                is needed before this generation is gone.
+                Nhiều nghệ nhân đã ngoài 70, 80 tuổi hoặc hơn. Khi họ qua đời,
+                kiến thức quý giá biến mất. Tính chất truyền miệng có nghĩa buổi
+                diễn không ghi hình, kỹ thuật và bối cảnh văn hóa sẽ mất mãi
+                mãi. Cần tài liệu hóa gấp trước khi thế hệ này ra đi.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Youth disinterest and migration
+                Giới trẻ không quan tâm và di cư
               </h3>
               <p className="leading-relaxed">
-                Younger generations increasingly pursue modern education and
-                migrate to cities for economic opportunities. Traditional music
-                training requires years of dedication without immediate economic
-                returns. The apprenticeship model struggles to compete with
-                modern entertainment and career paths.
+                Thế hệ trẻ ngày càng theo đuổi giáo dục hiện đại và di cư lên
+                thành phố để tìm kiếm cơ hội kinh tế. Đào tạo âm nhạc truyền
+                thống đòi hỏi nhiều năm tận tuỵ không mang lại lợi nhuận kinh tế
+                trực tiếp. Mô hình học việc khó cạnh tranh với giải trí hiện đại
+                và con đường sự nghiệp.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Loss of performance contexts
+                Mất bối cảnh biểu diễn
               </h3>
               <p className="leading-relaxed">
-                As traditional ceremonies decline and communities modernize,
-                authentic performance contexts disappear. Music extracted from
-                its ritual, agricultural, or social contexts loses cultural
-                meaning and becomes mere entertainment. Masters who learned in
-                traditional contexts struggle to transmit holistic cultural
-                understanding.
+                Khi nghi lễ truyền thống suy giảm và cộng đồng hiện đại hóa, bối
+                cảnh biểu diễn chân thực biến mất. Âm nhạc tách khỏi bối cảnh
+                nghi lễ, nông nghiệp hoặc xã hội sẽ mất ý nghĩa văn hóa và trở
+                thành giải trí thuần túy. Nghệ nhân học trong bối cảnh truyền
+                thống gặp khó khăn truyền hiểu biết văn hóa toàn diện.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Limited documentation and recognition
+                Thiếu tài liệu và công nhận
               </h3>
               <p className="leading-relaxed">
-                Most master musicians remain unknown outside their local
-                communities. Lack of systematic documentation means their
-                contributions go unrecognized. Economic hardship often forces
-                masters to abandon cultural work for survival. Recognition as
-                cultural treasures could provide both material support and
-                motivation for continued transmission.
+                Hầu hết nghệ nhân vẫn không được biết đến ngoài cộng đồng địa
+                phương. Thiếu tài liệu hóa hệ thống có nghĩa đóng góp của họ
+                không được ghi nhận. Khó khăn kinh tế thường buộc nghệ nhân phải
+                bỏ công việc văn hóa để muôn sinh. Công nhận là bảo vật văn hóa
+                có thể mang lại cả hỗ trợ vật chất và động lực tiếp tục truyền
+                thống.
               </p>
             </div>
           </div>
@@ -313,47 +294,46 @@ export default function MastersPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Contributing to master musician documentation
+            Đóng góp tài liệu hóa nghệ nhân
           </h2>
           <div className="text-white">
             <p className="leading-relaxed mb-4">
-              VietTune Archive welcomes contributions documenting master
-              musicians and their traditions. Valuable documentation includes:
+              VietTune chào đón mọi đóng góp tài liệu hóa nghệ nhân và truyền
+              thống của họ. Tài liệu giá trị bao gồm:
             </p>
             <ul className="list-disc list-inside space-y-2 ml-4 mb-4">
               <li>
-                <strong>Performance recordings:</strong> Audio or video of
-                master musicians performing in authentic contexts
+                <strong>Ghi hình biểu diễn:</strong> Âm thanh hoặc video nghệ
+                nhân biểu diễn trong bối cảnh chân thực
               </li>
               <li>
-                <strong>Biographical information:</strong> Life histories,
-                training backgrounds, lineages, and cultural contributions
+                <strong>Tiểu sử:</strong> Lịch sử cuộc đời, quá trình đào tạo,
+                dòng dõi và đóng góp văn hóa
               </li>
               <li>
-                <strong>Technical knowledge:</strong> Instrument construction
-                techniques, performance methods, tuning systems, and aesthetic
-                principles
+                <strong>Kiến thức kỹ thuật:</strong> Kỹ thuật chế tác nhạc cụ,
+                phương pháp biểu diễn, hệ thống điệu và nguyên tắc thẩm mỹ
               </li>
               <li>
-                <strong>Cultural context:</strong> Information about ritual
-                uses, social functions, symbolic meanings, and community
-                significance
+                <strong>Bối cảnh văn hóa:</strong> Thông tin về sử dụng trong
+                nghi lễ, chức năng xã hội, ý nghĩa biểu tượng và tầm quan trọng
+                cộng đồng
               </li>
               <li>
-                <strong>Apprenticeship documentation:</strong> Teaching methods,
-                learning processes, and intergenerational transmission
+                <strong>Tài liệu học việc:</strong> Phương pháp giảng dạy, quy
+                trình học và truyền thống giữa các thế hệ
               </li>
               <li>
-                <strong>Historical documentation:</strong> Photographs, news
-                articles, program notes, and other archival materials
+                <strong>Tài liệu lịch sử:</strong> Ảnh, bài báo, ghi chú chương
+                trình và tài liệu lưu trữ khác
               </li>
             </ul>
             <p className="leading-relaxed">
-              When documenting master musicians, always obtain informed consent,
-              respect cultural sensitivities, acknowledge intellectual property,
-              and involve community members in the documentation process. Proper
-              attribution and contextualization honor masters' contributions
-              while preserving cultural integrity.
+              Khi tài liệu hóa nghệ nhân, luôn xin sự đồng ý, tôn trọng điều
+              nhạy cảm văn hóa, thừa nhận quyền sở hữu trí tuệ và liên hệ với
+              thành viên cộng đồng trong quá trình tài liệu hóa. Ghi rõ nguồn và
+              tìm hiểu bối cảnh đúng đắn tôn vinh đóng góp của nghệ nhân và giữ
+              gìn tính toàn vẹn văn hóa.
             </p>
           </div>
         </div>

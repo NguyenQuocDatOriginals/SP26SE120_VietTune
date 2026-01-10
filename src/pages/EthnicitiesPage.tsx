@@ -29,9 +29,7 @@ export default function EthnicitiesPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">
-          Vietnamese ethnicities
-        </h1>
+        <h1 className="text-3xl font-bold text-white mb-8">Dân tộc Việt Nam</h1>
 
         {/* Introduction */}
         <div
@@ -43,22 +41,16 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Overview of Vietnam's ethnic diversity
+            Bức tranh đa sắc của các dân tộc
           </h2>
           <p className="text-white leading-relaxed mb-4">
-            Vietnam is home to 54 officially recognized ethnic groups, each with
-            distinct cultural identities, languages, and musical traditions. The
-            Kinh (Viet) people comprise approximately 86% of the population,
-            while the remaining 53 ethnic minorities represent about 14%,
-            primarily residing in mountainous and highland regions.
+            Việt Nam có 54 dân tộc với những nét văn hóa độc đáo. Người Kinh
+            chiếm 86% dân số, còn 53 dân tộc khác (14%) chủ yếu sinh sống ở miền
+            núi và cao nguyên.
           </p>
           <p className="text-white leading-relaxed">
-            These ethnic minorities are categorized into eight major
-            ethnolinguistic families: Austroasiatic, Tai-Kadai, Hmong-Mien,
-            Austronesian, Sino-Tibetan, and others. Each group has developed
-            unique musical instruments, performance practices, vocal techniques,
-            and ceremonial traditions passed down through oral transmission for
-            centuries.
+            Mỗi dân tộc có ngôn ngữ, nhạc cụ và phong cách âm nhạc riêng biệt,
+            được truyền từ thế hệ này sang thế hệ khác qua nhiều thế kỷ.
           </p>
         </div>
 
@@ -72,76 +64,70 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Northern highlands ethnicities
+            Dân tộc trung du và miền núi Bắc Bộ
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">Tày (Tay)</h3>
               <p className="leading-relaxed">
-                The Tày people are the largest ethnic minority in Vietnam,
-                primarily residing in northern mountain provinces. Their musical
-                traditions include the <em>đàn tính</em> (two-string lute) and{" "}
-                <em>then</em> singing, a spiritual practice performed by shamans
-                during religious ceremonies. The <em>sli</em> flute and{" "}
-                <em>pí lè</em> reed instrument are also central to their folk
-                music.
+                Người Tày là dân tộc thiểu số đông nhất Việt Nam, chủ yếu sống ở
+                các tỉnh miền núi Bắc Bộ. Truyền thống âm nhạc bao gồm{" "}
+                <em>đàn tính</em> (đàn hai dây) và hát <em>thần</em>, thực hành
+                tâm linh do thầy cúng thực hiện trong nghi lễ tôn giáo. Sáo{" "}
+                <em>sli</em> và nhạc cụ sậy <em>pí lè</em> cũng là trung tâm của
+                nhạc dân gian.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Nùng (Nung)</h3>
               <p className="leading-relaxed">
-                Closely related to the Tày, the Nùng people share similar
-                musical instruments including the <em>đàn tính</em> and various
-                percussion instruments. Their <em>sli</em> songs accompany
-                agricultural work and courtship rituals. The <em>then</em>{" "}
-                ritual music plays a vital role in their spiritual practices.
+                Có quan hệ gần gũi với người Tày, người Nùng có nhạc cụ tương tự
+                như <em>đàn tính</em> và các nhạc cụ gõ. Bài hát <em>sli</em>{" "}
+                đệm công việc nông nghiệp và nghi lễ tình yêu. Nhạc nghi lễ{" "}
+                <em>thần</em> đóng vai trò quan trọng trong thực hành tâm linh.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Thái (Thai)</h3>
               <p className="leading-relaxed">
-                The Thái people, divided into Black Thái, White Thái, and Red
-                Thái subgroups, have rich vocal traditions including{" "}
-                <em>khắp</em> and <em>xòe</em> singing. Their instrumental music
-                features the <em>đàn tính</em>, <em>pí pắp</em> (buffalo horn),
-                and various drums used in the <em>xòe</em> circle dance.
+                Người Thái chia thành Thái Đen, Thái Trắng và Thái Đỏ, có truyền
+                thống thanh nhạc phong phú gồm hát <em>khắp</em> và hát{" "}
+                <em>xòe</em>. Nhạc cụ bao gồm <em>đàn tính</em>, <em>pí pắp</em>{" "}
+                (sùng trâu) và các loại trống dùng trong múa vòng <em>xòe</em>.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">H'Mông (Hmong)</h3>
               <p className="leading-relaxed">
-                The H'Mông people are renowned for their <em>khèn</em>{" "}
-                (free-reed mouth organ), which produces complex polyphonic
-                melodies during festivals and courtship rituals. Their vocal
-                traditions include <em>hát đối đáp</em> (antiphonal singing) and
-                epic narratives that preserve historical memories and cultural
-                identity.
+                Người H'Mông nổi tiếng với <em>khèn</em> (sáo mộc trực tiếp),
+                tạo giai điệu đa thanh phức tạp trong lễ hội và nghi lễ tình
+                yêu. Truyền thống thanh nhạc bao gồm <em>hát đối đáp</em> (hát
+                luyn phiên) và truyện kể sử thi giữ gìn ký ức lịch sử và bản sắc
+                văn hóa.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Dao (Yao)</h3>
               <p className="leading-relaxed">
-                The Dao people maintain diverse musical practices including the{" "}
-                <em>tiêu</em> flute, <em>đàn nhị</em> (two-string fiddle), and
-                various percussion instruments. Their ceremonial music,
-                particularly during <em>cấp sắc</em> (ordination) rituals,
-                incorporates Taoist religious elements with indigenous
-                traditions.
+                Người Dao duy trì thực hành âm nhạc đa dạng gồm sáo{" "}
+                <em>tiêu</em>, <em>đàn nhị</em> (nhị hai dây) và các nhạc cụ gõ.
+                Nhạc nghi lễ của họ, đặc biệt trong nghi lễ <em>cấp sắc</em>{" "}
+                (thụ phong), kết hợp yếu tố Đạo giáo với truyền thống bảnđịa.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Mường (Muong)</h3>
               <p className="leading-relaxed">
-                The Mường people, linguistically related to the Kinh, preserve
-                ancient Vietnamese musical forms. Their <em>mò mường</em> shaman
-                songs and gong ensemble music reflect pre-Buddhist animist
-                traditions. The <em>chiêng</em> (gong) plays a central role in
-                community ceremonies.
+                Người Mường, có quan hệ ngôn ngữ với người Kinh, giữ gìn các
+                hình thức âm nhạc Việt cổ đại. Bài hát <em>mò mường</em> của
+                thầy cúng và nhạc cồng chiêng phản ánh truyền thống phiphật giáo
+                tin thần linh. <em>Chiêng</em> (cồng chiêng) đóng vai trò trung
+                tâm trong nghi lễ cộng đồng.
               </p>
             </div>
           </div>
@@ -157,63 +143,58 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Central highlands ethnicities (Tây Nguyên)
+            Dân tộc cao nguyên Trung Bộ
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">Ê Đê (Ede)</h3>
               <p className="leading-relaxed">
-                The Ê Đê people are famous for their gong culture, recognized by
-                UNESCO as Intangible Cultural Heritage. Their gong ensembles (
-                <em>chiêng</em>) consist of multiple sizes producing a layered
-                soundscape during festivals, funerals, and agricultural
-                celebrations. The <em>đing năm</em> (bamboo xylophone) and{" "}
-                <em>goong</em> (bamboo tube zither) are unique to their musical
-                tradition.
+                Người Ê Đê nổi tiếng với văn hóa cồng chiêng, được UNESCO công
+                nhận là Di sản Văn hóa Phi vật thể. Dàn cồng chiêng (
+                <em>chiêng</em>) gồm nhiều kích cỡ tạo không gian âm thanh phức
+                tạp trong lễ hội, đám tang và lễ nông nghiệp. <em>Đing năm</em>{" "}
+                (đàn mộc cầm trúc) và <em>goong</em> (đàn tranh ống trúc) là đặc
+                trưng truyền thống âm nhạc của họ.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Ba Na (Bahnar)</h3>
               <p className="leading-relaxed">
-                The Ba Na people maintain elaborate gong traditions and unique
-                bamboo instruments including the <em>đing tút</em> (bamboo tubes
-                struck with sticks) and <em>ta lốt</em> (bamboo xylophone).
-                Their ceremonial music accompanies communal house (<em>rông</em>
-                ) rituals and buffalo sacrifice ceremonies.
+                Người Ba Na duy trì truyền thống cồng chiêng tinh xảo và nhạc cụ
+                tre độc đáo như <em>đing tút</em> (ống trúc gõ bằng gchy) và{" "}
+                <em>ta lốt</em> (đàn mộc cầm trúc). Nhạc nghi lễ đệm các nghi
+                thức nhà rông (<em>rông</em>) và lễ cúng trâu.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Gia Rai (Jarai)</h3>
               <p className="leading-relaxed">
-                The Gia Rai people are known for their sophisticated gong
-                orchestras and diverse bamboo instruments. The{" "}
-                <em>klong put</em> (bamboo tubes struck on the ground) creates
-                powerful rhythmic patterns. Their vocal traditions include epic
-                narratives and lullabies with distinctive pentatonic scales.
+                Người Gia Rai nổi tiếng với dàn cồng chiêng tinh xảo và nhạc cụ
+                tre đa dạng. <em>Klong put</em> (ống tre gõ xuống đất) tạo nhịp
+                mạnh mẽ. Truyền thống thanh nhạc bao gồm truyện kể sử thi và ru
+                ngủ với thang âm ngũ cung đặc trưng.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Sedang</h3>
               <p className="leading-relaxed">
-                The Sedang people maintain gong traditions and unique wind
-                instruments. Their <em>ta-ri-ang</em> (gourd mouth organ) and
-                various flutes produce haunting melodies during courtship and
-                ceremonies. Community gong performances accompany agricultural
-                cycles and lifecycle rituals.
+                Người Sedang duy trì truyền thống cồng chiêng và nhạc cụ hơi độc
+                đáo. <em>Ta-ri-ang</em> (khèn bầu) và các loại sáo tạo giai điệu
+                ma mị trong nghi lễ tình yêu và lễ hội. Hòa tấu cồng chiêng cộng
+                đồng đểm chu kỳ nông nghiệp và nghi lễ đời sống.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Co Ho (Koho)</h3>
               <p className="leading-relaxed">
-                The Co Ho people use gongs, drums, and unique bamboo
-                instruments. Their <em>tà-linh</em> singing style and bamboo
-                flute music accompany rice wine ceremonies and community
-                gatherings. The <em>dung-kar</em> (buffalo horn trumpet)
-                announces important events.
+                Người Co Ho dùng cồng chiêng, trống và nhạc cụ tre độc đáo.
+                Phong cách hát <em>tà-linh</em> và nhạc sáo tre đệm các nghi lễ
+                rượu cần và tụ họp cộng đồng. <em>Dung-kar</em> (kèn trâu) báo
+                hiệu sự kiện quan trọng.
               </p>
             </div>
           </div>
@@ -229,41 +210,40 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Southern and coastal ethnicities
+            Dân tộc Nam Trung Bộ, Đông Nam Bộ và Tây Nam Bộ
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">Chăm (Cham)</h3>
               <p className="leading-relaxed">
-                The Chăm people, descendants of the ancient Champa Kingdom,
-                maintain Hindu and Islamic musical traditions. Their{" "}
-                <em>saranai</em> (oboe), <em>ginang</em> (drums), and{" "}
-                <em>paranung</em> (barrel drum) accompany religious ceremonies,
-                particularly the <em>Kate</em> festival. Their vocal music
-                blends ancient Austronesian traditions with South Asian
-                influences.
+                Người Chăm, hậu duệ Vương quốc Champa cổ đại, duy trì truyền
+                thống âm nhạc Hindu và Hồi giáo. Nhạc cụ <em>saranai</em> (kèn),{" "}
+                <em>ginang</em> (trống) và <em>paranung</em> (trống thùng) đệm
+                nghi lễ tôn giáo, đặc biệt trong lễ hội <em>Kate</em>. Thanh
+                nhạc của họ kết hợp truyền thống Austronesian cổ đại với ảnh
+                hưởng Nam Á.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Khmer</h3>
               <p className="leading-relaxed">
-                The Khmer people of the Mekong Delta maintain strong connections
-                to Cambodian classical music traditions. Their <em>tro</em>{" "}
-                (spike fiddle), <em>skor</em> (drums), and <em>korng</em> (gong
-                circles) accompany Buddhist ceremonies and traditional theater.
-                The <em>ayai</em> folk singing style is popular at festivals.
+                Người Khmer ở Đồng bằng Sông Cửu Long duy trì mối liên kết chặt
+                chẽ với truyền thống âm nhạc cổ điển Campuchia. Nhạc cụ{" "}
+                <em>tro</em> (nhị có cần dài), <em>skor</em> (trống) và{" "}
+                <em>korng</em> (vòng cồng chiêng) đệm nghi lễ Phật giáo và sân
+                khấu truyền thống. Phong cách hát dân gian <em>ayai</em> phổ
+                biến trong lễ hội.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">Hoa (Chinese)</h3>
               <p className="leading-relaxed">
-                The Hoa people preserve various regional Chinese opera
-                traditions including <em>tuồng</em> and <em>hát bội</em>,
-                alongside instrumental music featuring the <em>erhu</em>, pipa,
-                and various percussion instruments. Their temple music
-                accompanies religious festivals and ancestor worship ceremonies.
+                Người Hoa giữ gìn các truyền thống hát bội Trung Quốc vùng miền
+                như <em>tuồng</em> và <em>hát bội</em>, cùng nhạc cụ gồm{" "}
+                <em>erhu</em>, pipa và các nhạc cụ gõ. Nhạc đền thờ của họ đệm
+                lễ hội tôn giáo và nghi lễ thờ cúng tổ tiên.
               </p>
             </div>
           </div>
@@ -279,69 +259,68 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Common musical characteristics
+            Đặc điểm âm nhạc chung
           </h2>
           <div className="space-y-4 text-white">
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Gong culture (Văn hóa Cồng chiêng)
+                Văn hóa cồng chiêng
               </h3>
               <p className="leading-relaxed">
-                Gong ensembles are central to many highland ethnic groups,
-                particularly in the Central Highlands. Different gong sizes
-                produce specific pitches creating complex polyrhythmic and
-                polyphonic textures. Gongs are considered sacred objects
-                connecting communities to ancestral spirits and natural forces.
+                Dàn cồng chiêng là trung tâm của nhiều dân tộc miền núi, đặc
+                biệt ở cao nguyên Trung Bộ. Các cồng chiêng cỡ khác nhau tạo cao độ cụ
+                thể tạo kết cấu đa nhịp và đa thanh phức tạp. Cồng chiêng được
+                coi là vật thiêng liêng kết nối cộng đồng với linh hồn tổ tiên
+                và lực lượng thiên nhiên.
               </p>
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Bamboo instruments</h3>
+              <h3 className="text-xl font-semibold mb-2">Nhạc cụ tre trúc</h3>
               <p className="leading-relaxed">
-                Bamboo's abundance has led to extraordinary diversity in bamboo
-                instruments across ethnic groups: xylophones, tube zithers,
-                flutes, mouth organs, percussion tubes, and more. Each
-                instrument reflects specific environmental adaptations and
-                cultural aesthetics.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-2">
-                Vocal traditions and oral literature
-              </h3>
-              <p className="leading-relaxed">
-                Epic singing traditions preserve historical narratives, creation
-                myths, and cultural knowledge. Antiphonal singing (call and
-                response) is common in courtship practices. Vocal techniques
-                often include ornamentation, microtonal inflections, and nasal
-                timbres specific to each ethnic group.
+                Sự dồi dào của tre trúc dẫn đến sự đa dạng phi thường trong nhạc
+                cụ tre của các dân tộc: đàn mộc cầm, đàn tranh ống trúc, sáo,
+                khèn, ống gõ và nhiều loại khác. Mỗi nhạc cụ phản ánh sự thích
+                nghi môi trường và thẩm mỹ văn hóa cụ thể.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Ceremonial and ritual music
+                Truyền thống thanh nhạc và văn học truyền miệng
               </h3>
               <p className="leading-relaxed">
-                Music plays essential roles in lifecycle ceremonies (birth,
-                coming-of-age, marriage, death), agricultural rituals (planting,
-                harvest), spiritual practices (shamanism, animism, Buddhism),
-                and community celebrations. These performances maintain social
-                cohesion and transmit cultural values across generations.
+                Truyền thống ca hát sử thi giữ gìn truyện kể lịch sử, thần thoại
+                sáng thế và kiến thức văn hóa. Hát luân phiên (gọi và đáp) phổ
+                biến trong thực hành tình yêu. Kỹ thuật thanh nhạc thường bao
+                gồm trang trí, uốn luyến vi thanh và âm sắc mũi đặc trưng của
+                từng dân tộc.
               </p>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-2">
-                Pentatonic and modal systems
+                Nhạc nghi lễ và tâm linh
               </h3>
               <p className="leading-relaxed">
-                While many groups use pentatonic (five-tone) scales, significant
-                variation exists in tuning systems, modal structures, and
-                melodic patterns. Some groups use anhemitonic (no semitones)
-                scales, while others incorporate microtonal inflections and
-                complex modal systems.
+                Âm nhạc đóng vai trò thiết yếu trong nghi lễ đời sống (sinh,
+                trưởng thành, kết hôn, tử), nghi lễ nông nghiệp (giá trồng,
+                gat), thực hành tâm linh (thầy cúng, tin thần linh, Phật giáo)
+                và lễ hội cộng đồng. Các buổi biểu diễn này duy trì gắn kết xã
+                hội và truyền giá trị văn hóa qua các thế hệ.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                Hệ thống ngũ cung và điệu thức
+              </h3>
+              <p className="leading-relaxed">
+                Mặc dù nhiều nhóm dùng thang âm ngũ cung (năm nốt), vẫn có sự
+                khác biệt đáng kể trong hệ thống điệu, cấu trúc điệu thức và mẫu
+                giai điệu. Một số nhóm dùng thang âm không có nửa cầu, trong khi
+                nhóm khác kết hợp uốn luyến vi thanh và hệ thống điệu thức phức
+                tạp.
               </p>
             </div>
           </div>
@@ -357,16 +336,15 @@ export default function EthnicitiesPage() {
           }}
         >
           <h2 className="text-2xl font-semibold text-white mb-4">
-            Other notable ethnic groups
+            Các dân tộc đáng chú ý khác
           </h2>
           <div className="text-white">
             <p className="leading-relaxed mb-4">
-              Many other ethnic groups maintain distinct musical traditions
-              including:
+              Nhiều dân tộc khác duy trì truyền thống âm nhạc độc đáo bao gồm:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="font-semibold mb-2">Northern groups:</p>
+                <p className="font-semibold mb-2">Nhóm miền Bắc:</p>
                 <ul className="list-disc list-inside space-y-1 ml-4">
                   <li>La Chí, La Ha, Lự, Lô Lô</li>
                   <li>Phù Lá, Pa Thẻn, Giáy</li>
@@ -376,7 +354,7 @@ export default function EthnicitiesPage() {
               </div>
               <div>
                 <p className="font-semibold mb-2">
-                  Central and southern groups:
+                  Nhóm miền Trung và miền Nam:
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4">
                   <li>Xơ Đăng, Brâu, Bru-Vân Kiều</li>
@@ -387,11 +365,10 @@ export default function EthnicitiesPage() {
               </div>
             </div>
             <p className="leading-relaxed mt-4">
-              Each group contributes unique instruments, vocal styles, and
-              ceremonial practices to Vietnam's extraordinary musical diversity.
-              Documentation and preservation efforts are crucial as many master
-              musicians are elderly and traditional transmission methods face
-              challenges from modernization.
+              Mỗi nhóm đóng góp nhạc cụ, phong cách thanh nhạc và thực hành nghi
+              lễ độc đáo vào sự đa dạng âm nhạc phi thường của Việt Nam. Nỗ lực
+              tài liệu hóa và bảo tồn rất quan trọng vì nhiều nghệ nhân đã lớn
+              tuổi và phương thức truyền thống đối mặt thách thức từ hiện đại hóa.
             </p>
           </div>
         </div>

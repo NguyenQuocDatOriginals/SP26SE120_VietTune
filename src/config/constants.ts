@@ -1,5 +1,5 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-export const APP_NAME = import.meta.env.VITE_APP_NAME || "VietTune Archive";
+export const APP_NAME = import.meta.env.VITE_APP_NAME || "VietTune";
 
 export const ITEMS_PER_PAGE = 20;
 export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -73,24 +73,24 @@ export const VIETNAMESE_ETHNICITIES = [
 ];
 
 export const REGION_NAMES = {
-  NORTHERN_MOUNTAINS: "Northern Mountains",
-  RED_RIVER_DELTA: "Red River Delta",
-  NORTH_CENTRAL: "North Central Coast",
-  SOUTH_CENTRAL_COAST: "South Central Coast",
-  CENTRAL_HIGHLANDS: "Central Highlands",
-  SOUTHEAST: "Southeast",
-  MEKONG_DELTA: "Mekong Delta",
+  NORTHERN_MOUNTAINS: "Trung du và miền núi Bắc Bộ",
+  RED_RIVER_DELTA: "Đồng bằng Bắc Bộ",
+  NORTH_CENTRAL: "Bắc Trung Bộ",
+  SOUTH_CENTRAL_COAST: "Nam Trung Bộ",
+  CENTRAL_HIGHLANDS: "Cao nguyên Trung Bộ",
+  SOUTHEAST: "Đông Nam Bộ",
+  MEKONG_DELTA: "Tây Nam Bộ",
 };
 
 export const RECORDING_TYPE_NAMES = {
-  INSTRUMENTAL: "Instrumental",
-  VOCAL: "Vocal",
-  CEREMONIAL: "Ceremonial",
-  FOLK_SONG: "Folk song",
-  EPIC: "Epic",
-  LULLABY: "Lullaby",
-  WORK_SONG: "Work song",
-  OTHER: "Other",
+  INSTRUMENTAL: "Nhạc không lời",
+  VOCAL: "Nhạc có lời",
+  CEREMONIAL: "Nhạc nghi lễ",
+  FOLK_SONG: "Dân ca",
+  EPIC: "Sử thi",
+  LULLABY: "Hát ru",
+  WORK_SONG: "Hát lao động",
+  OTHER: "Loại khác",
 };
 
 export const INSTRUMENT_CATEGORY_NAMES = {

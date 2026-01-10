@@ -69,28 +69,26 @@ export default function HomePage() {
             }}
           >
             <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                VietTune Archive
-              </h1>
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">VietTune</h1>
               <p className="text-xl md:text-2xl mb-8 text-primary-100">
-                Intelligent Vietnamese traditional music documentation system
+                Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
               </p>
               <p className="text-lg mb-10 max-w-3xl mx-auto">
-                Preserving the rich musical heritage of Vietnam's 54 ethnic
-                minorities through collaborative documentation, intelligent
-                search, and community curation.
+                Gìn giữ di sản âm nhạc của 54 dân tộc Việt Nam
+                <br />
+                qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
               </p>
               <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <Link to="/recordings">
+                <Link to="/explore">
                   <button className="btn-liquid-glass-primary flex items-center justify-center gap-2 min-w-[200px]">
                     <Music className="h-5 w-5" />
-                    Explore recordings
+                    Khám phá bản thu
                   </button>
                 </Link>
                 <Link to="/upload">
                   <button className="btn-liquid-glass-primary flex items-center justify-center gap-2 min-w-[200px]">
                     <Upload className="h-5 w-5" />
-                    Contribute
+                    Đóng góp
                   </button>
                 </Link>
               </div>
@@ -116,11 +114,12 @@ export default function HomePage() {
                   <Music className="h-8 w-8 text-primary-700" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">
-                  Comprehensive archive
+                  Kho tàng đa dạng
                 </h3>
                 <p className="text-white">
-                  Systematic documentation of traditional music from all 54
-                  Vietnamese ethnic minorities
+                  Lưu giữ âm nhạc truyền thống
+                  <br />
+                  từ 54 dân tộc Việt Nam
                 </p>
               </div>
 
@@ -129,11 +128,12 @@ export default function HomePage() {
                   <Search className="h-8 w-8 text-primary-700" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">
-                  Intelligent search
+                  Tìm kiếm dễ dàng
                 </h3>
                 <p className="text-white">
-                  Advanced search by ethnicity, instruments, ceremonial context,
-                  and musical characteristics
+                  Lọc theo dân tộc, nhạc cụ,
+                  <br />
+                  nghi lễ và phong cách
                 </p>
               </div>
 
@@ -142,11 +142,11 @@ export default function HomePage() {
                   <Users className="h-8 w-8 text-primary-700" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">
-                  Community driven
+                  Cộng đồng đóng góp
                 </h3>
                 <p className="text-white">
-                  Crowdsourced verification by researchers, master musicians,
-                  and cultural experts
+                  Được kiểm duyệt bởi các nhà nghiên cứu, nghệ nhân và chuyên
+                  gia
                 </p>
               </div>
             </div>
@@ -167,13 +167,13 @@ export default function HomePage() {
           >
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold text-white">
-                Popular recordings
+                Bản thu phổ biến
               </h2>
               <Link
-                to="/recordings"
+                to="/search"
                 className="text-white hover:text-green-300 transition-colors"
               >
-                View all →
+                Xem tất cả →
               </Link>
             </div>
 
@@ -202,12 +202,12 @@ export default function HomePage() {
             }}
           >
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-white">Recent uploads</h2>
+              <h2 className="text-3xl font-bold text-white">Tải lên gần đây</h2>
               <Link
-                to="/recordings"
+                to="/search"
                 className="text-white hover:text-green-300 active:text-green-200 transition-colors"
               >
-                View all →
+                Xem tất cả →
               </Link>
             </div>
 
@@ -236,17 +236,16 @@ export default function HomePage() {
             }}
           >
             <div className="text-center">
-              <h2 className="text-3xl font-bold mb-4">
-                Help preserve Vietnam's musical heritage
-              </h2>
+              <h2 className="text-3xl font-bold mb-4">Hãy cùng gìn giữ</h2>
               <p className="text-xl mb-8 text-primary-100">
-                Join our community of researchers, musicians, and cultural
-                enthusiasts in documenting and preserving traditional Vietnamese
-                music for future generations.
+                Mỗi bản thu, mỗi câu chuyện đều quý giá.
+                <br />
+                Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn
+                hóa lưu giữ di sản âm nhạc Việt Nam, bạn nhé!
               </p>
               <Link to="/register">
                 <button className="btn-liquid-glass-primary min-w-[180px]">
-                  Get started
+                  Bắt đầu
                 </button>
               </Link>
             </div>

@@ -14,7 +14,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Profile</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">Hồ sơ</h1>
 
         <div
           ref={containerRef}
@@ -25,8 +25,8 @@ export default function ProfilePage() {
           }}
         >
           <p className="text-white">
-            User profile with settings, uploaded recordings, and contributions
-            will be displayed here.
+            Thông tin cá nhân, cài đặt, bản thu đã tải lên và đóng góp sẽ hiển
+            thị ở đây.
           </p>
         </div>
       </div>

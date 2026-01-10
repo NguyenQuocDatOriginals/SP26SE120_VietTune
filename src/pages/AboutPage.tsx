@@ -28,7 +28,7 @@ export default function AboutPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-white mb-8">
-          About VietTune Archive
+          Về VietTune
         </h1>
 
         <div className="prose max-w-none">
@@ -40,25 +40,20 @@ export default function AboutPage() {
                 "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
-            <h2 className="text-2xl font-semibold mb-4 text-white">
-              Our mission
-            </h2>
+            <h2 className="text-2xl font-semibold mb-4 text-white">Sứ mệnh</h2>
             <p className="text-white leading-relaxed mb-4">
-              Vietnam's 54 ethnic minorities possess rich musical traditions
-              passed down orally through generations. Many elderly master
-              musicians hold irreplaceable knowledge about rare instruments,
-              performance techniques, ceremonial songs, and regional variations.
-              Unfortunately, systematic documentation efforts remain minimal -
-              most recordings exist as scattered cassette tapes in provincial
-              cultural centers, untranscribed and inaccessible to researchers or
-              younger generations.
+              54 dân tộc Việt Nam có kho tàng âm nhạc phong phú được truyền
+              miệng qua nhiều đời. Nhiều nghệ nhân lớn tuổi nắm giữ kiến thức
+              quý báu về nhạc cụ, kỹ thuật biểu diễn, bài hát nghi lễ và phong
+              cách vùng miền. Đáng tiếc là các bản thu hầu hết chỉ là băng
+              cassette rải rác ở các trung tâm văn hóa tỉnh, khó tiếp cận và
+              chưa được lưu giữ bài bản.
             </p>
             <p className="text-white leading-relaxed">
-              VietTune Archive addresses the urgent need for a specialized
-              crowdsourced documentation platform before this intangible
-              cultural heritage disappears. We provide intelligent search
-              capabilities and collaborative curation tools needed to build
-              comprehensive, verified collections.
+              VietTune ra đời để giải quyết vấn đề này - một nền tảng cộng đồng
+              chuyên biệt giúp lưu giữ di sản âm nhạc trước khi quá muộn. Chúng
+              tôi cung cấp công cụ tìm kiếm thông minh và quản lý nội dung để
+              xây dựng kho tư liệu đáng tin cậy.
             </p>
           </div>
 
@@ -75,14 +70,13 @@ export default function AboutPage() {
                 <Target className="h-6 w-6 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-white">
-                What makes us different?
+                Điểm khác biệt
               </h3>
               <p className="text-white">
-                Unlike commercial music platforms focused on entertainment,
-                traditional music requires specialized metadata capturing
-                ethnomusicological details: tuning systems, modal structures,
-                ritual contexts, instrument construction methods, and regional
-                dialectal variations in lyrics.
+                Khác với các nền tảng nhạc giải trí, âm nhạc truyền thống cần
+                thông tin chuyên sâu: hệ thống điệu thức, ngữ cảnh nghi lễ, cách
+                chế tác nhạc cụ và đặc trưng vùng miền. Đó là điều chúng tôi tập
+                trung.
               </p>
             </div>
 
@@ -98,13 +92,11 @@ export default function AboutPage() {
                 <Users className="h-6 w-6 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-white">
-                Community driven
+                Sức mạnh cộng đồng
               </h3>
               <p className="text-white">
-                Our platform enables crowdsourced documentation with
-                verification by researchers, ethnomusicologists, and master
-                musicians themselves. Together, we preserve cultural heritage
-                for future generations.
+                Mọi người có thể đóng góp, các chuyên gia sẽ kiểm duyệt. Cùng
+                nhau chúng ta gìn giữ di sản văn hóa cho thế hệ mai sau.
               </p>
             </div>
           </div>
@@ -120,14 +112,11 @@ export default function AboutPage() {
             <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Heart className="h-6 w-6 text-primary-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-white">
-              Built with purpose
-            </h3>
+            <h3 className="text-xl font-semibold mb-3 text-white">Mục đích</h3>
             <p className="text-white">
-              This is a capstone project for university graduation, built with
-              the mission to preserve and celebrate Vietnam's rich musical
-              heritage. Every contribution helps document and protect
-              irreplaceable cultural knowledge.
+              Đây là đồ án tốt nghiệp đại học với sứ mệnh bảo tồn di sản âm nhạc Việt
+              Nam. Mỗi đóng góp của bạn giúp lưu giữ những kiến thức văn hóa quý
+              báu.
             </p>
           </div>
 
@@ -140,38 +129,35 @@ export default function AboutPage() {
             }}
           >
             <h2 className="text-2xl font-semibold mb-4 text-white">
-              Key features
+              Tính năng chính
             </h2>
             <ul className="space-y-3 text-white">
               <li className="flex items-start">
                 <span className="text-white mr-2">•</span>
                 <span>
-                  <strong>Comprehensive metadata:</strong> Detailed
-                  ethnomusicological information including tuning systems, modal
-                  structures, ritual contexts, and cultural significance
+                  <strong>Thông tin chi tiết:</strong> Dữ liệu chuyên sâu về hệ
+                  thống điệu thức, ngữ cảnh nghi lễ và ý nghĩa văn hóa
                 </span>
               </li>
               <li className="flex items-start">
                 <span className="text-white mr-2">•</span>
                 <span>
-                  <strong>Intelligent search:</strong> Advanced filtering by
-                  ethnicity, region, instrument, recording type, and performance
-                  context
+                  <strong>Tìm kiếm linh hoạt:</strong> Lọc theo dân tộc, vùng
+                  miền, nhạc cụ và ngữ cảnh biểu diễn
                 </span>
               </li>
               <li className="flex items-start">
                 <span className="text-white mr-2">•</span>
                 <span>
-                  <strong>Collaborative verification:</strong> Community-driven
-                  curation with expert review from researchers and master
-                  musicians
+                  <strong>Kiểm duyệt chuyên nghiệp:</strong> Nội dung được xác
+                  minh bởi các chuyên gia và nghệ nhân
                 </span>
               </li>
               <li className="flex items-start">
                 <span className="text-white mr-2">•</span>
                 <span>
-                  <strong>Digital preservation:</strong> High-quality audio
-                  archiving with proper documentation for long-term preservation
+                  <strong>Lưu trữ bền vững:</strong> Âm thanh chất lượng cao
+                  cùng hồ sơ đầy đủ
                 </span>
               </li>
             </ul>

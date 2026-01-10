@@ -80,45 +80,21 @@ body {
     @apply bg-red-100 text-red-800;
   }
 
-  /* Water Surface Effect for Containers */
+  /* Glass Morphism Effect for Containers */
   .spotlight-container {
     @apply relative overflow-hidden;
-    /* Pure water - light blue, transparent, flowing */
+    /* Pure glass - translucent, clean, modern */
     background: linear-gradient(
-      120deg,
-      rgba(176, 224, 230, 0.28) 0%,
-      rgba(135, 206, 235, 0.22) 25%,
-      rgba(173, 216, 230, 0.26) 50%,
-      rgba(135, 206, 235, 0.22) 75%,
-      rgba(176, 224, 230, 0.28) 100%
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 100%
     );
-    background-size: 200% 200%;
-    animation: water-wave 8s ease-in-out infinite;
-    /* Enhanced water depth and light refraction */
-    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6),
-      inset 0 -2px 4px rgba(0, 120, 180, 0.25),
-      0 4px 20px rgba(135, 206, 235, 0.3), 0 8px 40px rgba(100, 180, 220, 0.15);
-    backdrop-filter: blur(8px);
-  }
-
-  @keyframes water-wave {
-    0%,
-    100% {
-      background-position: 0% 50%;
-      filter: brightness(1) saturate(1);
-    }
-    25% {
-      background-position: 50% 25%;
-      filter: brightness(1.06) saturate(1.05);
-    }
-    50% {
-      background-position: 100% 50%;
-      filter: brightness(1.1) saturate(1.08);
-    }
-    75% {
-      background-position: 50% 75%;
-      filter: brightness(1.06) saturate(1.05);
-    }
+    /* Glass effect with subtle shadows */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
 
   .spotlight-container::before {
@@ -127,14 +103,10 @@ body {
     transition: opacity 0.3s ease;
     background: radial-gradient(
       circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.18) 10%,
-      rgba(176, 224, 230, 0.15) 20%,
-      rgba(135, 206, 250, 0.12) 35%,
-      rgba(173, 216, 230, 0.08) 50%,
-      rgba(135, 206, 235, 0.05) 65%,
-      rgba(176, 224, 230, 0.03) 80%,
-      transparent 100%
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.12) 15%,
+      rgba(255, 255, 255, 0.06) 35%,
+      transparent 65%
     );
     z-index: 1;
     filter: blur(2px);
@@ -148,79 +120,50 @@ body {
     @apply relative z-10;
   }
 
-  /* Water Surface Button Styles */
+  /* Glass Morphism Button Styles */
   .btn-liquid-glass {
     @apply relative overflow-hidden;
-    /* Water droplet on surface */
-    backdrop-filter: blur(20px) saturate(1.2);
+    /* Clean glass effect */
+    backdrop-filter: blur(16px) saturate(180%);
     background: linear-gradient(
       135deg,
-      rgba(176, 224, 230, 0.4) 0%,
-      rgba(135, 206, 235, 0.3) 50%,
-      rgba(173, 216, 230, 0.35) 100%
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 100%
     );
-    background-size: 200% 200%;
-    border: 1.5px solid rgba(176, 224, 230, 0.6);
-    /* Enhanced water droplet depth with surface tension */
-    box-shadow: 0 4px 15px rgba(135, 206, 235, 0.3),
-      0 2px 8px rgba(100, 180, 220, 0.2),
-      inset 0 2px 3px rgba(255, 255, 255, 0.7),
-      inset 0 -2px 3px rgba(0, 120, 180, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    /* Subtle glass shadows */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
     @apply text-white font-semibold rounded-full;
-    @apply px-6 py-3 transition-all duration-500;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    animation: button-water-shimmer 4s ease-in-out infinite;
-  }
-
-  @keyframes button-water-shimmer {
-    0%,
-    100% {
-      background-position: 0% 50%;
-      box-shadow: 0 4px 15px rgba(135, 206, 235, 0.3),
-        0 2px 8px rgba(100, 180, 220, 0.2),
-        inset 0 2px 3px rgba(255, 255, 255, 0.7),
-        inset 0 -2px 3px rgba(0, 120, 180, 0.25);
-    }
-    50% {
-      background-position: 100% 50%;
-      box-shadow: 0 6px 20px rgba(135, 206, 235, 0.4),
-        0 3px 12px rgba(100, 180, 220, 0.3),
-        inset 0 2px 4px rgba(255, 255, 255, 0.8),
-        inset 0 -2px 4px rgba(0, 120, 180, 0.3);
-    }
+    @apply px-6 py-3 transition-all duration-300;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   .btn-liquid-glass:hover {
     background: linear-gradient(
       135deg,
-      rgba(176, 224, 230, 0.5) 0%,
-      rgba(135, 206, 235, 0.4) 50%,
-      rgba(173, 216, 230, 0.45) 100%
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.12) 100%
     );
-    box-shadow: 0 6px 25px rgba(135, 206, 235, 0.45),
-      0 3px 15px rgba(100, 180, 220, 0.3),
-      inset 0 2px 4px rgba(255, 255, 255, 0.8),
-      inset 0 -2px 4px rgba(0, 120, 180, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 3px 10px rgba(0, 0, 0, 0.08),
+      inset 0 1px 2px rgba(255, 255, 255, 0.35);
     transform: translateY(-1px);
   }
 
   .btn-liquid-glass:active {
     transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 10px rgba(135, 206, 235, 0.35),
-      0 1px 5px rgba(100, 180, 220, 0.25),
-      inset 0 2px 3px rgba(255, 255, 255, 0.6),
-      inset 0 -2px 3px rgba(0, 120, 180, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06),
+      inset 0 1px 2px rgba(255, 255, 255, 0.25);
   }
 
   .btn-liquid-glass::before {
     content: "";
-    @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none;
     background: radial-gradient(
       circle 200px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      rgba(255, 255, 255, 0.5),
-      rgba(176, 224, 230, 0.35) 35%,
-      rgba(135, 206, 235, 0.2) 60%,
-      transparent 80%
+      rgba(255, 255, 255, 0.25),
+      rgba(255, 255, 255, 0.1) 45%,
+      transparent 75%
     );
     z-index: 1;
     filter: blur(1px);
@@ -234,49 +177,44 @@ body {
     @apply relative z-10;
   }
 
-  /* Liquid Glass Button - Primary (Amber/Green with water effect) */
+  /* Glass Button - Primary (Amber/Green with glass effect) */
   .btn-liquid-glass-primary {
     @apply btn-liquid-glass;
     background: linear-gradient(
       135deg,
-      rgba(217, 119, 6, 0.75) 0%,
-      rgba(180, 83, 9, 0.65) 50%,
-      rgba(217, 119, 6, 0.7) 100%
+      rgba(217, 119, 6, 0.7) 0%,
+      rgba(180, 83, 9, 0.6) 100%
     );
-    background-size: 200% 200%;
   }
 
   .btn-liquid-glass-primary:hover {
     background: linear-gradient(
       135deg,
-      rgba(5, 150, 105, 0.75) 0%,
-      rgba(4, 120, 87, 0.7) 50%,
-      rgba(5, 150, 105, 0.75) 100%
+      rgba(5, 150, 105, 0.7) 0%,
+      rgba(4, 120, 87, 0.65) 100%
     );
   }
 
   .btn-liquid-glass-primary:active {
     background: linear-gradient(
       135deg,
-      rgba(4, 120, 87, 0.8) 0%,
-      rgba(6, 95, 70, 0.75) 50%,
-      rgba(4, 120, 87, 0.8) 100%
+      rgba(4, 120, 87, 0.75) 0%,
+      rgba(6, 95, 70, 0.7) 100%
     );
   }
 
-  /* Liquid Glass Button - Secondary (Pure water) */
+  /* Glass Button - Secondary (Pure glass) */
   .btn-liquid-glass-secondary {
     @apply btn-liquid-glass;
   }
 
-  /* Liquid Glass Button - Close/Delete (Red with water) */
+  /* Glass Button - Close/Delete (Red with glass) */
   .btn-liquid-glass-close {
     @apply btn-liquid-glass;
     background: linear-gradient(
       135deg,
-      rgba(176, 224, 230, 0.35) 0%,
-      rgba(135, 206, 235, 0.25) 50%,
-      rgba(173, 216, 230, 0.3) 100%
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 100%
     );
     @apply text-white;
   }
@@ -284,21 +222,19 @@ body {
   .btn-liquid-glass-close:hover {
     background: linear-gradient(
       135deg,
-      rgba(239, 68, 68, 0.8) 0%,
-      rgba(220, 38, 38, 0.75) 50%,
-      rgba(239, 68, 68, 0.8) 100%
+      rgba(239, 68, 68, 0.75) 0%,
+      rgba(220, 38, 38, 0.7) 100%
     );
-    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.4),
-      inset 0 2px 4px rgba(255, 255, 255, 0.6),
-      inset 0 -2px 4px rgba(150, 0, 0, 0.3);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3),
+      0 3px 10px rgba(239, 68, 68, 0.15),
+      inset 0 1px 2px rgba(255, 255, 255, 0.3);
   }
 
   .btn-liquid-glass-close:active {
     background: linear-gradient(
       135deg,
-      rgba(185, 28, 28, 0.85) 0%,
-      rgba(153, 27, 27, 0.8) 50%,
-      rgba(185, 28, 28, 0.85) 100%
+      rgba(185, 28, 28, 0.8) 0%,
+      rgba(153, 27, 27, 0.75) 100%
     );
   }
 }

@@ -14,7 +14,7 @@ export default function UploadPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Upload recording</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">Tải lên bản ghi</h1>
 
         <div
           ref={containerRef}
@@ -25,8 +25,8 @@ export default function UploadPage() {
           }}
         >
           <p className="text-white">
-            Upload form will be implemented here with file upload, metadata
-            fields, and form validation.
+            Biểu mẫu tải lên sẽ được triển khai ở đây với tính năng tải lên tệp,
+            trường metadata và xác thực biểu mẫu.
           </p>
         </div>
       </div>

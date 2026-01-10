@@ -14,7 +14,9 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">
+          Bảng điều khiển quản trị
+        </h1>
 
         <div
           ref={containerRef}
@@ -25,8 +27,8 @@ export default function AdminDashboard() {
           }}
         >
           <p className="text-white">
-            Admin dashboard with user management, content moderation, and
-            analytics will be implemented here.
+            Bảng điều khiển quản trị với các tính năng quản lý người dùng, kiểm
+            duyệt nội dung và phân tích dữ liệu sẽ được triển khai tại đây.
           </p>
         </div>
       </div>
