@@ -4,13 +4,22 @@ import { useEffect, useState, useRef } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import AudioPlayer from "@/components/features/AudioPlayer";
 import { addSpotlightEffect } from "@/utils/spotlight";
+
+// Local recording type for client-saved uploads
+interface LocalRecording {
+  id: string;
+  name: string;
+  audioData: string;
+  userType?: string;
+  detectedType?: string;
+}
 
 export default function HomePage() {
   const [popularRecordings, setPopularRecordings] = useState<Recording[]>([]);
   const [recentRecordings, setRecentRecordings] = useState<Recording[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [localRecordings, setLocalRecordings] = useState<LocalRecording[]>([]);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -20,6 +29,9 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchRecordings();
+    // Lấy bản thu local
+    const local = JSON.parse(localStorage.getItem("localRecordings") || "[]");
+    setLocalRecordings(local as LocalRecording[]);
 
     // Add spotlight effects
     const cleanupFunctions: (() => void)[] = [];
@@ -50,8 +62,6 @@ export default function HomePage() {
       setRecentRecordings(recent.data || []);
     } catch (error) {
       console.error("Error fetching recordings:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -177,15 +187,35 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {loading ? (
-              <LoadingSpinner size="lg" />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {popularRecordings.map((recording) => (
-                  <RecordingCard key={recording.id} recording={recording} />
-                ))}
+            {/* Hiển thị bản thu local ở mục phổ biến (full-width list) */}
+            {localRecordings.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Bản thu của bạn
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {localRecordings.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="bg-white/10 rounded-xl p-4 shadow-lg flex flex-col items-stretch"
+                    >
+                      <div className="text-lg font-semibold text-white mb-1 w-full">
+                        {rec.name}
+                      </div>
+                      <div className="text-xs text-white/80 mb-3">
+                        {rec.userType || rec.detectedType}
+                      </div>
+                      <AudioPlayer src={rec.audioData} className="w-full" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {popularRecordings.map((recording) => (
+                <RecordingCard key={recording.id} recording={recording} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -211,15 +241,35 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {loading ? (
-              <LoadingSpinner size="lg" />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recentRecordings.map((recording) => (
-                  <RecordingCard key={recording.id} recording={recording} />
-                ))}
+            {/* Hiển thị bản thu local ở mục gần đây (full-width list) */}
+            {localRecordings.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Bản thu của bạn
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {localRecordings.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="bg-white/10 rounded-xl p-4 shadow-lg flex flex-col items-stretch"
+                    >
+                      <div className="text-lg font-semibold text-white mb-1 w-full">
+                        {rec.name}
+                      </div>
+                      <div className="text-xs text-white/80 mb-3">
+                        {rec.userType || rec.detectedType}
+                      </div>
+                      <AudioPlayer src={rec.audioData} className="w-full" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recentRecordings.map((recording) => (
+                <RecordingCard key={recording.id} recording={recording} />
+              ))}
+            </div>
           </div>
         </div>
       </section>

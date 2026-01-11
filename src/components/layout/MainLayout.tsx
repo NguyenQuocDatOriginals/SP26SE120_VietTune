@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
-import AudioPlayer from "../features/AudioPlayer";
 import { initializeButtonSpotlights } from "@/utils/buttonSpotlight";
 
 export default function MainLayout() {
@@ -29,7 +28,6 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
-      <AudioPlayer />
     </div>
   );
 }
