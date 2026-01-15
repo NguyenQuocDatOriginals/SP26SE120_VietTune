@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,14 +10,18 @@ using System.Text;
 using VietTuneArchive.Application.Common.Email;
 using VietTuneArchive.Application.Mapper;
 using VietTuneArchive.Domain.Context;
+using VietTuneArchive.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var smtpSettings = builder.Configuration.GetSection("SmtpSettings");
 var connectionString = builder.Configuration.GetConnectionString("Database");
+
 builder.Services.AddDbContext<DBContext>(options =>
     options.UseSqlServer(connectionString));
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -43,14 +47,17 @@ builder.Services.AddSingleton<EmailService>();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(x =>
-        x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve);
+        x.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.Preserve);
 
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(option =>
 {
-    ////JWT Config
+    // JWT Config
     option.DescribeAllParametersInCamelCase();
     option.ResolveConflictingActions(conf => conf.First());
+
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -60,6 +67,7 @@ builder.Services.AddSwaggerGen(option =>
         BearerFormat = "JWT",
         Scheme = "Bearer"
     });
+
     option.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -67,16 +75,16 @@ builder.Services.AddSwaggerGen(option =>
             {
                 Reference = new OpenApiReference
                 {
-                    Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
                 }
             },
-            new string[]{}
+            new string[] {}
         }
     });
 });
 
-//CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -85,15 +93,25 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Repositories
+// Essentia API HttpClient
+builder.Services.AddHttpClient<EssentiaService>(client =>
+{
+    var baseUrl = builder.Configuration["EssentiaApi:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
 
-// Services
+// Audio Analysis Service
+builder.Services.AddScoped<AudioAnalysisService>();
 
-//Others
-builder.Services.Configure<SmtpSettings>(smtpSettings);
+// ==========================
+
+// Others
 builder.Services.AddTransient<EmailService>();
 builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile));
-builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.Configure<SmtpSettings>(
+    builder.Configuration.GetSection("SmtpSettings"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -113,5 +131,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-app.Run();
+app.MapGet("/health", () =>
+    Results.Ok(new
+    {
+        status = "ok",
+        service = "music-heritage-api"
+    }))
+.WithName("Health");
 
+app.Run();

@@ -7,9 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Mapper\DTOs\" />
     <Folder Include="IServices\" />
-    <Folder Include="Services\" />
+    <Folder Include="Mapper\DTOs\" />
   </ItemGroup>
 
   <ItemGroup>
