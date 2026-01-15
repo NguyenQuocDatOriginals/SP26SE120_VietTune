@@ -33,7 +33,6 @@ lerna-debug.log*
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
 
 # Java/Spring Boot (backend)

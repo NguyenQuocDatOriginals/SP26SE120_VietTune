@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36705.20
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VietTuneArchive.API", "VietTuneArchive\VietTuneArchive.API.csproj", "{F328EE99-0402-4255-8624-F9F2564B716D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VietTuneArchive.Domain", "VietTuneArchive.Domain\VietTuneArchive.Domain.csproj", "{4DBD4EAA-F6A1-4337-8515-FCDF02824DBE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VietTuneArchive.Application", "VietTuneArchive.Application\VietTuneArchive.Application.csproj", "{4F1F202E-96CC-40FF-A25D-2975DD77C7E2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F328EE99-0402-4255-8624-F9F2564B716D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F328EE99-0402-4255-8624-F9F2564B716D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F328EE99-0402-4255-8624-F9F2564B716D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F328EE99-0402-4255-8624-F9F2564B716D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DBD4EAA-F6A1-4337-8515-FCDF02824DBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DBD4EAA-F6A1-4337-8515-FCDF02824DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DBD4EAA-F6A1-4337-8515-FCDF02824DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DBD4EAA-F6A1-4337-8515-FCDF02824DBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F1F202E-96CC-40FF-A25D-2975DD77C7E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F1F202E-96CC-40FF-A25D-2975DD77C7E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F1F202E-96CC-40FF-A25D-2975DD77C7E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F1F202E-96CC-40FF-A25D-2975DD77C7E2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B973550A-FDC3-497F-8A93-EB74801F5DCF}
+	EndGlobalSection
+EndGlobal
