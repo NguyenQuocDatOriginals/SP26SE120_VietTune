@@ -1,0 +1,6 @@
+@VietTuneArchive_HostAddress = http://localhost:5037
+
+GET {{VietTuneArchive_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
