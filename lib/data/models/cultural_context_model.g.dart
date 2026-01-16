@@ -1,0 +1,29 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'cultural_context_model.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+CulturalContextModel _$CulturalContextModelFromJson(
+        Map<String, dynamic> json) =>
+    CulturalContextModel(
+      type: json['type'] as String,
+      season: json['season'] as String?,
+      occasion: json['occasion'] as String?,
+      significance: json['significance'] as String?,
+      performanceDetails: json['performance_details'] as String?,
+      historicalBackground: json['historical_background'] as String?,
+    );
+
+Map<String, dynamic> _$CulturalContextModelToJson(
+        CulturalContextModel instance) =>
+    <String, dynamic>{
+      'type': instance.type,
+      'season': instance.season,
+      'occasion': instance.occasion,
+      'significance': instance.significance,
+      'performance_details': instance.performanceDetails,
+      'historical_background': instance.historicalBackground,
+    };

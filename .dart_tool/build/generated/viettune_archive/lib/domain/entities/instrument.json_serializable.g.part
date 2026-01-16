@@ -1,0 +1,41 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_$InstrumentImpl _$$InstrumentImplFromJson(Map<String, dynamic> json) =>
+    _$InstrumentImpl(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: $enumDecode(_$InstrumentTypeEnumMap, json['type']),
+      description: json['description'] as String,
+      materials: (json['materials'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      playingTechnique: json['playingTechnique'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      audioSampleUrl: json['audioSampleUrl'] as String?,
+      associatedEthnicGroups: (json['associatedEthnicGroups'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+    );
+
+Map<String, dynamic> _$$InstrumentImplToJson(_$InstrumentImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'type': _$InstrumentTypeEnumMap[instance.type]!,
+      'description': instance.description,
+      'materials': instance.materials,
+      'playingTechnique': instance.playingTechnique,
+      'imageUrl': instance.imageUrl,
+      'audioSampleUrl': instance.audioSampleUrl,
+      'associatedEthnicGroups': instance.associatedEthnicGroups,
+    };
+
+const _$InstrumentTypeEnumMap = {
+  InstrumentType.string: 'string',
+  InstrumentType.wind: 'wind',
+  InstrumentType.percussion: 'percussion',
+  InstrumentType.keyboard: 'keyboard',
+  InstrumentType.other: 'other',
+};

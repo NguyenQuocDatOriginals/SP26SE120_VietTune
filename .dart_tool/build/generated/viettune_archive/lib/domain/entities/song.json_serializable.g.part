@@ -1,0 +1,73 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_$SongImpl _$$SongImplFromJson(Map<String, dynamic> json) => _$SongImpl(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      alternativeTitles: (json['alternativeTitles'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      genre: $enumDecode(_$MusicGenreEnumMap, json['genre']),
+      ethnicGroupId: json['ethnicGroupId'] as String,
+      verificationStatus:
+          $enumDecode(_$VerificationStatusEnumMap, json['verificationStatus']),
+      audioMetadata: json['audioMetadata'] == null
+          ? null
+          : AudioMetadata.fromJson(
+              json['audioMetadata'] as Map<String, dynamic>),
+      culturalContext: json['culturalContext'] == null
+          ? null
+          : CulturalContext.fromJson(
+              json['culturalContext'] as Map<String, dynamic>),
+      lyricsNativeScript: json['lyricsNativeScript'] as String?,
+      lyricsVietnameseTranslation:
+          json['lyricsVietnameseTranslation'] as String?,
+      description: json['description'] as String?,
+      playCount: (json['playCount'] as num?)?.toInt(),
+      favoriteCount: (json['favoriteCount'] as num?)?.toInt(),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
+      contributorId: json['contributorId'] as String?,
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    );
+
+Map<String, dynamic> _$$SongImplToJson(_$SongImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'alternativeTitles': instance.alternativeTitles,
+      'genre': _$MusicGenreEnumMap[instance.genre]!,
+      'ethnicGroupId': instance.ethnicGroupId,
+      'verificationStatus':
+          _$VerificationStatusEnumMap[instance.verificationStatus]!,
+      'audioMetadata': instance.audioMetadata,
+      'culturalContext': instance.culturalContext,
+      'lyricsNativeScript': instance.lyricsNativeScript,
+      'lyricsVietnameseTranslation': instance.lyricsVietnameseTranslation,
+      'description': instance.description,
+      'playCount': instance.playCount,
+      'favoriteCount': instance.favoriteCount,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String(),
+      'contributorId': instance.contributorId,
+      'tags': instance.tags,
+    };
+
+const _$MusicGenreEnumMap = {
+  MusicGenre.folk: 'folk',
+  MusicGenre.ceremonial: 'ceremonial',
+  MusicGenre.courtMusic: 'courtMusic',
+  MusicGenre.operatic: 'operatic',
+  MusicGenre.contemporary: 'contemporary',
+};
+
+const _$VerificationStatusEnumMap = {
+  VerificationStatus.pending: 'pending',
+  VerificationStatus.verified: 'verified',
+  VerificationStatus.rejected: 'rejected',
+};

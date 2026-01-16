@@ -1,0 +1,27 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'location_model.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+LocationModel _$LocationModelFromJson(Map<String, dynamic> json) =>
+    LocationModel(
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      province: json['province'] as String?,
+      district: json['district'] as String?,
+      commune: json['commune'] as String?,
+      address: json['address'] as String?,
+    );
+
+Map<String, dynamic> _$LocationModelToJson(LocationModel instance) =>
+    <String, dynamic>{
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
+      'province': instance.province,
+      'district': instance.district,
+      'commune': instance.commune,
+      'address': instance.address,
+    };

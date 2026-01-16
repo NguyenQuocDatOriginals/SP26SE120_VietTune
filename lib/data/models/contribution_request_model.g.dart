@@ -1,0 +1,39 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'contribution_request_model.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+ContributionRequestModel _$ContributionRequestModelFromJson(
+        Map<String, dynamic> json) =>
+    ContributionRequestModel(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      type: json['type'] as String,
+      status: json['status'] as String,
+      songData: json['song_data'] == null
+          ? null
+          : SongModel.fromJson(json['song_data'] as Map<String, dynamic>),
+      notes: json['notes'] as String?,
+      reviewComments: json['review_comments'] as String?,
+      submittedAt: json['submitted_at'] as String?,
+      reviewedAt: json['reviewed_at'] as String?,
+      reviewedBy: json['reviewed_by'] as String?,
+    );
+
+Map<String, dynamic> _$ContributionRequestModelToJson(
+        ContributionRequestModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'type': instance.type,
+      'status': instance.status,
+      'song_data': instance.songData,
+      'notes': instance.notes,
+      'review_comments': instance.reviewComments,
+      'submitted_at': instance.submittedAt,
+      'reviewed_at': instance.reviewedAt,
+      'reviewed_by': instance.reviewedBy,
+    };

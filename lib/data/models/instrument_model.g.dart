@@ -1,0 +1,38 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'instrument_model.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+InstrumentModel _$InstrumentModelFromJson(Map<String, dynamic> json) =>
+    InstrumentModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      type: json['type'] as String,
+      description: json['description'] as String,
+      materials: (json['materials'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      playingTechnique: json['playing_technique'] as String?,
+      imageUrl: json['image_url'] as String?,
+      audioSampleUrl: json['audio_sample_url'] as String?,
+      associatedEthnicGroups:
+          (json['associated_ethnic_groups'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList(),
+    );
+
+Map<String, dynamic> _$InstrumentModelToJson(InstrumentModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'type': instance.type,
+      'description': instance.description,
+      'materials': instance.materials,
+      'playing_technique': instance.playingTechnique,
+      'image_url': instance.imageUrl,
+      'audio_sample_url': instance.audioSampleUrl,
+      'associated_ethnic_groups': instance.associatedEthnicGroups,
+    };
