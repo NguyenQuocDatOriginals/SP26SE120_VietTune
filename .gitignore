@@ -651,3 +651,5 @@ obj/
 appsettings.Development.json
 appsettings.Local.json
 appsettings.json
+backend/VietTuneArchive/docker-compose.yml
+backend/VietTuneArchive/Dockerfile
