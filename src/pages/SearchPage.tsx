@@ -63,7 +63,7 @@ export default function SearchPage() {
   const features = [
     {
       icon: Music2,
-      title: "Hơn 10,000 bản thu",
+      title: "Đa dạng bản thu",
       description: "Kho tàng âm nhạc truyền thống phong phú",
     },
     {

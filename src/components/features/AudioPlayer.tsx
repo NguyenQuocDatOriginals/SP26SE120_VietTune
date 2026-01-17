@@ -162,14 +162,27 @@ export default function AudioPlayer({
           <div className="flex-1 min-w-0">
             <div 
               className="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer"
-              onClick={(e) => {
+              onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                const percent = (e.clientX - rect.left) / rect.width;
-                seekTo(percent * duration);
+                const updateProgress = (clientX: number) => {
+                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                  seekTo(percent * duration);
+                };
+                updateProgress(e.clientX);
+                
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  updateProgress(moveEvent.clientX);
+                };
+                const onMouseUp = () => {
+                  document.removeEventListener('mousemove', onMouseMove);
+                  document.removeEventListener('mouseup', onMouseUp);
+                };
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
               }}
             >
               <div 
-                className="h-full bg-emerald-500 rounded-full transition-all duration-100"
+                className="h-full bg-emerald-500 rounded-full transition-none"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -205,14 +218,27 @@ export default function AudioPlayer({
         <div className="mb-4">
           <div 
             className="h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer group"
-            onClick={(e) => {
+            onMouseDown={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
-              const percent = (e.clientX - rect.left) / rect.width;
-              seekTo(percent * duration);
+              const updateProgress = (clientX: number) => {
+                const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                seekTo(percent * duration);
+              };
+              updateProgress(e.clientX);
+              
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                updateProgress(moveEvent.clientX);
+              };
+              const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+              };
+              document.addEventListener('mousemove', onMouseMove);
+              document.addEventListener('mouseup', onMouseUp);
             }}
           >
             <div 
-              className="h-full bg-emerald-500 rounded-full transition-all duration-100 relative"
+              className="h-full bg-emerald-500 rounded-full transition-none relative"
               style={{ width: `${progressPercent}%` }}
             >
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
@@ -282,17 +308,32 @@ export default function AudioPlayer({
                 <Volume2 className="w-4 h-4" />
               )}
             </button>
-            <div className="w-20 hidden sm:block">
+            <div 
+              className="w-20 hidden sm:block"
+              onMouseDown={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const updateVolume = (clientX: number) => {
+                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                  handleVolume(percent);
+                };
+                updateVolume(e.clientX);
+                
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  updateVolume(moveEvent.clientX);
+                };
+                const onMouseUp = () => {
+                  document.removeEventListener('mousemove', onMouseMove);
+                  document.removeEventListener('mouseup', onMouseUp);
+                };
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+              }}
+            >
               <div 
                 className="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const percent = (e.clientX - rect.left) / rect.width;
-                  handleVolume(percent);
-                }}
               >
                 <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all"
+                  className="h-full bg-emerald-500 rounded-full transition-none"
                   style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                 />
               </div>

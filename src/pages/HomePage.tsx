@@ -6,6 +6,7 @@ import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import { addSpotlightEffect } from "@/utils/spotlight";
+import logo from "@/components/image/VietTune logo.png";
 
 // Local recording type for client-saved uploads
 interface LocalRecording {
@@ -198,10 +199,10 @@ export default function HomePage() {
 
   // Stats data
   const stats = [
-    { icon: Disc, value: "10,000+", label: "Bản thu" },
+    { icon: Disc, value: "Đa dạng", label: "Bản thu" },
     { icon: Users, value: "54", label: "Dân tộc" },
-    { icon: Globe, value: "7", label: "Vùng miền" },
-    { icon: Music, value: "200+", label: "Nhạc cụ" },
+    { icon: Globe, value: "7", label: "Khu vực" },
+    { icon: Music, value: "Rất nhiều", label: "Nhạc cụ" },
   ];
 
   // Features data
@@ -215,7 +216,7 @@ export default function HomePage() {
     {
       icon: Search,
       title: "Tìm kiếm",
-      description: "Tìm kiếm nâng cao theo thể loại, dân tộc, vùng miền, nhạc cụ và nhiều tiêu chí khác",
+      description: "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
       to: "/search",
     },
     {
@@ -242,9 +243,11 @@ export default function HomePage() {
           <div className="text-center">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-4 bg-emerald-500/20 rounded-2xl">
-                <Music className="h-12 w-12 text-emerald-400" />
-              </div>
+              <img
+                src={logo}
+                alt="VietTune Logo"
+                className="h-20 w-20 object-contain rounded-2xl"
+              />
             </div>
 
             {/* Title */}

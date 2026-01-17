@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Compass, Music2, Globe, Users, Filter, Search, ChevronDown, Play, Disc, MapPin, ArrowRight } from "lucide-react";
+import { createPortal } from "react-dom";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import { addSpotlightEffect } from "@/utils/spotlight";
@@ -10,7 +11,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 // ===== CONSTANTS =====
 const GENRES = [
-  "Tất cả",
+  "Tất cả thể loại",
   "Dân ca",
   "Hát xẩm",
   "Ca trù",
@@ -32,7 +33,7 @@ const GENRES = [
 ];
 
 const REGIONS = [
-  "Tất cả",
+  "Tất cả khu vực",
   "Trung du và miền núi Bắc Bộ",
   "Đồng bằng Bắc Bộ",
   "Bắc Trung Bộ",
@@ -43,7 +44,7 @@ const REGIONS = [
 ];
 
 const ETHNICITIES = [
-  "Tất cả",
+  "Tất cả dân tộc",
   "Kinh",
   "Tày",
   "Thái",
@@ -59,77 +60,152 @@ const ETHNICITIES = [
   "Khác",
 ];
 
-// ===== FILTER BUTTON COMPONENT =====
-function FilterButton({
-  label,
+// ===== SEARCHABLE DROPDOWN COMPONENT =====
+function SearchableDropdown({
   value,
-  options,
   onChange,
-  icon: Icon,
+  options,
+  placeholder = "-- Chọn --",
+  searchable = true,
+  disabled = false,
 }: {
-  label: string;
   value: string;
+  onChange: (v: string) => void;
   options: string[];
-  onChange: (value: string) => void;
-  icon: React.ElementType;
+  placeholder?: string;
+  searchable?: boolean;
+  disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
+
+  const filteredOptions = useMemo(() => {
+    if (!search) return options;
+    return options.filter((opt) =>
+      opt.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [options, search]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedOutsideDropdown =
+        dropdownRef.current && !dropdownRef.current.contains(target);
+      const clickedOutsideMenu =
+        menuRef.current && !menuRef.current.contains(target);
+      if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
         setIsOpen(false);
+        setSearch("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const updateRect = () => {
+      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+    };
+    if (isOpen) updateRect();
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [isOpen]);
+
   return (
     <div ref={dropdownRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-          value !== "Tất cả"
-            ? "bg-emerald-500 text-white"
-            : "bg-white/10 text-white/80 hover:bg-white/20 border border-white/20"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
       >
-        <Icon className="h-4 w-4" />
-        {value !== "Tất cả" ? value : label}
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <span className={value ? "text-secondary-900" : "text-secondary-400"}>
+          {value || placeholder}
+        </span>
+        <ChevronDown
+          className={`h-5 w-5 text-secondary-500 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-2 w-56 backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden z-50"
-          style={{
-            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <div className="max-h-60 overflow-y-auto">
-            {options.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                  value === option
-                    ? "bg-emerald-500 text-white font-medium"
-                    : "text-secondary-900 hover:bg-emerald-100 hover:text-emerald-900"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {isOpen &&
+        menuRect &&
+        createPortal(
+          <div
+            ref={(el) => (menuRef.current = el)}
+            className="backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+            style={{
+              position: "absolute",
+              left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
+              top: menuRect.bottom + (window.scrollY ?? 0) + 8,
+              width: menuRect.width,
+              zIndex: 200000,
+              boxShadow:
+                "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+            }}
+          >
+            {searchable && (
+              <div className="p-3 border-b border-secondary-200">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm kiếm..."
+                    className="w-full pl-9 pr-3 py-2 bg-secondary-50 text-secondary-900 placeholder-secondary-400 border border-secondary-200 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+            <div
+              className="max-h-60 overflow-y-auto"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#10b981 rgba(255, 255, 255, 0.3)",
+              }}
+            >
+              {filteredOptions.length === 0 ? (
+                <div className="px-5 py-3 text-secondary-400 text-sm text-center">
+                  Không tìm thấy kết quả
+                </div>
+              ) : (
+                filteredOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      onChange(option);
+                      setIsOpen(false);
+                      setSearch("");
+                    }}
+                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${
+                      value === option
+                        ? "bg-emerald-500 text-white font-medium"
+                        : "text-secondary-900 hover:bg-emerald-100 hover:text-emerald-900"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -176,9 +252,9 @@ export default function ExplorePage() {
   const [totalResults, setTotalResults] = useState(0);
 
   // Filters
-  const [selectedGenre, setSelectedGenre] = useState("Tất cả");
-  const [selectedRegion, setSelectedRegion] = useState("Tất cả");
-  const [selectedEthnicity, setSelectedEthnicity] = useState("Tất cả");
+  const [selectedGenre, setSelectedGenre] = useState("Tất cả thể loại");
+  const [selectedRegion, setSelectedRegion] = useState("Tất cả khu vực");
+  const [selectedEthnicity, setSelectedEthnicity] = useState("Tất cả dân tộc");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Categories data (mock)
@@ -215,16 +291,16 @@ export default function ExplorePage() {
   }, [fetchRecordings]);
 
   const handleClearFilters = () => {
-    setSelectedGenre("Tất cả");
-    setSelectedRegion("Tất cả");
-    setSelectedEthnicity("Tất cả");
+    setSelectedGenre("Tất cả thể loại");
+    setSelectedRegion("Tất cả khu vực");
+    setSelectedEthnicity("Tất cả dân tộc");
     setSearchQuery("");
   };
 
   const hasActiveFilters =
-    selectedGenre !== "Tất cả" ||
-    selectedRegion !== "Tất cả" ||
-    selectedEthnicity !== "Tất cả" ||
+    selectedGenre !== "Tất cả thể loại" ||
+    selectedRegion !== "Tất cả khu vực" ||
+    selectedEthnicity !== "Tất cả dân tộc" ||
     searchQuery !== "";
 
   const features = [
@@ -235,7 +311,7 @@ export default function ExplorePage() {
     },
     {
       icon: Globe,
-      title: "7 vùng miền",
+      title: "7 khu vực",
       description: "Trải dài khắp đất nước Việt Nam",
     },
     {
@@ -296,7 +372,7 @@ export default function ExplorePage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Bộ lọc nhanh</h2>
-                <p className="text-sm text-white/60">Lọc theo thể loại, vùng miền và dân tộc</p>
+                <p className="text-sm text-white/60">Lọc theo thể loại, khu vực và dân tộc</p>
               </div>
             </div>
 
@@ -307,39 +383,40 @@ export default function ExplorePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm bản thu, nghệ nhân, nhạc cụ..."
+                placeholder="Tìm kiếm bản thu, nghệ nhân, nhạc cụ,..."
                 className="w-full pl-14 pr-5 py-3 bg-white text-secondary-900 placeholder-secondary-400 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
               />
             </div>
 
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-3">
-              <FilterButton
-                label="Thể loại"
+            {/* Filter Dropdowns - New UI/UX */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <SearchableDropdown
                 value={selectedGenre}
-                options={GENRES}
                 onChange={setSelectedGenre}
-                icon={Music2}
+                options={GENRES}
+                placeholder="Chọn thể loại"
               />
-              <FilterButton
-                label="Vùng miền"
+              <SearchableDropdown
                 value={selectedRegion}
-                options={REGIONS}
                 onChange={setSelectedRegion}
-                icon={MapPin}
+                options={REGIONS}
+                placeholder="Chọn khu vực"
+                searchable={false}
               />
-              <FilterButton
-                label="Dân tộc"
+              <SearchableDropdown
                 value={selectedEthnicity}
-                options={ETHNICITIES}
                 onChange={setSelectedEthnicity}
-                icon={Users}
+                options={ETHNICITIES}
+                placeholder="Chọn dân tộc"
               />
+            </div>
 
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-4 py-2.5 text-sm text-white/70 hover:text-white transition-colors"
+                  className="px-4 py-2 bg-white/10 text-white/80 hover:bg-white/20 rounded-full text-sm transition-colors"
                 >
                   Xóa bộ lọc
                 </button>
@@ -349,7 +426,7 @@ export default function ExplorePage() {
                 to="/search"
                 className="ml-auto px-4 py-2.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
               >
-                Tìm kiếm nâng cao
+                Tìm kiếm
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -440,7 +517,7 @@ export default function ExplorePage() {
                 </div>
                 <div>
                   <h4 className="text-white font-medium group-hover:text-emerald-300 transition-colors">
-                    Tìm kiếm nâng cao
+                    Tìm kiếm bản thu
                   </h4>
                   <p className="text-white/50 text-sm">
                     Lọc chi tiết theo nhạc cụ, sự kiện, năm ghi âm

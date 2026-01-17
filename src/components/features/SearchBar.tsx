@@ -137,7 +137,7 @@ const EVENT_TYPES = [
   "Đám tang",
   "Lễ hội đình",
   "Lễ hội chùa",
-  "Tết Nguyên Đán",
+  "Tết Nguyên đán",
   "Hội xuân",
   "Lễ cầu mùa",
   "Lễ cúng tổ tiên",
@@ -744,12 +744,12 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             />
           </FormField>
 
-          <FormField label="Vùng miền">
+          <FormField label="Khu vực">
             <SearchableDropdown
               value={region}
               onChange={setRegion}
-              options={["Tất cả vùng", ...REGIONS]}
-              placeholder="Tất cả vùng"
+              options={["Tất cả khu vực", ...REGIONS]}
+              placeholder="Tất cả khu vực"
               searchable={false}
             />
           </FormField>

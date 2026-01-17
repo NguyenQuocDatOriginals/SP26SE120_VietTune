@@ -61,7 +61,7 @@ const LANGUAGES = [
   "Tiếng Giáy",
   "Tiếng Cơ Tu",
   "Tiếng Bru-Vân Kiều",
-  "Tiếng Khác",
+  "Khác",
 ];
 
 const ETHNICITIES = [
@@ -176,7 +176,7 @@ const EVENT_TYPES = [
   "Đám tang",
   "Lễ hội đình",
   "Lễ hội chùa",
-  "Tết Nguyên Đán",
+  "Tết Nguyên đán",
   "Hội xuân",
   "Lễ cầu mùa",
   "Lễ cúng tổ tiên",
@@ -672,6 +672,227 @@ function MultiSelectTags({
   );
 }
 
+// Custom Date Picker Component với UI/UX giống dropdown
+function DatePicker({
+  value,
+  onChange,
+  placeholder = "Chọn ngày/tháng/năm",
+  disabled = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
+
+  // State cho calendar
+  const [viewDate, setViewDate] = useState(() => {
+    if (value) {
+      const date = new Date(value);
+      return new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+    return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  });
+
+  const selectedDate = value ? new Date(value) : null;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const clickedOutsideDropdown =
+        dropdownRef.current && !dropdownRef.current.contains(target);
+      const clickedOutsideMenu =
+        menuRef.current && !menuRef.current.contains(target);
+      if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const updateRect = () => {
+      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+    };
+    if (isOpen) updateRect();
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [isOpen]);
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days: (number | null)[] = [];
+    // Add empty slots for days before the first day of month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  };
+
+  const days = getDaysInMonth(viewDate);
+  const monthNames = [
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  ];
+  const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+  const handleDateClick = (day: number) => {
+    const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const isoString = newDate.toISOString().split('T')[0];
+    onChange(isoString);
+    setIsOpen(false);
+  };
+
+  const handlePrevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('vi-VN');
+  };
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        }`}
+      >
+        <span className={value ? "text-secondary-900" : "text-secondary-400"}>
+          {value ? formatDisplayDate(value) : placeholder}
+        </span>
+        <ChevronDown
+          className={`h-5 w-5 text-secondary-500 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isOpen &&
+        menuRect &&
+        createPortal(
+          <div
+            ref={(el) => (menuRef.current = el)}
+            className="backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+            style={{
+              position: "absolute",
+              left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
+              top: menuRect.bottom + (window.scrollY ?? 0) + 8,
+              width: Math.max(320, menuRect.width),
+              zIndex: 200000,
+              boxShadow:
+                "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+            }}
+          >
+            {/* Calendar Header */}
+            <div className="p-3 border-b border-secondary-200 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                className="p-2 hover:bg-emerald-100 rounded-full transition-colors"
+              >
+                <ChevronDown className="h-4 w-4 text-secondary-700 rotate-90" />
+              </button>
+              <span className="text-sm font-medium text-secondary-900">
+                {monthNames[viewDate.getMonth()]} {viewDate.getFullYear()}
+              </span>
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="p-2 hover:bg-emerald-100 rounded-full transition-colors"
+              >
+                <ChevronDown className="h-4 w-4 text-secondary-700 -rotate-90" />
+              </button>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="p-3">
+              {/* Day names */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {dayNames.map((day) => (
+                  <div
+                    key={day}
+                    className="text-center text-xs font-medium text-secondary-500 py-1"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Days */}
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day, index) => {
+                  if (day === null) {
+                    return <div key={`empty-${index}`} />;
+                  }
+
+                  const isSelected =
+                    selectedDate &&
+                    selectedDate.getDate() === day &&
+                    selectedDate.getMonth() === viewDate.getMonth() &&
+                    selectedDate.getFullYear() === viewDate.getFullYear();
+
+                  const isToday =
+                    new Date().getDate() === day &&
+                    new Date().getMonth() === viewDate.getMonth() &&
+                    new Date().getFullYear() === viewDate.getFullYear();
+
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => handleDateClick(day)}
+                      className={`aspect-square rounded-lg text-sm transition-colors ${
+                        isSelected
+                          ? "bg-emerald-500 text-white font-medium"
+                          : isToday
+                          ? "bg-emerald-100 text-emerald-900 font-medium"
+                          : "text-secondary-900 hover:bg-emerald-50"
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+}
+
 // Text Input - UI matching SearchBar style
 function TextInput({
   value,
@@ -847,6 +1068,7 @@ export default function UploadMusic() {
   // Basic info
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
+  const [artistUnknown, setArtistUnknown] = useState(false);
   const [composer, setComposer] = useState("");
   const [composerUnknown, setComposerUnknown] = useState(false);
   const [language, setLanguage] = useState("");
@@ -974,7 +1196,9 @@ export default function UploadMusic() {
 
     if (!file) newErrors.file = "Vui lòng chọn file âm thanh";
     if (!title.trim()) newErrors.title = "Vui lòng nhập tiêu đề";
-    if (!artist.trim()) newErrors.artist = "Vui lòng nhập tên nghệ sĩ";
+    if (!artistUnknown && !artist.trim()) {
+      newErrors.artist = "Vui lòng nhập tên nghệ sĩ hoặc chọn 'Không rõ'";
+    }
     if (!composerUnknown && !composer.trim()) {
       newErrors.composer = "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
     }
@@ -1009,7 +1233,7 @@ export default function UploadMusic() {
       },
       basicInfo: {
         title,
-        artist,
+        artist: artistUnknown ? "Không rõ nghệ sĩ" : artist,
         composer: composerUnknown ? "Dân gian/Không rõ tác giả" : composer,
         language,
         genre,
@@ -1079,6 +1303,7 @@ export default function UploadMusic() {
     setAudioInfo(null);
     setTitle("");
     setArtist("");
+    setArtistUnknown(false);
     setComposer("");
     setComposerUnknown(false);
     setLanguage("");
@@ -1231,17 +1456,32 @@ export default function UploadMusic() {
             )}
           </FormField>
 
-          <FormField label="Nghệ sĩ/Người biểu diễn" required>
-            <TextInput
-              value={artist}
-              onChange={setArtist}
-              placeholder="Tên người hát hoặc chơi nhạc cụ"
-              required
-            />
+          <div className="space-y-2">
+            <FormField label="Nghệ sĩ/Người biểu diễn" required={!artistUnknown}>
+              <TextInput
+                value={artist}
+                onChange={setArtist}
+                placeholder="Tên người hát hoặc chơi nhạc cụ"
+                required={!artistUnknown}
+                disabled={artistUnknown}
+              />
+            </FormField>
+            <label className="flex items-center gap-2 text-sm text-white/90 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={artistUnknown}
+                onChange={(e) => {
+                  setArtistUnknown(e.target.checked);
+                  if (e.target.checked) setArtist("");
+                }}
+                className="w-4 h-4 rounded border-secondary-300 bg-white text-emerald-500 focus:ring-emerald-500"
+              />
+              Không rõ
+            </label>
             {errors.artist && (
               <p className="text-sm text-red-400">{errors.artist}</p>
             )}
-          </FormField>
+          </div>
 
           <div className="space-y-2">
             <FormField label="Nhạc sĩ/Tác giả" required={!composerUnknown}>
@@ -1292,11 +1532,10 @@ export default function UploadMusic() {
 
           <div className="space-y-2">
             <FormField label="Ngày ghi âm">
-              <input
-                type="date"
+              <DatePicker
                 value={recordingDate}
-                onChange={(e) => setRecordingDate(e.target.value)}
-                className="w-full px-5 py-3 bg-white text-secondary-900 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                onChange={setRecordingDate}
+                placeholder="Chọn ngày/tháng/năm"
               />
             </FormField>
             <label className="flex items-center gap-2 text-sm text-white/90 cursor-pointer">
@@ -1312,12 +1551,12 @@ export default function UploadMusic() {
               <TextInput
                 value={dateNote}
                 onChange={setDateNote}
-                placeholder="Ghi chú về ngày tháng (VD: khoảng năm 1990)"
+                placeholder="Ghi chú về ngày tháng (Ví dụ: khoảng năm 1990)"
               />
             )}
           </div>
 
-          <FormField label="Địa điểm ghi âm" hint="VD: Đình làng X, Nhà văn hóa Y">
+          <FormField label="Địa điểm ghi âm" hint="Ví dụ: Đình làng X, Nhà văn hóa Y">
             <TextInput
               value={recordingLocation}
               onChange={setRecordingLocation}
@@ -1343,12 +1582,12 @@ export default function UploadMusic() {
             />
           </FormField>
 
-          <FormField label="Vùng miền">
+          <FormField label="Khu vực">
             <SearchableDropdown
               value={region}
               onChange={setRegion}
               options={REGIONS}
-              placeholder="Chọn vùng miền"
+              placeholder="Chọn khu vực"
               searchable={false}
             />
           </FormField>

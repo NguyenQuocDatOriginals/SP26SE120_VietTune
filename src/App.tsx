@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
+import ExplorePage from "./pages/ExplorePage";
 import RecordingDetailPage from "./pages/RecordingDetailPage";
 import UploadPage from "./pages/UploadPage";
 import SearchPage from "./pages/SearchPage";
@@ -22,6 +23,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
+          <Route path="explore" element={<ExplorePage />} />
           <Route path="recordings/:id" element={<RecordingDetailPage />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="search" element={<SearchPage />} />
