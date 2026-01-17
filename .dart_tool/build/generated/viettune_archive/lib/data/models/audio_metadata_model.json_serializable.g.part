@@ -22,6 +22,7 @@ AudioMetadataModel _$AudioMetadataModelFromJson(Map<String, dynamic> json) =>
       recordedBy: json['recorded_by'] as String?,
       bitrate: (json['bitrate'] as num?)?.toInt(),
       format: json['format'] as String?,
+      sampleRate: (json['sample_rate'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$AudioMetadataModelToJson(AudioMetadataModel instance) =>
@@ -37,4 +38,5 @@ Map<String, dynamic> _$AudioMetadataModelToJson(AudioMetadataModel instance) =>
       'recorded_by': instance.recordedBy,
       'bitrate': instance.bitrate,
       'format': instance.format,
+      'sample_rate': instance.sampleRate,
     };

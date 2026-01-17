@@ -23,6 +23,13 @@ _$SongImpl _$$SongImplFromJson(Map<String, dynamic> json) => _$SongImpl(
       lyricsNativeScript: json['lyricsNativeScript'] as String?,
       lyricsVietnameseTranslation:
           json['lyricsVietnameseTranslation'] as String?,
+      language: json['language'] as String?,
+      author: json['author'] as String?,
+      performanceType: $enumDecodeNullable(
+          _$PerformanceTypeEnumMap, json['performanceType']),
+      isRecordingDateEstimated: json['isRecordingDateEstimated'] as bool?,
+      copyrightInfo: json['copyrightInfo'] as String?,
+      fieldNotes: json['fieldNotes'] as String?,
       description: json['description'] as String?,
       playCount: (json['playCount'] as num?)?.toInt(),
       favoriteCount: (json['favoriteCount'] as num?)?.toInt(),
@@ -49,6 +56,12 @@ Map<String, dynamic> _$$SongImplToJson(_$SongImpl instance) =>
       'culturalContext': instance.culturalContext,
       'lyricsNativeScript': instance.lyricsNativeScript,
       'lyricsVietnameseTranslation': instance.lyricsVietnameseTranslation,
+      'language': instance.language,
+      'author': instance.author,
+      'performanceType': _$PerformanceTypeEnumMap[instance.performanceType],
+      'isRecordingDateEstimated': instance.isRecordingDateEstimated,
+      'copyrightInfo': instance.copyrightInfo,
+      'fieldNotes': instance.fieldNotes,
       'description': instance.description,
       'playCount': instance.playCount,
       'favoriteCount': instance.favoriteCount,
@@ -70,4 +83,10 @@ const _$VerificationStatusEnumMap = {
   VerificationStatus.pending: 'pending',
   VerificationStatus.verified: 'verified',
   VerificationStatus.rejected: 'rejected',
+};
+
+const _$PerformanceTypeEnumMap = {
+  PerformanceType.instrumental: 'instrumental',
+  PerformanceType.aCappella: 'aCappella',
+  PerformanceType.vocalWithAccompaniment: 'vocalWithAccompaniment',
 };
