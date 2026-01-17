@@ -26,6 +26,8 @@ class AudioMetadataModel {
   final String? recordedBy;
   final int? bitrate;
   final String? format;
+  @JsonKey(name: 'sample_rate')
+  final int? sampleRate;
 
   const AudioMetadataModel({
     required this.url,
@@ -39,6 +41,7 @@ class AudioMetadataModel {
     this.recordedBy,
     this.bitrate,
     this.format,
+    this.sampleRate,
   });
 
   factory AudioMetadataModel.fromJson(Map<String, dynamic> json) =>
@@ -63,6 +66,7 @@ class AudioMetadataModel {
       recordedBy: recordedBy,
       bitrate: bitrate,
       format: format,
+      sampleRate: sampleRate,
     );
   }
 
@@ -82,6 +86,7 @@ class AudioMetadataModel {
       recordedBy: entity.recordedBy,
       bitrate: entity.bitrate,
       format: entity.format,
+      sampleRate: entity.sampleRate,
     );
   }
 }

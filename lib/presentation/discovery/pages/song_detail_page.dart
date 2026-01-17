@@ -5,6 +5,8 @@ import '../../../domain/entities/enums.dart';
 import '../../../domain/usecases/discovery/get_song_by_id.dart';
 import '../../../domain/usecases/discovery/toggle_favorite.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/services/guest_favorite_service.dart';
+import '../../../core/utils/constants.dart';
 import '../../shared/widgets/audio_player_widget.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/loading_indicator.dart';
@@ -30,14 +32,109 @@ final songByIdProvider = FutureProvider.family((ref, String songId) async {
   );
 });
 
-class SongDetailPage extends ConsumerWidget {
+class SongDetailPage extends ConsumerStatefulWidget {
   final String songId;
 
   const SongDetailPage({super.key, required this.songId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final songAsync = ref.watch(songByIdProvider(songId));
+  ConsumerState<SongDetailPage> createState() => _SongDetailPageState();
+}
+
+class _SongDetailPageState extends ConsumerState<SongDetailPage> {
+  bool _isFavorite = false;
+  bool _isLoadingFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavoriteStatus();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final user = ref.read(currentUserProvider);
+
+    if (user == null) {
+      // Guest - check local storage
+      final guestService = getIt<GuestFavoriteService>();
+      final isFav = await guestService.isFavorite(widget.songId);
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFav;
+        });
+      }
+    } else {
+      // Authenticated - check from repository/use case
+      // TODO: Implement server-side favorite check
+      // For now, assume not favorite
+      setState(() {
+        _isFavorite = false;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final user = ref.read(currentUserProvider);
+
+    if (user == null) {
+      // Guest - save to local storage
+      setState(() {
+        _isLoadingFavorite = true;
+      });
+
+      final guestService = getIt<GuestFavoriteService>();
+
+      if (_isFavorite) {
+        await guestService.removeFavorite(widget.songId);
+      } else {
+        await guestService.addFavorite(widget.songId);
+
+        // Show sync prompt
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Đã lưu vào danh sách yêu thích (chỉ trên thiết bị này)',
+              ),
+              action: SnackBarAction(
+                label: 'Đăng nhập để đồng bộ',
+                onPressed: () {
+                  context.push(AppRoutes.authLogin);
+                },
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+          _isLoadingFavorite = false;
+        });
+      }
+    } else {
+      // Authenticated - use existing toggle favorite use case
+      setState(() {
+        _isLoadingFavorite = true;
+      });
+
+      final useCase = getIt<ToggleFavorite>();
+      await useCase(songId: widget.songId, userId: user.id);
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+          _isLoadingFavorite = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final songAsync = ref.watch(songByIdProvider(widget.songId));
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
@@ -45,14 +142,11 @@ class SongDetailPage extends ConsumerWidget {
         title: const Text('Chi tiết bài hát'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {
-              // Toggle favorite
-              final useCase = getIt<ToggleFavorite>();
-              if (user != null) {
-                useCase(songId: songId, userId: user.id);
-              }
-            },
+            icon: Icon(
+              _isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: _isFavorite ? Colors.red : null,
+            ),
+            onPressed: _isLoadingFavorite ? null : _toggleFavorite,
           ),
         ],
       ),
@@ -165,7 +259,7 @@ class SongDetailPage extends ConsumerWidget {
         error: (error, stack) => ErrorView(
           message: 'Error loading song: $error',
           onRetry: () {
-            ref.invalidate(songByIdProvider(songId));
+            ref.invalidate(songByIdProvider(widget.songId));
           },
         ),
       ),

@@ -26,6 +26,16 @@ class SongModel {
   final String? lyricsNativeScript;
   @JsonKey(name: 'lyrics_vietnamese_translation')
   final String? lyricsVietnameseTranslation;
+  final String? language;
+  final String? author;
+  @JsonKey(name: 'performance_type')
+  final String? performanceType;
+  @JsonKey(name: 'is_recording_date_estimated')
+  final bool? isRecordingDateEstimated;
+  @JsonKey(name: 'copyright_info')
+  final String? copyrightInfo;
+  @JsonKey(name: 'field_notes')
+  final String? fieldNotes;
   final String? description;
   @JsonKey(name: 'play_count')
   final int? playCount;
@@ -50,6 +60,12 @@ class SongModel {
     this.culturalContext,
     this.lyricsNativeScript,
     this.lyricsVietnameseTranslation,
+    this.language,
+    this.author,
+    this.performanceType,
+    this.isRecordingDateEstimated,
+    this.copyrightInfo,
+    this.fieldNotes,
     this.description,
     this.playCount,
     this.favoriteCount,
@@ -66,6 +82,12 @@ class SongModel {
 
   /// Convert model to domain entity
   Song toEntity() {
+    final parsedPerformanceType = performanceType != null
+        ? PerformanceType.values.firstWhere(
+            (e) => e.name == performanceType,
+            orElse: () => PerformanceType.instrumental,
+          )
+        : null;
     return Song(
       id: id,
       title: title,
@@ -83,6 +105,12 @@ class SongModel {
       culturalContext: culturalContext?.toEntity(),
       lyricsNativeScript: lyricsNativeScript,
       lyricsVietnameseTranslation: lyricsVietnameseTranslation,
+      language: language,
+      author: author,
+      performanceType: parsedPerformanceType,
+      isRecordingDateEstimated: isRecordingDateEstimated,
+      copyrightInfo: copyrightInfo,
+      fieldNotes: fieldNotes,
       description: description,
       playCount: playCount,
       favoriteCount: favoriteCount,
@@ -110,6 +138,12 @@ class SongModel {
           : null,
       lyricsNativeScript: entity.lyricsNativeScript,
       lyricsVietnameseTranslation: entity.lyricsVietnameseTranslation,
+      language: entity.language,
+      author: entity.author,
+      performanceType: entity.performanceType?.name,
+      isRecordingDateEstimated: entity.isRecordingDateEstimated,
+      copyrightInfo: entity.copyrightInfo,
+      fieldNotes: entity.fieldNotes,
       description: entity.description,
       playCount: entity.playCount,
       favoriteCount: entity.favoriteCount,

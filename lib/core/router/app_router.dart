@@ -29,10 +29,37 @@ final appRouter = GoRouter(
     final isAuthRoute = state.matchedLocation.startsWith('/auth');
     final isSplash = state.matchedLocation == AppRoutes.splash;
 
-    if (!isAuthenticated && !isAuthRoute && !isSplash) {
+    // Define public routes accessible by guests
+    final publicRoutes = [
+      AppRoutes.home,
+      '/home/discover',
+      '/home/discover/song',
+      '/home/discover/search',
+      '/home/discover/instrument',
+      '/home/discover/ethnic-group',
+    ];
+
+    final isPublicRoute = publicRoutes.any(
+      (route) => state.matchedLocation.startsWith(route),
+    );
+
+    // Require auth for protected routes only
+    final protectedRoutes = [
+      '/home/contribute',
+      '/home/profile/favorites',
+      '/home/profile/settings',
+    ];
+
+    final isProtectedRoute = protectedRoutes.any(
+      (route) => state.matchedLocation.startsWith(route),
+    );
+
+    // Block unauthenticated users from protected routes
+    if (!isAuthenticated && isProtectedRoute) {
       return AppRoutes.authLogin;
     }
 
+    // Redirect authenticated users away from auth routes
     if (isAuthenticated && isAuthRoute) {
       return AppRoutes.home;
     }

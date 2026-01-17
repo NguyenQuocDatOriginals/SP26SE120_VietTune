@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../contribution/providers/contribution_providers.dart';
 import 'contribution_wizard_steps/audio_upload_step.dart';
 import 'contribution_wizard_steps/basic_info_step.dart';
 import 'contribution_wizard_steps/cultural_context_step.dart';
-import 'contribution_wizard_steps/lyrics_step.dart';
-import 'contribution_wizard_steps/review_submit_step.dart';
+import 'contribution_wizard_steps/performance_details_step.dart';
+import 'contribution_wizard_steps/notes_copyright_step.dart';
+import '../../../core/utils/constants.dart';
 
 class NewContributionPage extends ConsumerWidget {
   const NewContributionPage({super.key});
@@ -19,16 +21,16 @@ class NewContributionPage extends ConsumerWidget {
       const AudioUploadStep(),
       const BasicInfoStep(),
       const CulturalContextStep(),
-      const LyricsStep(),
-      const ReviewSubmitStep(),
+      const PerformanceDetailsStep(),
+      const NotesCopyrightStep(),
     ];
 
     final stepTitles = [
-      'Tải lên',
-      'Thông tin',
-      'Bối cảnh',
-      'Lời bài hát',
-      'Xem xét',
+      'Tải lên & Tự nhận diện',
+      'Thông tin định danh',
+      'Bối cảnh văn hóa',
+      'Chi tiết biểu diễn',
+      'Ghi chú & Bản quyền',
     ];
 
     return Scaffold(
@@ -117,21 +119,26 @@ class NewContributionPage extends ConsumerWidget {
                     ),
                   ),
                 if (formState.currentStep > 0) const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: formNotifier.canProceedToNextStep() &&
-                            formState.currentStep < steps.length - 1
-                        ? () => formNotifier.updateStep(
-                              formState.currentStep + 1,
-                            )
-                        : null,
-                    child: Text(
-                      formState.currentStep < steps.length - 1
-                          ? 'Tiếp theo'
-                          : 'Hoàn tất',
+                // Hide "Tiếp theo" button on last step (NotesCopyrightStep has its own submit button)
+                if (formState.currentStep < steps.length - 1)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (formNotifier.canProceedToNextStep()) {
+                          formNotifier.updateStep(formState.currentStep + 1);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: formNotifier.canProceedToNextStep()
+                            ? null // Use default primary color
+                            : Colors.grey,
+                        foregroundColor: formNotifier.canProceedToNextStep()
+                            ? null // Use default text color
+                            : Colors.grey[600],
+                      ),
+                      child: const Text('Tiếp theo'),
                     ),
                   ),
-                ),
               ],
             ),
           ),

@@ -31,6 +31,12 @@ mixin _$Song {
   CulturalContext? get culturalContext => throw _privateConstructorUsedError;
   String? get lyricsNativeScript => throw _privateConstructorUsedError;
   String? get lyricsVietnameseTranslation => throw _privateConstructorUsedError;
+  String? get language => throw _privateConstructorUsedError;
+  String? get author => throw _privateConstructorUsedError;
+  PerformanceType? get performanceType => throw _privateConstructorUsedError;
+  bool? get isRecordingDateEstimated => throw _privateConstructorUsedError;
+  String? get copyrightInfo => throw _privateConstructorUsedError;
+  String? get fieldNotes => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
   int? get playCount => throw _privateConstructorUsedError;
   int? get favoriteCount => throw _privateConstructorUsedError;
@@ -60,6 +66,12 @@ abstract class $SongCopyWith<$Res> {
       CulturalContext? culturalContext,
       String? lyricsNativeScript,
       String? lyricsVietnameseTranslation,
+      String? language,
+      String? author,
+      PerformanceType? performanceType,
+      bool? isRecordingDateEstimated,
+      String? copyrightInfo,
+      String? fieldNotes,
       String? description,
       int? playCount,
       int? favoriteCount,
@@ -95,6 +107,12 @@ class _$SongCopyWithImpl<$Res, $Val extends Song>
     Object? culturalContext = freezed,
     Object? lyricsNativeScript = freezed,
     Object? lyricsVietnameseTranslation = freezed,
+    Object? language = freezed,
+    Object? author = freezed,
+    Object? performanceType = freezed,
+    Object? isRecordingDateEstimated = freezed,
+    Object? copyrightInfo = freezed,
+    Object? fieldNotes = freezed,
     Object? description = freezed,
     Object? playCount = freezed,
     Object? favoriteCount = freezed,
@@ -143,6 +161,30 @@ class _$SongCopyWithImpl<$Res, $Val extends Song>
       lyricsVietnameseTranslation: freezed == lyricsVietnameseTranslation
           ? _value.lyricsVietnameseTranslation
           : lyricsVietnameseTranslation // ignore: cast_nullable_to_non_nullable
+              as String?,
+      language: freezed == language
+          ? _value.language
+          : language // ignore: cast_nullable_to_non_nullable
+              as String?,
+      author: freezed == author
+          ? _value.author
+          : author // ignore: cast_nullable_to_non_nullable
+              as String?,
+      performanceType: freezed == performanceType
+          ? _value.performanceType
+          : performanceType // ignore: cast_nullable_to_non_nullable
+              as PerformanceType?,
+      isRecordingDateEstimated: freezed == isRecordingDateEstimated
+          ? _value.isRecordingDateEstimated
+          : isRecordingDateEstimated // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      copyrightInfo: freezed == copyrightInfo
+          ? _value.copyrightInfo
+          : copyrightInfo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fieldNotes: freezed == fieldNotes
+          ? _value.fieldNotes
+          : fieldNotes // ignore: cast_nullable_to_non_nullable
               as String?,
       description: freezed == description
           ? _value.description
@@ -218,6 +260,12 @@ abstract class _$$SongImplCopyWith<$Res> implements $SongCopyWith<$Res> {
       CulturalContext? culturalContext,
       String? lyricsNativeScript,
       String? lyricsVietnameseTranslation,
+      String? language,
+      String? author,
+      PerformanceType? performanceType,
+      bool? isRecordingDateEstimated,
+      String? copyrightInfo,
+      String? fieldNotes,
       String? description,
       int? playCount,
       int? favoriteCount,
@@ -252,6 +300,12 @@ class __$$SongImplCopyWithImpl<$Res>
     Object? culturalContext = freezed,
     Object? lyricsNativeScript = freezed,
     Object? lyricsVietnameseTranslation = freezed,
+    Object? language = freezed,
+    Object? author = freezed,
+    Object? performanceType = freezed,
+    Object? isRecordingDateEstimated = freezed,
+    Object? copyrightInfo = freezed,
+    Object? fieldNotes = freezed,
     Object? description = freezed,
     Object? playCount = freezed,
     Object? favoriteCount = freezed,
@@ -301,6 +355,30 @@ class __$$SongImplCopyWithImpl<$Res>
           ? _value.lyricsVietnameseTranslation
           : lyricsVietnameseTranslation // ignore: cast_nullable_to_non_nullable
               as String?,
+      language: freezed == language
+          ? _value.language
+          : language // ignore: cast_nullable_to_non_nullable
+              as String?,
+      author: freezed == author
+          ? _value.author
+          : author // ignore: cast_nullable_to_non_nullable
+              as String?,
+      performanceType: freezed == performanceType
+          ? _value.performanceType
+          : performanceType // ignore: cast_nullable_to_non_nullable
+              as PerformanceType?,
+      isRecordingDateEstimated: freezed == isRecordingDateEstimated
+          ? _value.isRecordingDateEstimated
+          : isRecordingDateEstimated // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      copyrightInfo: freezed == copyrightInfo
+          ? _value.copyrightInfo
+          : copyrightInfo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fieldNotes: freezed == fieldNotes
+          ? _value.fieldNotes
+          : fieldNotes // ignore: cast_nullable_to_non_nullable
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -347,6 +425,12 @@ class _$SongImpl implements _Song {
       this.culturalContext,
       this.lyricsNativeScript,
       this.lyricsVietnameseTranslation,
+      this.language,
+      this.author,
+      this.performanceType,
+      this.isRecordingDateEstimated,
+      this.copyrightInfo,
+      this.fieldNotes,
       this.description,
       this.playCount,
       this.favoriteCount,
@@ -390,6 +474,18 @@ class _$SongImpl implements _Song {
   @override
   final String? lyricsVietnameseTranslation;
   @override
+  final String? language;
+  @override
+  final String? author;
+  @override
+  final PerformanceType? performanceType;
+  @override
+  final bool? isRecordingDateEstimated;
+  @override
+  final String? copyrightInfo;
+  @override
+  final String? fieldNotes;
+  @override
   final String? description;
   @override
   final int? playCount;
@@ -413,7 +509,7 @@ class _$SongImpl implements _Song {
 
   @override
   String toString() {
-    return 'Song(id: $id, title: $title, alternativeTitles: $alternativeTitles, genre: $genre, ethnicGroupId: $ethnicGroupId, verificationStatus: $verificationStatus, audioMetadata: $audioMetadata, culturalContext: $culturalContext, lyricsNativeScript: $lyricsNativeScript, lyricsVietnameseTranslation: $lyricsVietnameseTranslation, description: $description, playCount: $playCount, favoriteCount: $favoriteCount, createdAt: $createdAt, updatedAt: $updatedAt, contributorId: $contributorId, tags: $tags)';
+    return 'Song(id: $id, title: $title, alternativeTitles: $alternativeTitles, genre: $genre, ethnicGroupId: $ethnicGroupId, verificationStatus: $verificationStatus, audioMetadata: $audioMetadata, culturalContext: $culturalContext, lyricsNativeScript: $lyricsNativeScript, lyricsVietnameseTranslation: $lyricsVietnameseTranslation, language: $language, author: $author, performanceType: $performanceType, isRecordingDateEstimated: $isRecordingDateEstimated, copyrightInfo: $copyrightInfo, fieldNotes: $fieldNotes, description: $description, playCount: $playCount, favoriteCount: $favoriteCount, createdAt: $createdAt, updatedAt: $updatedAt, contributorId: $contributorId, tags: $tags)';
   }
 
   @override
@@ -440,6 +536,18 @@ class _$SongImpl implements _Song {
                     lyricsVietnameseTranslation) ||
                 other.lyricsVietnameseTranslation ==
                     lyricsVietnameseTranslation) &&
+            (identical(other.language, language) ||
+                other.language == language) &&
+            (identical(other.author, author) || other.author == author) &&
+            (identical(other.performanceType, performanceType) ||
+                other.performanceType == performanceType) &&
+            (identical(
+                    other.isRecordingDateEstimated, isRecordingDateEstimated) ||
+                other.isRecordingDateEstimated == isRecordingDateEstimated) &&
+            (identical(other.copyrightInfo, copyrightInfo) ||
+                other.copyrightInfo == copyrightInfo) &&
+            (identical(other.fieldNotes, fieldNotes) ||
+                other.fieldNotes == fieldNotes) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.playCount, playCount) ||
@@ -457,25 +565,32 @@ class _$SongImpl implements _Song {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      const DeepCollectionEquality().hash(_alternativeTitles),
-      genre,
-      ethnicGroupId,
-      verificationStatus,
-      audioMetadata,
-      culturalContext,
-      lyricsNativeScript,
-      lyricsVietnameseTranslation,
-      description,
-      playCount,
-      favoriteCount,
-      createdAt,
-      updatedAt,
-      contributorId,
-      const DeepCollectionEquality().hash(_tags));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        id,
+        title,
+        const DeepCollectionEquality().hash(_alternativeTitles),
+        genre,
+        ethnicGroupId,
+        verificationStatus,
+        audioMetadata,
+        culturalContext,
+        lyricsNativeScript,
+        lyricsVietnameseTranslation,
+        language,
+        author,
+        performanceType,
+        isRecordingDateEstimated,
+        copyrightInfo,
+        fieldNotes,
+        description,
+        playCount,
+        favoriteCount,
+        createdAt,
+        updatedAt,
+        contributorId,
+        const DeepCollectionEquality().hash(_tags)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -503,6 +618,12 @@ abstract class _Song implements Song {
       final CulturalContext? culturalContext,
       final String? lyricsNativeScript,
       final String? lyricsVietnameseTranslation,
+      final String? language,
+      final String? author,
+      final PerformanceType? performanceType,
+      final bool? isRecordingDateEstimated,
+      final String? copyrightInfo,
+      final String? fieldNotes,
       final String? description,
       final int? playCount,
       final int? favoriteCount,
@@ -533,6 +654,18 @@ abstract class _Song implements Song {
   String? get lyricsNativeScript;
   @override
   String? get lyricsVietnameseTranslation;
+  @override
+  String? get language;
+  @override
+  String? get author;
+  @override
+  PerformanceType? get performanceType;
+  @override
+  bool? get isRecordingDateEstimated;
+  @override
+  String? get copyrightInfo;
+  @override
+  String? get fieldNotes;
   @override
   String? get description;
   @override

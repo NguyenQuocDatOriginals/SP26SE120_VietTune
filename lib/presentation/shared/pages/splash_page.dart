@@ -19,7 +19,10 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> _navigateToHome() async {
+    // Wait for auth restoration attempt (but don't block guest access)
     await Future.delayed(const Duration(seconds: 2));
+    
+    // Navigate to home regardless of auth state (guest mode supported)
     if (mounted) {
       context.go(AppRoutes.home);
     }
@@ -27,6 +30,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth provider to trigger restoration
     ref.watch(authProvider);
     return Scaffold(
       body: Center(

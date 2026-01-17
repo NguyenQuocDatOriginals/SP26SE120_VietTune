@@ -12,6 +12,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:viettune_archive/core/di/injection.dart' as _i509;
+import 'package:viettune_archive/core/services/guest_favorite_service.dart'
+    as _i228;
 import 'package:viettune_archive/data/datasources/mock/mock_auth_data_source.dart'
     as _i601;
 import 'package:viettune_archive/data/datasources/mock/mock_contribution_data_source.dart'
@@ -86,6 +88,7 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final dataSourceModule = _$DataSourceModule();
+    final serviceModule = _$ServiceModule();
     final repositoryModule = _$RepositoryModule();
     final useCaseModule = _$UseCaseModule();
     gh.lazySingleton<_i327.MockSongDataSource>(
@@ -100,6 +103,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => dataSourceModule.authDataSource);
     gh.lazySingleton<_i558.FlutterSecureStorage>(
         () => dataSourceModule.secureStorage);
+    gh.lazySingleton<_i228.GuestFavoriteService>(
+        () => serviceModule.guestFavoriteService);
     gh.lazySingleton<_i773.SongRepository>(
         () => repositoryModule.songRepository(gh<_i327.MockSongDataSource>()));
     gh.lazySingleton<_i697.ContributionRepository>(() => repositoryModule
@@ -159,6 +164,8 @@ extension GetItInjectableX on _i174.GetIt {
 }
 
 class _$DataSourceModule extends _i509.DataSourceModule {}
+
+class _$ServiceModule extends _i509.ServiceModule {}
 
 class _$RepositoryModule extends _i509.RepositoryModule {}
 

@@ -31,6 +31,7 @@ mixin _$AudioMetadata {
   String? get recordedBy => throw _privateConstructorUsedError;
   int? get bitrate => throw _privateConstructorUsedError;
   String? get format => throw _privateConstructorUsedError;
+  int? get sampleRate => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -55,7 +56,8 @@ abstract class $AudioMetadataCopyWith<$Res> {
       String? recordingEquipment,
       String? recordedBy,
       int? bitrate,
-      String? format});
+      String? format,
+      int? sampleRate});
 
   $LocationCopyWith<$Res>? get recordingLocation;
 }
@@ -84,6 +86,7 @@ class _$AudioMetadataCopyWithImpl<$Res, $Val extends AudioMetadata>
     Object? recordedBy = freezed,
     Object? bitrate = freezed,
     Object? format = freezed,
+    Object? sampleRate = freezed,
   }) {
     return _then(_value.copyWith(
       url: null == url
@@ -130,6 +133,10 @@ class _$AudioMetadataCopyWithImpl<$Res, $Val extends AudioMetadata>
           ? _value.format
           : format // ignore: cast_nullable_to_non_nullable
               as String?,
+      sampleRate: freezed == sampleRate
+          ? _value.sampleRate
+          : sampleRate // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 
@@ -165,7 +172,8 @@ abstract class _$$AudioMetadataImplCopyWith<$Res>
       String? recordingEquipment,
       String? recordedBy,
       int? bitrate,
-      String? format});
+      String? format,
+      int? sampleRate});
 
   @override
   $LocationCopyWith<$Res>? get recordingLocation;
@@ -193,6 +201,7 @@ class __$$AudioMetadataImplCopyWithImpl<$Res>
     Object? recordedBy = freezed,
     Object? bitrate = freezed,
     Object? format = freezed,
+    Object? sampleRate = freezed,
   }) {
     return _then(_$AudioMetadataImpl(
       url: null == url
@@ -239,6 +248,10 @@ class __$$AudioMetadataImplCopyWithImpl<$Res>
           ? _value.format
           : format // ignore: cast_nullable_to_non_nullable
               as String?,
+      sampleRate: freezed == sampleRate
+          ? _value.sampleRate
+          : sampleRate // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -257,7 +270,8 @@ class _$AudioMetadataImpl implements _AudioMetadata {
       this.recordingEquipment,
       this.recordedBy,
       this.bitrate,
-      this.format})
+      this.format,
+      this.sampleRate})
       : _instrumentIds = instrumentIds,
         _performerNames = performerNames;
 
@@ -302,10 +316,12 @@ class _$AudioMetadataImpl implements _AudioMetadata {
   final int? bitrate;
   @override
   final String? format;
+  @override
+  final int? sampleRate;
 
   @override
   String toString() {
-    return 'AudioMetadata(url: $url, durationInSeconds: $durationInSeconds, quality: $quality, recordingDate: $recordingDate, instrumentIds: $instrumentIds, recordingLocation: $recordingLocation, performerNames: $performerNames, recordingEquipment: $recordingEquipment, recordedBy: $recordedBy, bitrate: $bitrate, format: $format)';
+    return 'AudioMetadata(url: $url, durationInSeconds: $durationInSeconds, quality: $quality, recordingDate: $recordingDate, instrumentIds: $instrumentIds, recordingLocation: $recordingLocation, performerNames: $performerNames, recordingEquipment: $recordingEquipment, recordedBy: $recordedBy, bitrate: $bitrate, format: $format, sampleRate: $sampleRate)';
   }
 
   @override
@@ -330,7 +346,9 @@ class _$AudioMetadataImpl implements _AudioMetadata {
             (identical(other.recordedBy, recordedBy) ||
                 other.recordedBy == recordedBy) &&
             (identical(other.bitrate, bitrate) || other.bitrate == bitrate) &&
-            (identical(other.format, format) || other.format == format));
+            (identical(other.format, format) || other.format == format) &&
+            (identical(other.sampleRate, sampleRate) ||
+                other.sampleRate == sampleRate));
   }
 
   @JsonKey(ignore: true)
@@ -347,7 +365,8 @@ class _$AudioMetadataImpl implements _AudioMetadata {
       recordingEquipment,
       recordedBy,
       bitrate,
-      format);
+      format,
+      sampleRate);
 
   @JsonKey(ignore: true)
   @override
@@ -375,7 +394,8 @@ abstract class _AudioMetadata implements AudioMetadata {
       final String? recordingEquipment,
       final String? recordedBy,
       final int? bitrate,
-      final String? format}) = _$AudioMetadataImpl;
+      final String? format,
+      final int? sampleRate}) = _$AudioMetadataImpl;
 
   factory _AudioMetadata.fromJson(Map<String, dynamic> json) =
       _$AudioMetadataImpl.fromJson;
@@ -402,6 +422,8 @@ abstract class _AudioMetadata implements AudioMetadata {
   int? get bitrate;
   @override
   String? get format;
+  @override
+  int? get sampleRate;
   @override
   @JsonKey(ignore: true)
   _$$AudioMetadataImplCopyWith<_$AudioMetadataImpl> get copyWith =>

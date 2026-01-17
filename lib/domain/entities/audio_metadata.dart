@@ -20,6 +20,7 @@ class AudioMetadata with _$AudioMetadata {
     String? recordedBy,
     int? bitrate,
     String? format,
+    int? sampleRate,
   }) = _AudioMetadata;
 
   factory AudioMetadata.fromJson(Map<String, dynamic> json) =>

@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/router/auth_session.dart';
+import '../../../core/services/guest_favorite_service.dart';
 import '../../../domain/entities/auth_state.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/auth_repository.dart';
+import '../../../domain/usecases/discovery/toggle_favorite.dart';
 import '../../../data/models/user_model.dart';
 
 const _tokenKey = 'auth_token';
@@ -95,6 +97,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       (failure) => Left(failure),
       (response) async {
         await _persistAuth(response);
+        
+        // Migrate guest favorites to authenticated account
+        await _migrateGuestFavorites(response.user.id);
+        
         _setState(AuthState.authenticated(
           user: response.user,
           token: response.accessToken,
@@ -121,6 +127,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       (failure) => Left(failure),
       (response) async {
         await _persistAuth(response);
+        
+        // Migrate guest favorites to new account
+        await _migrateGuestFavorites(response.user.id);
+        
         _setState(AuthState.authenticated(
           user: response.user,
           token: response.accessToken,
@@ -203,5 +213,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void _setState(AuthState next) {
     state = next;
     AuthSession.instance.setState(next);
+  }
+
+  /// Migrate guest favorites to authenticated user account
+  Future<void> _migrateGuestFavorites(String userId) async {
+    try {
+      final guestService = getIt<GuestFavoriteService>();
+      final guestFavorites = await guestService.getFavorites();
+
+      if (guestFavorites.isEmpty) {
+        return;
+      }
+
+      // Sync to cloud using ToggleFavorite use case for each song
+      final toggleFavorite = getIt<ToggleFavorite>();
+
+      for (final songId in guestFavorites) {
+        try {
+          await toggleFavorite(songId: songId, userId: userId);
+        } catch (e) {
+          // Continue with other favorites even if one fails
+          print('Error migrating favorite $songId: $e');
+        }
+      }
+
+      // Clear guest favorites after successful migration
+      await guestService.clear();
+
+      print('Migrated ${guestFavorites.length} guest favorites to cloud');
+    } catch (e) {
+      print('Error migrating guest favorites: $e');
+      // Don't throw - migration failure shouldn't block login
+    }
   }
 }

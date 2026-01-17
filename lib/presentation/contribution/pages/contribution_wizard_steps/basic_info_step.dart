@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
-import '../../../../domain/entities/song.dart';
 import '../../../shared/widgets/ethnic_group_selector.dart';
-import '../../../shared/widgets/instrument_selector.dart';
-import '../../../shared/widgets/location_picker.dart';
 
 /// Step 2: Basic Information
 class BasicInfoStep extends ConsumerWidget {
@@ -23,7 +20,7 @@ class BasicInfoStep extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Bước 2: Thông tin cơ bản',
+            'Bước 2: Thông tin định danh',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 24),
@@ -38,24 +35,34 @@ class BasicInfoStep extends ConsumerWidget {
             onChanged: (value) => formNotifier.updateTitle(value),
           ),
           const SizedBox(height: 16),
-          // Alternative titles
+          // Artist
           TextFormField(
-            initialValue: song?.alternativeTitles?.join(', '),
+            initialValue:
+                song?.audioMetadata?.performerNames?.join(', ') ?? '',
             decoration: const InputDecoration(
-              labelText: 'Tên khác (tùy chọn)',
+              labelText: 'Nghệ sĩ *',
               border: OutlineInputBorder(),
-              hintText: 'Các tên khác, phân cách bằng dấu phẩy',
+              hintText: 'Tên nghệ sĩ, phân cách bằng dấu phẩy',
             ),
-            maxLines: 2,
             onChanged: (value) {
-              final alternatives = value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-              if (song != null) {
-                final updatedSong = song.copyWith(
-                  alternativeTitles: alternatives.isEmpty ? null : alternatives,
-                );
-                formNotifier.updateSongData(updatedSong);
-              }
+              final performers = value
+                  .split(',')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+              formNotifier.updateArtist(performers);
             },
+          ),
+          const SizedBox(height: 16),
+          // Author
+          TextFormField(
+            initialValue: song?.author ?? 'Dân gian',
+            decoration: const InputDecoration(
+              labelText: 'Tác giả',
+              border: OutlineInputBorder(),
+              hintText: 'Mặc định: Dân gian',
+            ),
+            onChanged: (value) => formNotifier.updateAuthor(value),
           ),
           const SizedBox(height: 16),
           // Genre dropdown
@@ -77,58 +84,9 @@ class BasicInfoStep extends ConsumerWidget {
               }
             },
           ),
-          const SizedBox(height: 24),
-          // Ethnic group selector
-          const Text(
-            'Dân tộc *',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          EthnicGroupSelector(
-            selectedId: song?.ethnicGroupId,
-            onSelected: (group) {
-              if (group != null) {
-                formNotifier.updateEthnicGroup(group.id);
-              }
-            },
-          ),
-          const SizedBox(height: 24),
-          // Instrument selector
-          const Text(
-            'Nhạc cụ',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 200,
-            child: InstrumentSelector(
-              selectedIds: song?.audioMetadata?.instrumentIds ?? [],
-              onSelectionChanged: (ids) => formNotifier.updateInstruments(ids),
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Location picker
-          const Text(
-            'Địa điểm',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          if (song != null)
-            LocationPicker(
-              initialLocation: song.audioMetadata?.recordingLocation,
-              onLocationSelected: (location) {
-                final audioMetadata = song.audioMetadata;
-                if (audioMetadata != null && song != null) {
-                  final updatedMetadata = audioMetadata.copyWith(
-                    recordingLocation: location,
-                  );
-                  final updatedSong = song.copyWith(
-                    audioMetadata: updatedMetadata,
-                  );
-                  formNotifier.updateSongData(updatedSong);
-                }
-              },
-            ),
+          const SizedBox(height: 16),
+          // Language selector
+          _buildLanguageSelector(ref, formNotifier, song?.language),
         ],
       ),
     );
@@ -147,5 +105,65 @@ class BasicInfoStep extends ConsumerWidget {
       case MusicGenre.contemporary:
         return 'Đương đại';
     }
+  }
+
+  Widget _buildLanguageSelector(
+    WidgetRef ref,
+    ContributionFormNotifier formNotifier,
+    String? currentLanguage,
+  ) {
+    final groupsAsync = ref.watch(ethnicGroupsProvider);
+    return groupsAsync.when(
+      data: (groups) {
+        final options = <String>[
+          'Tiếng Việt',
+          ...groups.map((group) => group.name),
+        ];
+        final selected =
+            currentLanguage != null && options.contains(currentLanguage)
+                ? currentLanguage
+                : options.first;
+        return DropdownButtonFormField<String>(
+          value: selected,
+          decoration: const InputDecoration(
+            labelText: 'Ngôn ngữ *',
+            border: OutlineInputBorder(),
+          ),
+          items: options
+              .map(
+                (value) => DropdownMenuItem(
+                  value: value,
+                  child: Text(value),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) {
+              formNotifier.updateLanguage(value);
+            }
+          },
+        );
+      },
+      loading: () => const TextField(
+        decoration: InputDecoration(
+          labelText: 'Ngôn ngữ',
+          border: OutlineInputBorder(),
+          suffixIcon: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        enabled: false,
+      ),
+      error: (error, stack) => const TextField(
+        decoration: InputDecoration(
+          labelText: 'Ngôn ngữ',
+          border: OutlineInputBorder(),
+          errorText: 'Không thể tải danh sách ngôn ngữ',
+        ),
+        enabled: false,
+      ),
+    );
   }
 }

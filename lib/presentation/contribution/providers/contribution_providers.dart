@@ -3,6 +3,7 @@ import '../../../domain/entities/contribution_request.dart';
 import '../../../domain/entities/song.dart';
 import '../../../domain/entities/audio_metadata.dart';
 import '../../../domain/entities/enums.dart';
+import '../../../core/utils/audio_metadata_extractor.dart';
 import '../../../domain/usecases/contribution/get_user_contributions.dart';
 import '../../../domain/usecases/contribution/submit_contribution.dart';
 import '../../../domain/usecases/contribution/get_contribution_by_id.dart';
@@ -40,6 +41,48 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
     );
   }
 
+  void updateAudioMetadataExtracted(AudioFileMetadata metadata) {
+    final song = state.songData;
+    if (song == null) return;
+    final audioMetadata = song.audioMetadata;
+    if (audioMetadata == null) return;
+
+    final updatedMetadata = audioMetadata.copyWith(
+      format: metadata.format,
+      bitrate: metadata.bitrateKbps,
+      sampleRate: metadata.sampleRateHz,
+      durationInSeconds: metadata.durationInSeconds,
+    );
+
+    state = state.copyWith(
+      songData: song.copyWith(audioMetadata: updatedMetadata),
+    );
+  }
+
+  void updateArtist(List<String> performerNames) {
+    final song = state.songData;
+    if (song == null) return;
+    final audioMetadata = song.audioMetadata;
+    if (audioMetadata == null) return;
+    state = state.copyWith(
+      songData: song.copyWith(
+        audioMetadata: audioMetadata.copyWith(performerNames: performerNames),
+      ),
+    );
+  }
+
+  void updateAuthor(String author) {
+    state = state.copyWith(
+      songData: state.songData?.copyWith(author: author),
+    );
+  }
+
+  void updateLanguage(String language) {
+    state = state.copyWith(
+      songData: state.songData?.copyWith(language: language),
+    );
+  }
+
   void updateTitle(String title) {
     state = state.copyWith(
       songData: state.songData?.copyWith(title: title),
@@ -49,6 +92,29 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
   void updateGenre(MusicGenre genre) {
     state = state.copyWith(
       songData: state.songData?.copyWith(genre: genre),
+    );
+  }
+
+  void updatePerformanceType(PerformanceType type) {
+    final song = state.songData;
+    if (song == null) return;
+
+    // Auto-clear instruments when switching to A Cappella
+    if (type == PerformanceType.aCappella) {
+      final audioMetadata = song.audioMetadata;
+      if (audioMetadata != null && (audioMetadata.instrumentIds?.isNotEmpty ?? false)) {
+        state = state.copyWith(
+          songData: song.copyWith(
+            performanceType: type,
+            audioMetadata: audioMetadata.copyWith(instrumentIds: []),
+          ),
+        );
+        return;
+      }
+    }
+
+    state = state.copyWith(
+      songData: song.copyWith(performanceType: type),
     );
   }
 
@@ -67,6 +133,35 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
         ),
       );
     }
+  }
+
+  void updateRecordingDate(DateTime date) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata != null) {
+      state = state.copyWith(
+        songData: state.songData?.copyWith(
+          audioMetadata: audioMetadata.copyWith(recordingDate: date),
+        ),
+      );
+    }
+  }
+
+  void updateIsRecordingDateEstimated(bool isEstimated) {
+    state = state.copyWith(
+      songData: state.songData?.copyWith(isRecordingDateEstimated: isEstimated),
+    );
+  }
+
+  void updateCopyrightInfo(String? info) {
+    state = state.copyWith(
+      songData: state.songData?.copyWith(copyrightInfo: info),
+    );
+  }
+
+  void updateFieldNotes(String? notes) {
+    state = state.copyWith(
+      songData: state.songData?.copyWith(fieldNotes: notes),
+    );
   }
 
   void updateLyrics({
@@ -91,15 +186,32 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
         return state.songData?.audioMetadata?.url != null &&
             state.songData!.audioMetadata!.url.isNotEmpty;
       case 1: // Basic info
-        return state.songData?.title != null &&
-            state.songData!.title.isNotEmpty &&
-            state.songData?.ethnicGroupId != null &&
-            state.songData!.ethnicGroupId.isNotEmpty;
+        final hasTitle =
+            state.songData?.title != null && state.songData!.title.isNotEmpty;
+        final hasArtist =
+            state.songData?.audioMetadata?.performerNames?.isNotEmpty == true;
+        final hasGenre = state.songData?.genre != null;
+        final hasLanguage =
+            state.songData?.language != null && state.songData!.language!.isNotEmpty;
+        return hasTitle && hasArtist && hasGenre && hasLanguage;
       case 2: // Cultural context
-        return true; // Optional step
-      case 3: // Lyrics
-        return true; // Optional step
-      case 4: // Review
+        final ethnicGroupId = state.songData?.ethnicGroupId;
+        return ethnicGroupId != null && ethnicGroupId.isNotEmpty;
+      case 3: // Performance details
+        final performanceType = state.songData?.performanceType;
+        if (performanceType == null) return false;
+
+        final hasInstruments =
+            state.songData?.audioMetadata?.instrumentIds?.isNotEmpty == true;
+
+        switch (performanceType) {
+          case PerformanceType.instrumental:
+          case PerformanceType.vocalWithAccompaniment:
+            return hasInstruments; // Bắt buộc có nhạc cụ
+          case PerformanceType.aCappella:
+            return !hasInstruments; // Không được có nhạc cụ
+        }
+      case 4: // Notes & submit
         return true;
       default:
         return false;
@@ -130,6 +242,9 @@ class ContributionFormState {
         genre: MusicGenre.folk,
         ethnicGroupId: '',
         verificationStatus: VerificationStatus.pending,
+        author: 'Dân gian',
+        language: 'Tiếng Việt',
+        isRecordingDateEstimated: false,
       ),
     );
   }

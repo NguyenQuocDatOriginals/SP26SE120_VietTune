@@ -40,6 +40,8 @@ import '../../domain/usecases/auth/refresh_token.dart';
 import '../../domain/usecases/auth/update_profile.dart';
 import '../../domain/usecases/auth/change_password.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/guest_favorite_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -187,4 +189,10 @@ abstract class UseCaseModule {
   @lazySingleton
   ChangePassword changePassword(AuthRepository repository) =>
       ChangePassword(repository);
+}
+
+@module
+abstract class ServiceModule {
+  @lazySingleton
+  GuestFavoriteService get guestFavoriteService => GuestFavoriteService();
 }

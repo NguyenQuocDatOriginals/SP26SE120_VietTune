@@ -26,6 +26,7 @@ _$AudioMetadataImpl _$$AudioMetadataImplFromJson(Map<String, dynamic> json) =>
       recordedBy: json['recordedBy'] as String?,
       bitrate: (json['bitrate'] as num?)?.toInt(),
       format: json['format'] as String?,
+      sampleRate: (json['sampleRate'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$AudioMetadataImplToJson(_$AudioMetadataImpl instance) =>
@@ -41,6 +42,7 @@ Map<String, dynamic> _$$AudioMetadataImplToJson(_$AudioMetadataImpl instance) =>
       'recordedBy': instance.recordedBy,
       'bitrate': instance.bitrate,
       'format': instance.format,
+      'sampleRate': instance.sampleRate,
     };
 
 const _$AudioQualityEnumMap = {

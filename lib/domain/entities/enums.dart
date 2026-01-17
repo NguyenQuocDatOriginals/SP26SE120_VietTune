@@ -53,6 +53,13 @@ enum AudioQuality {
   professional,
 }
 
+/// Performance types for contributions
+enum PerformanceType {
+  instrumental,           // Chỉ nhạc cụ
+  aCappella,              // Chỉ giọng hát không đệm
+  vocalWithAccompaniment, // Giọng hát có nhạc đệm
+}
+
 /// User roles for authentication/authorization
 enum UserRole {
   researcher,

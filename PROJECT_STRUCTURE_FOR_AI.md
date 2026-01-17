@@ -3,9 +3,9 @@
     ## 📋 Project Overview
 
     **Project**: VietTune Archive - Intelligent Vietnamese Traditional Music Documentation System  
-    **Platform**: Flutter Mobile (iOS & Android)  
+    **Platform**: Flutter Mobile (iOS & Android) + Web  
     **Architecture**: Clean Architecture (Domain, Data, Presentation)  
-    **Current Status**: ~70% Complete  
+    **Current Status**: ~85% Complete  
 
     ## 🏗️ Architecture Layers
 
@@ -36,7 +36,8 @@
     │   │   │   ├── injection.dart               ✅ DI configuration (GetIt + Injectable)
     │   │   │   └── injection.config.dart        ✅ Generated DI config
     │   │   ├── router/
-    │   │   │   └── app_router.dart              ✅ GoRouter configuration
+    │   │   │   ├── app_router.dart              ✅ GoRouter configuration (with auth redirects)
+    │   │   │   └── auth_session.dart            ✅ Global auth session state
     │   │   ├── theme/
     │   │   │   └── app_theme.dart               ✅ App theming (Vietnamese colors)
     │   │   └── utils/
@@ -44,26 +45,32 @@
     │   │       ├── extensions.dart              ✅ Dart extensions
     │   │       ├── validators.dart              ✅ Form validators
     │   │       ├── audio_utils.dart             ✅ Audio helpers
+    │   │       ├── audio_metadata_extractor.dart ✅ Audio metadata extraction (just_audio)
     │   │       └── location_utils.dart          ✅ GPS/location helpers
     │   │
     │   ├── domain/                               # Business Logic Layer
     │   │   ├── entities/                         # Pure Dart models
-    │   │   │   ├── enums.dart                   ✅ All enums (Status, Types, Genres)
-    │   │   │   ├── song.dart                    ✅ Song entity + freezed
+    │   │   │   ├── enums.dart                   ✅ All enums (Status, Types, Genres, UserRole, PerformanceType)
+    │   │   │   ├── song.dart                    ✅ Song entity + freezed (with new fields: author, performanceType, copyrightInfo, fieldNotes, isRecordingDateEstimated)
     │   │   │   ├── instrument.dart              ✅ Instrument entity + freezed
     │   │   │   ├── ethnic_group.dart            ✅ Ethnic group entity + freezed
     │   │   │   ├── contribution_request.dart    ✅ Contribution entity + freezed
-    │   │   │   ├── audio_metadata.dart          ✅ Audio metadata entity + freezed
+    │   │   │   ├── audio_metadata.dart          ✅ Audio metadata entity + freezed (with sampleRate)
     │   │   │   ├── cultural_context.dart        ✅ Cultural context entity + freezed
     │   │   │   ├── location.dart                ✅ Location entity + freezed
+    │   │   │   ├── user.dart                    ✅ User entity + freezed (with role, profile fields)
+    │   │   │   ├── auth_state.dart              ✅ AuthState (authenticated/unauthenticated/loading) + freezed
+    │   │   │   ├── contribution_statistics.dart ✅ Contribution statistics entity + freezed
     │   │   │   └── *.freezed.dart, *.g.dart     ✅ Generated files
     │   │   │
     │   │   ├── repositories/                     # Abstract interfaces
     │   │   │   ├── base_repository.dart         ✅ Base repo + QueryParams
-    │   │   │   ├── song_repository.dart         ✅ Song operations interface
+    │   │   │   ├── song_repository.dart         ✅ Song operations interface (with RBAC support)
     │   │   │   ├── instrument_repository.dart   ✅ Instrument operations interface
     │   │   │   ├── ethnic_group_repository.dart ✅ Ethnic group operations interface
-    │   │   │   └── contribution_repository.dart ✅ Contribution operations interface
+    │   │   │   ├── contribution_repository.dart ✅ Contribution operations interface (with RBAC support)
+    │   │   │   ├── auth_repository.dart         ✅ Auth operations interface (login, register, logout, refresh token)
+    │   │   │   └── user_repository.dart         ✅ User operations interface (profile, stats, role management)
     │   │   │
     │   │   ├── usecases/                         # Business logic operations
     │   │   │   ├── discovery/
@@ -78,10 +85,28 @@
     │   │   │   │   ├── get_user_contributions.dart ✅ Get user's submissions
     │   │   │   │   ├── get_contribution_by_id.dart ✅
     │   │   │   │   └── update_contribution.dart ✅
+    │   │   │   ├── auth/
+    │   │   │   │   ├── login.dart               ✅ Login use case
+    │   │   │   │   ├── register.dart            ✅ Register use case
+    │   │   │   │   ├── logout.dart              ✅ Logout use case
+    │   │   │   │   ├── get_current_user.dart    ✅ Get current user
+    │   │   │   │   ├── refresh_token.dart       ✅ Refresh token
+    │   │   │   │   ├── update_profile.dart      ✅ Update user profile
+    │   │   │   │   ├── change_password.dart     ✅ Change password
+    │   │   │   │   └── request_contributor_role.dart ✅ Request contributor role
+    │   │   │   ├── user/
+    │   │   │   │   ├── get_user_by_id.dart      ✅ Get user by ID
+    │   │   │   │   ├── get_user_stats.dart      ✅ Get user statistics
+    │   │   │   │   ├── search_users.dart        ✅ Search users
+    │   │   │   │   ├── promote_to_contributor.dart ✅ Promote user to contributor
+    │   │   │   │   └── promote_to_expert.dart   ✅ Promote user to expert
     │   │   │   └── reference/
     │   │   │       ├── get_instruments.dart     ✅ Get instrument list
     │   │   │       ├── get_ethnic_groups.dart   ✅ Get ethnic group list
     │   │   │       └── get_regions.dart         ✅ Get regions
+    │   │   │
+    │   │   ├── services/
+    │   │   │   └── permission_guard.dart        ✅ RBAC permission checks (canViewSong, canEditSong, canReviewContributions, canSubmitContributions)
     │   │   │
     │   │   └── failures/
     │   │       ├── failure.dart                 ✅ Failure union types
@@ -90,35 +115,40 @@
     │   ├── data/                                 # Data Layer
     │   │   ├── models/                           # JSON serializable DTOs
     │   │   │   ├── models.dart                  ✅ Barrel export
-    │   │   │   ├── song_model.dart              ✅ Song DTO + toEntity()
+    │   │   │   ├── song_model.dart              ✅ Song DTO + toEntity() (with new fields)
     │   │   │   ├── instrument_model.dart        ✅ Instrument DTO
     │   │   │   ├── ethnic_group_model.dart      ✅ Ethnic group DTO
     │   │   │   ├── contribution_request_model.dart ✅ Contribution DTO
-    │   │   │   ├── audio_metadata_model.dart    ✅ Audio metadata DTO
+    │   │   │   ├── audio_metadata_model.dart    ✅ Audio metadata DTO (with sampleRate)
     │   │   │   ├── cultural_context_model.dart  ✅ Cultural context DTO
     │   │   │   ├── location_model.dart          ✅ Location DTO
+    │   │   │   ├── user_model.dart              ✅ User DTO + toEntity()
+    │   │   │   ├── auth_response_model.dart     ✅ Auth response DTO
     │   │   │   └── *.g.dart                     ✅ Generated JSON serialization
     │   │   │
     │   │   ├── datasources/
     │   │   │   └── mock/                         # Mock data for development
     │   │   │       ├── mock_data_sources.dart   ✅ Barrel export
-    │   │   │       ├── mock_song_data_source.dart ✅ ~50 Vietnamese songs
+    │   │   │       ├── mock_song_data_source.dart ✅ ~50 Vietnamese songs (with new fields)
     │   │   │       ├── mock_instrument_data_source.dart ✅ 50+ instruments
     │   │   │       ├── mock_ethnic_group_data_source.dart ✅ 54 ethnic groups
-    │   │   │       └── mock_contribution_data_source.dart ✅ Sample contributions
+    │   │   │       ├── mock_contribution_data_source.dart ✅ Sample contributions
+    │   │   │       └── mock_auth_data_source.dart ✅ Mock auth with sample users (researcher, contributor, expert, admin)
     │   │   │
     │   │   └── repositories/                     # Repository implementations
     │   │       ├── repositories.dart            ✅ Barrel export
-    │   │       ├── song_repository_impl.dart    ✅ Song repo with mock data
+    │   │       ├── song_repository_impl.dart    ✅ Song repo with mock data (RBAC support)
     │   │       ├── instrument_repository_impl.dart ✅
     │   │       ├── ethnic_group_repository_impl.dart ✅
-    │   │       └── contribution_repository_impl.dart ✅
+    │   │       ├── contribution_repository_impl.dart ✅ (RBAC support, approve/reject for experts)
+    │   │       ├── auth_repository_impl.dart    ✅ Auth repo with mock auth data source
+    │   │       └── user_repository_impl.dart    ✅ User repo with user operations
     │   │
     │   ├── presentation/                         # UI Layer
     │   │   ├── shared/
     │   │   │   ├── pages/
     │   │   │   │   ├── splash_page.dart         ✅ Splash screen
-    │   │   │   │   └── home_page.dart           ✅ Bottom nav (3 tabs)
+    │   │   │   │   └── home_page.dart           ✅ Bottom nav (3 tabs, conditional based on role)
     │   │   │   └── widgets/
     │   │   │       ├── audio_player_widget.dart ⚠️ Widget exists, needs audio logic
     │   │   │       ├── song_card.dart           ✅ Song list item
@@ -140,17 +170,32 @@
     │   │   │
     │   │   ├── contribution/                     # Contributor Portal
     │   │   │   ├── pages/
-    │   │   │   │   ├── new_contribution_page.dart ✅ Wizard container
-    │   │   │   │   ├── submissions_page.dart    ⚠️ Needs implementation
+    │   │   │   │   ├── new_contribution_page.dart ✅ Wizard container (5 steps)
+    │   │   │   │   ├── submissions_page.dart    ✅ User submissions list with status
     │   │   │   │   ├── contribution_detail_page.dart ⚠️ Needs implementation
     │   │   │   │   └── contribution_wizard_steps/
-    │   │   │   │       ├── audio_upload_step.dart ⚠️ Needs file picker logic
-    │   │   │   │       ├── basic_info_step.dart   ⚠️ Needs form logic
-    │   │   │   │       ├── cultural_context_step.dart ⚠️ Needs form logic
-    │   │   │   │       ├── lyrics_step.dart       ⚠️ Needs form logic
-    │   │   │   │       └── review_submit_step.dart ⚠️ Needs submission logic
+    │   │   │   │       ├── audio_upload_step.dart ✅ File picker + auto metadata extraction (format, bitrate, sample rate, duration)
+    │   │   │   │       ├── basic_info_step.dart   ✅ Title, Artist, Author, Genre, Language
+    │   │   │   │       ├── cultural_context_step.dart ✅ Ethnic Group, Region (Province/City), Event Type, Location
+    │   │   │   │       ├── performance_details_step.dart ✅ Performance Type, Instruments, Recording Date, Estimated Date checkbox
+    │   │   │   │       ├── notes_copyright_step.dart ✅ Lyrics (Native/Vietnamese), Copyright, Field Notes
+    │   │   │   │       ├── lyrics_step.dart       ⚠️ Legacy file (kept for reference)
+    │   │   │   │       └── review_submit_step.dart ⚠️ Legacy file (kept for reference)
     │   │   │   └── providers/
-    │   │   │       └── contribution_providers.dart ❌ CRITICAL - needs implementation
+    │   │   │       └── contribution_providers.dart ✅ Full form state management with all fields
+    │   │   │
+    │   │   ├── auth/                             # Authentication & Authorization
+    │   │   │   ├── pages/
+    │   │   │   │   ├── login_page.dart          ✅ Login UI with email/password
+    │   │   │   │   └── register_page.dart       ✅ Registration UI
+    │   │   │   ├── providers/
+    │   │   │   │   └── auth_provider.dart       ✅ AuthNotifier with Riverpod (login/logout/session restore)
+    │   │   │   └── widgets/
+    │   │   │       └── role_badge.dart          ✅ User role display badge
+    │   │   │
+    │   │   ├── review/                           # Expert Review Portal
+    │   │   │   └── pages/
+    │   │   │       └── review_queue_page.dart   ✅ Review queue for experts/admins
     │   │   │
     │   │   └── profile/                          # Profile & Settings
     │   │       └── pages/
@@ -186,11 +231,16 @@
 
     ### Media & Files
     ```yaml
-    just_audio: ^0.9.36           # Audio playback
+    just_audio: ^0.9.36           # Audio playback + metadata extraction
     audio_service: ^0.18.12       # Background audio
     image_picker: ^1.0.7          # Image selection
-    file_picker: ^6.1.1           # File selection
+    file_picker: ^6.1.1           # File selection (web + mobile)
     path_provider: ^2.1.2         # File paths
+    ```
+    
+    ### Security & Storage
+    ```yaml
+    flutter_secure_storage: ^9.0.0 # Secure token storage
     ```
 
     ### Location & UI
@@ -205,29 +255,34 @@
 
     | Layer | Component | Status | Completion |
     |-------|-----------|--------|------------|
-    | **DOMAIN** | Entities (8 files) | ✅ Done | 100% |
-    | | Enums | ✅ Done | 100% |
-    | | Repository Interfaces (4) | ✅ Done | 100% |
-    | | Use Cases (13) | ✅ Done | 100% |
+    | **DOMAIN** | Entities (11 files) | ✅ Done | 100% |
+    | | Enums (includes UserRole, PerformanceType) | ✅ Done | 100% |
+    | | Repository Interfaces (7) | ✅ Done | 100% |
+    | | Use Cases (21+) | ✅ Done | 100% |
+    | | Services (PermissionGuard) | ✅ Done | 100% |
     | | Failures | ✅ Done | 100% |
-    | **DATA** | Models/DTOs (7) | ✅ Done | 100% |
-    | | Mock DataSources (4) | ✅ Done | 95% |
-    | | Repository Impls (4) | ✅ Done | 100% |
+    | **DATA** | Models/DTOs (9) | ✅ Done | 100% |
+    | | Mock DataSources (5) | ✅ Done | 100% |
+    | | Repository Impls (7) | ✅ Done | 100% |
     | **INFRASTRUCTURE** | DI Setup | ✅ Done | 100% |
-    | | Router | ✅ Done | 100% |
+    | | Router (with auth guards) | ✅ Done | 100% |
     | | Theme | ✅ Done | 100% |
-    | | Utils | ✅ Done | 100% |
-    | **PRESENTATION** | Shared Widgets | ✅ Done | 90% |
-    | | Home & Navigation | ✅ Done | 100% |
+    | | Utils (includes AudioMetadataExtractor) | ✅ Done | 100% |
+    | **PRESENTATION** | Shared Widgets | ✅ Done | 95% |
+    | | Home & Navigation (RBAC-aware) | ✅ Done | 100% |
+    | | Auth Pages (Login/Register) | ✅ Done | 100% |
+    | | Auth Providers (Riverpod) | ✅ Done | 100% |
     | | Discovery Home | ✅ Done | 80% |
-    | | Contribution Wizard | ⚠️ Partial | 40% |
-    | | Detail Pages | ⚠️ Partial | 30% |
-    | | Search & Discovery | ⚠️ Partial | 20% |
+    | | Contribution Wizard (5 steps) | ✅ Done | 95% |
+    | | Contribution Providers | ✅ Done | 100% |
+    | | Review Queue (Expert) | ✅ Done | 90% |
+    | | Detail Pages | ⚠️ Partial | 50% |
+    | | Search & Discovery | ⚠️ Partial | 30% |
     | | Profile Pages | ⚠️ Partial | 40% |
-    | **TESTING** | Unit Tests | ❌ Missing | 0% |
+    | **TESTING** | Unit Tests (Auth/Permissions) | ⚠️ Partial | 20% |
     | | Widget Tests | ❌ Missing | 0% |
 
-    **Overall: ~70% Complete**
+    **Overall: ~85% Complete**
 
     ## 🎯 Key Code Samples
 
@@ -385,39 +440,136 @@
     }
     ```
 
-    ### 7. Contribution Wizard (new_contribution_page.dart)
+### 7. Contribution Wizard - 5-Step Flow (new_contribution_page.dart)
 
-    ```dart
-    class NewContributionPage extends ConsumerWidget {
-    @override
-    Widget build(BuildContext context, WidgetRef ref) {
-        final formState = ref.watch(contributionFormProvider);
-        
-        final steps = [
-        AudioUploadStep(),
-        BasicInfoStep(),
-        CulturalContextStep(),
-        LyricsStep(),
-        ReviewSubmitStep(),
-        ];
-        
-        return Scaffold(
-        body: Column(
-            children: [
-            // Step indicator progress bar
-            StepIndicator(currentStep: formState.currentStep),
-            // Current step content
-            Expanded(child: steps[formState.currentStep]),
-            // Navigation buttons
-            NavigationButtons(...),
-            ],
-        ),
-        );
-    }
-    }
-    ```
+**Step 1: Audio Upload & Auto-detection**
+- File picker (web + mobile compatible)
+- Automatic metadata extraction: Format, Bitrate, Sample Rate, Duration
+- Display "Thông tin ghi âm" card with extracted info
 
-    ### 8. Mock Data Example (mock_song_data_source.dart)
+**Step 2: Basic Description**
+- Title, Artist (performerNames), Author
+- Genre (dropdown), Language (ethnic groups or "Tiếng Việt")
+
+**Step 3: Cultural Context**
+- Ethnic Group (searchable dropdown)
+- Region (Province/City - 63 Vietnamese provinces)
+- Event Type, Specific Location
+
+**Step 4: Performance Details & Instruments**
+- Performance Type (Instrumental/Vocal/Both - radio buttons)
+- Instruments (multi-select tags/chips)
+- Recording Date (date picker) + "Estimated Date" checkbox
+
+**Step 5: Notes & Copyright**
+- Lyrics (Native Script and Vietnamese Translation)
+- Copyright/Archive Organization
+- Field Notes
+
+```dart
+class NewContributionPage extends ConsumerWidget {
+@override
+Widget build(BuildContext context, WidgetRef ref) {
+    final formState = ref.watch(contributionFormProvider);
+    
+    final steps = [
+    AudioUploadStep(),      // Step 1: Upload + metadata extraction
+    BasicInfoStep(),        // Step 2: Title, Artist, Author, Genre, Language
+    CulturalContextStep(),  // Step 3: Ethnic Group, Region, Event, Location
+    PerformanceDetailsStep(), // Step 4: Performance Type, Instruments, Date
+    NotesCopyrightStep(),   // Step 5: Lyrics, Copyright, Field Notes
+    ];
+    
+    return Scaffold(
+    body: Column(
+        children: [
+        // 5-step progress indicator
+        StepIndicator(currentStep: formState.currentStep),
+        // Current step content
+        Expanded(child: steps[formState.currentStep]),
+        // Navigation buttons (Prev/Next)
+        NavigationButtons(...),
+        ],
+    ),
+    );
+}
+}
+```
+
+### 8. Authentication & RBAC System
+
+**Auth Provider with Riverpod:**
+```dart
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  final repository = getIt<AuthRepository>();
+  final storage = getIt<FlutterSecureStorage>();
+  return AuthNotifier(repository, storage);
+});
+
+class AuthNotifier extends StateNotifier<AuthState> {
+  final AuthRepository _repository;
+  final FlutterSecureStorage _storage;
+  
+  AuthNotifier(this._repository, this._storage)
+      : super(const AuthState.loading()) {
+    _restoreSession();
+  }
+  
+  Future<void> login(String email, String password) async {
+    state = const AuthState.loading();
+    final result = await _repository.login(email: email, password: password);
+    // Handle result, store tokens, update state...
+  }
+}
+```
+
+**Permission Guard (RBAC):**
+```dart
+class PermissionGuard {
+  static bool canViewSong(Song song, User user) {
+    switch (user.role) {
+      case UserRole.researcher:
+        return song.verificationStatus == VerificationStatus.verified;
+      case UserRole.contributor:
+        return song.verificationStatus == VerificationStatus.verified ||
+            song.contributorId == user.id;
+      case UserRole.expert:
+      case UserRole.admin:
+        return true;
+    }
+  }
+  
+  static bool canReviewContributions(User user) =>
+      user.role == UserRole.expert || user.role == UserRole.admin;
+}
+```
+
+**User Roles:**
+- **Researcher**: View verified songs only
+- **Contributor**: View verified + own submissions, can submit contributions
+- **Expert**: Full access, can review contributions
+- **Admin**: Full access + user management
+
+**Router with Auth Guards:**
+```dart
+final appRouter = GoRouter(
+  redirect: (context, state) {
+    final authState = ref.read(authProvider);
+    final isLoggedIn = authState.maybeWhen(
+      authenticated: (_, __, ___) => true,
+      orElse: () => false,
+    );
+    
+    final isLoginRoute = state.uri.path == authLogin;
+    if (!isLoggedIn && !isLoginRoute) return authLogin;
+    if (isLoggedIn && isLoginRoute) return home;
+    return null;
+  },
+  // ... routes
+);
+```
+
+### 9. Mock Data Example (mock_song_data_source.dart)
 
     ```dart
     class MockSongDataSourceImpl implements MockSongDataSource {
@@ -508,20 +660,19 @@
     - State management integration
     - Error handling
 
-    ### 3. **Detail Pages** (HIGH PRIORITY)
-    - `song_detail_page.dart`: Complete song view with player
-    - `instrument_detail_page.dart`: Instrument info + related songs
-    - `ethnic_group_detail_page.dart`: Ethnic group info + songs
-    - `contribution_detail_page.dart`: View submission status
+- `song_detail_page.dart`: Complete song view with player (skeleton exists, needs content)
+- `instrument_detail_page.dart`: Instrument info + related songs
+- `ethnic_group_detail_page.dart`: Ethnic group info + songs
+- `contribution_detail_page.dart`: View submission status
 
-    ### 4. **Search Page** (MEDIUM PRIORITY)
+### 2. **Search Page** (MEDIUM PRIORITY)
     Advanced search UI with:
     - Text search input
     - Filter chips (ethnic group, instrument, genre, region)
     - Results list with pagination
     - Empty/error states
 
-    ### 5. **Audio Player Logic** (MEDIUM PRIORITY)
+    ### 3. **Audio Player Logic** (MEDIUM PRIORITY)
     `audio_player_widget.dart` needs:
     - just_audio integration
     - Play/pause/seek controls
@@ -538,15 +689,16 @@
     ✅ Infrastructure (DI, Router, Theme)
     ✅ Basic UI structure
 
-    Week 3-4 (IN PROGRESS - 40%):
-    ⚠️ Contribution wizard structure
-    ❌ Wizard form logic
-    ❌ File upload handling
+    Week 3-4 (COMPLETED - 100%):
+    ✅ Contribution wizard structure (5 steps)
+    ✅ Wizard form logic (full state management)
+    ✅ File upload handling + metadata extraction
+    ✅ Authentication & RBAC system
 
-    Week 5-7 (NOT STARTED):
-    ❌ Detail pages
-    ❌ Search functionality
-    ❌ Audio player integration
+    Week 5-7 (IN PROGRESS - 50%):
+    ⚠️ Detail pages (song detail has skeleton, needs content)
+    ⚠️ Search functionality (basic structure exists)
+    ⚠️ Audio player integration (widget exists, needs logic)
 
     Week 8-9 (NOT STARTED):
     ❌ Profile pages
@@ -652,21 +804,26 @@
     - All async operations use **Either<Failure, T>** for error handling
     - **Mock data** is realistic Vietnamese cultural content
     - UI text is in **Vietnamese** (not English)
-    - **User ID** is currently hardcoded as 'current_user_id' (needs auth later)
+    - **Authentication** is fully implemented with mock data (ready for real API integration)
+    - **RBAC** is active - navigation and actions are role-based
     - **Audio/image URLs** are mock (ready for real file upload integration)
 
-    ## 🐛 Known Issues
+## 🐛 Known Issues
 
-    1. `contribution_providers.dart` is empty/stub - needs full implementation
-    2. Wizard steps have UI but no form logic
-    3. Detail pages are skeletons without content
-    4. Audio player widget has no playback logic
-    5. No authentication system yet (user ID hardcoded)
-    6. No tests written yet
-    7. Some mock data could be more diverse (geographic distribution)
+1. ~~`contribution_providers.dart` is empty/stub~~ ✅ **FIXED** - Full implementation complete
+2. ~~Wizard steps have UI but no form logic~~ ✅ **FIXED** - All 5 steps fully functional
+3. Detail pages are skeletons without content - **IN PROGRESS**
+4. Audio player widget has no playback logic - **TODO**
+5. ~~No authentication system~~ ✅ **FIXED** - Full auth + RBAC implemented
+6. Unit tests exist for auth/permissions (20% coverage) - **NEEDS EXPANSION**
+7. Some mock data could be more diverse (geographic distribution) - **MINOR**
+8. File picker on web has limitations (metadata extraction skipped) - **PLATFORM LIMITATION**
 
     ---
 
     **Generated**: 2026-01-16  
-    **Project Status**: 70% Complete, Domain & Infrastructure Solid, UI Needs Implementation  
-    **Ready for**: AI-assisted completion of Presentation layer
+    **Last Updated**: 2026-01-16  
+    **Project Status**: 85% Complete  
+    **Completed**: Domain, Data, Infrastructure, Auth/RBAC, Contribution Wizard  
+    **In Progress**: Detail Pages, Search, Audio Player  
+    **Ready for**: AI-assisted completion of remaining Presentation features

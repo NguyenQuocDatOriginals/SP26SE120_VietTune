@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
-import '../../../../domain/entities/song.dart';
 import '../../../../domain/entities/cultural_context.dart';
+import '../../../../domain/entities/location.dart';
+import '../../../../core/utils/constants.dart';
+import '../../../shared/widgets/ethnic_group_selector.dart';
 
 /// Step 3: Cultural Context
 class CulturalContextStep extends ConsumerStatefulWidget {
@@ -15,11 +17,8 @@ class CulturalContextStep extends ConsumerStatefulWidget {
 
 class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
   ContextType? _selectedContextType;
-  final _seasonController = TextEditingController();
-  final _occasionController = TextEditingController();
-  final _significanceController = TextEditingController();
-  final _performanceDetailsController = TextEditingController();
-  final _historicalBackgroundController = TextEditingController();
+  String? _selectedProvince;
+  final _specificLocationController = TextEditingController();
 
   @override
   void initState() {
@@ -28,21 +27,15 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
     if (song?.culturalContext != null) {
       final context = song!.culturalContext!;
       _selectedContextType = context.type;
-      _seasonController.text = context.season ?? '';
-      _occasionController.text = context.occasion ?? '';
-      _significanceController.text = context.significance ?? '';
-      _performanceDetailsController.text = context.performanceDetails ?? '';
-      _historicalBackgroundController.text = context.historicalBackground ?? '';
     }
+    _selectedProvince = song?.audioMetadata?.recordingLocation?.province;
+    _specificLocationController.text =
+        song?.audioMetadata?.recordingLocation?.commune ?? '';
   }
 
   @override
   void dispose() {
-    _seasonController.dispose();
-    _occasionController.dispose();
-    _significanceController.dispose();
-    _performanceDetailsController.dispose();
-    _historicalBackgroundController.dispose();
+    _specificLocationController.dispose();
     super.dispose();
   }
 
@@ -50,45 +43,101 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
     if (_selectedContextType != null) {
       final formNotifier = ref.read(contributionFormProvider.notifier);
       final song = ref.read(contributionFormProvider).songData;
-      
+
       if (song != null) {
         final culturalContext = CulturalContext(
           type: _selectedContextType!,
-          season: _seasonController.text.isEmpty ? null : _seasonController.text,
-          occasion: _occasionController.text.isEmpty ? null : _occasionController.text,
-          significance: _significanceController.text.isEmpty ? null : _significanceController.text,
-          performanceDetails: _performanceDetailsController.text.isEmpty ? null : _performanceDetailsController.text,
-          historicalBackground: _historicalBackgroundController.text.isEmpty ? null : _historicalBackgroundController.text,
         );
-        
-        final updatedSong = song.copyWith(culturalContext: culturalContext);
+
+        final updatedSong = song.copyWith(
+          culturalContext: culturalContext,
+        );
         formNotifier.updateSongData(updatedSong);
       }
     }
   }
 
+  void _updateRecordingLocation() {
+    final formNotifier = ref.read(contributionFormProvider.notifier);
+    final song = ref.read(contributionFormProvider).songData;
+    if (song == null) return;
+
+    final location = Location(
+      latitude: 0,
+      longitude: 0,
+      province: _selectedProvince,
+      commune: _specificLocationController.text.isEmpty
+          ? null
+          : _specificLocationController.text,
+    );
+    final audioMetadata = song.audioMetadata;
+    if (audioMetadata == null) return;
+
+    final updatedMetadata = audioMetadata.copyWith(
+      recordingLocation: location,
+    );
+    formNotifier.updateSongData(song.copyWith(audioMetadata: updatedMetadata));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final song = ref.watch(contributionFormProvider).songData;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Bước 3: Bối cảnh văn hóa (Tùy chọn)',
+            'Bước 3: Bối cảnh văn hóa',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Thông tin về bối cảnh biểu diễn và ý nghĩa văn hóa',
+            'Thông tin về dân tộc, vùng miền và bối cảnh biểu diễn',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
+          const Text(
+            'Dân tộc *',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          EthnicGroupSelector(
+            selectedId: song?.ethnicGroupId,
+            onSelected: (group) {
+              if (group != null) {
+                ref
+                    .read(contributionFormProvider.notifier)
+                    .updateEthnicGroup(group.id);
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _selectedProvince,
+            decoration: const InputDecoration(
+              labelText: 'Tỉnh/Thành',
+              border: OutlineInputBorder(),
+            ),
+            items: VietnameseProvinces.allProvinces
+                .map(
+                  (province) => DropdownMenuItem(
+                    value: province,
+                    child: Text(province),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              setState(() => _selectedProvince = value);
+              _updateRecordingLocation();
+            },
+          ),
+          const SizedBox(height: 16),
           // Context type
           DropdownButtonFormField<ContextType>(
             value: _selectedContextType,
             decoration: const InputDecoration(
-              labelText: 'Loại bối cảnh',
+              labelText: 'Loại sự kiện',
               border: OutlineInputBorder(),
             ),
             items: ContextType.values.map((type) {
@@ -103,62 +152,15 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
             },
           ),
           const SizedBox(height: 16),
-          // Season
+          // Specific location
           TextFormField(
-            controller: _seasonController,
+            controller: _specificLocationController,
             decoration: const InputDecoration(
-              labelText: 'Mùa',
+              labelText: 'Địa điểm cụ thể',
               border: OutlineInputBorder(),
-              hintText: 'Ví dụ: Mùa xuân, Mùa thu',
+              hintText: 'Ví dụ: Xã, phường hoặc địa danh',
             ),
-            onChanged: (_) => _updateCulturalContext(),
-          ),
-          const SizedBox(height: 16),
-          // Occasion
-          TextFormField(
-            controller: _occasionController,
-            decoration: const InputDecoration(
-              labelText: 'Dịp',
-              border: OutlineInputBorder(),
-              hintText: 'Ví dụ: Tết Nguyên Đán, Lễ hội',
-            ),
-            onChanged: (_) => _updateCulturalContext(),
-          ),
-          const SizedBox(height: 16),
-          // Significance
-          TextFormField(
-            controller: _significanceController,
-            decoration: const InputDecoration(
-              labelText: 'Ý nghĩa',
-              border: OutlineInputBorder(),
-              hintText: 'Ý nghĩa văn hóa của bài hát',
-            ),
-            maxLines: 3,
-            onChanged: (_) => _updateCulturalContext(),
-          ),
-          const SizedBox(height: 16),
-          // Performance details
-          TextFormField(
-            controller: _performanceDetailsController,
-            decoration: const InputDecoration(
-              labelText: 'Chi tiết biểu diễn',
-              border: OutlineInputBorder(),
-              hintText: 'Mô tả cách biểu diễn',
-            ),
-            maxLines: 3,
-            onChanged: (_) => _updateCulturalContext(),
-          ),
-          const SizedBox(height: 16),
-          // Historical background
-          TextFormField(
-            controller: _historicalBackgroundController,
-            decoration: const InputDecoration(
-              labelText: 'Bối cảnh lịch sử',
-              border: OutlineInputBorder(),
-              hintText: 'Thông tin lịch sử liên quan',
-            ),
-            maxLines: 4,
-            onChanged: (_) => _updateCulturalContext(),
+            onChanged: (_) => _updateRecordingLocation(),
           ),
         ],
       ),
