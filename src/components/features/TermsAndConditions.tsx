@@ -34,7 +34,7 @@ export default function TermsAndConditions({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/30">
-          <h2 className="text-2xl font-bold text-white">Điều khoản sử dụng</h2>
+          <h2 className="text-2xl font-bold text-white">Điều khoản và Điều kiện</h2>
           <button
             onClick={onClose}
             className="btn-liquid-glass-close w-12 h-12 flex-shrink-0 flex items-center justify-center"

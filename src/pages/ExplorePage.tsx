@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Compass, Music2, Globe, Users, Filter, Search, ChevronDown, Play, Disc, MapPin, ArrowRight } from "lucide-react";
+import { Compass, Music2, Globe, Users, Filter, Search, ChevronDown, Play, Disc, MapPin, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -59,6 +59,24 @@ const ETHNICITIES = [
   "Chăm",
   "Khác",
 ];
+
+// Mapping genre to typical ethnicity (same as UploadMusic)
+const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
+  "Ca trù": ["Kinh"],
+  "Quan họ": ["Kinh"],
+  "Chầu văn": ["Kinh"],
+  "Nhã nhạc": ["Kinh"],
+  "Ca Huế": ["Kinh"],
+  "Đờn ca tài tử": ["Kinh"],
+  "Hát bội": ["Kinh"],
+  "Cải lương": ["Kinh"],
+  "Tuồng": ["Kinh"],
+  "Chèo": ["Kinh"],
+  "Hát xẩm": ["Kinh"],
+  "Hát then": ["Tày", "Nùng"],
+  "Khèn": ["H'Mông"],
+  "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
+};
 
 // ===== SEARCHABLE DROPDOWN COMPONENT =====
 function SearchableDropdown({
@@ -237,7 +255,7 @@ function CategoryCard({
         <Icon className={`h-5 w-5 ${isActive ? "text-emerald-400" : "text-white/70"}`} />
       </div>
       <h3 className={`font-medium ${isActive ? "text-emerald-300" : "text-white"}`}>{title}</h3>
-      <p className="text-sm text-white/50">{count.toLocaleString()} bản thu</p>
+      <p className="text-sm text-white/60">{count.toLocaleString()} bản thu</p>
     </button>
   );
 }
@@ -245,6 +263,7 @@ function CategoryCard({
 // ===== MAIN COMPONENT =====
 export default function ExplorePage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const guidelinesRef = useRef<HTMLDivElement>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -265,10 +284,24 @@ export default function ExplorePage() {
     { title: "Chầu văn", count: 734, icon: MapPin },
   ];
 
+  // Check for genre-ethnicity mismatch
+  const genreEthnicityWarning = useMemo(() => {
+    if (selectedGenre && selectedGenre !== "Tất cả thể loại" && 
+        selectedEthnicity && selectedEthnicity !== "Tất cả dân tộc") {
+      const expectedEthnicities = GENRE_ETHNICITY_MAP[selectedGenre];
+      if (expectedEthnicities && !expectedEthnicities.includes(selectedEthnicity)) {
+        return `Lưu ý: Thể loại "${selectedGenre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
+      }
+    }
+    return null;
+  }, [selectedGenre, selectedEthnicity]);
+
   useEffect(() => {
     const cleanupFunctions: (() => void)[] = [];
     if (containerRef.current)
       cleanupFunctions.push(addSpotlightEffect(containerRef.current));
+    if (guidelinesRef.current)
+      cleanupFunctions.push(addSpotlightEffect(guidelinesRef.current));
     return () => cleanupFunctions.forEach((cleanup) => cleanup());
   }, []);
 
@@ -322,35 +355,38 @@ export default function ExplorePage() {
   ];
 
   return (
-    <div className="min-h-screen pb-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 bg-emerald-500/20 rounded-xl">
-              <Compass className="h-6 w-6 text-emerald-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-white">Khám phá bản thu</h1>
-          </div>
-          <p className="text-white/60 ml-14">
-            Khám phá kho tàng âm nhạc truyền thống phong phú của Việt Nam
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Khám phá bản thu
+          </h1>
+          <p className="text-white leading-relaxed">
+            Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước
           </p>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-3"
+              className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-6 shadow-2xl"
+              style={{
+                boxShadow:
+                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+              }}
             >
-              <div className="p-2 bg-emerald-500/10 rounded-lg flex-shrink-0">
-                <feature.icon className="h-5 w-5 text-emerald-400" />
+              <div className="p-3 bg-emerald-500/20 rounded-xl w-fit mb-4">
+                <feature.icon className="h-6 w-6 text-emerald-400" />
               </div>
-              <div>
-                <h3 className="text-white font-medium text-sm">{feature.title}</h3>
-                <p className="text-white/50 text-xs mt-0.5">{feature.description}</p>
-              </div>
+              <h3 className="text-white font-semibold text-lg mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-white/70 leading-relaxed">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
@@ -358,26 +394,34 @@ export default function ExplorePage() {
         {/* Main Content */}
         <div
           ref={containerRef}
-          className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8"
+          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
           }}
         >
           {/* Search & Filters Section */}
-          <div className="border border-white/10 rounded-2xl p-6 bg-white/5 mb-6">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="border border-white/10 rounded-2xl p-8 bg-white/5 mb-8">
+            <div className="flex items-start gap-3 mb-6">
               <div className="p-2 bg-emerald-500/20 rounded-lg">
                 <Filter className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">Bộ lọc nhanh</h2>
-                <p className="text-sm text-white/60">Lọc theo thể loại, khu vực và dân tộc</p>
+                <h2 className="text-xl font-semibold text-white">Bộ lọc nhanh</h2>
+                <p className="text-sm text-white/70 mt-1">Lọc theo thể loại, khu vực và dân tộc</p>
               </div>
             </div>
 
+            {/* Genre-Ethnicity Warning */}
+            {genreEthnicityWarning && (
+              <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
+                <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+              </div>
+            )}
+
             {/* Search Input */}
-            <div className="relative mb-4">
+            <div className="relative mb-6">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
               <input
                 type="text"
@@ -388,27 +432,38 @@ export default function ExplorePage() {
               />
             </div>
 
-            {/* Filter Dropdowns - New UI/UX */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              <SearchableDropdown
-                value={selectedGenre}
-                onChange={setSelectedGenre}
-                options={GENRES}
-                placeholder="Chọn thể loại"
-              />
-              <SearchableDropdown
-                value={selectedRegion}
-                onChange={setSelectedRegion}
-                options={REGIONS}
-                placeholder="Chọn khu vực"
-                searchable={false}
-              />
-              <SearchableDropdown
-                value={selectedEthnicity}
-                onChange={setSelectedEthnicity}
-                options={ETHNICITIES}
-                placeholder="Chọn dân tộc"
-              />
+            {/* Filter Dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-white">Thể loại</label>
+                <SearchableDropdown
+                  value={selectedGenre}
+                  onChange={setSelectedGenre}
+                  options={GENRES}
+                  placeholder="Chọn thể loại"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-white">Khu vực</label>
+                <SearchableDropdown
+                  value={selectedRegion}
+                  onChange={setSelectedRegion}
+                  options={REGIONS}
+                  placeholder="Chọn khu vực"
+                  searchable={false}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-white">Dân tộc</label>
+                <SearchableDropdown
+                  value={selectedEthnicity}
+                  onChange={setSelectedEthnicity}
+                  options={ETHNICITIES}
+                  placeholder="Chọn dân tộc"
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -416,29 +471,23 @@ export default function ExplorePage() {
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-4 py-2 bg-white/10 text-white/80 hover:bg-white/20 rounded-full text-sm transition-colors"
+                  className="px-6 py-2.5 bg-white/10 text-white hover:bg-white/20 rounded-xl transition-colors"
                 >
                   Xóa bộ lọc
                 </button>
               )}
-
-              <Link
-                to="/search"
-                className="ml-auto px-4 py-2.5 text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
-              >
-                Tìm kiếm
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </div>
 
           {/* Popular Categories */}
-          <div className="mb-6">
-            <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-              <Disc className="h-4 w-4 text-emerald-400" />
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/20 rounded-lg">
+                <Disc className="h-5 w-5 text-emerald-400" />
+              </div>
               Thể loại phổ biến
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {categories.map((category, index) => (
                 <CategoryCard
                   key={index}
@@ -453,11 +502,11 @@ export default function ExplorePage() {
           </div>
 
           {/* Results Header */}
-          <div className="flex items-center justify-between mb-6 pt-6 border-t border-white/10">
+          <div className="flex items-center justify-between mb-6 pt-8 border-t border-white/10">
             <div>
-              <h2 className="text-xl font-semibold text-white">Tất cả bản thu</h2>
+              <h2 className="text-2xl font-semibold text-white">Tất cả bản thu</h2>
               {!loading && (
-                <p className="text-white/60 text-sm mt-1">
+                <p className="text-white/70 mt-1">
                   Hiển thị {recordings.length} trong số {totalResults.toLocaleString()} bản thu
                 </p>
               )}
@@ -471,19 +520,19 @@ export default function ExplorePage() {
             </div>
           ) : recordings.length === 0 ? (
             <div className="p-12 text-center bg-white/5 rounded-xl border border-white/10">
-              <div className="p-4 bg-white/10 rounded-full w-fit mx-auto mb-4">
-                <Search className="h-8 w-8 text-white/50" />
+              <div className="p-4 bg-emerald-500/20 rounded-2xl w-fit mx-auto mb-4">
+                <Search className="h-8 w-8 text-emerald-400" />
               </div>
-              <h3 className="text-xl font-medium text-white mb-2">
+              <h3 className="text-xl font-semibold text-white mb-2">
                 Không tìm thấy bản thu
               </h3>
-              <p className="text-white/60 max-w-md mx-auto">
+              <p className="text-white/70 mx-auto leading-relaxed">
                 Thử thay đổi bộ lọc hoặc từ khóa để tìm kiếm kết quả phù hợp hơn
               </p>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {recordings.map((recording) => (
                   <RecordingCard key={recording.id} recording={recording} />
                 ))}
@@ -501,25 +550,34 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div className="mt-8 backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-6">
-          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-            <Compass className="h-4 w-4 text-emerald-400" />
+        <div
+          ref={guidelinesRef}
+          className="spotlight-container backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-8 shadow-2xl"
+          style={{
+            boxShadow:
+              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+          }}
+        >
+          <h2 className="text-2xl font-semibold mb-6 text-white flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/20 rounded-lg">
+              <Compass className="h-5 w-5 text-emerald-400" />
+            </div>
             Khám phá thêm
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               to="/search"
-              className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+              className="p-6 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <Search className="h-5 w-5 text-emerald-400" />
+                <div className="p-3 bg-emerald-500/10 rounded-lg">
+                  <Search className="h-6 w-6 text-emerald-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-medium group-hover:text-emerald-300 transition-colors">
+                  <h4 className="text-white font-semibold text-lg group-hover:text-emerald-300 transition-colors">
                     Tìm kiếm bản thu
                   </h4>
-                  <p className="text-white/50 text-sm">
+                  <p className="text-white/70 leading-relaxed">
                     Lọc chi tiết theo nhạc cụ, sự kiện, năm ghi âm
                   </p>
                 </div>
@@ -527,17 +585,17 @@ export default function ExplorePage() {
             </Link>
             <Link
               to="/upload"
-              className="p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+              className="p-6 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <Play className="h-5 w-5 text-emerald-400" />
+                <div className="p-3 bg-emerald-500/10 rounded-lg">
+                  <Play className="h-6 w-6 text-emerald-400" />
                 </div>
                 <div>
-                  <h4 className="text-white font-medium group-hover:text-emerald-300 transition-colors">
+                  <h4 className="text-white font-semibold text-lg group-hover:text-emerald-300 transition-colors">
                     Đóng góp bản thu
                   </h4>
-                  <p className="text-white/50 text-sm">
+                  <p className="text-white/70 leading-relaxed">
                     Chia sẻ bản thu âm nhạc truyền thống của bạn
                   </p>
                 </div>

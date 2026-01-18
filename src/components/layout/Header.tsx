@@ -56,7 +56,7 @@ export default function Header() {
                 to="/upload"
                 className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Đóng góp
+                Đóng góp bản thu
               </Link>
               <Link
                 to="/instruments"
@@ -80,7 +80,7 @@ export default function Header() {
                 to="/about"
                 className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
               >
-                Về VietTune
+                Giới thiệu VietTune
               </Link>
             </div>
 

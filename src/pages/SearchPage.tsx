@@ -10,6 +10,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 export default function SearchPage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const guidelinesRef = useRef<HTMLDivElement>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -22,6 +23,8 @@ export default function SearchPage() {
     const cleanupFunctions: (() => void)[] = [];
     if (containerRef.current)
       cleanupFunctions.push(addSpotlightEffect(containerRef.current));
+    if (guidelinesRef.current)
+      cleanupFunctions.push(addSpotlightEffect(guidelinesRef.current));
     return () => cleanupFunctions.forEach((cleanup) => cleanup());
   }, []);
 
@@ -79,35 +82,38 @@ export default function SearchPage() {
   ];
 
   return (
-    <div className="min-h-screen pb-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 bg-emerald-500/20 rounded-xl">
-              <Search className="h-6 w-6 text-emerald-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-white">Tìm kiếm bản thu</h1>
-          </div>
-          <p className="text-white/60 ml-14">
-            Khám phá kho tàng âm nhạc truyền thống Việt Nam với bộ lọc nâng cao
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Tìm kiếm bản thu
+          </h1>
+          <p className="text-white leading-relaxed">
+            Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác
           </p>
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-3"
+              className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-6 shadow-2xl"
+              style={{
+                boxShadow:
+                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+              }}
             >
-              <div className="p-2 bg-emerald-500/10 rounded-lg flex-shrink-0">
-                <feature.icon className="h-5 w-5 text-emerald-400" />
+              <div className="p-3 bg-emerald-500/20 rounded-xl w-fit mb-4">
+                <feature.icon className="h-6 w-6 text-emerald-400" />
               </div>
-              <div>
-                <h3 className="text-white font-medium text-sm">{feature.title}</h3>
-                <p className="text-white/50 text-xs mt-0.5">{feature.description}</p>
-              </div>
+              <h3 className="text-white font-semibold text-lg mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-white/70 leading-relaxed">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
@@ -115,7 +121,7 @@ export default function SearchPage() {
         {/* Main Search Form */}
         <div
           ref={containerRef}
-          className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8"
+          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -126,15 +132,20 @@ export default function SearchPage() {
 
         {/* Search Results */}
         {hasSearched && (
-          <div className="mt-8">
+          <div className="backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
+            style={{
+              boxShadow:
+                "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+            }}
+          >
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className="text-2xl font-semibold text-white">
                   Kết quả tìm kiếm
                 </h2>
                 {!loading && (
-                  <p className="text-white/60 text-sm mt-1">
+                  <p className="text-white/70 mt-1">
                     Tìm thấy {totalResults} bản thu
                   </p>
                 )}
@@ -147,14 +158,14 @@ export default function SearchPage() {
                 <LoadingSpinner size="lg" />
               </div>
             ) : recordings.length === 0 ? (
-              <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-                <div className="p-4 bg-white/10 rounded-full w-fit mx-auto mb-4">
-                  <Search className="h-8 w-8 text-white/50" />
+              <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
+                <div className="p-4 bg-emerald-500/20 rounded-2xl w-fit mx-auto mb-4">
+                  <Search className="h-8 w-8 text-emerald-400" />
                 </div>
-                <h3 className="text-xl font-medium text-white mb-2">
+                <h3 className="text-xl font-semibold text-white mb-2">
                   Không tìm thấy bản thu
                 </h3>
-                <p className="text-white/60 max-w-md mx-auto">
+                <p className="text-white/70 max-w-md mx-auto leading-relaxed">
                   Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn
                 </p>
               </div>
@@ -180,26 +191,35 @@ export default function SearchPage() {
 
         {/* Initial State - Search Tips */}
         {!hasSearched && (
-          <div className="mt-8 backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-6">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Search className="h-4 w-4 text-emerald-400" />
+          <div
+            ref={guidelinesRef}
+            className="spotlight-container backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-8 shadow-2xl"
+            style={{
+              boxShadow:
+                "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+            }}
+          >
+            <h2 className="text-2xl font-semibold mb-4 text-white flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/20 rounded-lg">
+                <Search className="h-5 w-5 text-emerald-400" />
+              </div>
               Mẹo tìm kiếm
-            </h3>
-            <ul className="space-y-2 text-sm text-white/60">
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
+            </h2>
+            <ul className="space-y-3 text-white leading-relaxed">
+              <li className="flex items-start gap-3">
+                <span className="text-emerald-400 flex-shrink-0">•</span>
                 <span>Sử dụng từ khóa cụ thể như tên bài hát, nghệ nhân, hoặc nhạc cụ</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
+              <li className="flex items-start gap-3">
+                <span className="text-emerald-400 flex-shrink-0">•</span>
                 <span>Kết hợp nhiều bộ lọc để thu hẹp kết quả tìm kiếm</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
+              <li className="flex items-start gap-3">
+                <span className="text-emerald-400 flex-shrink-0">•</span>
                 <span>Thử tìm theo vùng miền hoặc dân tộc để khám phá âm nhạc đặc trưng</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
+              <li className="flex items-start gap-3">
+                <span className="text-emerald-400 flex-shrink-0">•</span>
                 <span>Bộ lọc "Đã xác minh" giúp tìm các bản thu đã được kiểm chứng</span>
               </li>
             </ul>

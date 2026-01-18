@@ -509,7 +509,7 @@ export default function InstrumentsPage() {
                 thống biến mất khi thợ lão thành qua đời không có đệ tử
               </li>
               <li>
-                <strong>khan hiếm vật liệu:</strong> Vật liệu cụ thể trở nên
+                <strong>Khan hiếm vật liệu:</strong> Vật liệu cụ thể trở nên
                 khan hiếm do thay đổi môi trường hoặc quy định
               </li>
               <li>
