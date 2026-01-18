@@ -1,154 +1,41 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Search, MapPin, Music, Filter, X, Plus } from "lucide-react";
+import { ChevronDown, Search, MapPin, Music, Filter, X, Plus, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import { SearchFilters, Region, RecordingType, VerificationStatus } from "@/types";
 
 // ===== CONSTANTS =====
 const GENRES = [
-  "Dân ca",
-  "Hát xẩm",
-  "Ca trù",
-  "Chầu văn",
-  "Quan họ",
-  "Hát then",
-  "Cải lương",
-  "Tuồng",
-  "Chèo",
-  "Nhã nhạc",
-  "Ca Huế",
-  "Đờn ca tài tử",
-  "Hát bội",
-  "Hò",
-  "Lý",
-  "Vọng cổ",
-  "Hát ru",
-  "Hát ví",
-  "Hát giặm",
-  "Bài chòi",
-  "Khác",
+  "Dân ca", "Hát xẩm", "Ca trù", "Chầu văn", "Quan họ", "Hát then",
+  "Cải lương", "Tuồng", "Chèo", "Nhã nhạc", "Ca Huế", "Đờn ca tài tử",
+  "Hát bội", "Hò", "Lý", "Vọng cổ", "Hát ru", "Hát ví", "Hát giặm", "Bài chòi", "Khác",
 ];
 
 const ETHNICITIES = [
-  "Kinh",
-  "Tày",
-  "Thái",
-  "Mường",
-  "Khmer",
-  "H'Mông",
-  "Nùng",
-  "Hoa",
-  "Dao",
-  "Gia Rai",
-  "Ê Đê",
-  "Ba Na",
-  "Xơ Đăng",
-  "Sán Chay",
-  "Cơ Ho",
-  "Chăm",
-  "Sán Dìu",
-  "Hrê",
-  "Mnông",
-  "Ra Glai",
-  "Giáy",
-  "Stră",
-  "Bru-Vân Kiều",
-  "Cơ Tu",
-  "Giẻ Triêng",
-  "Tà Ôi",
-  "Mạ",
-  "Khơ Mú",
-  "Co",
-  "Chơ Ro",
-  "Hà Nhì",
-  "Xinh Mun",
-  "Chu Ru",
-  "Lào",
-  "La Chí",
-  "Kháng",
-  "Phù Lá",
-  "La Hủ",
-  "La Ha",
-  "Pà Thẻn",
-  "Lự",
-  "Ngái",
-  "Chứt",
-  "Lô Lô",
-  "Mảng",
-  "Cờ Lao",
-  "Bố Y",
-  "Cống",
-  "Si La",
-  "Pu Péo",
-  "Rơ Măm",
-  "Brâu",
-  "Ơ Đu",
-  "Khác",
+  "Kinh", "Tày", "Thái", "Mường", "Khmer", "H'Mông", "Nùng", "Hoa", "Dao", "Gia Rai",
+  "Ê Đê", "Ba Na", "Xơ Đăng", "Sán Chay", "Cơ Ho", "Chăm", "Sán Dìu", "Hrê", "Mnông", "Ra Glai",
+  "Giáy", "Stră", "Bru-Vân Kiều", "Cơ Tu", "Giẻ Triêng", "Tà Ôi", "Mạ", "Khơ Mú", "Co", "Chơ Ro",
+  "Hà Nhì", "Xinh Mun", "Chu Ru", "Lào", "La Chí", "Kháng", "Phù Lá", "La Hủ", "La Ha", "Pà Thẻn",
+  "Lự", "Ngái", "Chứt", "Lô Lô", "Mảng", "Cờ Lao", "Bố Y", "Cống", "Si La", "Pu Péo",
+  "Rơ Măm", "Brâu", "Ơ Đu", "Khác",
 ];
 
 const REGIONS = [
-  "Trung du và miền núi Bắc Bộ",
-  "Đồng bằng Bắc Bộ",
-  "Bắc Trung Bộ",
-  "Nam Trung Bộ",
-  "Cao nguyên Trung Bộ",
-  "Đông Nam Bộ",
-  "Tây Nam Bộ",
+  "Trung du và miền núi Bắc Bộ", "Đồng bằng Bắc Bộ", "Bắc Trung Bộ",
+  "Nam Trung Bộ", "Cao nguyên Trung Bộ", "Đông Nam Bộ", "Tây Nam Bộ",
 ];
 
 const PROVINCES = [
-  "TP. Hà Nội",
-  "TP. Hải Phòng",
-  "TP. Huế",
-  "TP. Đà Nẵng",
-  "TP. Hồ Chí Minh",
-  "TP. Cần Thơ",
-  "An Giang",
-  "Bắc Ninh",
-  "Cà Mau",
-  "Cao Bằng",
-  "Điện Biên",
-  "Đắk Lắk",
-  "Đồng Nai",
-  "Đồng Tháp",
-  "Gia Lai",
-  "Hà Tĩnh",
-  "Hưng Yên",
-  "Khánh Hòa",
-  "Lai Châu",
-  "Lâm Đồng",
-  "Lạng Sơn",
-  "Lào Cai",
-  "Nghệ An",
-  "Ninh Bình",
-  "Phú Thọ",
-  "Quảng Ngãi",
-  "Quảng Ninh",
-  "Quảng Trị",
-  "Sơn La",
-  "Tây Ninh",
-  "Thái Nguyên",
-  "Thanh Hóa",
-  "Tuyên Quang",
-  "Vĩnh Long",
+  "TP. Hà Nội", "TP. Hải Phòng", "TP. Huế", "TP. Đà Nẵng", "TP. Hồ Chí Minh", "TP. Cần Thơ",
+  "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Điện Biên", "Đắk Lắk", "Đồng Nai", "Đồng Tháp",
+  "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hòa", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai",
+  "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+  "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long",
 ];
 
 const EVENT_TYPES = [
-  "Đám cưới",
-  "Đám tang",
-  "Lễ hội đình",
-  "Lễ hội chùa",
-  "Tết Nguyên đán",
-  "Hội xuân",
-  "Lễ cầu mùa",
-  "Lễ cúng tổ tiên",
-  "Lễ cấp sắc",
-  "Lễ hội đâm trâu",
-  "Lễ hội cồng chiêng",
-  "Sinh hoạt cộng đồng",
-  "Biểu diễn nghệ thuật",
-  "Ghi âm studio",
-  "Ghi âm thực địa",
-  "Khác",
+  "Đám cưới", "Đám tang", "Lễ hội đình", "Lễ hội chùa", "Tết Nguyên đán", "Hội xuân",
+  "Lễ cầu mùa", "Lễ cúng tổ tiên", "Lễ cấp sắc", "Lễ hội đâm trâu", "Lễ hội cồng chiêng",
+  "Sinh hoạt cộng đồng", "Biểu diễn nghệ thuật", "Ghi âm studio", "Ghi âm thực địa", "Khác",
 ];
 
 const PERFORMANCE_TYPES = [
@@ -164,20 +51,10 @@ const VERIFICATION_STATUS = [
 ];
 
 const INSTRUMENTS = [
-  "Đàn bầu (Kinh)",
-  "Đàn tranh (Kinh)",
-  "Đàn nguyệt (Kinh)",
-  "Đàn nhị (Kinh)",
-  "Đàn tỳ bà (Kinh)",
-  "Sáo ngang (Kinh)",
-  "Tiêu (Kinh)",
-  "Trống (Kinh)",
-  "Khèn (H'Mông)",
-  "Đàn t'rưng (Ba Na)",
-  "Cồng, chiêng (Gia Rai)",
-  "Tính tẩu (Thái)",
-  "Đàn đá (Kinh)",
-  "Khác",
+  "Đàn bầu (Kinh)", "Đàn tranh (Kinh)", "Đàn nguyệt (Kinh)", "Đàn nhị (Kinh)",
+  "Đàn tỳ bà (Kinh)", "Sáo ngang (Kinh)", "Tiêu (Kinh)", "Trống (Kinh)",
+  "Khèn (H'Mông)", "Đàn t'rưng (Ba Na)", "Cồng, chiêng (Gia Rai)",
+  "Tính tẩu (Thái)", "Đàn đá (Kinh)", "Khác",
 ];
 
 const YEAR_RANGES = [
@@ -189,9 +66,26 @@ const YEAR_RANGES = [
   { key: "after_2020", label: "Sau 2020" },
 ];
 
+// Mapping genre to typical ethnicity
+const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
+  "Ca trù": ["Kinh"],
+  "Quan họ": ["Kinh"],
+  "Chầu văn": ["Kinh"],
+  "Nhã nhạc": ["Kinh"],
+  "Ca Huế": ["Kinh"],
+  "Đờn ca tài tử": ["Kinh"],
+  "Hát bội": ["Kinh"],
+  "Cải lương": ["Kinh"],
+  "Tuồng": ["Kinh"],
+  "Chèo": ["Kinh"],
+  "Hát xẩm": ["Kinh"],
+  "Hát then": ["Tày", "Nùng"],
+  "Khèn": ["H'Mông"],
+  "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
+};
+
 // ===== REUSABLE COMPONENTS =====
 
-// Dropdown with search - UI matching SearchBar style
 function SearchableDropdown({
   value,
   onChange,
@@ -341,7 +235,6 @@ function SearchableDropdown({
   );
 }
 
-// Multi-select with tags - UI matching SearchBar style
 function MultiSelectTags({
   values,
   onChange,
@@ -500,7 +393,6 @@ function MultiSelectTags({
   );
 }
 
-// Form Field Wrapper
 function FormField({
   label,
   children,
@@ -512,16 +404,15 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-white/90">
+      <label className="block text-sm font-medium text-white">
         {label}
       </label>
       {children}
-      {hint && <p className="text-xs text-white/50">{hint}</p>}
+      {hint && <p className="text-xs text-white/60">{hint}</p>}
     </div>
   );
 }
 
-// Section Header
 function SectionHeader({
   icon: Icon,
   title,
@@ -532,19 +423,18 @@ function SectionHeader({
   subtitle?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 mb-4">
+    <div className="flex items-start gap-3 mb-6">
       <div className="p-2 bg-emerald-500/20 rounded-lg">
         <Icon className="h-5 w-5 text-emerald-400" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        {subtitle && <p className="text-sm text-white/60 mt-0.5">{subtitle}</p>}
+        <h3 className="text-xl font-semibold text-white">{title}</h3>
+        {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
       </div>
     </div>
   );
 }
 
-// Collapsible Section
 function CollapsibleSection({
   icon: Icon,
   title,
@@ -565,15 +455,15 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
+        className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-500/20 rounded-lg">
             <Icon className="h-5 w-5 text-emerald-400" />
           </div>
           <div className="text-left">
-            <h3 className="text-base font-semibold text-white">{title}</h3>
-            {subtitle && <p className="text-sm text-white/60">{subtitle}</p>}
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
           </div>
         </div>
         <ChevronDown
@@ -582,7 +472,7 @@ function CollapsibleSection({
           }`}
         />
       </button>
-      {isOpen && <div className="p-4 pt-2 space-y-4">{children}</div>}
+      {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
     </div>
   );
 }
@@ -594,23 +484,29 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarProps) {
-  // Search query
   const [query, setQuery] = useState(initialFilters.query || "");
-
-  // Basic filters
   const [genres, setGenres] = useState<string[]>([]);
   const [ethnicity, setEthnicity] = useState("");
   const [region, setRegion] = useState("");
   const [province, setProvince] = useState("");
-
-  // Advanced filters
   const [eventType, setEventType] = useState("");
   const [performanceType, setPerformanceType] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
   const [yearRange, setYearRange] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
 
-  // Count active filters
+  // Check for genre-ethnicity mismatch
+  const genreEthnicityWarning = useMemo(() => {
+    if (genres.length === 1 && ethnicity && ethnicity !== "Tất cả dân tộc") {
+      const genre = genres[0];
+      const expectedEthnicities = GENRE_ETHNICITY_MAP[genre];
+      if (expectedEthnicities && !expectedEthnicities.includes(ethnicity)) {
+        return `Lưu ý: Thể loại "${genre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
+      }
+    }
+    return null;
+  }, [genres, ethnicity]);
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (genres.length > 0) count++;
@@ -625,13 +521,11 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     return count;
   }, [genres, ethnicity, region, province, eventType, performanceType, instruments, yearRange, verificationStatus]);
 
-  // Handle search
   const handleSearch = () => {
     const filters: SearchFilters = {
       query: query.trim() || undefined,
     };
 
-    // Add filters to search
     if (genres.length > 0) {
       filters.recordingTypes = genres as RecordingType[];
     }
@@ -645,7 +539,6 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     onSearch(filters);
   };
 
-  // Handle clear all
   const handleClearAll = () => {
     setQuery("");
     setGenres([]);
@@ -660,7 +553,6 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     onSearch({});
   };
 
-  // Handle key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
@@ -670,7 +562,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input */}
-      <div className="border border-white/10 rounded-2xl p-6 bg-white/5 backdrop-blur-sm">
+      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
         <SectionHeader
           icon={Search}
           title="Tìm kiếm bản thu"
@@ -718,14 +610,22 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       </div>
 
       {/* Basic Filters */}
-      <div className="border border-white/10 rounded-2xl p-6 bg-white/5 backdrop-blur-sm">
+      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
         <SectionHeader
           icon={Music}
           title="Bộ lọc cơ bản"
           subtitle="Lọc theo thể loại và nguồn gốc"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Genre-Ethnicity Warning */}
+        {genreEthnicityWarning && (
+          <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
+            <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Thể loại/Loại hình">
             <MultiSelectTags
               values={genres}
@@ -772,7 +672,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         subtitle="Lọc theo sự kiện và hình thức biểu diễn"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Loại sự kiện">
             <SearchableDropdown
               value={eventType}
@@ -812,7 +712,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         subtitle="Lọc theo năm ghi âm và trạng thái xác minh"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Năm ghi âm">
             <SearchableDropdown
               value={yearRange}
@@ -836,7 +736,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       </CollapsibleSection>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
         <button
           type="button"
           onClick={handleClearAll}

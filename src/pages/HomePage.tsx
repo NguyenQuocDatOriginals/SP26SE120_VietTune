@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Music, Upload, Search, Users, Disc, Globe, Play, ArrowRight, Compass, Heart, Sparkles, TrendingUp, Clock, MapPin } from "lucide-react";
+import { Music, Upload, Search, Users, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Clock, MapPin } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -46,8 +46,8 @@ function SectionHeader({
           <Icon className="h-5 w-5 text-emerald-400" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
-          {subtitle && <p className="text-sm text-white/60">{subtitle}</p>}
+          <h2 className="text-2xl font-semibold text-white">{title}</h2>
+          {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
         </div>
       </div>
       {action && (
@@ -104,10 +104,10 @@ function FeatureCard({
       <div className="p-3 bg-emerald-500/10 rounded-xl w-fit mb-4 group-hover:bg-emerald-500/20 transition-colors">
         <Icon className="h-6 w-6 text-emerald-400" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+      <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-emerald-300 transition-colors">
         {title}
       </h3>
-      <p className="text-white/60 text-sm">{description}</p>
+      <p className="text-white/70 leading-relaxed">{description}</p>
     </Link>
   );
 }
@@ -156,7 +156,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchRecordings();
-    
+
     // Load local recordings
     const local = JSON.parse(localStorage.getItem("localRecordings") || "[]");
     setLocalRecordings(local as LocalRecording[]);
@@ -164,7 +164,7 @@ export default function HomePage() {
     // Add spotlight effects for static containers
     const cleanupFunctions: (() => void)[] = [];
     const staticRefs = [heroRef, statsRef, featuresRef, popularRef, recentRef, ctaRef];
-    
+
     staticRefs.forEach((ref) => {
       if (ref.current) {
         cleanupFunctions.push(addSpotlightEffect(ref.current));
@@ -209,32 +209,32 @@ export default function HomePage() {
   const features = [
     {
       icon: Compass,
-      title: "Khám phá",
+      title: "Khám phá bản thu",
       description: "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
       to: "/explore",
     },
     {
       icon: Search,
-      title: "Tìm kiếm",
+      title: "Tìm kiếm bản thu",
       description: "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
       to: "/search",
     },
     {
       icon: Upload,
-      title: "Đóng góp",
+      title: "Đóng góp bản thu",
       description: "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
       to: "/upload",
     },
   ];
 
   return (
-    <div className="min-h-screen pb-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
         {/* Hero Section */}
         <div
           ref={heroRef}
-          className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8 md:p-12 mb-8"
+          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 md:p-12 mb-8"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -261,15 +261,16 @@ export default function HomePage() {
             </p>
             
             {/* Description */}
-            <p className="text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed">
-              Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam qua nền tảng 
-              chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
+            <p className="text-white leading-relaxed max-w-2xl mx-auto mb-8">
+              Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
+              <br />
+              qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
             </p>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <QuickActionButton
-                icon={Play}
+                icon={Compass}
                 label="Khám phá bản thu"
                 to="/explore"
                 primary
@@ -284,10 +285,7 @@ export default function HomePage() {
         </div>
 
         {/* Stats Section */}
-        <div
-          ref={statsRef}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
-        >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {stats.map((stat, index) => (
             <StatCard
               key={index}
@@ -301,19 +299,17 @@ export default function HomePage() {
         {/* Features Section */}
         <div
           ref={featuresRef}
-          className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8 mb-8"
+          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
           }}
         >
-          <SectionHeader
-            icon={Sparkles}
-            title="Tính năng chính"
-            subtitle="Khám phá các tính năng của VietTune"
-          />
+          <h2 className="text-2xl font-semibold mb-6 text-white">
+            Tính năng chính
+          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <FeatureCard
                 key={index}
@@ -330,17 +326,16 @@ export default function HomePage() {
         {localRecordings.length > 0 && (
           <div
             ref={localRef}
-            className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8 mb-8"
+            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
             style={{
               boxShadow:
                 "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
-            <SectionHeader
-              icon={Heart}
-              title="Bản thu của bạn"
-              subtitle="Các bản thu bạn đã tải lên gần đây"
-            />
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-white">Bản thu của bạn</h2>
+              <p className="text-sm text-white/70 mt-1">Các bản thu bạn đã tải lên gần đây</p>
+            </div>
 
             <div className="space-y-4">
               {localRecordings.slice(0, 3).map((rec) => (
@@ -403,7 +398,7 @@ export default function HomePage() {
         {popularRecordings.length > 0 && (
           <div
             ref={popularRef}
-            className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8 mb-8"
+            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
             style={{
               boxShadow:
                 "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -428,7 +423,7 @@ export default function HomePage() {
         {recentRecordings.length > 0 && (
           <div
             ref={recentRef}
-            className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8 mb-8"
+            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
             style={{
               boxShadow:
                 "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -452,7 +447,7 @@ export default function HomePage() {
         {/* Call to Action Section */}
         <div
           ref={ctaRef}
-          className="spotlight-container backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8"
+          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
           style={{
             boxShadow:
               "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
@@ -463,20 +458,22 @@ export default function HomePage() {
               <Heart className="h-8 w-8 text-emerald-400" />
             </div>
             
-            <h2 className="text-2xl font-bold text-white mb-3">
+            <h2 className="text-2xl font-semibold text-white mb-4">
               Hãy cùng gìn giữ di sản
             </h2>
             
-            <p className="text-white/60 mb-6 leading-relaxed">
-              Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân tộc. 
-              Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn hóa 
+            <p className="text-white leading-relaxed mb-6 max-w-6xl mx-auto">
+              Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân tộc.
+              <br />
+              Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn hóa
+              <br />
               chung tay bảo tồn âm nhạc truyền thống Việt Nam cho thế hệ mai sau.
             </p>
 
             <div className="flex justify-center">
               <QuickActionButton
                 icon={Upload}
-                label="Đóng góp ngay"
+                label="Đóng góp bản thu"
                 to="/upload"
                 primary
               />

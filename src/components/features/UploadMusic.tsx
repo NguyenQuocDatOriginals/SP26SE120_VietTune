@@ -39,7 +39,6 @@ const GENRES = [
 
 const LANGUAGES = [
   "Tiếng Việt",
-  "Tiếng Kinh",
   "Tiếng Thái",
   "Tiếng Tày",
   "Tiếng Nùng",
@@ -65,60 +64,12 @@ const LANGUAGES = [
 ];
 
 const ETHNICITIES = [
-  "Kinh",
-  "Tày",
-  "Thái",
-  "Mường",
-  "Khmer",
-  "H'Mông",
-  "Nùng",
-  "Hoa",
-  "Dao",
-  "Gia Rai",
-  "Ê Đê",
-  "Ba Na",
-  "Xơ Đăng",
-  "Sán Chay",
-  "Cơ Ho",
-  "Chăm",
-  "Sán Dìu",
-  "Hrê",
-  "Mnông",
-  "Ra Glai",
-  "Giáy",
-  "Stră",
-  "Bru-Vân Kiều",
-  "Cơ Tu",
-  "Giẻ Triêng",
-  "Tà Ôi",
-  "Mạ",
-  "Khơ Mú",
-  "Co",
-  "Chơ Ro",
-  "Hà Nhì",
-  "Xinh Mun",
-  "Chu Ru",
-  "Lào",
-  "La Chí",
-  "Kháng",
-  "Phù Lá",
-  "La Hủ",
-  "La Ha",
-  "Pà Thẻn",
-  "Lự",
-  "Ngái",
-  "Chứt",
-  "Lô Lô",
-  "Mảng",
-  "Cờ Lao",
-  "Bố Y",
-  "Cống",
-  "Si La",
-  "Pu Péo",
-  "Rơ Măm",
-  "Brâu",
-  "Ơ Đu",
-  "Khác",
+  "Kinh", "Tày", "Thái", "Mường", "Khmer", "H'Mông", "Nùng", "Hoa", "Dao", "Gia Rai",
+  "Ê Đê", "Ba Na", "Xơ Đăng", "Sán Chay", "Cơ Ho", "Chăm", "Sán Dìu", "Hrê", "Mnông", "Ra Glai",
+  "Giáy", "Stră", "Bru-Vân Kiều", "Cơ Tu", "Giẻ Triêng", "Tà Ôi", "Mạ", "Khơ Mú", "Co", "Chơ Ro",
+  "Hà Nhì", "Xinh Mun", "Chu Ru", "Lào", "La Chí", "Kháng", "Phù Lá", "La Hủ", "La Ha", "Pà Thẻn",
+  "Lự", "Ngái", "Chứt", "Lô Lô", "Mảng", "Cờ Lao", "Bố Y", "Cống", "Si La", "Pu Péo",
+  "Rơ Măm", "Brâu", "Ơ Đu", "Khác",
 ];
 
 const REGIONS = [
@@ -131,63 +82,18 @@ const REGIONS = [
   "Tây Nam Bộ",
 ];
 
-// 34 tỉnh thành sau sắp xếp đơn vị hành chính 1/7/2025
 const PROVINCES = [
-  // 6 thành phố trực thuộc Trung ương
-  "TP. Hà Nội",
-  "TP. Hải Phòng",
-  "TP. Huế",
-  "TP. Đà Nẵng",
-  "TP. Hồ Chí Minh",
-  "TP. Cần Thơ",
-  // 28 tỉnh (sắp xếp A-Z)
-  "An Giang",
-  "Bắc Ninh",
-  "Cà Mau",
-  "Cao Bằng",
-  "Điện Biên",
-  "Đắk Lắk",
-  "Đồng Nai",
-  "Đồng Tháp",
-  "Gia Lai",
-  "Hà Tĩnh",
-  "Hưng Yên",
-  "Khánh Hòa",
-  "Lai Châu",
-  "Lâm Đồng",
-  "Lạng Sơn",
-  "Lào Cai",
-  "Nghệ An",
-  "Ninh Bình",
-  "Phú Thọ",
-  "Quảng Ngãi",
-  "Quảng Ninh",
-  "Quảng Trị",
-  "Sơn La",
-  "Tây Ninh",
-  "Thái Nguyên",
-  "Thanh Hóa",
-  "Tuyên Quang",
-  "Vĩnh Long",
+  "TP. Hà Nội", "TP. Hải Phòng", "TP. Huế", "TP. Đà Nẵng", "TP. Hồ Chí Minh", "TP. Cần Thơ",
+  "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Điện Biên", "Đắk Lắk", "Đồng Nai", "Đồng Tháp",
+  "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hòa", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai",
+  "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+  "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long",
 ];
 
 const EVENT_TYPES = [
-  "Đám cưới",
-  "Đám tang",
-  "Lễ hội đình",
-  "Lễ hội chùa",
-  "Tết Nguyên đán",
-  "Hội xuân",
-  "Lễ cầu mùa",
-  "Lễ cúng tổ tiên",
-  "Lễ cấp sắc",
-  "Lễ hội đâm trâu",
-  "Lễ hội cồng chiêng",
-  "Sinh hoạt cộng đồng",
-  "Biểu diễn nghệ thuật",
-  "Ghi âm studio",
-  "Ghi âm thực địa",
-  "Khác",
+  "Đám cưới", "Đám tang", "Lễ hội đình", "Lễ hội chùa", "Tết Nguyên đán", "Hội xuân",
+  "Lễ cầu mùa", "Lễ cúng tổ tiên", "Lễ cấp sắc", "Lễ hội đâm trâu", "Lễ hội cồng chiêng",
+  "Sinh hoạt cộng đồng", "Biểu diễn nghệ thuật", "Ghi âm studio", "Ghi âm thực địa", "Khác",
 ];
 
 const PERFORMANCE_TYPES = [
@@ -197,131 +103,49 @@ const PERFORMANCE_TYPES = [
 ];
 
 const INSTRUMENTS = [
-  "Alal (Ba Na)",
-  "Aráp (Ba Na)",
-  "Aráp (Ca Dong)",
-  "Aráp (Gia Rai)",
-  "Aráp (Rơ Năm)",
-  "Aráp (Stră)",
-  "Biên khánh (Kinh)",
-  "Bro (Ba Na)",
-  "Bro (Gia Rai)",
-  "Bro (Giẻ Triêng)",
-  "Bro (Xơ Đăng)",
-  "Bẳng bu (Thái)",
-  "Chul (Ba Na)",
-  "Chul (Gia Rai)",
-  "Chênh Kial (Ba Na)",
-  "Cò ke (Mường)",
-  "Cồng, chiêng (Ba Na)",
-  "Cồng, chiêng (Gia Rai)",
-  "Cồng, chiêng (Giẻ Triêng)",
-  "Cồng, chiêng (Hrê)",
-  "Cồng, chiêng (Ê Đê)",
-  "Dàn nhạc ngũ âm (Khmer)",
-  "Goong (Ba Na)",
-  "Goong (Gia Rai)",
-  "Goong (Giẻ Triêng)",
-  "Goong đe (Ba Na)",
-  "Hơgơr (Ê Đê)",
-  "Hơgơr cân (Mnâm)",
-  "Hơgơr cân (Rơ Năm)",
-  "Hơgơr prong (Gia Rai)",
-  "Hơgơr tuôn (Hà Lang)",
-  "Hơgơr tăk (Ba Na)",
-  "Khinh khung (Ba Na)",
-  "Khinh khung (Gia Rai)",
-  "Khèn (H'Mông)",
-  "Khèn (Ta Ôi)",
-  "Khèn (Ê Đê)",
-  "Khên (Vân Kiều)",
-  "Knăh ring (Ba Na)",
-  "Knăh ring (Gia Rai)",
-  "K'lông put (Gia Rai)",
-  "K'ny (Ba Na)",
-  "K'ny (Gia Rai)",
-  "K'ny (Rơ Ngao)",
-  "K'ny (Xơ Đăng)",
-  "Kèn bầu (Chăm)",
-  "Kèn bầu (Kinh)",
-  "Kèn bầu (Thái)",
-  "Kềnh (H'Mông)",
-  "M'linh (Dao)",
-  "M'linh (Mường)",
-  "M'nhum (Gia Rai)",
-  "Mõ (Kinh)",
-  "Phách (Kinh)",
-  "Pí cổng (Thái)",
-  "Pí lè (Thái)",
-  "Pí lè (Tày)",
-  "Pí một lao (Kháng)",
-  "Pí một lao (Khơ Mú)",
-  "Pí một lao (La Ha)",
-  "Pí một lao (Thái)",
-  "Pí pặp (Thái)",
-  "Pí phướng (Thái)",
-  "Pí đôi (Thái)",
-  "Púa (H'Mông)",
-  "Púa (Lô Lô)",
-  "Qeej (H'Mông)",
-  "Rang leh (Ca Dong)",
-  "Rang leh (Stră)",
-  "Rang rai (Ba Na)",
-  "Rang rai (Gia Rai)",
-  "Song lang (Kinh)",
-  "Sáo ngang (Kinh)",
-  "Sênh tiền (Kinh)",
-  "T'rum (Gia Rai)",
-  "Ta in (Hà Nhì)",
-  "Ta lư (Vân Kiều)",
-  "Ta pòl (Ba Na)",
-  "Ta pòl (Brâu)",
-  "Ta pòl (Gia Rai)",
-  "Ta pòl (Rơ Năm)",
-  "Tam thập lục (Kinh)",
-  "Teh ding (Gia Rai)",
-  "Tiêu (Kinh)",
-  "Tol alao (Ca Dong)",
-  "Tông đing (Ba Na)",
-  "Tông đing (Ca Dong)",
-  "Tơ nốt (Ba Na)",
-  "Trống bộc (Kinh)",
-  "Trống cái (Kinh)",
-  "Trống chầu (Kinh)",
-  "Trống cơm (Kinh)",
-  "Trống dẹt (Kinh)",
-  "Trống khẩu (Kinh)",
-  "Trống lắng (Kinh)",
-  "Trống mảnh (Kinh)",
-  "Trống quần (Kinh)",
-  "Trống đế (Kinh)",
-  "Trống đồng (Kinh)",
-  "Tính tẩu (Thái)",
-  "Tính tẩu (Tày)",
-  "Vang (Gia Rai)",
-  "Đinh Duar (Giẻ Triêng)",
-  "Đinh Khén (Xơ Đăng)",
-  "Đinh tuk (Ba Na)",
-  "Đao đao (Khơ Mú)",
-  "Đuk đik (Giẻ Triêng)",
-  "Đàn bầu (Kinh)",
-  "Đàn môi (H'Mông)",
-  "Đàn nguyệt (Kinh)",
-  "Đàn nhị (Chăm)",
-  "Đàn nhị (Dao)",
-  "Đàn nhị (Giáy)",
-  "Đàn nhị (Kinh)",
-  "Đàn nhị (Nùng)",
-  "Đàn nhị (Tày)",
-  "Đàn t'rưng (Ba Na)",
-  "Đàn t'rưng (Gia Rai)",
-  "Đàn tam (Kinh)",
-  "Đàn tranh (Kinh)",
-  "Đàn tứ (Kinh)",
-  "Đàn tỳ bà (Kinh)",
-  "Đàn đá (Kinh)",
-  "Đàn đáy (Kinh)",
+  "Alal (Ba Na)", "Aráp (Ba Na)", "Aráp (Ca Dong)", "Aráp (Gia Rai)", "Aráp (Rơ Năm)", "Aráp (Stră)",
+  "Biên khánh (Kinh)", "Bro (Ba Na)", "Bro (Gia Rai)", "Bro (Giẻ Triêng)", "Bro (Xơ Đăng)", "Bẳng bu (Thái)",
+  "Chul (Ba Na)", "Chul (Gia Rai)", "Chênh Kial (Ba Na)", "Cò ke (Mường)", "Cồng, chiêng (Ba Na)",
+  "Cồng, chiêng (Gia Rai)", "Cồng, chiêng (Giẻ Triêng)", "Cồng, chiêng (Hrê)", "Cồng, chiêng (Ê Đê)",
+  "Dàn nhạc ngũ âm (Khmer)", "Goong (Ba Na)", "Goong (Gia Rai)", "Goong (Giẻ Triêng)", "Goong đe (Ba Na)",
+  "Hơgơr (Ê Đê)", "Hơgơr cân (Mnâm)", "Hơgơr cân (Rơ Năm)", "Hơgơr prong (Gia Rai)", "Hơgơr tuôn (Hà Lang)",
+  "Hơgơr tăk (Ba Na)", "Khinh khung (Ba Na)", "Khinh khung (Gia Rai)", "Khèn (H'Mông)", "Khèn (Ta Ôi)",
+  "Khèn (Ê Đê)", "Khên (Vân Kiều)", "Knăh ring (Ba Na)", "Knăh ring (Gia Rai)", "K'lông put (Gia Rai)",
+  "K'ny (Ba Na)", "K'ny (Gia Rai)", "K'ny (Rơ Ngao)", "K'ny (Xơ Đăng)", "Kèn bầu (Chăm)", "Kèn bầu (Kinh)",
+  "Kèn bầu (Thái)", "Kềnh (H'Mông)", "M'linh (Dao)", "M'linh (Mường)", "M'nhum (Gia Rai)", "Mõ (Kinh)",
+  "Phách (Kinh)", "Pí cổng (Thái)", "Pí lè (Thái)", "Pí lè (Tày)", "Pí một lao (Kháng)", "Pí một lao (Khơ Mú)",
+  "Pí một lao (La Ha)", "Pí một lao (Thái)", "Pí pặp (Thái)", "Pí phướng (Thái)", "Pí đôi (Thái)",
+  "Púa (H'Mông)", "Púa (Lô Lô)", "Qeej (H'Mông)", "Rang leh (Ca Dong)", "Rang leh (Stră)", "Rang rai (Ba Na)",
+  "Rang rai (Gia Rai)", "Song lang (Kinh)", "Sáo ngang (Kinh)", "Sênh tiền (Kinh)", "T'rum (Gia Rai)",
+  "Ta in (Hà Nhì)", "Ta lư (Vân Kiều)", "Ta pòl (Ba Na)", "Ta pòl (Brâu)", "Ta pòl (Gia Rai)",
+  "Ta pòl (Rơ Năm)", "Tam thập lục (Kinh)", "Teh ding (Gia Rai)", "Tiêu (Kinh)", "Tol alao (Ca Dong)",
+  "Tông đing (Ba Na)", "Tông đing (Ca Dong)", "Tơ nốt (Ba Na)", "Trống bộc (Kinh)", "Trống cái (Kinh)",
+  "Trống chầu (Kinh)", "Trống cơm (Kinh)", "Trống dẹt (Kinh)", "Trống khẩu (Kinh)", "Trống lắng (Kinh)",
+  "Trống mảnh (Kinh)", "Trống quần (Kinh)", "Trống đế (Kinh)", "Trống đồng (Kinh)", "Tính tẩu (Thái)",
+  "Tính tẩu (Tày)", "Vang (Gia Rai)", "Đinh Duar (Giẻ Triêng)", "Đinh Khén (Xơ Đăng)", "Đinh tuk (Ba Na)",
+  "Đao đao (Khơ Mú)", "Đuk đik (Giẻ Triêng)", "Đàn bầu (Kinh)", "Đàn môi (H'Mông)", "Đàn nguyệt (Kinh)",
+  "Đàn nhị (Chăm)", "Đàn nhị (Dao)", "Đàn nhị (Giáy)", "Đàn nhị (Kinh)", "Đàn nhị (Nùng)", "Đàn nhị (Tày)",
+  "Đàn t'rưng (Ba Na)", "Đàn t'rưng (Gia Rai)", "Đàn tam (Kinh)", "Đàn tranh (Kinh)", "Đàn tứ (Kinh)",
+  "Đàn tỳ bà (Kinh)", "Đàn đá (Kinh)", "Đàn đáy (Kinh)",
 ];
+
+// Mapping genre to typical ethnicity
+const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
+  "Ca trù": ["Kinh"],
+  "Quan họ": ["Kinh"],
+  "Chầu văn": ["Kinh"],
+  "Nhã nhạc": ["Kinh"],
+  "Ca Huế": ["Kinh"],
+  "Đờn ca tài tử": ["Kinh"],
+  "Hát bội": ["Kinh"],
+  "Cải lương": ["Kinh"],
+  "Tuồng": ["Kinh"],
+  "Chèo": ["Kinh"],
+  "Hát xẩm": ["Kinh"],
+  "Hát then": ["Tày", "Nùng"],
+  "Khèn": ["H'Mông"],
+  "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
+};
 
 // ===== UTILITY FUNCTIONS =====
 const inferMimeFromName = (name: string) => {
@@ -347,7 +171,6 @@ const formatFileSize = (bytes: number) => {
 
 // ===== REUSABLE COMPONENTS =====
 
-// Dropdown with search - UI matching SearchBar style
 function SearchableDropdown({
   value,
   onChange,
@@ -465,22 +288,6 @@ function SearchableDropdown({
                 scrollbarColor: "#10b981 rgba(255, 255, 255, 0.3)",
               }}
             >
-              <style>{`
-                .dropdown-scroll::-webkit-scrollbar {
-                  width: 8px;
-                }
-                .dropdown-scroll::-webkit-scrollbar-track {
-                  background: rgba(255, 255, 255, 0.3);
-                  border-radius: 10px;
-                }
-                .dropdown-scroll::-webkit-scrollbar-thumb {
-                  background: #10b981;
-                  border-radius: 10px;
-                }
-                .dropdown-scroll::-webkit-scrollbar-thumb:hover {
-                  background: #059669;
-                }
-              `}</style>
               {filteredOptions.length === 0 ? (
                 <div className="px-5 py-3 text-secondary-400 text-sm text-center">
                   Không tìm thấy kết quả
@@ -513,7 +320,6 @@ function SearchableDropdown({
   );
 }
 
-// Multi-select with tags - UI matching SearchBar style
 function MultiSelectTags({
   values,
   onChange,
@@ -672,7 +478,6 @@ function MultiSelectTags({
   );
 }
 
-// Custom Date Picker Component với UI/UX giống dropdown
 function DatePicker({
   value,
   onChange,
@@ -690,7 +495,6 @@ function DatePicker({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
 
-  // State cho calendar
   const [viewDate, setViewDate] = useState(() => {
     if (value) {
       const date = new Date(value);
@@ -738,11 +542,9 @@ function DatePicker({
     const startingDayOfWeek = firstDay.getDay();
 
     const days: (number | null)[] = [];
-    // Add empty slots for days before the first day of month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    // Add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
@@ -814,7 +616,6 @@ function DatePicker({
                 "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
-            {/* Calendar Header */}
             <div className="p-3 border-b border-secondary-200 flex items-center justify-between">
               <button
                 type="button"
@@ -835,9 +636,7 @@ function DatePicker({
               </button>
             </div>
 
-            {/* Calendar Grid */}
             <div className="p-3">
-              {/* Day names */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {dayNames.map((day) => (
                   <div
@@ -849,7 +648,6 @@ function DatePicker({
                 ))}
               </div>
 
-              {/* Days */}
               <div className="grid grid-cols-7 gap-1">
                 {days.map((day, index) => {
                   if (day === null) {
@@ -893,7 +691,6 @@ function DatePicker({
   );
 }
 
-// Text Input - UI matching SearchBar style
 function TextInput({
   value,
   onChange,
@@ -942,7 +739,6 @@ function TextInput({
   );
 }
 
-// Form Field Wrapper
 function FormField({
   label,
   required = false,
@@ -956,17 +752,16 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-white/90">
+      <label className="block text-sm font-medium text-white">
         {label}
         {required && <span className="text-red-400 ml-1">*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-white/50">{hint}</p>}
+      {hint && <p className="text-xs text-white/60">{hint}</p>}
     </div>
   );
 }
 
-// Section Header
 function SectionHeader({
   icon: Icon,
   title,
@@ -979,12 +774,12 @@ function SectionHeader({
   optional?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 mb-4">
+    <div className="flex items-start gap-3 mb-6">
       <div className="p-2 bg-emerald-500/20 rounded-lg">
         <Icon className="h-5 w-5 text-emerald-400" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h3 className="text-xl font-semibold text-white flex items-center gap-2">
           {title}
           {optional && (
             <span className="text-xs font-normal text-white/50 bg-white/10 px-2 py-0.5 rounded-full">
@@ -992,13 +787,12 @@ function SectionHeader({
             </span>
           )}
         </h3>
-        {subtitle && <p className="text-sm text-white/60 mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
       </div>
     </div>
   );
 }
 
-// Collapsible Section
 function CollapsibleSection({
   icon: Icon,
   title,
@@ -1021,14 +815,14 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-4 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
+        className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-500/20 rounded-lg">
             <Icon className="h-5 w-5 text-emerald-400" />
           </div>
           <div className="text-left">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               {title}
               {optional && (
                 <span className="text-xs font-normal text-white/50 bg-white/10 px-2 py-0.5 rounded-full">
@@ -1036,7 +830,7 @@ function CollapsibleSection({
                 </span>
               )}
             </h3>
-            {subtitle && <p className="text-sm text-white/60">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
           </div>
         </div>
         <ChevronDown
@@ -1045,14 +839,13 @@ function CollapsibleSection({
           }`}
         />
       </button>
-      {isOpen && <div className="p-4 pt-2 space-y-4">{children}</div>}
+      {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
     </div>
   );
 }
 
 // ===== MAIN COMPONENT =====
 export default function UploadMusic() {
-  // File state
   const [file, setFile] = useState<File | null>(null);
   const [audioInfo, setAudioInfo] = useState<{
     name: string;
@@ -1065,7 +858,6 @@ export default function UploadMusic() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Basic info
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [artistUnknown, setArtistUnknown] = useState(false);
@@ -1078,7 +870,6 @@ export default function UploadMusic() {
   const [dateNote, setDateNote] = useState("");
   const [recordingLocation, setRecordingLocation] = useState("");
 
-  // Cultural context
   const [ethnicity, setEthnicity] = useState("");
   const [region, setRegion] = useState("");
   const [province, setProvince] = useState("");
@@ -1086,28 +877,34 @@ export default function UploadMusic() {
   const [performanceType, setPerformanceType] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
 
-  // Additional notes
   const [description, setDescription] = useState("");
   const [fieldNotes, setFieldNotes] = useState("");
   const [transcription, setTranscription] = useState("");
   const [lyricsFile, setLyricsFile] = useState<File | null>(null);
 
-  // Admin & copyright
   const [collector, setCollector] = useState("");
   const [copyright, setCopyright] = useState("");
   const [archiveOrg, setArchiveOrg] = useState("");
   const [catalogId, setCatalogId] = useState("");
 
-  // UI state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
 
-  // Derived states
   const requiresInstruments = performanceType === "instrumental" || performanceType === "vocal_accompaniment";
   const allowsLyrics = performanceType === "acappella" || performanceType === "vocal_accompaniment";
 
-  // Handle file selection
+  // Check for genre-ethnicity mismatch
+  const genreEthnicityWarning = useMemo(() => {
+    if (!genre || !ethnicity) return null;
+    
+    const expectedEthnicities = GENRE_ETHNICITY_MAP[genre];
+    if (expectedEthnicities && !expectedEthnicities.includes(ethnicity)) {
+      return `Lưu ý: Thể loại "${genre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
+    }
+    return null;
+  }, [genre, ethnicity]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
@@ -1136,7 +933,6 @@ export default function UploadMusic() {
       if (cleanedUp) return;
       const durationSeconds = isFinite(audio.duration) ? Math.round(audio.duration) : 0;
       
-      // Estimate bitrate from file size and duration
       const bitrate = durationSeconds > 0 
         ? Math.round((selected.size * 8) / durationSeconds / 1000) 
         : undefined;
@@ -1149,7 +945,6 @@ export default function UploadMusic() {
         bitrate,
       });
       
-      // Auto-fill title from filename
       if (!title) {
         const nameWithoutExt = selected.name.replace(/\.[^/.]+$/, "");
         setTitle(nameWithoutExt);
@@ -1182,7 +977,6 @@ export default function UploadMusic() {
     audio.addEventListener("error", onError);
   };
 
-  // Handle lyrics file
   const handleLyricsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -1190,7 +984,6 @@ export default function UploadMusic() {
     }
   };
 
-  // Validate form
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -1211,7 +1004,6 @@ export default function UploadMusic() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -1221,7 +1013,6 @@ export default function UploadMusic() {
       return;
     }
 
-    // Prepare data
     const formData = {
       id: Date.now(),
       file: {
@@ -1265,7 +1056,6 @@ export default function UploadMusic() {
       uploadedAt: new Date().toISOString(),
     };
 
-    // Save to localStorage (in real app, this would be an API call)
     const reader = new FileReader();
     reader.onload = function (ev) {
       const audioData = ev.target?.result;
@@ -1282,9 +1072,8 @@ export default function UploadMusic() {
       localStorage.setItem("localRecordings", JSON.stringify(recordings));
 
       setSubmitStatus("success");
-      setSubmitMessage(`Đã tải lên thành công: ${title}`);
+      setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
       
-      // Reset form
       setTimeout(() => {
         resetForm();
       }, 3000);
@@ -1334,23 +1123,27 @@ export default function UploadMusic() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-6">
-      {/* Status Messages */}
+      {/* Required Fields Note */}
+      <div className="flex items-center gap-2 text-sm text-white/60">
+        <span className="text-red-400">*</span>
+        <span>Trường bắt buộc</span>
+      </div>
+
       {submitStatus === "success" && (
-        <div className="flex items-center gap-3 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl">
+        <div className="flex items-center gap-3 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl">
           <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
           <p className="text-emerald-200">{submitMessage}</p>
         </div>
       )}
       
       {submitStatus === "error" && (
-        <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
+        <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
           <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
           <p className="text-red-200">{submitMessage}</p>
         </div>
       )}
 
-      {/* File Upload Section */}
-      <div className="border border-white/10 rounded-2xl p-6 bg-white/5 backdrop-blur-sm">
+      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
         <SectionHeader
           icon={Upload}
           title="Tải lên file âm thanh"
@@ -1384,7 +1177,7 @@ export default function UploadMusic() {
               </div>
             ) : file && audioInfo ? (
               <div className="space-y-3">
-                <div className="p-3 bg-emerald-500/20 rounded-full w-fit mx-auto">
+                <div className="p-3 bg-emerald-500/20 rounded-2xl w-fit mx-auto">
                   <FileAudio className="h-8 w-8 text-emerald-400" />
                 </div>
                 <div>
@@ -1409,19 +1202,19 @@ export default function UploadMusic() {
                     setAudioInfo(null);
                     if (fileInputRef.current) fileInputRef.current.value = "";
                   }}
-                  className="text-sm text-white/50 hover:text-red-400 transition-colors"
+                  className="text-sm text-white/60 hover:text-red-400 transition-colors"
                 >
                   Chọn file khác
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="p-3 bg-white/10 rounded-full w-fit mx-auto">
-                  <Upload className="h-8 w-8 text-white/50" />
+                <div className="p-3 bg-emerald-500/20 rounded-2xl w-fit mx-auto">
+                  <Upload className="h-8 w-8 text-emerald-400" />
                 </div>
                 <div>
                   <p className="text-white">Kéo thả file hoặc click để chọn</p>
-                  <p className="text-sm text-white/50 mt-1">MP3, WAV, FLAC - Tối đa 50MB</p>
+                  <p className="text-sm text-white/60 mt-1">MP3, WAV, FLAC - Tối đa 50MB</p>
                 </div>
               </div>
             )}
@@ -1435,15 +1228,14 @@ export default function UploadMusic() {
         </div>
       </div>
 
-      {/* Basic Info Section */}
-      <div className="border border-white/10 rounded-2xl p-6 bg-white/5 backdrop-blur-sm">
+      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
         <SectionHeader
           icon={Music}
           title="Thông tin mô tả cơ bản"
           subtitle="Thông tin chính về bản nhạc"
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Tiêu đề/Tên bản nhạc" required>
             <TextInput
               value={title}
@@ -1466,7 +1258,7 @@ export default function UploadMusic() {
                 disabled={artistUnknown}
               />
             </FormField>
-            <label className="flex items-center gap-2 text-sm text-white/90 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
               <input
                 type="checkbox"
                 checked={artistUnknown}
@@ -1492,7 +1284,7 @@ export default function UploadMusic() {
                 disabled={composerUnknown}
               />
             </FormField>
-            <label className="flex items-center gap-2 text-sm text-white/90 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
               <input
                 type="checkbox"
                 checked={composerUnknown}
@@ -1538,7 +1330,7 @@ export default function UploadMusic() {
                 placeholder="Chọn ngày/tháng/năm"
               />
             </FormField>
-            <label className="flex items-center gap-2 text-sm text-white/90 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
               <input
                 type="checkbox"
                 checked={dateEstimated}
@@ -1566,13 +1358,20 @@ export default function UploadMusic() {
         </div>
       </div>
 
-      {/* Cultural Context Section */}
       <CollapsibleSection
         icon={MapPin}
         title="Thông tin bối cảnh văn hóa"
         subtitle="Thông tin về nguồn gốc và bối cảnh biểu diễn"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Genre-Ethnicity Warning */}
+        {genreEthnicityWarning && (
+          <div className="mb-4 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
+            <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Thuộc tính dân tộc">
             <SearchableDropdown
               value={ethnicity}
@@ -1626,7 +1425,7 @@ export default function UploadMusic() {
                     className={`px-4 py-2 rounded-xl text-sm transition-all ${
                       performanceType === pt.key
                         ? "bg-emerald-500 text-white"
-                        : "bg-white/10 text-white/70 hover:bg-white/15"
+                        : "bg-white/10 text-white/70 hover:bg-white/15 border-0"
                     }`}
                   >
                     {pt.label}
@@ -1658,7 +1457,7 @@ export default function UploadMusic() {
 
           {allowsLyrics && (
             <div className="md:col-span-2">
-              <FormField label="Upload lời bài hát" hint="File .txt hoặc .doc">
+              <FormField label="Tải lên lời bài hát (nếu có)" hint="File .txt hoặc .docx">
                 <div className="flex items-center gap-3">
                   <label className="btn-liquid-glass-secondary px-4 py-2 rounded-xl cursor-pointer text-sm">
                     Chọn file
@@ -1679,7 +1478,6 @@ export default function UploadMusic() {
         </div>
       </CollapsibleSection>
 
-      {/* Additional Notes Section */}
       <CollapsibleSection
         icon={Info}
         title="Ghi chú bổ sung"
@@ -1719,14 +1517,13 @@ export default function UploadMusic() {
         </div>
       </CollapsibleSection>
 
-      {/* Admin & Copyright Section */}
       <CollapsibleSection
         icon={Shield}
         title="Thông tin quản trị và bản quyền"
         optional
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Người thu thập/Ghi âm">
             <TextInput
               value={collector}
@@ -1761,11 +1558,7 @@ export default function UploadMusic() {
         </div>
       </CollapsibleSection>
 
-      {/* Submit Button */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-        <p className="text-sm text-white/50">
-          <span className="text-red-400">*</span> Trường bắt buộc
-        </p>
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
         <div className="flex gap-3">
           <button
             type="button"
@@ -1780,7 +1573,7 @@ export default function UploadMusic() {
             className="btn-liquid-glass-primary px-8 py-2.5 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Upload className="h-4 w-4" />
-            Tải lên
+            Đóng góp
           </button>
         </div>
       </div>
