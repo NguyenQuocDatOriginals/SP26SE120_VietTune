@@ -559,8 +559,10 @@ function DatePicker({
   const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
   const handleDateClick = (day: number) => {
-    const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-    const isoString = newDate.toISOString().split('T')[0];
+    const year = viewDate.getFullYear();
+    const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
+    const dayStr = day.toString().padStart(2, '0');
+    const isoString = `${year}-${month}-${dayStr}`;
     onChange(isoString);
     setIsOpen(false);
   };
@@ -660,18 +662,25 @@ function DatePicker({
                     selectedDate.getMonth() === viewDate.getMonth() &&
                     selectedDate.getFullYear() === viewDate.getFullYear();
 
+                  const today = new Date();
                   const isToday =
-                    new Date().getDate() === day &&
-                    new Date().getMonth() === viewDate.getMonth() &&
-                    new Date().getFullYear() === viewDate.getFullYear();
+                    today.getDate() === day &&
+                    today.getMonth() === viewDate.getMonth() &&
+                    today.getFullYear() === viewDate.getFullYear();
+
+                  const dayDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+                  const isFuture = dayDate > today;
 
                   return (
                     <button
                       key={day}
                       type="button"
-                      onClick={() => handleDateClick(day)}
+                      onClick={() => !isFuture && handleDateClick(day)}
+                      disabled={isFuture}
                       className={`aspect-square rounded-lg text-sm transition-colors ${
-                        isSelected
+                        isFuture
+                          ? "text-secondary-300 cursor-not-allowed"
+                          : isSelected
                           ? "bg-emerald-500 text-white font-medium"
                           : isToday
                           ? "bg-emerald-100 text-emerald-900 font-medium"
@@ -864,16 +873,21 @@ export default function UploadMusic() {
   const [composer, setComposer] = useState("");
   const [composerUnknown, setComposerUnknown] = useState(false);
   const [language, setLanguage] = useState("");
+  const [noLanguage, setNoLanguage] = useState(false);
+  const [customLanguage, setCustomLanguage] = useState("");
   const [genre, setGenre] = useState("");
+  const [customGenre, setCustomGenre] = useState("");
   const [recordingDate, setRecordingDate] = useState("");
   const [dateEstimated, setDateEstimated] = useState(false);
   const [dateNote, setDateNote] = useState("");
   const [recordingLocation, setRecordingLocation] = useState("");
 
   const [ethnicity, setEthnicity] = useState("");
+  const [customEthnicity, setCustomEthnicity] = useState("");
   const [region, setRegion] = useState("");
   const [province, setProvince] = useState("");
   const [eventType, setEventType] = useState("");
+  const [customEventType, setCustomEventType] = useState("");
   const [performanceType, setPerformanceType] = useState("");
   const [instruments, setInstruments] = useState<string[]>([]);
 
@@ -897,7 +911,7 @@ export default function UploadMusic() {
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
     if (!genre || !ethnicity) return null;
-    
+
     const expectedEthnicities = GENRE_ETHNICITY_MAP[genre];
     if (expectedEthnicities && !expectedEthnicities.includes(ethnicity)) {
       return `Lưu ý: Thể loại "${genre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
@@ -1026,18 +1040,18 @@ export default function UploadMusic() {
         title,
         artist: artistUnknown ? "Không rõ nghệ sĩ" : artist,
         composer: composerUnknown ? "Dân gian/Không rõ tác giả" : composer,
-        language,
-        genre,
+        language: language === "Khác" ? customLanguage : language,
+        genre: genre === "Khác" ? customGenre : genre,
         recordingDate,
         dateEstimated,
         dateNote,
         recordingLocation,
       },
       culturalContext: {
-        ethnicity,
+        ethnicity: ethnicity === "Khác" ? customEthnicity : ethnicity,
         region,
         province,
-        eventType,
+        eventType: eventType === "Khác" ? customEventType : eventType,
         performanceType,
         instruments,
       },
@@ -1096,15 +1110,20 @@ export default function UploadMusic() {
     setComposer("");
     setComposerUnknown(false);
     setLanguage("");
+    setNoLanguage(false);
+    setCustomLanguage("");
     setGenre("");
+    setCustomGenre("");
     setRecordingDate("");
     setDateEstimated(false);
     setDateNote("");
     setRecordingLocation("");
     setEthnicity("");
+    setCustomEthnicity("");
     setRegion("");
     setProvince("");
     setEventType("");
+    setCustomEventType("");
     setPerformanceType("");
     setInstruments([]);
     setDescription("");
@@ -1301,26 +1320,66 @@ export default function UploadMusic() {
             )}
           </div>
 
-          <FormField label="Ngôn ngữ">
-            <SearchableDropdown
-              value={language}
-              onChange={setLanguage}
-              options={LANGUAGES}
-              placeholder="Chọn ngôn ngữ"
-            />
-          </FormField>
-
-          <FormField label="Thể loại/Loại hình" required>
-            <SearchableDropdown
-              value={genre}
-              onChange={setGenre}
-              options={GENRES}
-              placeholder="Chọn thể loại"
-            />
-            {errors.genre && (
-              <p className="text-sm text-red-400">{errors.genre}</p>
+          <div className="space-y-2">
+            <FormField label="Ngôn ngữ">
+              <SearchableDropdown
+                value={language}
+                onChange={(val) => {
+                  setLanguage(val);
+                  if (val !== "Khác") setCustomLanguage("");
+                }}
+                options={LANGUAGES}
+                placeholder="Chọn ngôn ngữ"
+                disabled={noLanguage}
+              />
+            </FormField>
+            {language === "Khác" && !noLanguage && (
+              <TextInput
+                value={customLanguage}
+                onChange={setCustomLanguage}
+                placeholder="Nhập tên ngôn ngữ khác..."
+              />
             )}
-          </FormField>
+            <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={noLanguage}
+                onChange={(e) => {
+                  setNoLanguage(e.target.checked);
+                  if (e.target.checked) {
+                    setLanguage("");
+                    setCustomLanguage("");
+                  }
+                }}
+                className="w-4 h-4 rounded border-secondary-300 bg-white text-emerald-500 focus:ring-emerald-500"
+              />
+              Không có ngôn ngữ
+            </label>
+          </div>
+
+          <div className="space-y-2">
+            <FormField label="Thể loại/Loại hình" required>
+              <SearchableDropdown
+                value={genre}
+                onChange={(val) => {
+                  setGenre(val);
+                  if (val !== "Khác") setCustomGenre("");
+                }}
+                options={GENRES}
+                placeholder="Chọn thể loại"
+              />
+              {errors.genre && (
+                <p className="text-sm text-red-400">{errors.genre}</p>
+              )}
+            </FormField>
+            {genre === "Khác" && (
+              <TextInput
+                value={customGenre}
+                onChange={setCustomGenre}
+                placeholder="Nhập tên thể loại khác..."
+              />
+            )}
+          </div>
 
           <div className="space-y-2">
             <FormField label="Ngày ghi âm">
@@ -1372,14 +1431,26 @@ export default function UploadMusic() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField label="Thuộc tính dân tộc">
-            <SearchableDropdown
-              value={ethnicity}
-              onChange={setEthnicity}
-              options={ETHNICITIES}
-              placeholder="Chọn dân tộc"
-            />
-          </FormField>
+          <div className="space-y-2">
+            <FormField label="Thuộc tính dân tộc">
+              <SearchableDropdown
+                value={ethnicity}
+                onChange={(val) => {
+                  setEthnicity(val);
+                  if (val !== "Khác") setCustomEthnicity("");
+                }}
+                options={ETHNICITIES}
+                placeholder="Chọn dân tộc"
+              />
+            </FormField>
+            {ethnicity === "Khác" && (
+              <TextInput
+                value={customEthnicity}
+                onChange={setCustomEthnicity}
+                placeholder="Nhập tên dân tộc khác..."
+              />
+            )}
+          </div>
 
           <FormField label="Khu vực">
             <SearchableDropdown
@@ -1400,14 +1471,26 @@ export default function UploadMusic() {
             />
           </FormField>
 
-          <FormField label="Loại sự kiện">
-            <SearchableDropdown
-              value={eventType}
-              onChange={setEventType}
-              options={EVENT_TYPES}
-              placeholder="Chọn loại sự kiện"
-            />
-          </FormField>
+          <div className="space-y-2">
+            <FormField label="Loại sự kiện">
+              <SearchableDropdown
+                value={eventType}
+                onChange={(val) => {
+                  setEventType(val);
+                  if (val !== "Khác") setCustomEventType("");
+                }}
+                options={EVENT_TYPES}
+                placeholder="Chọn loại sự kiện"
+              />
+            </FormField>
+            {eventType === "Khác" && (
+              <TextInput
+                value={customEventType}
+                onChange={setCustomEventType}
+                placeholder="Nhập loại sự kiện khác..."
+              />
+            )}
+          </div>
 
           <div className="md:col-span-2">
             <FormField label="Loại hình biểu diễn">
