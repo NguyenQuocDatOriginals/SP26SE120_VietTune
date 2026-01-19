@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../domain/entities/song.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/utils/extensions.dart';
+import '../../../core/theme/app_theme.dart';
 import 'status_badge.dart';
 
 /// Song card widget for displaying songs in lists
@@ -10,18 +10,20 @@ class SongCard extends StatelessWidget {
   final Song song;
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteTap;
+  final EdgeInsets? margin;
 
   const SongCard({
     super.key,
     required this.song,
     this.onTap,
     this.onFavoriteTap,
+    this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -36,7 +38,7 @@ class SongCard extends StatelessWidget {
                 child: Container(
                   width: 80,
                   height: 80,
-                  color: Colors.grey[300],
+                  color: AppColors.divider,
                   child: song.audioMetadata?.url != null
                       ? const Icon(Icons.music_note, size: 40)
                       : const Icon(Icons.audio_file, size: 40),
@@ -102,7 +104,7 @@ class SongCard extends StatelessWidget {
                           Icon(
                             Icons.play_arrow,
                             size: 14,
-                            color: Colors.grey[600],
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -115,7 +117,7 @@ class SongCard extends StatelessWidget {
                           Icon(
                             Icons.access_time,
                             size: 14,
-                            color: Colors.grey[600],
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(

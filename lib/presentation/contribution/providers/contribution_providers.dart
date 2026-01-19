@@ -2,12 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/contribution_request.dart';
 import '../../../domain/entities/song.dart';
 import '../../../domain/entities/audio_metadata.dart';
+import '../../../domain/entities/location.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/utils/audio_metadata_extractor.dart';
 import '../../../domain/usecases/contribution/get_user_contributions.dart';
-import '../../../domain/usecases/contribution/submit_contribution.dart';
 import '../../../domain/usecases/contribution/get_contribution_by_id.dart';
-import '../../../domain/usecases/contribution/update_contribution.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../../core/di/injection.dart';
 
@@ -71,7 +70,7 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
     );
   }
 
-  void updateAuthor(String author) {
+  void updateAuthor(String? author) {
     state = state.copyWith(
       songData: state.songData?.copyWith(author: author),
     );
@@ -150,6 +149,26 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
     state = state.copyWith(
       songData: state.songData?.copyWith(isRecordingDateEstimated: isEstimated),
     );
+  }
+
+  void updateRecordingLocation(String province, String commune) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata != null) {
+      final currentLocation = audioMetadata.recordingLocation;
+      final newLocation = Location(
+        latitude: currentLocation?.latitude ?? 0.0,
+        longitude: currentLocation?.longitude ?? 0.0,
+        province: province.isNotEmpty ? province : currentLocation?.province,
+        district: currentLocation?.district,
+        commune: commune.isNotEmpty ? commune : currentLocation?.commune,
+        address: currentLocation?.address,
+      );
+      state = state.copyWith(
+        songData: state.songData?.copyWith(
+          audioMetadata: audioMetadata.copyWith(recordingLocation: newLocation),
+        ),
+      );
+    }
   }
 
   void updateCopyrightInfo(String? info) {

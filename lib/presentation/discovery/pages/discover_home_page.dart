@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../domain/entities/song.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../domain/usecases/discovery/get_featured_songs.dart';
 import '../../../domain/usecases/reference/get_ethnic_groups.dart';
 import '../../../domain/usecases/reference/get_instruments.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../shared/widgets/song_card.dart';
 import '../../shared/widgets/loading_indicator.dart';
@@ -56,37 +56,46 @@ class DiscoverHomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Khám phá'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => context.push(AppRoutes.discoverSearch),
+            tooltip: 'Tìm kiếm',
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(featuredSongsProvider);
-          ref.invalidate(ethnicGroupsListProvider);
-          ref.invalidate(instrumentsListProvider);
-        },
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Featured Songs
-              _buildSectionHeader(context, 'Bài hát nổi bật'),
-              _buildFeaturedSongs(context, ref),
-              const SizedBox(height: 24),
-              // Browse by Ethnic Group
-              _buildSectionHeader(context, 'Dân tộc'),
-              _buildEthnicGroups(context, ref),
-              const SizedBox(height: 24),
-              // Browse by Instrument
-              _buildSectionHeader(context, 'Nhạc cụ'),
-              _buildInstruments(context, ref),
-            ],
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(featuredSongsProvider);
+            ref.invalidate(ethnicGroupsListProvider);
+            ref.invalidate(instrumentsListProvider);
+          },
+          color: AppColors.textOnGradient,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 80), // Space for AppBar
+                // Featured Songs
+                _buildSectionHeader(context, 'Bài hát nổi bật'),
+                _buildFeaturedSongs(context, ref),
+                const SizedBox(height: 32),
+                // Browse by Ethnic Group
+                _buildSectionHeader(context, 'Dân tộc'),
+                _buildEthnicGroups(context, ref),
+                const SizedBox(height: 32),
+                // Browse by Instrument
+                _buildSectionHeader(context, 'Nhạc cụ'),
+                _buildInstruments(context, ref),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -95,10 +104,14 @@ class DiscoverHomePage extends ConsumerWidget {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.headlineSmall,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: AppColors.textOnGradient,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -113,29 +126,37 @@ class DiscoverHomePage extends ConsumerWidget {
         }
 
         return SizedBox(
-          height: 200,
+          height: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: songs.length,
             itemBuilder: (context, index) {
               final song = songs[index];
               return SizedBox(
-                width: 300,
-                child: SongCard(
-                  song: song,
-                  onTap: () {
-                    context.push('/discover/song/${song.id}');
-                  },
+                width: 320,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: SongCard(
+                    song: song,
+                    margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                    onTap: () {
+                      context.push('/discover/song/${song.id}');
+                    },
+                  ),
                 ),
               );
             },
           ),
         );
       },
-      loading: () => const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator()),
+      loading: () => SizedBox(
+        height: 260,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.textOnGradient,
+          ),
+        ),
       ),
       error: (error, stack) => const SizedBox.shrink(),
     );
@@ -147,35 +168,49 @@ class DiscoverHomePage extends ConsumerWidget {
     return groupsAsync.when(
       data: (groups) {
         return SizedBox(
-          height: 150,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: groups.length,
             itemBuilder: (context, index) {
               final group = groups[index];
               return Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 16),
                 child: Card(
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: InkWell(
                     onTap: () {
                       context.push('/discover/ethnic-group/${group.id}');
                     },
+                    borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      width: 120,
-                      padding: const EdgeInsets.all(16),
+                      width: 130,
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.people,
-                            size: 40,
-                            color: Theme.of(context).colorScheme.primary,
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryRed.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.people,
+                              size: 36,
+                              color: AppColors.primaryRed,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             group.name,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -190,9 +225,13 @@ class DiscoverHomePage extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox(
-        height: 150,
-        child: Center(child: CircularProgressIndicator()),
+      loading: () => SizedBox(
+        height: 160,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.textOnGradient,
+          ),
+        ),
       ),
       error: (error, stack) => const SizedBox.shrink(),
     );
@@ -206,38 +245,57 @@ class DiscoverHomePage extends ConsumerWidget {
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
           ),
           itemCount: instruments.length,
           itemBuilder: (context, index) {
             final instrument = instruments[index];
             return Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: InkWell(
                 onTap: () {
                   context.push('/discover/instrument/${instrument.id}');
                 },
+                borderRadius: BorderRadius.circular(16),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.music_note,
-                        size: 32,
-                        color: Theme.of(context).colorScheme.primary,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGold.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.music_note,
+                            size: 28,
+                            color: AppColors.primaryGold,
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        instrument.name,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 10),
+                      Flexible(
+                        child: Text(
+                          instrument.name,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

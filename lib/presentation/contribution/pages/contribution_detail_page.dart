@@ -6,6 +6,7 @@ import '../../../core/utils/extensions.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
+import '../../../core/theme/app_theme.dart';
 
 class ContributionDetailPage extends ConsumerWidget {
   final String contributionId;
@@ -19,25 +20,35 @@ class ContributionDetailPage extends ConsumerWidget {
     );
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Chi tiết đóng góp'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
       ),
-      body: contributionAsync.when(
-        data: (contribution) {
-          final song = contribution.songData;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: contributionAsync.when(
+            data: (contribution) {
+              final song = contribution.songData;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Status badge
                 StatusBadge(status: contribution.status),
                 const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 // Song title
                 if (song != null) ...[
                   Text(
                     song.title,
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.textOnGradient,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Genre
@@ -86,12 +97,14 @@ class ContributionDetailPage extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorView(
-          message: 'Lỗi khi tải chi tiết: $error',
-          onRetry: () {
-            ref.invalidate(contributionByIdProvider(contributionId));
-          },
+            loading: () => const LoadingIndicator(),
+            error: (error, stack) => ErrorView(
+              message: 'Lỗi khi tải chi tiết: $error',
+              onRetry: () {
+                ref.invalidate(contributionByIdProvider(contributionId));
+              },
+            ),
+          ),
         ),
       ),
     );

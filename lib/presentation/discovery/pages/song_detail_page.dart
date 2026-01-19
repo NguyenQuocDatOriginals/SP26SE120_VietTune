@@ -7,6 +7,7 @@ import '../../../domain/usecases/discovery/toggle_favorite.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/services/guest_favorite_service.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../shared/widgets/audio_player_widget.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/loading_indicator.dart';
@@ -150,10 +151,13 @@ class _SongDetailPageState extends ConsumerState<SongDetailPage> {
           ),
         ],
       ),
-      body: songAsync.when(
-        data: (song) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: songAsync.when(
+            data: (song) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -255,12 +259,14 @@ class _SongDetailPageState extends ConsumerState<SongDetailPage> {
             ),
           );
         },
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorView(
-          message: 'Error loading song: $error',
-          onRetry: () {
-            ref.invalidate(songByIdProvider(widget.songId));
-          },
+            loading: () => const LoadingIndicator(),
+            error: (error, stack) => ErrorView(
+              message: 'Error loading song: $error',
+              onRetry: () {
+                ref.invalidate(songByIdProvider(widget.songId));
+              },
+            ),
+          ),
         ),
       ),
     );

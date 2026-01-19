@@ -8,6 +8,7 @@ import '../../../domain/repositories/contribution_repository.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/theme/app_theme.dart';
 
 final pendingContributionsProvider = FutureProvider((ref) async {
   final repository = getIt<ContributionRepository>();
@@ -38,10 +39,16 @@ class ReviewQueuePage extends ConsumerWidget {
 
     final pendingAsync = ref.watch(pendingContributionsProvider);
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Hàng chờ thẩm định'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
       ),
-      body: pendingAsync.when(
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: pendingAsync.when(
         data: (items) {
           if (items.isEmpty) {
             return const Center(child: Text('Không có đóng góp đang chờ.'));
@@ -59,10 +66,12 @@ class ReviewQueuePage extends ConsumerWidget {
             },
           );
         },
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorView(
-          message: 'Error loading queue: $error',
-          onRetry: () => ref.invalidate(pendingContributionsProvider),
+            loading: () => const LoadingIndicator(),
+            error: (error, stack) => ErrorView(
+              message: 'Error loading queue: $error',
+              onRetry: () => ref.invalidate(pendingContributionsProvider),
+            ),
+          ),
         ),
       ),
     );

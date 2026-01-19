@@ -7,6 +7,7 @@ import '../../../domain/usecases/discovery/search_songs.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../shared/widgets/song_card.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
@@ -148,35 +149,49 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     final resultsAsync = ref.watch(searchResultsProvider(searchState));
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
-          decoration: const InputDecoration(
+          style: TextStyle(color: AppColors.textOnGradient),
+          decoration: InputDecoration(
             hintText: 'Tìm kiếm bài hát...',
+            hintStyle: TextStyle(color: AppColors.textSecondaryOnGradient),
             border: InputBorder.none,
           ),
           onSubmitted: (_) => _performSearch(),
         ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
         actions: [
           IconButton(
-            icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
+            icon: Icon(
+              _showFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+              color: AppColors.textOnGradient,
+            ),
             onPressed: () {
               setState(() => _showFilters = !_showFilters);
             },
           ),
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(
+              Icons.search,
+              color: AppColors.textOnGradient,
+            ),
             onPressed: _performSearch,
           ),
         ],
       ),
-      body: Column(
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: Column(
         children: [
           // Filters
           if (_showFilters)
             Container(
               padding: const EdgeInsets.all(16),
-              color: Colors.grey[100],
+              color: AppColors.secondaryLight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -232,7 +247,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                        Icon(Icons.search_off, size: 64, color: AppColors.textSecondary),
                         const SizedBox(height: 16),
                         Text(
                           'Không tìm thấy kết quả',
@@ -266,6 +281,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
@@ -33,28 +34,47 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     // Watch auth provider to trigger restoration
     ref.watch(authProvider);
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.music_note,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'VietTune Archive',
-              style: Theme.of(context).textTheme.displayMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Preserving Vietnamese Traditional Music',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(),
-          ],
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.music_note,
+                  size: 80,
+                  color: AppColors.textOnGradient,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'VietTune Archive',
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                  color: AppColors.textOnGradient,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Preserving Vietnamese Traditional Music',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppColors.textSecondaryOnGradient,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 48),
+              CircularProgressIndicator(
+                color: AppColors.textOnGradient,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -5,8 +5,6 @@ import '../../../../domain/entities/enums.dart';
 import '../../../../domain/entities/contribution_request.dart';
 import '../../../../domain/usecases/contribution/submit_contribution.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../core/utils/extensions.dart';
-import '../../../shared/widgets/status_badge.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 /// Step 5: Review and Submit

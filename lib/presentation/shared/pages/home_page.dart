@@ -6,6 +6,7 @@ import '../../profile/pages/profile_page.dart';
 import '../../review/pages/review_queue_page.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../domain/entities/enums.dart';
+import '../../../core/theme/app_theme.dart';
 import '../widgets/guest_auth_prompt_bottom_sheet.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -68,9 +69,12 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
 
     return Scaffold(
-      body: IndexedStack(
-        index: safeIndex,
-        children: pages,
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: IndexedStack(
+          index: safeIndex,
+          children: pages,
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: safeIndex,

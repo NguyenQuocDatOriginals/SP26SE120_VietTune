@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../contribution/providers/contribution_providers.dart';
 import 'contribution_wizard_steps/audio_upload_step.dart';
 import 'contribution_wizard_steps/basic_info_step.dart';
 import 'contribution_wizard_steps/cultural_context_step.dart';
 import 'contribution_wizard_steps/performance_details_step.dart';
 import 'contribution_wizard_steps/notes_copyright_step.dart';
-import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 
 class NewContributionPage extends ConsumerWidget {
   const NewContributionPage({super.key});
@@ -34,17 +33,26 @@ class NewContributionPage extends ConsumerWidget {
     ];
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Đóng góp mới'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
         actions: [
           if (formState.currentStep > 0)
             TextButton(
               onPressed: () => formNotifier.reset(),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textOnGradient,
+              ),
               child: const Text('Hủy'),
             ),
         ],
       ),
-      body: Column(
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: Column(
         children: [
           // Step indicator
           Container(
@@ -60,8 +68,8 @@ class NewContributionPage extends ConsumerWidget {
                           height: 4,
                           decoration: BoxDecoration(
                             color: index <= formState.currentStep
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey[300],
+                                ? AppColors.primaryRed
+                                : AppColors.divider,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -80,11 +88,18 @@ class NewContributionPage extends ConsumerWidget {
               children: [
                 Text(
                   'Bước ${formState.currentStep + 1}/${steps.length}',
-                  style: Theme.of(context).textTheme.titleSmall,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textOnGradient,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
                 Text(
                   stepTitles[formState.currentStep],
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: AppColors.textSecondaryOnGradient,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -98,11 +113,11 @@ class NewContributionPage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
+              color: AppColors.gradientBottom.withValues(alpha: 0.9),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
               ],
@@ -115,7 +130,24 @@ class NewContributionPage extends ConsumerWidget {
                       onPressed: () => formNotifier.updateStep(
                         formState.currentStep - 1,
                       ),
-                      child: const Text('Quay lại'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textOnGradient,
+                        side: const BorderSide(
+                          color: AppColors.textOnGradient,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Quay lại',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 if (formState.currentStep > 0) const SizedBox(width: 16),
@@ -130,19 +162,32 @@ class NewContributionPage extends ConsumerWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: formNotifier.canProceedToNextStep()
-                            ? null // Use default primary color
-                            : Colors.grey,
+                            ? AppColors.primaryRed
+                            : AppColors.divider,
                         foregroundColor: formNotifier.canProceedToNextStep()
-                            ? null // Use default text color
-                            : Colors.grey[600],
+                            ? AppColors.textOnGradient
+                            : AppColors.textSecondary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: formNotifier.canProceedToNextStep() ? 4 : 0,
                       ),
-                      child: const Text('Tiếp theo'),
+                      child: const Text(
+                        'Tiếp theo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
               ],
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

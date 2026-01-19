@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/enums.dart';
+import '../../../core/theme/app_theme.dart';
 
 class RoleBadge extends StatelessWidget {
   final UserRole role;
@@ -10,20 +11,20 @@ class RoleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text(role.displayName),
-      backgroundColor: _getColor(role, context),
+      backgroundColor: _getColor(role),
     );
   }
 
-  Color _getColor(UserRole role, BuildContext context) {
+  Color _getColor(UserRole role) {
     switch (role) {
       case UserRole.researcher:
-        return Colors.blue.shade100;
+        return AppColors.accentBlue.withValues(alpha: 0.2);
       case UserRole.contributor:
-        return Colors.green.shade100;
+        return AppColors.success.withValues(alpha: 0.2);
       case UserRole.expert:
-        return Colors.orange.shade100;
+        return AppColors.warning.withValues(alpha: 0.2);
       case UserRole.admin:
-        return Colors.red.shade100;
+        return AppColors.error.withValues(alpha: 0.2);
     }
   }
 }

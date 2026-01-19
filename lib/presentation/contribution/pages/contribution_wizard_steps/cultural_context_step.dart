@@ -5,6 +5,7 @@ import '../../../../domain/entities/enums.dart';
 import '../../../../domain/entities/cultural_context.dart';
 import '../../../../domain/entities/location.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/ethnic_group_selector.dart';
 
 /// Step 3: Cultural Context
@@ -89,17 +90,28 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
         children: [
           Text(
             'Bước 3: Bối cảnh văn hóa',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textOnGradient,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Thông tin về dân tộc, vùng miền và bối cảnh biểu diễn',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondaryOnGradient,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Dân tộc *',
-            style: TextStyle(fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: AppColors.textSecondaryOnGradient,
+            ),
           ),
           const SizedBox(height: 8),
           EthnicGroupSelector(
@@ -115,9 +127,33 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: _selectedProvince,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
               labelText: 'Tỉnh/Thành',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryRed,
+                  width: 2,
+                ),
+              ),
             ),
             items: VietnameseProvinces.allProvinces
                 .map(
@@ -136,9 +172,33 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
           // Context type
           DropdownButtonFormField<ContextType>(
             value: _selectedContextType,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
               labelText: 'Loại sự kiện',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryRed,
+                  width: 2,
+                ),
+              ),
             ),
             items: ContextType.values.map((type) {
               return DropdownMenuItem(
@@ -155,10 +215,38 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
           // Specific location
           TextFormField(
             controller: _specificLocationController,
-            decoration: const InputDecoration(
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
               labelText: 'Địa điểm cụ thể',
-              border: OutlineInputBorder(),
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
               hintText: 'Ví dụ: Xã, phường hoặc địa danh',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryRed,
+                  width: 2,
+                ),
+              ),
             ),
             onChanged: (_) => _updateRecordingLocation(),
           ),

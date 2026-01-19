@@ -9,6 +9,7 @@ import '../../../domain/repositories/base_repository.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/utils/extensions.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../shared/widgets/song_card.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
@@ -57,20 +58,30 @@ class EthnicGroupDetailPage extends ConsumerWidget {
     final songsAsync = ref.watch(songsByEthnicGroupProvider(ethnicGroupId));
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Chi tiết dân tộc'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
       ),
-      body: groupAsync.when(
-        data: (group) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: groupAsync.when(
+            data: (group) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 20),
                 // Group name
                 Text(
                   group.name,
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.textOnGradient,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 if (group.nameInNativeLanguage != group.name) ...[
                   const SizedBox(height: 8),
@@ -155,12 +166,14 @@ class EthnicGroupDetailPage extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorView(
-          message: 'Error loading ethnic group: $error',
-          onRetry: () {
-            ref.invalidate(ethnicGroupByIdProvider(ethnicGroupId));
-          },
+            loading: () => const LoadingIndicator(),
+            error: (error, stack) => ErrorView(
+              message: 'Error loading ethnic group: $error',
+              onRetry: () {
+                ref.invalidate(ethnicGroupByIdProvider(ethnicGroupId));
+              },
+            ),
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/instrument_selector.dart';
 
 /// Step 4: Performance Details & Instruments
@@ -22,20 +23,39 @@ class PerformanceDetailsStep extends ConsumerWidget {
         children: [
           Text(
             'Bước 4: Chi tiết biểu diễn',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textOnGradient,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Loại hình biểu diễn *',
-            style: TextStyle(fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: AppColors.textSecondaryOnGradient,
+            ),
           ),
           const SizedBox(height: 8),
           Column(
             children: PerformanceType.values.map((type) {
+              final isSelected = song?.performanceType == type;
               return RadioListTile<PerformanceType>(
                 value: type,
                 groupValue: song?.performanceType,
-                title: Text(_getPerformanceTypeText(type)),
+                title: Text(
+                  _getPerformanceTypeText(type),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isSelected
+                        ? AppColors.textOnGradient
+                        : AppColors.textSecondaryOnGradient,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+                activeColor: AppColors.primaryRed,
                 onChanged: (value) {
                   if (value != null) {
                     formNotifier.updatePerformanceType(value);
@@ -50,16 +70,21 @@ class PerformanceDetailsStep extends ConsumerWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text(
+                Text(
                   'Nhạc cụ *',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textSecondaryOnGradient,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '(Bắt buộc)',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.error,
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -78,8 +103,9 @@ class PerformanceDetailsStep extends ConsumerWidget {
                 child: Text(
                   'Vui lòng chọn ít nhất một nhạc cụ',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 13,
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -110,9 +136,13 @@ class PerformanceDetailsStep extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Ngày ghi âm',
-            style: TextStyle(fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: AppColors.textSecondaryOnGradient,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -120,21 +150,55 @@ class PerformanceDetailsStep extends ConsumerWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickRecordingDate(context, ref),
-                  icon: const Icon(Icons.date_range),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: audioMetadata?.recordingDate != null
+                        ? AppColors.primaryRed
+                        : AppColors.textSecondary,
+                    side: BorderSide(
+                      color: audioMetadata?.recordingDate != null
+                          ? AppColors.primaryRed
+                          : AppColors.divider,
+                      width: audioMetadata?.recordingDate != null ? 2 : 1,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: Icon(
+                    Icons.calendar_today,
+                    color: audioMetadata?.recordingDate != null
+                        ? AppColors.primaryRed
+                        : AppColors.textSecondary,
+                  ),
                   label: Text(
                     audioMetadata != null
                         ? _formatDate(audioMetadata.recordingDate)
                         : 'Chọn ngày',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: audioMetadata?.recordingDate != null
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Checkbox(
                 value: song?.isRecordingDateEstimated ?? false,
+                activeColor: AppColors.primaryRed,
+                checkColor: AppColors.textOnGradient,
                 onChanged: (value) =>
                     formNotifier.updateIsRecordingDateEstimated(value ?? false),
               ),
-              const Text('Ngày ước tính'),
+              Text(
+                'Ngày ước tính',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondaryOnGradient,
+                ),
+              ),
             ],
           ),
         ],

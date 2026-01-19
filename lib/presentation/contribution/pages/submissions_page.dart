@@ -6,10 +6,10 @@ import '../../../domain/entities/enums.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/utils/extensions.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
-import 'contribution_detail_page.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class SubmissionsPage extends ConsumerStatefulWidget {
@@ -42,8 +42,11 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
     );
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Đóng góp của tôi'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
         actions: [
           PopupMenuButton<VerificationStatus?>(
             icon: const Icon(Icons.filter_list),
@@ -74,7 +77,10 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
           ),
         ],
       ),
-      body: contributionsAsync.when(
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: contributionsAsync.when(
         data: (response) {
           if (response.items.isEmpty) {
             return Center(
@@ -149,12 +155,14 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
             ),
           );
         },
-        loading: () => const LoadingIndicator(message: 'Đang tải...'),
-        error: (error, stack) => ErrorView(
-          message: 'Lỗi khi tải đóng góp: $error',
-          onRetry: () {
-            ref.invalidate(userContributionsProvider);
-          },
+            loading: () => const LoadingIndicator(message: 'Đang tải...'),
+            error: (error, stack) => ErrorView(
+              message: 'Lỗi khi tải đóng góp: $error',
+              onRetry: () {
+                ref.invalidate(userContributionsProvider);
+              },
+            ),
+          ),
         ),
       ),
     );

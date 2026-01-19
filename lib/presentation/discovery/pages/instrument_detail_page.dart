@@ -8,6 +8,7 @@ import '../../../domain/usecases/discovery/get_songs_by_instrument.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../shared/widgets/song_card.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
@@ -56,20 +57,30 @@ class InstrumentDetailPage extends ConsumerWidget {
     final songsAsync = ref.watch(songsByInstrumentProvider(instrumentId));
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Chi tiết nhạc cụ'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textOnGradient,
       ),
-      body: instrumentAsync.when(
-        data: (instrument) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+      body: Container(
+        decoration: AppTheme.gradientBackground,
+        child: SafeArea(
+          child: instrumentAsync.when(
+            data: (instrument) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 20),
                 // Instrument name
                 Text(
                   instrument.name,
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: AppColors.textOnGradient,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 // Type
@@ -151,12 +162,14 @@ class InstrumentDetailPage extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const LoadingIndicator(),
-        error: (error, stack) => ErrorView(
-          message: 'Error loading instrument: $error',
-          onRetry: () {
-            ref.invalidate(instrumentByIdProvider(instrumentId));
-          },
+            loading: () => const LoadingIndicator(),
+            error: (error, stack) => ErrorView(
+              message: 'Error loading instrument: $error',
+              onRetry: () {
+                ref.invalidate(instrumentByIdProvider(instrumentId));
+              },
+            ),
+          ),
         ),
       ),
     );
