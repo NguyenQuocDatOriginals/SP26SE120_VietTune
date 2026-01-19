@@ -904,6 +904,7 @@ export default function UploadMusic() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const requiresInstruments = performanceType === "instrumental" || performanceType === "vocal_accompaniment";
   const allowsLyrics = performanceType === "acappella" || performanceType === "vocal_accompaniment";
@@ -923,11 +924,22 @@ export default function UploadMusic() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
+    // Kiểm tra kích thước file (giới hạn 50MB như đã ghi trong UI)
+    const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+    if (selected.size > maxSizeInBytes) {
+      setErrors((prev) => ({ ...prev, file: "File quá lớn. Vui lòng chọn file nhỏ hơn 50MB" }));
+      setFile(null);
+      setAudioInfo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     const mime = selected.type || inferMimeFromName(selected.name);
     if (!SUPPORTED_FORMATS.includes(mime)) {
       setErrors((prev) => ({ ...prev, file: "Chỉ hỗ trợ file MP3, WAV hoặc FLAC" }));
       setFile(null);
       setAudioInfo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
@@ -1020,12 +1032,22 @@ export default function UploadMusic() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (isSubmitting) return;
+
     if (!validateForm()) {
       setSubmitStatus("error");
       setSubmitMessage("Vui lòng điền đầy đủ thông tin bắt buộc");
+      setTimeout(() => {
+        setSubmitStatus("idle");
+        setSubmitMessage("");
+      }, 5000);
       return;
     }
+
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setSubmitMessage("");
 
     const formData = {
       id: Date.now(),
@@ -1073,27 +1095,81 @@ export default function UploadMusic() {
     const reader = new FileReader();
     reader.onload = function (ev) {
       const audioData = ev.target?.result;
-      if (!audioData) return;
+      if (!audioData) {
+        setIsSubmitting(false);
+        setSubmitStatus("error");
+        setSubmitMessage("Lỗi khi đọc file. Vui lòng thử lại.");
+        return;
+      }
 
       const newRecording = {
         ...formData,
         audioData,
       };
 
-      const recordings = JSON.parse(localStorage.getItem("localRecordings") || "[]");
-      recordings.unshift(newRecording);
-      if (recordings.length > 10) recordings.length = 10;
-      localStorage.setItem("localRecordings", JSON.stringify(recordings));
+      try {
+        // Lấy danh sách recordings hiện tại
+        let recordings = [];
+        try {
+          const stored = localStorage.getItem("localRecordings");
+          recordings = stored ? JSON.parse(stored) : [];
+        } catch (parseError) {
+          console.warn("Không thể đọc dữ liệu cũ, sẽ tạo mới:", parseError);
+          recordings = [];
+        }
 
-      setSubmitStatus("success");
-      setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
-      
-      setTimeout(() => {
-        resetForm();
-      }, 3000);
+        // Thêm recording mới vào đầu danh sách
+        recordings.unshift(newRecording);
+
+        // Giữ tối đa 5 bản ghi (giảm từ 10 để tránh vượt quá giới hạn localStorage)
+        if (recordings.length > 5) {
+          recordings = recordings.slice(0, 5);
+        }
+
+        // Thử lưu vào localStorage
+        const dataToSave = JSON.stringify(recordings);
+
+        // Kiểm tra kích thước (localStorage limit thường là 5-10MB)
+        const sizeInMB = new Blob([dataToSave]).size / (1024 * 1024);
+
+        if (sizeInMB > 8) {
+          // Nếu quá lớn, chỉ giữ lại 2 bản ghi mới nhất
+          const reducedRecordings = recordings.slice(0, 2);
+          localStorage.setItem("localRecordings", JSON.stringify(reducedRecordings));
+
+          setSubmitStatus("success");
+          setSubmitMessage(`Đã đóng góp bản thu thành công: ${title} (Đã tự động xóa các bản ghi cũ do giới hạn bộ nhớ)`);
+        } else {
+          localStorage.setItem("localRecordings", dataToSave);
+
+          setSubmitStatus("success");
+          setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
+        }
+
+        setTimeout(() => {
+          resetForm();
+          setIsSubmitting(false);
+        }, 3000);
+      } catch (error) {
+        console.error("Lỗi khi lưu dữ liệu:", error);
+        setIsSubmitting(false);
+        setSubmitStatus("error");
+
+        // Cung cấp thông báo lỗi chi tiết hơn
+        if (error instanceof Error) {
+          if (error.name === "QuotaExceededError" || error.message.includes("quota")) {
+            setSubmitMessage("Dung lượng lưu trữ đã đầy. Vui lòng xóa một số bản ghi cũ hoặc sử dụng file nhỏ hơn.");
+          } else {
+            setSubmitMessage(`Lỗi: ${error.message}. Vui lòng thử lại hoặc sử dụng file nhỏ hơn.`);
+          }
+        } else {
+          setSubmitMessage("Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại với file nhỏ hơn.");
+        }
+      }
     };
-    
+
     reader.onerror = () => {
+      setIsSubmitting(false);
       setSubmitStatus("error");
       setSubmitMessage("Lỗi khi đọc file. Vui lòng thử lại.");
     };
@@ -1137,6 +1213,7 @@ export default function UploadMusic() {
     setErrors({});
     setSubmitStatus("idle");
     setSubmitMessage("");
+    setIsSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -1646,17 +1723,27 @@ export default function UploadMusic() {
           <button
             type="button"
             onClick={resetForm}
-            className="px-6 py-2.5 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
+            disabled={isSubmitting}
+            className="px-6 py-2.5 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Đặt lại
           </button>
           <button
             type="submit"
-            disabled={!file || isAnalyzing}
+            disabled={!file || isAnalyzing || isSubmitting}
             className="btn-liquid-glass-primary px-8 py-2.5 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <Upload className="h-4 w-4" />
-            Đóng góp
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                Đóng góp
+              </>
+            )}
           </button>
         </div>
       </div>
