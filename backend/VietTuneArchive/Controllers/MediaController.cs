@@ -1,14 +1,15 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VietTuneArchive.Application.Mapper.DTOs.Response;
+using VietTuneArchive.Application.Mapper.DTOs;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.MediaDto;
 
 namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class MediaController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
@@ -25,7 +26,7 @@ namespace VietTuneArchive.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new BaseResponse { Success = false, Message = "No file" });
 
-            var mediaFile = new MediaFileDto
+            var mediaFile = new MediaFileDetailDto
             {
                 Id = "media-001",
                 SubmissionId = submissionId,

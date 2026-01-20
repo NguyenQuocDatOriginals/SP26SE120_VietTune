@@ -6,12 +6,13 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class AnalyticsController : ControllerBase
     {
         // GET: /api/analytics/overview?from=2026-01-01&to=2026-01-31
         [HttpGet("overview")]
-        [Authorize(Policy = "Admin")]
+        
+
         public ActionResult<OverviewMetricsDto> GetOverview(
             [FromQuery] DateTime? from = null,
             [FromQuery] DateTime? to = null)
@@ -29,7 +30,7 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/analytics/submissions?status=approved&from=2026-01-01
         [HttpGet("submissions")]
-        [Authorize(Policy = "Admin")]
+        //[Authorize(Policy = "Admin")]
         public ActionResult<SubmissionAnalyticsDto> GetSubmissionAnalytics(
             [FromQuery] string? status = null,
             [FromQuery] DateTime? from = null,
@@ -52,7 +53,7 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/analytics/coverage?ethnic=all
         [HttpGet("coverage")]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<CoverageAnalyticsDto> GetCoverage([FromQuery] string? ethnic = null)
         {
             var coverage = new CoverageAnalyticsDto
@@ -70,7 +71,7 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/analytics/contributors?limit=10
         [HttpGet("contributors")]
-        [Authorize(Policy = "Admin")]
+        //[Authorize(Policy = "Admin")]
         public ActionResult<List<ContributorDto>> GetTopContributors([FromQuery] int limit = 10)
         {
             var contributors = new List<ContributorDto>
@@ -83,7 +84,7 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/analytics/experts?period=30d
         [HttpGet("experts")]
-        [Authorize(Policy = "Admin")]
+        //[Authorize(Policy = "Admin")]
         public ActionResult<List<ExpertPerformanceDto>> GetExpertPerformance(
             [FromQuery] string? period = "30d")
         {
@@ -97,7 +98,7 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/analytics/content?type=songs
         [HttpGet("content")]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<ContentAnalyticsDto> GetContentAnalytics([FromQuery] string? type = "songs")
         {
             var analytics = new ContentAnalyticsDto

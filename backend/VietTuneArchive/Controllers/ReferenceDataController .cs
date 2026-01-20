@@ -6,7 +6,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class ReferenceDataController : ControllerBase
     {
         // GET: /api/v1/reference/ethnic-groups

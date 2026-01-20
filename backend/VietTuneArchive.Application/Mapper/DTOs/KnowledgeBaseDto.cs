@@ -20,18 +20,5 @@ namespace VietTuneArchive.Application.Mapper.DTOs
             public string Content { get; set; } = default!;
             public string[] RelatedSongIds { get; set; } = default!;
         }
-
-        public class CategoryDto
-        {
-            public string Id { get; set; } = default!;
-            public string Name { get; set; } = default!;
-            public string Icon { get; set; } = default!;
-        }
-
-        public class SongSummaryDto
-        {
-            public string Id { get; set; } = default!;
-            public string Title { get; set; } = default!;
-        }
     }
 }

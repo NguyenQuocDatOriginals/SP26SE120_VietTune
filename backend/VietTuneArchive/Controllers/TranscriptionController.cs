@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.TranscriptionRequest;
 using static VietTuneArchive.Application.Mapper.DTOs.TranscriptionDto;
-using TranscriptionJobDto = VietTuneArchive.Application.Mapper.DTOs.TranscriptionDto.TranscriptionJobDto;
 
 namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class TranscriptionController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
@@ -65,7 +65,7 @@ namespace VietTuneArchive.API.Controllers
 
         // POST: /api/transcriptions/submissions/{submissionId}/verify
         [HttpPost("submissions/{submissionId}/verify")]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<BaseResponse> VerifyTranscription(string submissionId, [FromBody] VerifyTranscriptionRequest request)
         {
             var response = new BaseResponse

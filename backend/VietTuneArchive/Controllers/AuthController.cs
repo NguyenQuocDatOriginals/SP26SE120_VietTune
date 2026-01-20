@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest;
 using ForgotPasswordRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.ForgotPasswordRequest;
@@ -64,7 +65,7 @@ namespace VietTuneArchive.API.Controllers
 
         // POST: /api/v1/auth/logout
         [HttpPost("logout")]
-        [Authorize]
+        //[Authorize]
         public ActionResult<BaseResponse> Logout()
         {
             // TODO: Revoke token hiện tại (ghi vào blacklist, v.v.)

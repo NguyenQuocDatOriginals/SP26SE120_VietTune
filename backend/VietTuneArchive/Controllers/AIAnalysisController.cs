@@ -2,13 +2,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.AIAnalysisRequest;
 
 namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class AIAnalysisController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";

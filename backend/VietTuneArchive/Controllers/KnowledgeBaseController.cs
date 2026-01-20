@@ -2,10 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.KnowledgeBaseRequest;
-using CategoryDto = VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto.CategoryDto;
-using SongSummaryDto = VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto.SongSummaryDto;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -81,7 +80,7 @@ namespace VietTuneArchive.API.Controllers
 
         // POST: /api/knowledge-base
         [HttpPost]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<ArticleDetailDto> CreateArticle([FromBody] CreateArticleRequest request)
         {
             var article = new ArticleDetailDto
@@ -103,7 +102,7 @@ namespace VietTuneArchive.API.Controllers
 
         // DELETE: /api/knowledge-base/{id}
         [HttpDelete("{id}")]
-        [Authorize(Policy = "Admin")]
+        //[Authorize(Policy = "Admin")]
         public ActionResult<BaseResponse> DeleteArticle(string id)
         {
             return Ok(new BaseResponse { Success = true, Message = "Article deleted" });

@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.InstrumentDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.InstrumentRequest;
-using SongSummaryDto = VietTuneArchive.Application.Mapper.DTOs.InstrumentDto.SongSummaryDto;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -80,7 +80,7 @@ namespace VietTuneArchive.API.Controllers
 
         // POST: /api/instruments
         [HttpPost]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<InstrumentDetailDto> CreateInstrument([FromBody] CreateInstrumentRequest request)
         {
             var instrument = new InstrumentDetailDto
@@ -94,7 +94,7 @@ namespace VietTuneArchive.API.Controllers
 
         // PUT: /api/instruments/{id}
         [HttpPut("{id}")]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<BaseResponse> UpdateInstrument(string id, [FromBody] UpdateInstrumentRequest request)
         {
             return Ok(new BaseResponse { Success = true, Message = "Instrument updated" });

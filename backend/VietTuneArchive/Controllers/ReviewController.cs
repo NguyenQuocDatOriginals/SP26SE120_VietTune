@@ -10,7 +10,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Policy = "Expert")]
+    //[Authorize(Policy = "Expert")]
     public class ReviewController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";

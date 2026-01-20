@@ -31,11 +31,6 @@ namespace VietTuneArchive.Application.Mapper.DTOs
             public DateTime AnalyzedAt { get; set; }
         }
 
-        public class TranscriptionJobDto : AIAnalysisJobDto
-        {
-            public string Language { get; set; } = default!;
-            public string? Transcript { get; set; }  // Kết quả khi complete
-        }
         public class MetadataSuggestionDto
         {
             public string EthnicGroupId { get; set; } = default!;

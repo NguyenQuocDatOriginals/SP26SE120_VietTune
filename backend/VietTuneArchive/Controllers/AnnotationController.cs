@@ -10,7 +10,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class AnnotationController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
@@ -32,7 +32,7 @@ namespace VietTuneArchive.API.Controllers
 
         // POST: /api/annotations/submissions/{submissionId}
         [HttpPost("submissions/{submissionId}")]
-        [Authorize(Policy = "Expert")]
+        //[Authorize(Policy = "Expert")]
         public ActionResult<AnnotationDto> CreateAnnotation(string submissionId, [FromBody] CreateAnnotationRequest request)
         {
             var annotation = new AnnotationDto

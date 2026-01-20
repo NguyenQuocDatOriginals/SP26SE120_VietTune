@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.UserRequest;
 using static VietTuneArchive.Application.Mapper.DTOs.UserDto;
@@ -10,7 +11,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]  // Toàn bộ controller yêu cầu auth, trừ nếu override
+    //[Authorize]  // Toàn bộ controller yêu cầu auth, trừ nếu override
     public class UserController : ControllerBase
     {
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";

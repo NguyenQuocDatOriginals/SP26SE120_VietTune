@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
+using static VietTuneArchive.Application.Mapper.DTOs.MediaDto;
 using static VietTuneArchive.Application.Mapper.DTOs.SongDto;
-using AnnotationDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.AnnotationDto;
-using MediaFileDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.MediaFileDto;
-using TranscriptionDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.TranscriptionDto;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -38,12 +37,9 @@ namespace VietTuneArchive.API.Controllers
             {
                 Id = songId,
                 Title = "Hò khoan Lệ Thủy",
-                EthnicGroup = "Kinh",
                 Region = "Bắc Trung Bộ",
                 Artist = "Nghệ sĩ dân gian",
                 Duration = "4:23",
-                Views = 12500,
-                Rating = 4.8,
                 PublishedAt = DateTime.UtcNow.AddMonths(-3)
             };
             return Ok(song);
@@ -51,9 +47,9 @@ namespace VietTuneArchive.API.Controllers
 
         // GET: /api/songs/{songId}/media
         [HttpGet("{songId}/media")]
-        public ActionResult<List<MediaFileDto>> GetSongMedia(string songId)
+        public ActionResult<List<MediaFileDetailDto>> GetSongMedia(string songId)
         {
-            var media = new List<MediaFileDto>
+            var media = new List<MediaFileDetailDto>
             {
                 new() { Id = "media-001", Type = "Audio", Url = "https://cdn.song.mp3", IsPrimary = true },
                 new() { Id = "media-002", Type = "Video", Url = "https://cdn.video.mp4", IsPrimary = false }

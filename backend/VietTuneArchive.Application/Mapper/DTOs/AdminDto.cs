@@ -31,16 +31,6 @@ namespace VietTuneArchive.Application.Mapper.DTOs
             public string SubmittedBy { get; set; } = default!;
         }
 
-        public class AuditLogDto
-        {
-            public string Id { get; set; } = default!;
-            public string UserId { get; set; } = default!;
-            public string Action { get; set; } = default!;
-            public string Entity { get; set; } = default!;
-            public DateTime Timestamp { get; set; }
-            public string Details { get; set; } = default!;
-        }
-
         public class SystemHealthDto
         {
             public string Status { get; set; } = default!;
