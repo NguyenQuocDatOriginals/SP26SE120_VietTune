@@ -412,7 +412,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Preservation Challenges */}
-        <div className="bg-secondary-50 border-l-4 border-secondary-500 rounded-2xl p-8 shadow-sm">
+        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-sm">
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Bảo tồn và nhu cầu tài liệu hóa
           </h2>

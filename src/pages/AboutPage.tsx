@@ -57,7 +57,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="bg-secondary-50 rounded-2xl border-l-4 border-secondary-500 p-6 mb-8 shadow-sm">
+          <div className="bg-secondary-50 rounded-2xl border border-neutral-200 p-6 mb-8 shadow-sm">
             <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Heart className="h-6 w-6 text-primary-600" />
             </div>

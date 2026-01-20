@@ -200,7 +200,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Hero Section */}
-        <div className="bg-primary-700 rounded-2xl shadow-lg p-8 md:p-12 mb-8">
+        <div className="bg-secondary-50 rounded-2xl shadow-lg p-8 md:p-12 mb-8">
           <div className="text-center">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -212,17 +212,17 @@ export default function HomePage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
               VietTune
             </h1>
             
             {/* Tagline */}
-            <p className="text-xl md:text-2xl text-secondary-300 mb-4">
+            <p className="text-xl md:text-2xl text-primary-700 font-medium mb-4">
               Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
             </p>
             
             {/* Description */}
-            <p className="text-white/90 leading-relaxed max-w-2xl mx-auto mb-8">
+            <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto mb-8">
               Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
               <br />
               qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
@@ -378,7 +378,7 @@ export default function HomePage() {
         )}
 
         {/* Call to Action Section */}
-        <div className="bg-secondary-50 rounded-2xl shadow-md border-l-4 border-secondary-500 p-8">
+        <div className="bg-secondary-50 rounded-2xl shadow-md border border-neutral-200 p-8">
           <div className="text-center max-w-2xl mx-auto">
             <div className="p-3 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
               <Heart className="h-8 w-8 text-primary-600" />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, SkipBack } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw } from "lucide-react";
 
 // Module-scoped active audio so only one player plays at a time
 let activeAudio: HTMLAudioElement | null = null;
@@ -24,6 +24,7 @@ export default function AudioPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [savedVolume, setSavedVolume] = useState(1); // Store volume before muting
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,7 +37,14 @@ export default function AudioPlayer({
       setDuration(isNaN(audio.duration) ? 0 : audio.duration || 0);
       setIsLoading(false);
     };
-    const onVolume = () => setVolume(audio.volume);
+    const onVolume = () => {
+      const newVol = audio.volume;
+      setVolume(newVol);
+      // Only update savedVolume if not muted (volume > 0)
+      if (newVol > 0) {
+        setSavedVolume(newVol);
+      }
+    };
     const onEnded = () => setPlaying(false);
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
@@ -117,18 +125,28 @@ export default function AudioPlayer({
   const handleVolume = (v: number) => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.volume = Math.max(0, Math.min(1, v));
-    setVolume(audio.volume);
-    setIsMuted(v === 0);
+    const newVolume = Math.max(0, Math.min(1, v));
+    audio.volume = newVolume;
+    setVolume(newVolume);
+    if (newVolume > 0) {
+      setSavedVolume(newVolume); // Save non-zero volume
+      setIsMuted(false);
+    } else {
+      setIsMuted(true);
+    }
   };
 
   const toggleMute = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isMuted) {
-      audio.volume = volume > 0 ? volume : 0.5;
+      // Unmute: restore saved volume
+      audio.volume = savedVolume > 0 ? savedVolume : 0.5;
+      setVolume(audio.volume);
       setIsMuted(false);
     } else {
+      // Mute: save current volume first
+      setSavedVolume(volume);
       audio.volume = 0;
       setIsMuted(true);
     }
@@ -161,7 +179,7 @@ export default function AudioPlayer({
           {/* Progress */}
           <div className="flex-1 min-w-0">
             <div 
-              className="h-1.5 bg-neutral-200 rounded-full overflow-hidden cursor-pointer"
+              className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer"
               onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const updateProgress = (clientX: number) => {
@@ -184,6 +202,11 @@ export default function AudioPlayer({
               <div 
                 className="h-full bg-primary-600 rounded-full transition-none"
                 style={{ width: `${progressPercent}%` }}
+              />
+              {/* Thumb */}
+              <div 
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing"
+                style={{ left: `calc(${progressPercent}% - 6px)` }}
               />
             </div>
             <div className="flex justify-between mt-1">
@@ -217,7 +240,7 @@ export default function AudioPlayer({
         {/* Progress Bar */}
         <div className="mb-4">
           <div 
-            className="h-2 bg-neutral-200 rounded-full overflow-hidden cursor-pointer group"
+            className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
             onMouseDown={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const updateProgress = (clientX: number) => {
@@ -238,11 +261,14 @@ export default function AudioPlayer({
             }}
           >
             <div 
-              className="h-full bg-primary-600 rounded-full transition-none relative"
+              className="h-full bg-primary-600 rounded-full transition-none"
               style={{ width: `${progressPercent}%` }}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
-            </div>
+            />
+            {/* Thumb */}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+              style={{ left: `calc(${progressPercent}% - 8px)` }}
+            />
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
@@ -252,25 +278,18 @@ export default function AudioPlayer({
 
         {/* Controls */}
         <div className="flex items-center justify-between">
-          {/* Left: Skip buttons */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => seekBy(-10)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors"
-              title="Lùi 10 giây"
-            >
-              <SkipBack className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Left: Empty placeholder for balance */}
+          <div className="w-9 h-9" />
 
           {/* Center: Play/Pause */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => seekBy(-5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 bg-neutral-100 hover:bg-neutral-200 transition-colors text-xs font-medium"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative"
               title="Lùi 5 giây"
             >
-              -5s
+              <RotateCcw className="w-6 h-6" strokeWidth={2} />
+              <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
             </button>
             
             <button
@@ -289,10 +308,11 @@ export default function AudioPlayer({
 
             <button
               onClick={() => seekBy(5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 bg-neutral-100 hover:bg-neutral-200 transition-colors text-xs font-medium"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative"
               title="Tiến 5 giây"
             >
-              +5s
+              <RotateCw className="w-6 h-6" strokeWidth={2} />
+              <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
             </button>
           </div>
 
@@ -309,7 +329,7 @@ export default function AudioPlayer({
               )}
             </button>
             <div 
-              className="w-20 hidden sm:block"
+              className="w-20 hidden sm:block relative"
               onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const updateVolume = (clientX: number) => {
@@ -329,12 +349,15 @@ export default function AudioPlayer({
                 document.addEventListener('mouseup', onMouseUp);
               }}
             >
-              <div 
-                className="h-1.5 bg-neutral-200 rounded-full overflow-hidden cursor-pointer"
-              >
+              <div className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer">
                 <div 
                   className="h-full bg-primary-600 rounded-full transition-none"
                   style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+                />
+                {/* Thumb */}
+                <div 
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                  style={{ left: `calc(${(isMuted ? 0 : volume) * 100}% - 6px)` }}
                 />
               </div>
             </div>

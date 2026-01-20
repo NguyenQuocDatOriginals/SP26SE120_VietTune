@@ -535,7 +535,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div className="bg-secondary-50 border-l-4 border-secondary-500 rounded-2xl p-8 shadow-sm">
+        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-sm">
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800 flex items-center gap-3">
             <div className="p-2 bg-primary-600/20 rounded-lg">
               <Compass className="h-5 w-5 text-primary-600" />
