@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using static VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto;
 
 namespace VietTuneArchive.API.Controllers
@@ -11,7 +10,7 @@ namespace VietTuneArchive.API.Controllers
     {
         // GET: /api/analytics/overview?from=2026-01-01&to=2026-01-31
         [HttpGet("overview")]
-        
+
 
         public ActionResult<OverviewMetricsDto> GetOverview(
             [FromQuery] DateTime? from = null,

@@ -3,10 +3,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using VietTuneArchive.Application.Common.Email;
-using VietTuneArchive.Application.Mapper;
-using VietTuneArchive.Domain.Context;
 using Service.EmailConfirmation;
+using VietTuneArchive.Application.Common.Email;
+using VietTuneArchive.Domain.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 

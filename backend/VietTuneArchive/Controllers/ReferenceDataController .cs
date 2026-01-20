@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using static VietTuneArchive.Application.Mapper.DTOs.ReferenceDataDto;
 
 namespace VietTuneArchive.API.Controllers
