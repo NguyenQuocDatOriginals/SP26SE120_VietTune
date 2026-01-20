@@ -5,33 +5,37 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  labelColor?: "dark" | "light";
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className, ...props }, ref) => {
+  ({ label, error, helperText, className, labelColor = "dark", ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-white mb-1">
+          <label className={clsx(
+            "block text-xs font-medium mb-0.5",
+            labelColor === "light" ? "text-white" : "text-neutral-700"
+          )}>
             {label}
-            {props.required && <span className="text-emerald-700 ml-1">*</span>}
+            {props.required && <span className="text-primary-600 ml-1">*</span>}
           </label>
         )}
         <input
           ref={ref}
           className={clsx(
-            "w-full px-5 py-3 border rounded-full focus:outline-none focus:ring-2 transition-colors",
-            "bg-white text-secondary-900 placeholder:text-secondary-400",
+            "w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm",
+            "bg-white text-neutral-900 placeholder:text-neutral-500",
             error
-              ? "border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500"
-              : "border-secondary-300 focus:border-transparent",
+              ? "border-primary-400 focus:border-primary-500"
+              : "border-neutral-400 focus:border-transparent",
             className
           )}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-emerald-300">{error}</p>}
+        {error && <p className="mt-0.5 text-xs text-primary-600">{error}</p>}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-secondary-500">{helperText}</p>
+          <p className="mt-0.5 text-xs text-neutral-500">{helperText}</p>
         )}
       </div>
     );

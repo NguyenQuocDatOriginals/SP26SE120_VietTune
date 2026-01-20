@@ -1,74 +1,33 @@
-import { useEffect, useRef } from "react";
-import { addSpotlightEffect } from "@/utils/spotlight";
-
 export default function EthnicitiesPage() {
-  const introRef = useRef<HTMLDivElement>(null);
-  const northernRef = useRef<HTMLDivElement>(null);
-  const centralRef = useRef<HTMLDivElement>(null);
-  const southernRef = useRef<HTMLDivElement>(null);
-  const musicalRef = useRef<HTMLDivElement>(null);
-  const additionalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (introRef.current)
-      cleanupFunctions.push(addSpotlightEffect(introRef.current));
-    if (northernRef.current)
-      cleanupFunctions.push(addSpotlightEffect(northernRef.current));
-    if (centralRef.current)
-      cleanupFunctions.push(addSpotlightEffect(centralRef.current));
-    if (southernRef.current)
-      cleanupFunctions.push(addSpotlightEffect(southernRef.current));
-    if (musicalRef.current)
-      cleanupFunctions.push(addSpotlightEffect(musicalRef.current));
-    if (additionalRef.current)
-      cleanupFunctions.push(addSpotlightEffect(additionalRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">Dân tộc Việt Nam</h1>
+        <h1 className="text-3xl font-bold text-neutral-800 mb-8">Dân tộc Việt Nam</h1>
 
         {/* Introduction */}
-        <div
-          ref={introRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Bức tranh đa sắc của các dân tộc
           </h2>
-          <p className="text-white leading-relaxed mb-4">
+          <p className="text-neutral-600 leading-relaxed mb-4">
             Việt Nam có 54 dân tộc với những nét văn hóa độc đáo. Người Kinh
             chiếm 86% dân số, còn 53 dân tộc khác (14%) chủ yếu sinh sống ở miền
             núi và cao nguyên.
           </p>
-          <p className="text-white leading-relaxed">
+          <p className="text-neutral-600 leading-relaxed">
             Mỗi dân tộc có ngôn ngữ, nhạc cụ và phong cách âm nhạc riêng biệt,
             được truyền từ thế hệ này sang thế hệ khác qua nhiều thế kỷ.
           </p>
         </div>
 
         {/* Northern Region */}
-        <div
-          ref={northernRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc trung du và miền núi Bắc Bộ
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Tày (Tay)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Tày (Tay)</h3>
               <p className="leading-relaxed">
                 Người Tày là dân tộc thiểu số đông nhất Việt Nam, chủ yếu sống ở
                 các tỉnh miền núi Bắc Bộ. Truyền thống âm nhạc bao gồm{" "}
@@ -80,7 +39,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Nùng (Nung)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Nùng (Nung)</h3>
               <p className="leading-relaxed">
                 Có quan hệ gần gũi với người Tày, người Nùng có nhạc cụ tương tự
                 như <em>đàn tính</em> và các nhạc cụ gõ. Bài hát <em>sli</em>{" "}
@@ -90,7 +49,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Thái (Thai)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Thái (Thai)</h3>
               <p className="leading-relaxed">
                 Người Thái chia thành Thái Đen, Thái Trắng và Thái Đỏ, có truyền
                 thống thanh nhạc phong phú gồm hát <em>khắp</em> và hát{" "}
@@ -100,7 +59,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">H'Mông (Hmong)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">H'Mông (Hmong)</h3>
               <p className="leading-relaxed">
                 Người H'Mông nổi tiếng với <em>khèn</em> (sáo mộc trực tiếp),
                 tạo giai điệu đa thanh phức tạp trong lễ hội và nghi lễ tình
@@ -111,7 +70,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Dao (Yao)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Dao (Yao)</h3>
               <p className="leading-relaxed">
                 Người Dao duy trì thực hành âm nhạc đa dạng gồm sáo{" "}
                 <em>tiêu</em>, <em>đàn nhị</em> (nhị hai dây) và các nhạc cụ gõ.
@@ -121,7 +80,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Mường (Muong)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Mường (Muong)</h3>
               <p className="leading-relaxed">
                 Người Mường, có quan hệ ngôn ngữ với người Kinh, giữ gìn các
                 hình thức âm nhạc Việt cổ đại. Bài hát <em>mò mường</em> của
@@ -134,20 +93,13 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Central Highlands */}
-        <div
-          ref={centralRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc cao nguyên Trung Bộ
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Ê Đê (Ede)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Ê Đê (Ede)</h3>
               <p className="leading-relaxed">
                 Người Ê Đê nổi tiếng với văn hóa cồng chiêng, được UNESCO công
                 nhận là Di sản Văn hóa Phi vật thể. Dàn cồng chiêng (
@@ -159,7 +111,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Ba Na (Bahnar)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Ba Na (Bahnar)</h3>
               <p className="leading-relaxed">
                 Người Ba Na duy trì truyền thống cồng chiêng tinh xảo và nhạc cụ
                 tre độc đáo như <em>đing tút</em> (ống trúc gõ bằng gchy) và{" "}
@@ -169,7 +121,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Gia Rai (Jarai)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Gia Rai (Jarai)</h3>
               <p className="leading-relaxed">
                 Người Gia Rai nổi tiếng với dàn cồng chiêng tinh xảo và nhạc cụ
                 tre đa dạng. <em>Klong put</em> (ống tre gõ xuống đất) tạo nhịp
@@ -179,7 +131,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Sedang</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Sedang</h3>
               <p className="leading-relaxed">
                 Người Sedang duy trì truyền thống cồng chiêng và nhạc cụ hơi độc
                 đáo. <em>Ta-ri-ang</em> (khèn bầu) và các loại sáo tạo giai điệu
@@ -189,7 +141,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Co Ho (Koho)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Co Ho (Koho)</h3>
               <p className="leading-relaxed">
                 Người Co Ho dùng cồng chiêng, trống và nhạc cụ tre độc đáo.
                 Phong cách hát <em>tà-linh</em> và nhạc sáo tre đệm các nghi lễ
@@ -201,20 +153,13 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Southern and Coastal */}
-        <div
-          ref={southernRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc Nam Trung Bộ, Đông Nam Bộ và Tây Nam Bộ
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Chăm (Cham)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Chăm (Cham)</h3>
               <p className="leading-relaxed">
                 Người Chăm, hậu duệ Vương quốc Champa cổ đại, duy trì truyền
                 thống âm nhạc Hindu và Hồi giáo. Nhạc cụ <em>saranai</em> (kèn),{" "}
@@ -226,7 +171,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Khmer</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Khmer</h3>
               <p className="leading-relaxed">
                 Người Khmer ở Đồng bằng Sông Cửu Long duy trì mối liên kết chặt
                 chẽ với truyền thống âm nhạc cổ điển Campuchia. Nhạc cụ{" "}
@@ -238,7 +183,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Hoa (Chinese)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Hoa (Chinese)</h3>
               <p className="leading-relaxed">
                 Người Hoa giữ gìn các truyền thống hát bội Trung Quốc vùng miền
                 như <em>tuồng</em> và <em>hát bội</em>, cùng nhạc cụ gồm{" "}
@@ -250,20 +195,13 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Musical Characteristics */}
-        <div
-          ref={musicalRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Đặc điểm âm nhạc chung
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
                 Văn hóa cồng chiêng
               </h3>
               <p className="leading-relaxed">
@@ -276,7 +214,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Nhạc cụ tre trúc</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Nhạc cụ tre trúc</h3>
               <p className="leading-relaxed">
                 Sự dồi dào của tre trúc dẫn đến sự đa dạng phi thường trong nhạc
                 cụ tre của các dân tộc: đàn mộc cầm, đàn tranh ống trúc, sáo,
@@ -286,7 +224,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
                 Truyền thống thanh nhạc và văn học truyền miệng
               </h3>
               <p className="leading-relaxed">
@@ -299,7 +237,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
                 Nhạc nghi lễ và tâm linh
               </h3>
               <p className="leading-relaxed">
@@ -312,7 +250,7 @@ export default function EthnicitiesPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
                 Hệ thống ngũ cung và điệu thức
               </h3>
               <p className="leading-relaxed">
@@ -327,18 +265,11 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Additional Groups */}
-        <div
-          ref={additionalRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-secondary-50 border-l-4 border-secondary-500 rounded-2xl p-8 shadow-sm">
+          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Các dân tộc đáng chú ý khác
           </h2>
-          <div className="text-white">
+          <div className="text-neutral-700">
             <p className="leading-relaxed mb-4">
               Nhiều dân tộc khác duy trì truyền thống âm nhạc độc đáo bao gồm:
             </p>

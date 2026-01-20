@@ -1,15 +1,14 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
-import { Play, Heart, Download, Share2, Eye, User } from "lucide-react";
+import { Play, Heart, Download, Share2, Eye, User, ArrowLeft } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import Badge from "@/components/common/Badge";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import Button from "@/components/common/Button";
 import { RECORDING_TYPE_NAMES, REGION_NAMES } from "@/config/constants";
 import { format } from "date-fns";
-import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function RecordingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,46 +16,11 @@ export default function RecordingDetailPage() {
   const [loading, setLoading] = useState(true);
   const { setCurrentRecording, setIsPlaying } = usePlayerStore();
 
-  const statsRef = useRef<HTMLDivElement>(null);
-  const descriptionRef = useRef<HTMLDivElement>(null);
-  const metadataRef = useRef<HTMLDivElement>(null);
-  const lyricsRef = useRef<HTMLDivElement>(null);
-  const basicInfoRef = useRef<HTMLDivElement>(null);
-  const instrumentsRef = useRef<HTMLDivElement>(null);
-  const performersRef = useRef<HTMLDivElement>(null);
-  const tagsRef = useRef<HTMLDivElement>(null);
-  const uploaderRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (id) {
       fetchRecording(id);
     }
   }, [id]);
-
-  useEffect(() => {
-    if (recording) {
-      const cleanupFunctions: (() => void)[] = [];
-      if (statsRef.current)
-        cleanupFunctions.push(addSpotlightEffect(statsRef.current));
-      if (descriptionRef.current)
-        cleanupFunctions.push(addSpotlightEffect(descriptionRef.current));
-      if (metadataRef.current)
-        cleanupFunctions.push(addSpotlightEffect(metadataRef.current));
-      if (lyricsRef.current)
-        cleanupFunctions.push(addSpotlightEffect(lyricsRef.current));
-      if (basicInfoRef.current)
-        cleanupFunctions.push(addSpotlightEffect(basicInfoRef.current));
-      if (instrumentsRef.current)
-        cleanupFunctions.push(addSpotlightEffect(instrumentsRef.current));
-      if (performersRef.current)
-        cleanupFunctions.push(addSpotlightEffect(performersRef.current));
-      if (tagsRef.current)
-        cleanupFunctions.push(addSpotlightEffect(tagsRef.current));
-      if (uploaderRef.current)
-        cleanupFunctions.push(addSpotlightEffect(uploaderRef.current));
-      return () => cleanupFunctions.forEach((cleanup) => cleanup());
-    }
-  }, [recording]);
 
   const fetchRecording = async (recordingId: string) => {
     try {
@@ -78,7 +42,7 @@ export default function RecordingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
+      <div className="min-h-screen bg-neutral-50 flex justify-center items-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -86,13 +50,14 @@ export default function RecordingDetailPage() {
 
   if (!recording) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">
+          <h1 className="text-2xl font-bold text-neutral-900 mb-4">
             Không tìm thấy bản thu
           </h1>
-          <Link to="/search" className="text-white hover:text-green-300">
-            ← Quay lại danh sách
+          <Link to="/search" className="text-primary-600 hover:text-primary-700 inline-flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại danh sách
           </Link>
         </div>
       </div>
@@ -100,20 +65,21 @@ export default function RecordingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           to="/search"
-          className="text-white hover:text-green-300 mb-6 inline-block"
+          className="text-primary-600 hover:text-primary-700 mb-6 inline-flex items-center gap-1"
         >
-          ← Quay lại
+          <ArrowLeft className="h-4 w-4" />
+          Quay lại
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Cover Image */}
-            <div className="bg-secondary-200 rounded-lg overflow-hidden mb-6">
+            <div className="bg-neutral-200 rounded-2xl overflow-hidden mb-6 border border-neutral-300">
               {recording.coverImage ? (
                 <img
                   src={recording.coverImage}
@@ -121,10 +87,10 @@ export default function RecordingDetailPage() {
                   className="w-full h-96 object-cover"
                 />
               ) : (
-                <div className="w-full h-96 flex items-center justify-center text-secondary-400">
+                <div className="w-full h-96 flex items-center justify-center text-neutral-400">
                   <div className="text-center">
                     <p className="text-6xl mb-4">🎵</p>
-                    <p>No cover image</p>
+                    <p>Không có ảnh bìa</p>
                   </div>
                 </div>
               )}
@@ -134,11 +100,11 @@ export default function RecordingDetailPage() {
             <div className="mb-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">
+                  <h1 className="text-3xl font-bold text-neutral-900 mb-2">
                     {recording.title}
                   </h1>
                   {recording.titleVietnamese && (
-                    <p className="text-xl text-white">
+                    <p className="text-xl text-neutral-600">
                       {recording.titleVietnamese}
                     </p>
                   )}
@@ -150,22 +116,22 @@ export default function RecordingDetailPage() {
                       : "warning"
                   }
                 >
-                  {recording.verificationStatus}
+                  {recording.verificationStatus === "VERIFIED" ? "Đã xác minh" : "Chờ xác minh"}
                 </Badge>
               </div>
 
-              <div className="flex space-x-4">
+              <div className="flex flex-wrap gap-3">
                 <Button onClick={handlePlay} variant="primary">
                   <Play className="h-5 w-5 mr-2" />
-                  Play
+                  Phát
                 </Button>
                 <Button variant="outline">
                   <Heart className="h-5 w-5 mr-2" />
-                  Like ({recording.likeCount})
+                  Thích ({recording.likeCount})
                 </Button>
                 <Button variant="outline">
                   <Download className="h-5 w-5 mr-2" />
-                  Download
+                  Tải xuống
                 </Button>
                 <Button variant="outline">
                   <Share2 className="h-5 w-5" />
@@ -174,42 +140,28 @@ export default function RecordingDetailPage() {
             </div>
 
             {/* Stats */}
-            <div
-              ref={statsRef}
-              className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 mb-6 shadow-2xl"
-              style={{
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-              }}
-            >
-              <div className="flex items-center space-x-8 text-white">
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+              <div className="flex items-center space-x-8 text-neutral-700">
                 <div className="flex items-center">
-                  <Eye className="h-5 w-5 mr-2" />
-                  <span>{recording.viewCount} views</span>
+                  <Eye className="h-5 w-5 mr-2 text-primary-600" />
+                  <span>{recording.viewCount} lượt xem</span>
                 </div>
                 <div className="flex items-center">
-                  <Heart className="h-5 w-5 mr-2" />
-                  <span>{recording.likeCount} likes</span>
+                  <Heart className="h-5 w-5 mr-2 text-primary-600" />
+                  <span>{recording.likeCount} lượt thích</span>
                 </div>
                 <div className="flex items-center">
-                  <Download className="h-5 w-5 mr-2" />
-                  <span>{recording.downloadCount} downloads</span>
+                  <Download className="h-5 w-5 mr-2 text-primary-600" />
+                  <span>{recording.downloadCount} lượt tải</span>
                 </div>
               </div>
             </div>
 
             {/* Description */}
             {recording.description && (
-              <div
-                ref={descriptionRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 mb-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h2 className="text-xl font-semibold mb-4 text-white">Mô tả</h2>
-                <p className="text-white whitespace-pre-wrap">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4 text-neutral-900">Mô tả</h2>
+                <p className="text-neutral-700 whitespace-pre-wrap">
                   {recording.description}
                 </p>
               </div>
@@ -217,54 +169,47 @@ export default function RecordingDetailPage() {
 
             {/* Metadata */}
             {recording.metadata && (
-              <div
-                ref={metadataRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 mb-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h2 className="text-xl font-semibold mb-4 text-white">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Thông tin chuyên môn
                 </h2>
                 <dl className="space-y-3">
                   {recording.metadata.tuningSystem && (
                     <div>
-                      <dt className="font-medium text-white">
+                      <dt className="font-medium text-neutral-900">
                         Hệ thống điệu thức
                       </dt>
-                      <dd className="text-white">
+                      <dd className="text-neutral-700">
                         {recording.metadata.tuningSystem}
                       </dd>
                     </div>
                   )}
                   {recording.metadata.modalStructure && (
                     <div>
-                      <dt className="font-medium text-white">
+                      <dt className="font-medium text-neutral-900">
                         Cấu trúc giai điệu
                       </dt>
-                      <dd className="text-white">
+                      <dd className="text-neutral-700">
                         {recording.metadata.modalStructure}
                       </dd>
                     </div>
                   )}
                   {recording.metadata.ritualContext && (
                     <div>
-                      <dt className="font-medium text-white">
+                      <dt className="font-medium text-neutral-900">
                         Ngữ cảnh nghi lễ
                       </dt>
-                      <dd className="text-white">
+                      <dd className="text-neutral-700">
                         {recording.metadata.ritualContext}
                       </dd>
                     </div>
                   )}
                   {recording.metadata.culturalSignificance && (
                     <div>
-                      <dt className="font-medium text-white">
+                      <dt className="font-medium text-neutral-900">
                         Ý nghĩa văn hóa
                       </dt>
-                      <dd className="text-white">
+                      <dd className="text-neutral-700">
                         {recording.metadata.culturalSignificance}
                       </dd>
                     </div>
@@ -275,24 +220,17 @@ export default function RecordingDetailPage() {
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
-              <div
-                ref={lyricsRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h2 className="text-xl font-semibold mb-4 text-white">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Lời bài hát
                 </h2>
-                <p className="text-white whitespace-pre-wrap mb-4">
+                <p className="text-neutral-700 whitespace-pre-wrap mb-4">
                   {recording.metadata.lyrics}
                 </p>
                 {recording.metadata.lyricsTranslation && (
                   <>
-                    <h3 className="font-medium text-white mb-2">Dịch nghĩa</h3>
-                    <p className="text-white whitespace-pre-wrap">
+                    <h3 className="font-medium text-neutral-900 mb-2">Dịch nghĩa</h3>
+                    <p className="text-neutral-700 whitespace-pre-wrap">
                       {recording.metadata.lyricsTranslation}
                     </p>
                   </>
@@ -304,54 +242,47 @@ export default function RecordingDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Basic Info */}
-            <div
-              ref={basicInfoRef}
-              className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-              style={{
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-              }}
-            >
-              <h3 className="font-semibold text-lg mb-4 text-white">
-                Information
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg mb-4 text-neutral-900">
+                Thông tin
               </h3>
               <dl className="space-y-3">
                 <div>
-                  <dt className="text-sm text-white">Dân tộc</dt>
-                  <dd className="font-medium text-white">
+                  <dt className="text-sm text-neutral-500">Dân tộc</dt>
+                  <dd className="font-medium text-neutral-900">
                     {recording.ethnicity.nameVietnamese}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Vùng miền</dt>
-                  <dd className="font-medium text-white">
+                  <dt className="text-sm text-neutral-500">Vùng miền</dt>
+                  <dd className="font-medium text-neutral-900">
                     {REGION_NAMES[recording.region]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Loại hình</dt>
-                  <dd className="font-medium text-white">
+                  <dt className="text-sm text-neutral-500">Loại hình</dt>
+                  <dd className="font-medium text-neutral-900">
                     {RECORDING_TYPE_NAMES[recording.recordingType]}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-white">Thời lượng</dt>
-                  <dd className="font-medium text-white">
+                  <dt className="text-sm text-neutral-500">Thời lượng</dt>
+                  <dd className="font-medium text-neutral-900">
                     {Math.floor(recording.duration / 60)}:
                     {(recording.duration % 60).toString().padStart(2, "0")}
                   </dd>
                 </div>
                 {recording.recordedDate && (
                   <div>
-                    <dt className="text-sm text-white">Ngày thu âm</dt>
-                    <dd className="font-medium text-white">
+                    <dt className="text-sm text-neutral-500">Ngày thu âm</dt>
+                    <dd className="font-medium text-neutral-900">
                       {format(new Date(recording.recordedDate), "PP")}
                     </dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm text-white">Ngày tải lên</dt>
-                  <dd className="font-medium text-white">
+                  <dt className="text-sm text-neutral-500">Ngày tải lên</dt>
+                  <dd className="font-medium text-neutral-900">
                     {format(new Date(recording.uploadedDate), "PP")}
                   </dd>
                 </div>
@@ -360,15 +291,8 @@ export default function RecordingDetailPage() {
 
             {/* Instruments */}
             {recording.instruments.length > 0 && (
-              <div
-                ref={instrumentsRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h3 className="font-semibold text-lg mb-4 text-white">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+                <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nhạc cụ
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -383,24 +307,17 @@ export default function RecordingDetailPage() {
 
             {/* Performers */}
             {recording.performers.length > 0 && (
-              <div
-                ref={performersRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h3 className="font-semibold text-lg mb-4 text-white">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+                <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nghệ nhân
                 </h3>
                 <ul className="space-y-2">
                   {recording.performers.map((performer) => (
                     <li
                       key={performer.id}
-                      className="flex items-center text-white"
+                      className="flex items-center text-neutral-700"
                     >
-                      <User className="h-4 w-4 mr-2 text-white" />
+                      <User className="h-4 w-4 mr-2 text-primary-600" />
                       <span>{performer.name}</span>
                       {performer.title && (
                         <Badge variant="secondary" size="sm" className="ml-2">
@@ -415,15 +332,8 @@ export default function RecordingDetailPage() {
 
             {/* Tags */}
             {recording.tags.length > 0 && (
-              <div
-                ref={tagsRef}
-                className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-                style={{
-                  boxShadow:
-                    "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-                }}
-              >
-                <h3 className="font-semibold text-lg mb-4 text-white">Thẻ</h3>
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+                <h3 className="font-semibold text-lg mb-4 text-neutral-900">Thẻ</h3>
                 <div className="flex flex-wrap gap-2">
                   {recording.tags.map((tag, index) => (
                     <Badge key={index} variant="secondary">
@@ -435,15 +345,8 @@ export default function RecordingDetailPage() {
             )}
 
             {/* Uploader */}
-            <div
-              ref={uploaderRef}
-              className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl border border-white/40 p-6 shadow-2xl"
-              style={{
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-              }}
-            >
-              <h3 className="font-semibold text-lg mb-4 text-white">
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Người tải lên
               </h3>
               <div className="flex items-center">
@@ -451,10 +354,10 @@ export default function RecordingDetailPage() {
                   <User className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-neutral-900">
                     {recording.uploader.fullName}
                   </p>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-neutral-500">
                     @{recording.uploader.username}
                   </p>
                 </div>

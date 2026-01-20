@@ -13,20 +13,14 @@ export default function Card({
   variant = "default",
 }: CardProps) {
   const variants = {
-    default: "backdrop-blur-xl bg-white/20 border border-white/40 shadow-2xl",
-    bordered: "backdrop-blur-xl bg-white/20 border border-white/60 shadow-2xl",
-    elevated: "backdrop-blur-xl bg-white/20 border border-white/40 shadow-2xl",
-  };
-
-  const boxShadowStyle = {
-    boxShadow:
-      "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
+    default: "bg-white shadow-md",
+    bordered: "bg-white border border-neutral-200 shadow-sm",
+    elevated: "bg-white shadow-lg",
   };
 
   return (
     <div
       className={clsx("rounded-2xl p-6", variants[variant], className)}
-      style={boxShadowStyle}
     >
       {children}
     </div>

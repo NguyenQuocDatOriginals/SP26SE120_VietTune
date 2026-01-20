@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
@@ -8,20 +8,11 @@ import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
 import TermsAndConditions from "@/components/features/TermsAndConditions";
-import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (formRef.current)
-      cleanupFunctions.push(addSpotlightEffect(formRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
 
   const {
     register,
@@ -36,14 +27,14 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await authService.register(data);
-      toast.success("Registration successful! Please login.");
+      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
       navigate("/login");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Registration failed. Please try again."
-          : "Registration failed. Please try again.";
+              ?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+          : "Đăng ký thất bại. Vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -52,49 +43,44 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-8"
+      className="h-screen flex items-center justify-center px-4"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="max-w-lg w-full">
+      <div className="max-w-md w-full">
         <form
-          ref={formRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 p-3 rounded-2xl shadow-2xl border border-white/40 space-y-0.5"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
+          className="bg-white p-5 rounded-2xl shadow-xl space-y-2.5"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col items-center">
             <img
               src={logo}
               alt="VietTune Logo"
-              className="w-12 h-12 object-contain mb-0.5 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-10 h-10 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />
-            <h2 className="text-center text-lg font-bold text-white">
+            <h2 className="text-center text-lg font-bold text-neutral-800">
               Tạo tài khoản của bạn
             </h2>
-            <p className="mt-0.5 text-center text-sm text-white">
+            <p className="text-center text-sm text-neutral-600">
               Đã có tài khoản?{" "}
               <Link
                 to="/login"
-                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
+                className="font-medium text-primary-600 hover:text-primary-700 active:text-primary-800"
               >
                 Đăng nhập
               </Link>
             </p>
           </div>
 
-          <div className="space-y-0.5">
+          <div className="grid grid-cols-2 gap-2.5">
             <Input
               label="Họ và tên"
               {...register("fullName", {
@@ -114,20 +100,22 @@ export default function RegisterPage() {
               })}
               error={errors.username?.message}
             />
+          </div>
 
-            <Input
-              label="Email"
-              type="email"
-              {...register("email", {
-                required: "Email là bắt buộc",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Địa chỉ email không hợp lệ",
-                },
-              })}
-              error={errors.email?.message}
-            />
+          <Input
+            label="Email"
+            type="email"
+            {...register("email", {
+              required: "Email là bắt buộc",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Địa chỉ email không hợp lệ",
+              },
+            })}
+            error={errors.email?.message}
+          />
 
+          <div className="grid grid-cols-2 gap-2.5">
             <Input
               label="Mật khẩu"
               type="password"
@@ -158,14 +146,14 @@ export default function RegisterPage() {
               id="terms"
               type="checkbox"
               required
-              className="h-4 w-4 bg-white text-blue-600 focus:ring-blue-500 border-2 border-secondary-400 rounded"
+              className="h-3.5 w-3.5 bg-white text-primary-600 focus:ring-primary-500 border-2 border-neutral-400 rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-sm text-white">
+            <label htmlFor="terms" className="ml-2 block text-sm text-neutral-700">
               Tôi đồng ý với{" "}
               <button
                 type="button"
                 onClick={() => setShowTerms(true)}
-                className="text-emerald-300 hover:text-emerald-400 active:text-emerald-500 underline transition-colors"
+                className="text-primary-600 hover:text-primary-700 active:text-primary-800 underline transition-colors"
               >
                 Điều khoản và Điều kiện
               </button>
@@ -175,7 +163,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-liquid-glass-primary w-full disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full py-2.5 bg-primary-600 text-white font-semibold rounded-full hover:bg-primary-700 transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
           >
             {isLoading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
           </button>

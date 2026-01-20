@@ -1,6 +1,4 @@
 import { X } from "lucide-react";
-import { useRef, useEffect } from "react";
-import { addSpotlightEffect } from "@/utils/spotlight";
 
 interface TermsAndConditionsProps {
   isOpen: boolean;
@@ -11,63 +9,35 @@ export default function TermsAndConditions({
   isOpen,
   onClose,
 }: TermsAndConditionsProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen && modalRef.current) {
-      const cleanup = addSpotlightEffect(modalRef.current);
-      return cleanup;
-    }
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div
-        ref={modalRef}
-        className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-        style={{
-          boxShadow:
-            "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-        }}
+        className="bg-white rounded-2xl shadow-xl border border-neutral-300 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/30">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-200 bg-primary-600">
           <h2 className="text-2xl font-bold text-white">Điều khoản và Điều kiện</h2>
           <button
             onClick={onClose}
-            className="btn-liquid-glass-close w-12 h-12 flex-shrink-0 flex items-center justify-center"
+            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
-            <span className="relative z-10">
-              <X className="h-5 w-5 text-white" strokeWidth={2.5} />
-            </span>
+            <X className="h-5 w-5 text-white" strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Content */}
         <div
-          className="overflow-y-auto pt-3 px-6 pb-6 space-y-6 text-white"
+          className="overflow-y-auto pt-3 px-6 pb-6 space-y-6 text-neutral-800"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: "#ffffff transparent",
+            scrollbarColor: "#dc2626 rgba(255,255,255,0.3)",
           }}
         >
-          <style>{`
-            .overflow-y-auto::-webkit-scrollbar {
-              width: 8px;
-            }
-            .overflow-y-auto::-webkit-scrollbar-track {
-              background: transparent;
-            }
-            .overflow-y-auto::-webkit-scrollbar-thumb {
-              background: #ffffff;
-              border-radius: 4px;
-            }
-          `}</style>
           {/* 1. Introduction */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               1. Giới thiệu
             </h3>
             <p className="leading-relaxed">
@@ -81,7 +51,7 @@ export default function TermsAndConditions({
 
           {/* 2. Platform purpose */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               2. Mục đích nền tảng
             </h3>
             <p className="leading-relaxed mb-2">
@@ -99,7 +69,7 @@ export default function TermsAndConditions({
 
           {/* 3. User accounts */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               3. Tài khoản người dùng
             </h3>
             <p className="leading-relaxed mb-2">
@@ -119,7 +89,7 @@ export default function TermsAndConditions({
 
           {/* 4. Content guidelines */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               4. Hướng dẫn nội dung
             </h3>
             <p className="leading-relaxed mb-2">
@@ -145,7 +115,7 @@ export default function TermsAndConditions({
 
           {/* 5. Intellectual property */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               5. Quyền sở hữu trí tuệ
             </h3>
             <p className="leading-relaxed mb-2">
@@ -169,7 +139,7 @@ export default function TermsAndConditions({
 
           {/* 6. Verification process */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               6. Quy trình xác minh
             </h3>
             <p className="leading-relaxed">
@@ -183,7 +153,7 @@ export default function TermsAndConditions({
 
           {/* 7. Privacy and Data protection */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               7. Quyền riêng tư và bảo vệ dữ liệu
             </h3>
             <p className="leading-relaxed">
@@ -197,7 +167,7 @@ export default function TermsAndConditions({
 
           {/* 8. Community conduct */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               8. Quy tắc cộng đồng
             </h3>
             <p className="leading-relaxed mb-2">Người dùng cần:</p>
@@ -216,7 +186,7 @@ export default function TermsAndConditions({
 
           {/* 9. Prohibited activities */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               9. Hoạt động bị cấm
             </h3>
             <p className="leading-relaxed mb-2">Bạn không được:</p>
@@ -240,7 +210,7 @@ export default function TermsAndConditions({
 
           {/* 10. Content moderation */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               10. Kiểm duyệt nội dung
             </h3>
             <p className="leading-relaxed">
@@ -254,7 +224,7 @@ export default function TermsAndConditions({
 
           {/* 11. Attribution and Citation */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               11. Ghi nhận và trích dẫn
             </h3>
             <p className="leading-relaxed">
@@ -271,7 +241,7 @@ export default function TermsAndConditions({
 
           {/* 12. Disclaimer of warranties */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               12. Từ chối bảo đảm
             </h3>
             <p className="leading-relaxed">
@@ -285,7 +255,7 @@ export default function TermsAndConditions({
 
           {/* 13. Limitation of liability */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               13. Giới hạn trách nhiệm
             </h3>
             <p className="leading-relaxed">
@@ -299,7 +269,7 @@ export default function TermsAndConditions({
 
           {/* 14. Changes to Terms */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               14. Thay đổi điều khoản
             </h3>
             <p className="leading-relaxed">
@@ -313,7 +283,7 @@ export default function TermsAndConditions({
 
           {/* 15. Termination */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               15. Chấm dứt tài khoản
             </h3>
             <p className="leading-relaxed">
@@ -328,7 +298,7 @@ export default function TermsAndConditions({
 
           {/* 16. Governing law */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               16. Luật điều chỉnh
             </h3>
             <p className="leading-relaxed">
@@ -340,7 +310,7 @@ export default function TermsAndConditions({
 
           {/* 17. Contact information */}
           <section>
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-3">
               17. Thông tin liên hệ
             </h3>
             <p className="leading-relaxed">
@@ -356,11 +326,11 @@ export default function TermsAndConditions({
           </section>
 
           {/* Last Updated */}
-          <section className="pt-6 border-t border-white/30">
-            <p className="text-sm text-white/80 italic">
+          <section className="pt-6 border-t border-neutral-200">
+            <p className="text-sm text-neutral-600 italic">
               Cập nhật lần cuối: 5 tháng 1, 2026
             </p>
-            <p className="text-sm text-white/80 mt-2">
+            <p className="text-sm text-neutral-600 mt-2">
               Bằng việc sử dụng VietTune, bạn xác nhận rằng bạn đã đọc, hiểu và
               đồng ý tuân thủ các Điều khoản sử dụng này.
             </p>

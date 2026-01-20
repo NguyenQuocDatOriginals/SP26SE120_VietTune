@@ -1,32 +1,13 @@
-import { useEffect, useRef } from "react";
-import { addSpotlightEffect } from "@/utils/spotlight";
-
 export default function AdminDashboard() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (containerRef.current)
-      cleanupFunctions.push(addSpotlightEffect(containerRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-white mb-8">
+        <h1 className="text-3xl font-bold text-neutral-900 mb-8">
           Bảng điều khiển quản trị
         </h1>
 
-        <div
-          ref={containerRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <p className="text-white">
+        <div className="bg-white rounded-2xl shadow-sm border border-neutral-300 p-8">
+          <p className="text-neutral-700">
             Bảng điều khiển quản trị với các tính năng quản lý người dùng, kiểm
             duyệt nội dung và phân tích dữ liệu sẽ được triển khai tại đây.
           </p>

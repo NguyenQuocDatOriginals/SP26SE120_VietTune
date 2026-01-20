@@ -147,7 +147,7 @@ export default function AudioPlayer({
           <button
             onClick={togglePlay}
             disabled={isLoading}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-colors disabled:opacity-50 flex-shrink-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -161,7 +161,7 @@ export default function AudioPlayer({
           {/* Progress */}
           <div className="flex-1 min-w-0">
             <div 
-              className="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer"
+              className="h-1.5 bg-neutral-200 rounded-full overflow-hidden cursor-pointer"
               onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const updateProgress = (clientX: number) => {
@@ -182,13 +182,13 @@ export default function AudioPlayer({
               }}
             >
               <div 
-                className="h-full bg-emerald-500 rounded-full transition-none"
+                className="h-full bg-primary-600 rounded-full transition-none"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             <div className="flex justify-between mt-1">
-              <span className="text-xs text-white/50">{formatTime(currentTime)}</span>
-              <span className="text-xs text-white/50">{formatTime(duration)}</span>
+              <span className="text-xs text-neutral-500">{formatTime(currentTime)}</span>
+              <span className="text-xs text-neutral-500">{formatTime(duration)}</span>
             </div>
           </div>
         </div>
@@ -201,15 +201,15 @@ export default function AudioPlayer({
     <div className={`${className} w-full`}>
       <audio ref={audioRef} src={src} preload="metadata" />
 
-      <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+      <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl">
         {/* Title & Artist */}
         {(title || artist) && (
           <div className="mb-4">
             {title && (
-              <h4 className="text-white font-medium truncate">{title}</h4>
+              <h4 className="text-neutral-800 font-medium truncate">{title}</h4>
             )}
             {artist && (
-              <p className="text-white/60 text-sm truncate">{artist}</p>
+              <p className="text-neutral-500 text-sm truncate">{artist}</p>
             )}
           </div>
         )}
@@ -217,7 +217,7 @@ export default function AudioPlayer({
         {/* Progress Bar */}
         <div className="mb-4">
           <div 
-            className="h-2 bg-white/10 rounded-full overflow-hidden cursor-pointer group"
+            className="h-2 bg-neutral-200 rounded-full overflow-hidden cursor-pointer group"
             onMouseDown={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const updateProgress = (clientX: number) => {
@@ -238,15 +238,15 @@ export default function AudioPlayer({
             }}
           >
             <div 
-              className="h-full bg-emerald-500 rounded-full transition-none relative"
+              className="h-full bg-primary-600 rounded-full transition-none relative"
               style={{ width: `${progressPercent}%` }}
             >
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
             </div>
           </div>
           <div className="flex justify-between mt-2">
-            <span className="text-xs text-white/50 font-mono">{formatTime(currentTime)}</span>
-            <span className="text-xs text-white/50 font-mono">{formatTime(duration)}</span>
+            <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
+            <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -256,7 +256,7 @@ export default function AudioPlayer({
           <div className="flex items-center gap-1">
             <button
               onClick={() => seekBy(-10)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors"
               title="Lùi 10 giây"
             >
               <SkipBack className="w-4 h-4" />
@@ -267,7 +267,7 @@ export default function AudioPlayer({
           <div className="flex items-center gap-3">
             <button
               onClick={() => seekBy(-5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors text-xs font-medium"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 bg-neutral-100 hover:bg-neutral-200 transition-colors text-xs font-medium"
               title="Lùi 5 giây"
             >
               -5s
@@ -276,7 +276,7 @@ export default function AudioPlayer({
             <button
               onClick={togglePlay}
               disabled={isLoading}
-              className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 transition-all hover:scale-105 disabled:opacity-50 shadow-lg shadow-emerald-500/30"
+              className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg shadow-primary-500/30"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -289,7 +289,7 @@ export default function AudioPlayer({
 
             <button
               onClick={() => seekBy(5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white bg-white/5 hover:bg-white/10 transition-colors text-xs font-medium"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 bg-neutral-100 hover:bg-neutral-200 transition-colors text-xs font-medium"
               title="Tiến 5 giây"
             >
               +5s
@@ -300,7 +300,7 @@ export default function AudioPlayer({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleMute}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors"
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-4 h-4" />
@@ -330,10 +330,10 @@ export default function AudioPlayer({
               }}
             >
               <div 
-                className="h-1.5 bg-white/10 rounded-full overflow-hidden cursor-pointer"
+                className="h-1.5 bg-neutral-200 rounded-full overflow-hidden cursor-pointer"
               >
                 <div 
-                  className="h-full bg-emerald-500 rounded-full transition-none"
+                  className="h-full bg-primary-600 rounded-full transition-none"
                   style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                 />
               </div>

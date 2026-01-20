@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -47,39 +48,50 @@ export default function Pagination({
 
   return (
     <div
-      className={clsx("flex items-center justify-center space-x-2", className)}
+      className={clsx("flex items-center justify-center gap-2", className)}
     >
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-3 py-2 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
       >
-        Previous
+        <ChevronLeft className="h-4 w-4" />
+        Trước
       </button>
 
-      {getPageNumbers().map((page, index) => (
-        <button
-          key={index}
-          onClick={() => typeof page === "number" && onPageChange(page)}
-          disabled={page === "..."}
-          className={clsx(
-            "px-3 py-2 text-sm font-medium rounded-full transition-all",
-            page === currentPage
-              ? "btn-liquid-glass-primary"
-              : "btn-liquid-glass-secondary",
-            page === "..." && "cursor-default opacity-50"
-          )}
-        >
-          {page}
-        </button>
-      ))}
+      {getPageNumbers().map((page, index) => {
+        const getButtonClass = () => {
+          if (page === "...") {
+            return "cursor-default bg-transparent text-neutral-400";
+          }
+          if (page === currentPage) {
+            return "bg-primary-600 text-white border border-primary-600";
+          }
+          return "bg-white text-neutral-700 border border-neutral-300 hover:bg-neutral-50";
+        };
+
+        return (
+          <button
+            key={index}
+            onClick={() => typeof page === "number" && onPageChange(page)}
+            disabled={page === "..."}
+            className={clsx(
+              "min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+              getButtonClass()
+            )}
+          >
+            {page}
+          </button>
+        );
+      })}
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-3 py-2 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
       >
-        Next
+        Sau
+        <ChevronRight className="h-4 w-4" />
       </button>
     </div>
   );

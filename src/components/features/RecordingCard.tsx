@@ -17,15 +17,9 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
   };
 
   return (
-    <div
-      className="backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 overflow-hidden hover:shadow-2xl transition-shadow"
-      style={{
-        boxShadow:
-          "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-      }}
-    >
+    <div className="bg-white rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow">
       {/* Cover Image */}
-      <div className="relative h-48 bg-secondary-200">
+      <div className="relative h-48 bg-neutral-100">
         {recording.coverImage ? (
           <img
             src={recording.coverImage}
@@ -33,7 +27,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-secondary-400">
+          <div className="w-full h-full flex items-center justify-center text-neutral-400">
             <div className="text-center">
               <p className="text-4xl mb-2">🎵</p>
               <p className="text-sm">Chưa có ảnh bìa</p>
@@ -46,7 +40,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
           onClick={handlePlay}
           className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all flex items-center justify-center group"
         >
-          <div className="bg-white rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="bg-white rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
             <Play className="h-8 w-8 text-primary-600" />
           </div>
         </button>
@@ -63,11 +57,11 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-secondary-900 mb-1 line-clamp-1">
+        <h3 className="font-semibold text-neutral-800 mb-1 line-clamp-1">
           {recording.title}
         </h3>
         {recording.titleVietnamese && (
-          <p className="text-sm text-secondary-600 mb-2 line-clamp-1">
+          <p className="text-sm text-neutral-500 mb-2 line-clamp-1">
             {recording.titleVietnamese}
           </p>
         )}
@@ -82,7 +76,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-secondary-500">
+        <div className="flex items-center justify-between text-xs text-neutral-500">
           <div className="flex items-center space-x-3">
             <span className="flex items-center">
               <Eye className="h-3 w-3 mr-1" />
