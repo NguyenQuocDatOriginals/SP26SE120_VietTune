@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using static VietTuneArchive.Application.Mapper.DTOs.SongDto;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.SongRequest;
-using static VietTuneArchive.Application.Mapper.DTOs.MediaDto;
-using VietTuneArchive.Application.Mapper.DTOs.Response;
+﻿using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
+using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.SongDto;
 using AnnotationDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.AnnotationDto;
 using MediaFileDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.MediaFileDto;
 using TranscriptionDto = VietTuneArchive.Application.Mapper.DTOs.SongDto.TranscriptionDto;

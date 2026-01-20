@@ -1,12 +1,9 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service.EmailConfirmation;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Text;
 using VietTuneArchive.Application.Common.Email;
 using VietTuneArchive.Application.Mapper;
 using VietTuneArchive.Domain.Context;

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using static VietTuneArchive.Application.Mapper.DTOs.SearchDto;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.SearchRequest;
 using VietTuneArchive.Application.Mapper.DTOs;
+using static VietTuneArchive.Application.Mapper.DTOs.SearchDto;
 
 namespace VietTuneArchive.API.Controllers
 {

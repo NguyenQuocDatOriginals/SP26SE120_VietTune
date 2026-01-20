@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using static VietTuneArchive.Application.Mapper.DTOs.TranscriptionDto;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.TranscriptionRequest;
-using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
-using VietTuneArchive.Application.Mapper.DTOs.Response;
 using VietTuneArchive.Application.Mapper.DTOs;
+using VietTuneArchive.Application.Mapper.DTOs.Response;
+using static VietTuneArchive.Application.Mapper.DTOs.Request.TranscriptionRequest;
+using static VietTuneArchive.Application.Mapper.DTOs.TranscriptionDto;
 using TranscriptionJobDto = VietTuneArchive.Application.Mapper.DTOs.TranscriptionDto.TranscriptionJobDto;
 
 namespace VietTuneArchive.API.Controllers

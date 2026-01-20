@@ -4,7 +4,7 @@ using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
 using static VietTuneArchive.Application.Mapper.DTOs.InstrumentDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.InstrumentRequest;
-using static VietTuneArchive.Application.Mapper.DTOs.SongDto;
+using SongSummaryDto = VietTuneArchive.Application.Mapper.DTOs.InstrumentDto.SongSummaryDto;
 
 namespace VietTuneArchive.API.Controllers
 {

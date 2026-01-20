@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
-using static VietTuneArchive.Application.Mapper.DTOs.UserDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.UserRequest;
+using static VietTuneArchive.Application.Mapper.DTOs.UserDto;
 
 
 namespace VietTuneArchive.API.Controllers

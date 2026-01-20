@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using System.Drawing.Drawing2D;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using static VietTuneArchive.Application.Mapper.DTOs.ReferenceDataDto;
 

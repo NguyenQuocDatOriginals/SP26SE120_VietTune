@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using static VietTuneArchive.Application.Mapper.DTOs.InstrumentDto;
+using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
 using static VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.KnowledgeBaseRequest;
-using VietTuneArchive.Application.Mapper.DTOs;
 using CategoryDto = VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto.CategoryDto;
 using SongSummaryDto = VietTuneArchive.Application.Mapper.DTOs.KnowledgeBaseDto.SongSummaryDto;
 

@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using VietTuneArchive.Application.Mapper.DTOs.Response;
 using VietTuneArchive.Application.Mapper.DTOs;
+using VietTuneArchive.Application.Mapper.DTOs.Response;
 using static VietTuneArchive.Application.Mapper.DTOs.NotificationDto;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.NotificationRequest;
 
 namespace VietTuneArchive.API.Controllers
 {
