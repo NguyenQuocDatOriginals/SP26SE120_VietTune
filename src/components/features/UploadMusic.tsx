@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, X, Check, Search, Plus, AlertCircle } from "lucide-react";
+import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
 // ===== CONSTANTS =====
@@ -64,12 +64,60 @@ const LANGUAGES = [
 ];
 
 const ETHNICITIES = [
-  "Kinh", "Tày", "Thái", "Mường", "Khmer", "H'Mông", "Nùng", "Hoa", "Dao", "Gia Rai",
-  "Ê Đê", "Ba Na", "Xơ Đăng", "Sán Chay", "Cơ Ho", "Chăm", "Sán Dìu", "Hrê", "Mnông", "Ra Glai",
-  "Giáy", "Stră", "Bru-Vân Kiều", "Cơ Tu", "Giẻ Triêng", "Tà Ôi", "Mạ", "Khơ Mú", "Co", "Chơ Ro",
-  "Hà Nhì", "Xinh Mun", "Chu Ru", "Lào", "La Chí", "Kháng", "Phù Lá", "La Hủ", "La Ha", "Pà Thẻn",
-  "Lự", "Ngái", "Chứt", "Lô Lô", "Mảng", "Cờ Lao", "Bố Y", "Cống", "Si La", "Pu Péo",
-  "Rơ Măm", "Brâu", "Ơ Đu", "Khác",
+  "Kinh",
+  "Tày",
+  "Thái",
+  "Mường",
+  "Khmer",
+  "H'Mông",
+  "Nùng",
+  "Hoa",
+  "Dao",
+  "Gia Rai",
+  "Ê Đê",
+  "Ba Na",
+  "Xơ Đăng",
+  "Sán Chay",
+  "Cơ Ho",
+  "Chăm",
+  "Sán Dìu",
+  "Hrê",
+  "Mnông",
+  "Ra Glai",
+  "Giáy",
+  "Stră",
+  "Bru-Vân Kiều",
+  "Cơ Tu",
+  "Giẻ Triêng",
+  "Tà Ôi",
+  "Mạ",
+  "Khơ Mú",
+  "Co",
+  "Chơ Ro",
+  "Hà Nhì",
+  "Xinh Mun",
+  "Chu Ru",
+  "Lào",
+  "La Chí",
+  "Kháng",
+  "Phù Lá",
+  "La Hủ",
+  "La Ha",
+  "Pà Thẻn",
+  "Lự",
+  "Ngái",
+  "Chứt",
+  "Lô Lô",
+  "Mảng",
+  "Cờ Lao",
+  "Bố Y",
+  "Cống",
+  "Si La",
+  "Pu Péo",
+  "Rơ Măm",
+  "Brâu",
+  "Ơ Đu",
+  "Khác",
 ];
 
 const REGIONS = [
@@ -83,50 +131,195 @@ const REGIONS = [
 ];
 
 const PROVINCES = [
-  "TP. Hà Nội", "TP. Hải Phòng", "TP. Huế", "TP. Đà Nẵng", "TP. Hồ Chí Minh", "TP. Cần Thơ",
-  "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Điện Biên", "Đắk Lắk", "Đồng Nai", "Đồng Tháp",
-  "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hòa", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai",
-  "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
-  "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long",
+  "TP. Hà Nội",
+  "TP. Hải Phòng",
+  "TP. Huế",
+  "TP. Đà Nẵng",
+  "TP. Hồ Chí Minh",
+  "TP. Cần Thơ",
+  "An Giang",
+  "Bắc Ninh",
+  "Cà Mau",
+  "Cao Bằng",
+  "Điện Biên",
+  "Đắk Lắk",
+  "Đồng Nai",
+  "Đồng Tháp",
+  "Gia Lai",
+  "Hà Tĩnh",
+  "Hưng Yên",
+  "Khánh Hòa",
+  "Lai Châu",
+  "Lâm Đồng",
+  "Lạng Sơn",
+  "Lào Cai",
+  "Nghệ An",
+  "Ninh Bình",
+  "Phú Thọ",
+  "Quảng Ngãi",
+  "Quảng Ninh",
+  "Quảng Trị",
+  "Sơn La",
+  "Tây Ninh",
+  "Thái Nguyên",
+  "Thanh Hóa",
+  "Tuyên Quang",
+  "Vĩnh Long",
 ];
 
 const EVENT_TYPES = [
-  "Đám cưới", "Đám tang", "Lễ hội đình", "Lễ hội chùa", "Tết Nguyên đán", "Hội xuân",
-  "Lễ cầu mùa", "Lễ cúng tổ tiên", "Lễ cấp sắc", "Lễ hội đâm trâu", "Lễ hội cồng chiêng",
-  "Sinh hoạt cộng đồng", "Biểu diễn nghệ thuật", "Ghi âm studio", "Ghi âm thực địa", "Khác",
+  "Đám cưới",
+  "Đám tang",
+  "Lễ hội đình",
+  "Lễ hội chùa",
+  "Tết Nguyên đán",
+  "Hội xuân",
+  "Lễ cầu mùa",
+  "Lễ cúng tổ tiên",
+  "Lễ cấp sắc",
+  "Lễ hội đâm trâu",
+  "Lễ hội cồng chiêng",
+  "Sinh hoạt cộng đồng",
+  "Biểu diễn nghệ thuật",
+  "Ghi âm studio",
+  "Ghi âm thực địa",
+  "Khác",
 ];
 
 const PERFORMANCE_TYPES = [
   { key: "instrumental", label: "Chỉ nhạc cụ (Instrumental)" },
   { key: "acappella", label: "Chỉ giọng hát không đệm (Acappella)" },
-  { key: "vocal_accompaniment", label: "Giọng hát có nhạc đệm (Vocal with accompaniment)" },
+  {
+    key: "vocal_accompaniment",
+    label: "Giọng hát có nhạc đệm (Vocal with accompaniment)",
+  },
 ];
 
 const INSTRUMENTS = [
-  "Alal (Ba Na)", "Aráp (Ba Na)", "Aráp (Ca Dong)", "Aráp (Gia Rai)", "Aráp (Rơ Năm)", "Aráp (Stră)",
-  "Biên khánh (Kinh)", "Bro (Ba Na)", "Bro (Gia Rai)", "Bro (Giẻ Triêng)", "Bro (Xơ Đăng)", "Bẳng bu (Thái)",
-  "Chul (Ba Na)", "Chul (Gia Rai)", "Chênh Kial (Ba Na)", "Cò ke (Mường)", "Cồng, chiêng (Ba Na)",
-  "Cồng, chiêng (Gia Rai)", "Cồng, chiêng (Giẻ Triêng)", "Cồng, chiêng (Hrê)", "Cồng, chiêng (Ê Đê)",
-  "Dàn nhạc ngũ âm (Khmer)", "Goong (Ba Na)", "Goong (Gia Rai)", "Goong (Giẻ Triêng)", "Goong đe (Ba Na)",
-  "Hơgơr (Ê Đê)", "Hơgơr cân (Mnâm)", "Hơgơr cân (Rơ Năm)", "Hơgơr prong (Gia Rai)", "Hơgơr tuôn (Hà Lang)",
-  "Hơgơr tăk (Ba Na)", "Khinh khung (Ba Na)", "Khinh khung (Gia Rai)", "Khèn (H'Mông)", "Khèn (Ta Ôi)",
-  "Khèn (Ê Đê)", "Khên (Vân Kiều)", "Knăh ring (Ba Na)", "Knăh ring (Gia Rai)", "K'lông put (Gia Rai)",
-  "K'ny (Ba Na)", "K'ny (Gia Rai)", "K'ny (Rơ Ngao)", "K'ny (Xơ Đăng)", "Kèn bầu (Chăm)", "Kèn bầu (Kinh)",
-  "Kèn bầu (Thái)", "Kềnh (H'Mông)", "M'linh (Dao)", "M'linh (Mường)", "M'nhum (Gia Rai)", "Mõ (Kinh)",
-  "Phách (Kinh)", "Pí cổng (Thái)", "Pí lè (Thái)", "Pí lè (Tày)", "Pí một lao (Kháng)", "Pí một lao (Khơ Mú)",
-  "Pí một lao (La Ha)", "Pí một lao (Thái)", "Pí pặp (Thái)", "Pí phướng (Thái)", "Pí đôi (Thái)",
-  "Púa (H'Mông)", "Púa (Lô Lô)", "Qeej (H'Mông)", "Rang leh (Ca Dong)", "Rang leh (Stră)", "Rang rai (Ba Na)",
-  "Rang rai (Gia Rai)", "Song lang (Kinh)", "Sáo ngang (Kinh)", "Sênh tiền (Kinh)", "T'rum (Gia Rai)",
-  "Ta in (Hà Nhì)", "Ta lư (Vân Kiều)", "Ta pòl (Ba Na)", "Ta pòl (Brâu)", "Ta pòl (Gia Rai)",
-  "Ta pòl (Rơ Năm)", "Tam thập lục (Kinh)", "Teh ding (Gia Rai)", "Tiêu (Kinh)", "Tol alao (Ca Dong)",
-  "Tông đing (Ba Na)", "Tông đing (Ca Dong)", "Tơ nốt (Ba Na)", "Trống bộc (Kinh)", "Trống cái (Kinh)",
-  "Trống chầu (Kinh)", "Trống cơm (Kinh)", "Trống dẹt (Kinh)", "Trống khẩu (Kinh)", "Trống lắng (Kinh)",
-  "Trống mảnh (Kinh)", "Trống quần (Kinh)", "Trống đế (Kinh)", "Trống đồng (Kinh)", "Tính tẩu (Thái)",
-  "Tính tẩu (Tày)", "Vang (Gia Rai)", "Đinh Duar (Giẻ Triêng)", "Đinh Khén (Xơ Đăng)", "Đinh tuk (Ba Na)",
-  "Đao đao (Khơ Mú)", "Đuk đik (Giẻ Triêng)", "Đàn bầu (Kinh)", "Đàn môi (H'Mông)", "Đàn nguyệt (Kinh)",
-  "Đàn nhị (Chăm)", "Đàn nhị (Dao)", "Đàn nhị (Giáy)", "Đàn nhị (Kinh)", "Đàn nhị (Nùng)", "Đàn nhị (Tày)",
-  "Đàn t'rưng (Ba Na)", "Đàn t'rưng (Gia Rai)", "Đàn tam (Kinh)", "Đàn tranh (Kinh)", "Đàn tứ (Kinh)",
-  "Đàn tỳ bà (Kinh)", "Đàn đá (Kinh)", "Đàn đáy (Kinh)",
+  "Alal (Ba Na)",
+  "Aráp (Ba Na)",
+  "Aráp (Ca Dong)",
+  "Aráp (Gia Rai)",
+  "Aráp (Rơ Năm)",
+  "Aráp (Stră)",
+  "Biên khánh (Kinh)",
+  "Bro (Ba Na)",
+  "Bro (Gia Rai)",
+  "Bro (Giẻ Triêng)",
+  "Bro (Xơ Đăng)",
+  "Bẳng bu (Thái)",
+  "Chul (Ba Na)",
+  "Chul (Gia Rai)",
+  "Chênh Kial (Ba Na)",
+  "Cò ke (Mường)",
+  "Cồng, chiêng (Ba Na)",
+  "Cồng, chiêng (Gia Rai)",
+  "Cồng, chiêng (Giẻ Triêng)",
+  "Cồng, chiêng (Hrê)",
+  "Cồng, chiêng (Ê Đê)",
+  "Dàn nhạc ngũ âm (Khmer)",
+  "Goong (Ba Na)",
+  "Goong (Gia Rai)",
+  "Goong (Giẻ Triêng)",
+  "Goong đe (Ba Na)",
+  "Hơgơr (Ê Đê)",
+  "Hơgơr cân (Mnâm)",
+  "Hơgơr cân (Rơ Năm)",
+  "Hơgơr prong (Gia Rai)",
+  "Hơgơr tuôn (Hà Lang)",
+  "Hơgơr tăk (Ba Na)",
+  "Khinh khung (Ba Na)",
+  "Khinh khung (Gia Rai)",
+  "Khèn (H'Mông)",
+  "Khèn (Ta Ôi)",
+  "Khèn (Ê Đê)",
+  "Khên (Vân Kiều)",
+  "Knăh ring (Ba Na)",
+  "Knăh ring (Gia Rai)",
+  "K'lông put (Gia Rai)",
+  "K'ny (Ba Na)",
+  "K'ny (Gia Rai)",
+  "K'ny (Rơ Ngao)",
+  "K'ny (Xơ Đăng)",
+  "Kèn bầu (Chăm)",
+  "Kèn bầu (Kinh)",
+  "Kèn bầu (Thái)",
+  "Kềnh (H'Mông)",
+  "M'linh (Dao)",
+  "M'linh (Mường)",
+  "M'nhum (Gia Rai)",
+  "Mõ (Kinh)",
+  "Phách (Kinh)",
+  "Pí cổng (Thái)",
+  "Pí lè (Thái)",
+  "Pí lè (Tày)",
+  "Pí một lao (Kháng)",
+  "Pí một lao (Khơ Mú)",
+  "Pí một lao (La Ha)",
+  "Pí một lao (Thái)",
+  "Pí pặp (Thái)",
+  "Pí phướng (Thái)",
+  "Pí đôi (Thái)",
+  "Púa (H'Mông)",
+  "Púa (Lô Lô)",
+  "Qeej (H'Mông)",
+  "Rang leh (Ca Dong)",
+  "Rang leh (Stră)",
+  "Rang rai (Ba Na)",
+  "Rang rai (Gia Rai)",
+  "Song lang (Kinh)",
+  "Sáo ngang (Kinh)",
+  "Sênh tiền (Kinh)",
+  "T'rum (Gia Rai)",
+  "Ta in (Hà Nhì)",
+  "Ta lư (Vân Kiều)",
+  "Ta pòl (Ba Na)",
+  "Ta pòl (Brâu)",
+  "Ta pòl (Gia Rai)",
+  "Ta pòl (Rơ Năm)",
+  "Tam thập lục (Kinh)",
+  "Teh ding (Gia Rai)",
+  "Tiêu (Kinh)",
+  "Tol alao (Ca Dong)",
+  "Tông đing (Ba Na)",
+  "Tông đing (Ca Dong)",
+  "Tơ nốt (Ba Na)",
+  "Trống bộc (Kinh)",
+  "Trống cái (Kinh)",
+  "Trống chầu (Kinh)",
+  "Trống cơm (Kinh)",
+  "Trống dẹt (Kinh)",
+  "Trống khẩu (Kinh)",
+  "Trống lắng (Kinh)",
+  "Trống mảnh (Kinh)",
+  "Trống quần (Kinh)",
+  "Trống đế (Kinh)",
+  "Trống đồng (Kinh)",
+  "Tính tẩu (Thái)",
+  "Tính tẩu (Tày)",
+  "Vang (Gia Rai)",
+  "Đinh Duar (Giẻ Triêng)",
+  "Đinh Khén (Xơ Đăng)",
+  "Đinh tuk (Ba Na)",
+  "Đao đao (Khơ Mú)",
+  "Đuk đik (Giẻ Triêng)",
+  "Đàn bầu (Kinh)",
+  "Đàn môi (H'Mông)",
+  "Đàn nguyệt (Kinh)",
+  "Đàn nhị (Chăm)",
+  "Đàn nhị (Dao)",
+  "Đàn nhị (Giáy)",
+  "Đàn nhị (Kinh)",
+  "Đàn nhị (Nùng)",
+  "Đàn nhị (Tày)",
+  "Đàn t'rưng (Ba Na)",
+  "Đàn t'rưng (Gia Rai)",
+  "Đàn tam (Kinh)",
+  "Đàn tranh (Kinh)",
+  "Đàn tứ (Kinh)",
+  "Đàn tỳ bà (Kinh)",
+  "Đàn đá (Kinh)",
+  "Đàn đáy (Kinh)",
 ];
 
 // Mapping genre to typical ethnicity
@@ -139,11 +332,11 @@ const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
   "Đờn ca tài tử": ["Kinh"],
   "Hát bội": ["Kinh"],
   "Cải lương": ["Kinh"],
-  "Tuồng": ["Kinh"],
-  "Chèo": ["Kinh"],
+  Tuồng: ["Kinh"],
+  Chèo: ["Kinh"],
   "Hát xẩm": ["Kinh"],
   "Hát then": ["Tày", "Nùng"],
-  "Khèn": ["H'Mông"],
+  Khèn: ["H'Mông"],
   "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
 };
 
@@ -156,9 +349,17 @@ function jdFromDate(dd: number, mm: number, yy: number): number {
   const a = Math.floor((14 - mm) / 12);
   const y = yy + 4800 - a;
   const m = mm + 12 * a - 3;
-  let jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+  let jd =
+    dd +
+    Math.floor((153 * m + 2) / 5) +
+    365 * y +
+    Math.floor(y / 4) -
+    Math.floor(y / 100) +
+    Math.floor(y / 400) -
+    32045;
   if (jd < 2299161) {
-    jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
+    jd =
+      dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
   }
   return jd;
 }
@@ -173,16 +374,31 @@ function getNewMoonDay(k: number, timeZone: number): number {
   const M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3;
   const Mpr = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3;
   const F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3;
-  let C1 = (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M);
+  let C1 =
+    (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M);
   C1 = C1 - 0.4068 * Math.sin(Mpr * dr) + 0.0161 * Math.sin(dr * 2 * Mpr);
   C1 = C1 - 0.0004 * Math.sin(dr * 3 * Mpr);
   C1 = C1 + 0.0104 * Math.sin(dr * 2 * F) - 0.0051 * Math.sin(dr * (M + Mpr));
-  C1 = C1 - 0.0074 * Math.sin(dr * (M - Mpr)) + 0.0004 * Math.sin(dr * (2 * F + M));
-  C1 = C1 - 0.0004 * Math.sin(dr * (2 * F - M)) - 0.0006 * Math.sin(dr * (2 * F + Mpr));
-  C1 = C1 + 0.001 * Math.sin(dr * (2 * F - Mpr)) + 0.0005 * Math.sin(dr * (2 * Mpr + M));
+  C1 =
+    C1 -
+    0.0074 * Math.sin(dr * (M - Mpr)) +
+    0.0004 * Math.sin(dr * (2 * F + M));
+  C1 =
+    C1 -
+    0.0004 * Math.sin(dr * (2 * F - M)) -
+    0.0006 * Math.sin(dr * (2 * F + Mpr));
+  C1 =
+    C1 +
+    0.001 * Math.sin(dr * (2 * F - Mpr)) +
+    0.0005 * Math.sin(dr * (2 * Mpr + M));
   let deltat: number;
   if (T < -11) {
-    deltat = 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3;
+    deltat =
+      0.001 +
+      0.000839 * T +
+      0.0002261 * T2 -
+      0.00000845 * T3 -
+      0.000000081 * T * T3;
   } else {
     deltat = -0.000278 + 0.000265 * T + 0.000262 * T2;
   }
@@ -197,11 +413,14 @@ function getSunLongitude(jdn: number, timeZone: number): number {
   const M = 357.5291 + 35999.0503 * T - 0.0001559 * T2 - 0.00000048 * T * T2;
   const L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2;
   let DL = (1.9146 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M);
-  DL = DL + (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.00029 * Math.sin(dr * 3 * M);
+  DL =
+    DL +
+    (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) +
+    0.00029 * Math.sin(dr * 3 * M);
   let L = L0 + DL;
   L = L * dr;
   L = L - PI * 2 * Math.floor(L / (PI * 2));
-  return Math.floor(L / PI * 6);
+  return Math.floor((L / PI) * 6);
 }
 
 function getLunarMonth11(yy: number, timeZone: number): number {
@@ -228,7 +447,12 @@ function getLeapMonthOffset(a11: number, timeZone: number): number {
   return i - 1;
 }
 
-function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number = 7): { day: number; month: number; year: number; leap: boolean } {
+function convertSolar2Lunar(
+  dd: number,
+  mm: number,
+  yy: number,
+  timeZone: number = 7,
+): { day: number; month: number; year: number; leap: boolean } {
   const dayNumber = jdFromDate(dd, mm, yy);
   const k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
   let monthStart = getNewMoonDay(k + 1, timeZone);
@@ -268,8 +492,32 @@ function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number
 }
 
 // Vietnamese Zodiac (Can Chi) calculation
-const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
-const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+const CAN = [
+  "Giáp",
+  "Ất",
+  "Bính",
+  "Đinh",
+  "Mậu",
+  "Kỷ",
+  "Canh",
+  "Tân",
+  "Nhâm",
+  "Quý",
+];
+const CHI = [
+  "Tý",
+  "Sửu",
+  "Dần",
+  "Mão",
+  "Thìn",
+  "Tỵ",
+  "Ngọ",
+  "Mùi",
+  "Thân",
+  "Dậu",
+  "Tuất",
+  "Hợi",
+];
 
 function getCanChi(lunarYear: number): string {
   const can = CAN[(lunarYear + 6) % 10];
@@ -285,23 +533,24 @@ function getLunarDateString(dd: number, mm: number, yy: number): string {
 function getFullLunarDateString(dd: number, mm: number, yy: number): string {
   const lunar = convertSolar2Lunar(dd, mm, yy);
   const canChi = getCanChi(lunar.year);
-  return `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''} năm ${canChi}`;
+  return `${lunar.day}/${lunar.month}${lunar.leap ? " nhuận" : ""} năm ${canChi}`;
 }
 
 // Convert lunar date to solar date
 function jdToDate(jd: number): { day: number; month: number; year: number } {
-  let a, b, c, d, e, m;
+  let a;
   if (jd > 2299160) {
     a = Math.floor((jd - 1867216.25) / 36524.25);
     a = jd + 1 + a - Math.floor(a / 4);
   } else {
     a = jd;
   }
-  b = a + 1524;
-  c = Math.floor((b - 122.1) / 365.25);
-  d = Math.floor(365.25 * c);
-  e = Math.floor((b - d) / 30.6001);
+  const b = a + 1524;
+  const c = Math.floor((b - 122.1) / 365.25);
+  const d = Math.floor(365.25 * c);
+  const e = Math.floor((b - d) / 30.6001);
   const day = b - d - Math.floor(30.6001 * e);
+  let m;
   if (e < 14) {
     m = e - 1;
   } else {
@@ -316,7 +565,13 @@ function jdToDate(jd: number): { day: number; month: number; year: number } {
   return { day, month: m, year };
 }
 
-function convertLunar2Solar(lunarDay: number, lunarMonth: number, lunarYear: number, lunarLeap: boolean = false, timeZone: number = 7): { day: number; month: number; year: number } | null {
+function convertLunar2Solar(
+  lunarDay: number,
+  lunarMonth: number,
+  lunarYear: number,
+  lunarLeap: boolean = false,
+  timeZone: number = 7,
+): { day: number; month: number; year: number } | null {
   let a11: number, b11: number;
   if (lunarMonth < 11) {
     a11 = getLunarMonth11(lunarYear - 1, timeZone);
@@ -325,26 +580,26 @@ function convertLunar2Solar(lunarDay: number, lunarMonth: number, lunarYear: num
     a11 = getLunarMonth11(lunarYear, timeZone);
     b11 = getLunarMonth11(lunarYear + 1, timeZone);
   }
-  
+
   const k = Math.floor(0.5 + (a11 - 2415021.076998695) / 29.530588853);
   let off = lunarMonth - 11;
   if (off < 0) {
     off += 12;
   }
-  
+
   if (b11 - a11 > 365) {
     const leapMonth = getLeapMonthInYear(lunarYear);
-    
+
     if (lunarLeap && lunarMonth !== leapMonth) {
       return null; // Invalid leap month request
     }
-    
+
     // Adjust offset if the target month is after the leap month, or is the leap month itself
     if (lunarLeap || lunarMonth > leapMonth) {
       off += 1;
     }
   }
-  
+
   const monthStart = getNewMoonDay(k + off, timeZone);
   return jdToDate(monthStart + lunarDay - 1);
 }
@@ -353,13 +608,13 @@ function convertLunar2Solar(lunarDay: number, lunarMonth: number, lunarYear: num
 function getLeapMonthInYear(lunarYear: number): number {
   // Use convertSolar2Lunar to find leap month by checking dates throughout the year
   // This approach uses the proven conversion algorithm
-  
-  // A lunar year spans approximately from late Jan/early Feb of solar year 
+
+  // A lunar year spans approximately from late Jan/early Feb of solar year
   // to late Jan/early Feb of the next solar year
   // Check solar dates from (lunarYear) to (lunarYear + 1) to cover all lunar months
-  
+
   const yearsToCheck = [lunarYear, lunarYear + 1];
-  
+
   for (const solarYear of yearsToCheck) {
     for (let solarMonth = 1; solarMonth <= 12; solarMonth++) {
       // Check multiple days in each solar month to ensure we catch the leap month
@@ -368,7 +623,7 @@ function getLeapMonthInYear(lunarYear: number): number {
         // Make sure the day is valid for this month
         const maxDay = new Date(solarYear, solarMonth, 0).getDate();
         if (day > maxDay) continue;
-        
+
         const lunar = convertSolar2Lunar(day, solarMonth, solarYear);
         if (lunar.year === lunarYear && lunar.leap) {
           return lunar.month;
@@ -376,14 +631,16 @@ function getLeapMonthInYear(lunarYear: number): number {
       }
     }
   }
-  
+
   return 0; // No leap month found
 }
 
 // Get lunar months for a lunar year (including leap month if any)
-function getLunarMonthsForYear(lunarYear: number): { month: number; leap: boolean; label: string }[] {
+function getLunarMonthsForYear(
+  lunarYear: number,
+): { month: number; leap: boolean; label: string }[] {
   const leapMonth = getLeapMonthInYear(lunarYear);
-  
+
   const months: { month: number; leap: boolean; label: string }[] = [];
   for (let m = 1; m <= 12; m++) {
     months.push({ month: m, leap: false, label: `Tháng ${m}` });
@@ -398,8 +655,12 @@ function getLunarMonthsForYear(lunarYear: number): { month: number; leap: boolea
 
 // Check if click is on scrollbar
 const isClickOnScrollbar = (event: MouseEvent): boolean => {
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-  if (scrollbarWidth > 0 && event.clientX >= document.documentElement.clientWidth) {
+  const scrollbarWidth =
+    window.innerWidth - document.documentElement.clientWidth;
+  if (
+    scrollbarWidth > 0 &&
+    event.clientX >= document.documentElement.clientWidth
+  ) {
     return true;
   }
   return false;
@@ -453,7 +714,7 @@ function SearchableDropdown({
   const filteredOptions = useMemo(() => {
     if (!search) return options;
     return options.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
+      opt.toLowerCase().includes(search.toLowerCase()),
     );
   }, [options, search]);
 
@@ -465,7 +726,10 @@ function SearchableDropdown({
         dropdownRef.current && !dropdownRef.current.contains(target);
       const clickedOutsideMenu =
         menuRef.current && !menuRef.current.contains(target);
-      if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
+      if (
+        clickedOutsideDropdown &&
+        (menuRef.current ? clickedOutsideMenu : true)
+      ) {
         setIsOpen(false);
         setSearch("");
       }
@@ -476,7 +740,8 @@ function SearchableDropdown({
 
   useEffect(() => {
     const updateRect = () => {
-      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+      if (buttonRef.current)
+        setMenuRect(buttonRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
     window.addEventListener("resize", updateRect);
@@ -497,7 +762,7 @@ function SearchableDropdown({
         className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
-        style={{ backgroundColor: '#FFFCF5' }}
+        style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value || placeholder}
@@ -516,7 +781,7 @@ function SearchableDropdown({
             ref={(el) => (menuRef.current = el)}
             className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
-              backgroundColor: '#FFFCF5',
+              backgroundColor: "#FFFCF5",
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -534,7 +799,7 @@ function SearchableDropdown({
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
                     className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                    style={{ backgroundColor: '#FFFCF5' }}
+                    style={{ backgroundColor: "#FFFCF5" }}
                     autoFocus
                   />
                 </div>
@@ -573,7 +838,7 @@ function SearchableDropdown({
               )}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -603,7 +868,7 @@ function MultiSelectTags({
     const available = options.filter((opt) => !values.includes(opt));
     if (!search) return available;
     return available.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
+      opt.toLowerCase().includes(search.toLowerCase()),
     );
   }, [options, values, search]);
 
@@ -615,7 +880,10 @@ function MultiSelectTags({
         containerRef.current && !containerRef.current.contains(target);
       const clickedOutsideMenu =
         menuRef.current && !menuRef.current.contains(target);
-      if (clickedOutsideContainer && (menuRef.current ? clickedOutsideMenu : true)) {
+      if (
+        clickedOutsideContainer &&
+        (menuRef.current ? clickedOutsideMenu : true)
+      ) {
         setIsOpen(false);
         setSearch("");
       }
@@ -626,7 +894,8 @@ function MultiSelectTags({
 
   useEffect(() => {
     const updateRect = () => {
-      if (inputRef.current) setMenuRect(inputRef.current.getBoundingClientRect());
+      if (inputRef.current)
+        setMenuRect(inputRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
     window.addEventListener("resize", updateRect);
@@ -636,10 +905,6 @@ function MultiSelectTags({
       window.removeEventListener("scroll", updateRect, true);
     };
   }, [isOpen]);
-
-  const removeTag = (tag: string) => {
-    onChange(values.filter((v) => v !== tag));
-  };
 
   const addTag = (tag: string) => {
     onChange([...values, tag]);
@@ -654,7 +919,7 @@ function MultiSelectTags({
         className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
-        style={{ backgroundColor: '#FFFCF5' }}
+        style={{ backgroundColor: "#FFFCF5" }}
       >
         <div className="flex flex-wrap gap-1.5">
           {values.map((tag) => (
@@ -686,7 +951,7 @@ function MultiSelectTags({
             ref={(el) => (menuRef.current = el)}
             className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
-              backgroundColor: '#FFFCF5',
+              backgroundColor: "#FFFCF5",
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -720,7 +985,7 @@ function MultiSelectTags({
               )}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -760,31 +1025,53 @@ function DatePicker({
   });
 
   const selectedDate = value ? new Date(value) : null;
-  
+
   // Generate year range (100 years back to current year - auto updates each new year)
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
-  const years = Array.from({ length: currentYear - (currentYear - 100) + 1 }, (_, i) => currentYear - i);
-  
+  const years = Array.from(
+    { length: currentYear - (currentYear - 100) + 1 },
+    (_, i) => currentYear - i,
+  );
+
   // Get current lunar info
-  const currentLunar = convertSolar2Lunar(new Date().getDate(), new Date().getMonth() + 1, new Date().getFullYear());
-  
+  const currentLunar = convertSolar2Lunar(
+    new Date().getDate(),
+    new Date().getMonth() + 1,
+    new Date().getFullYear(),
+  );
+
   // Find the lunar month whose first day (mùng 1) appears in the current solar month view
   const viewLunar = useMemo(() => {
-    const lastDay = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
-    
+    const lastDay = new Date(
+      viewDate.getFullYear(),
+      viewDate.getMonth() + 1,
+      0,
+    ).getDate();
+
     // Check each day in the solar month to find where a lunar month starts
     for (let d = 1; d <= lastDay; d++) {
-      const lunar = convertSolar2Lunar(d, viewDate.getMonth() + 1, viewDate.getFullYear());
+      const lunar = convertSolar2Lunar(
+        d,
+        viewDate.getMonth() + 1,
+        viewDate.getFullYear(),
+      );
       if (lunar.day === 1) {
         return lunar; // Found the lunar month that starts in this solar month
       }
     }
     // If no lunar month starts in this solar month, use the lunar month of day 1
-    return convertSolar2Lunar(1, viewDate.getMonth() + 1, viewDate.getFullYear());
+    return convertSolar2Lunar(
+      1,
+      viewDate.getMonth() + 1,
+      viewDate.getFullYear(),
+    );
   }, [viewDate]);
-  
-  const lunarYears = Array.from({ length: currentYear - (currentYear - 100) + 1 }, (_, i) => currentYear - i);
+
+  const lunarYears = Array.from(
+    { length: currentYear - (currentYear - 100) + 1 },
+    (_, i) => currentYear - i,
+  );
   const lunarMonths = getLunarMonthsForYear(viewLunar.year);
 
   useEffect(() => {
@@ -795,7 +1082,10 @@ function DatePicker({
         dropdownRef.current && !dropdownRef.current.contains(target);
       const clickedOutsideMenu =
         menuRef.current && !menuRef.current.contains(target);
-      if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
+      if (
+        clickedOutsideDropdown &&
+        (menuRef.current ? clickedOutsideMenu : true)
+      ) {
         setIsOpen(false);
         setShowMonthDropdown(false);
         setShowYearDropdown(false);
@@ -812,26 +1102,49 @@ function DatePicker({
     const handleClickOutsideDropdowns = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
-      if (showMonthDropdown && monthDropdownRef.current && !monthDropdownRef.current.contains(target)) {
+      if (
+        showMonthDropdown &&
+        monthDropdownRef.current &&
+        !monthDropdownRef.current.contains(target)
+      ) {
         setShowMonthDropdown(false);
       }
-      if (showYearDropdown && yearDropdownRef.current && !yearDropdownRef.current.contains(target)) {
+      if (
+        showYearDropdown &&
+        yearDropdownRef.current &&
+        !yearDropdownRef.current.contains(target)
+      ) {
         setShowYearDropdown(false);
       }
-      if (showLunarMonthDropdown && lunarMonthDropdownRef.current && !lunarMonthDropdownRef.current.contains(target)) {
+      if (
+        showLunarMonthDropdown &&
+        lunarMonthDropdownRef.current &&
+        !lunarMonthDropdownRef.current.contains(target)
+      ) {
         setShowLunarMonthDropdown(false);
       }
-      if (showLunarYearDropdown && lunarYearDropdownRef.current && !lunarYearDropdownRef.current.contains(target)) {
+      if (
+        showLunarYearDropdown &&
+        lunarYearDropdownRef.current &&
+        !lunarYearDropdownRef.current.contains(target)
+      ) {
         setShowLunarYearDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutsideDropdowns);
-    return () => document.removeEventListener("mousedown", handleClickOutsideDropdowns);
-  }, [showMonthDropdown, showYearDropdown, showLunarMonthDropdown, showLunarYearDropdown]);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutsideDropdowns);
+  }, [
+    showMonthDropdown,
+    showYearDropdown,
+    showLunarMonthDropdown,
+    showLunarYearDropdown,
+  ]);
 
   useEffect(() => {
     const updateRect = () => {
-      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+      if (buttonRef.current)
+        setMenuRect(buttonRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
     window.addEventListener("resize", updateRect);
@@ -863,15 +1176,25 @@ function DatePicker({
 
   const days = getDaysInMonth(viewDate);
   const monthNames = [
-    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+    "Tháng 7",
+    "Tháng 8",
+    "Tháng 9",
+    "Tháng 10",
+    "Tháng 11",
+    "Tháng 12",
   ];
   const dayNames = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
   const handleDateClick = (day: number) => {
     const year = viewDate.getFullYear();
-    const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
-    const dayStr = day.toString().padStart(2, '0');
+    const month = (viewDate.getMonth() + 1).toString().padStart(2, "0");
+    const dayStr = day.toString().padStart(2, "0");
     const isoString = `${year}-${month}-${dayStr}`;
     onChange(isoString);
     setIsOpen(false);
@@ -883,23 +1206,34 @@ function DatePicker({
 
   const handleNextMonth = () => {
     const nextMonth = viewDate.getMonth() + 1;
-    const nextYear = nextMonth > 11 ? viewDate.getFullYear() + 1 : viewDate.getFullYear();
+    const nextYear =
+      nextMonth > 11 ? viewDate.getFullYear() + 1 : viewDate.getFullYear();
     const actualNextMonth = nextMonth > 11 ? 0 : nextMonth;
-    
+
     // Don't allow navigating to future months
-    if (nextYear > currentYear || (nextYear === currentYear && actualNextMonth > currentMonth)) {
+    if (
+      nextYear > currentYear ||
+      (nextYear === currentYear && actualNextMonth > currentMonth)
+    ) {
       return;
     }
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   };
-  
-  const canGoNext = !(viewDate.getFullYear() === currentYear && viewDate.getMonth() >= currentMonth);
+
+  const canGoNext = !(
+    viewDate.getFullYear() === currentYear &&
+    viewDate.getMonth() >= currentMonth
+  );
 
   const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return '';
+    if (!dateStr) return "";
     const date = new Date(dateStr);
-    const solarDate = date.toLocaleDateString('vi-VN');
-    const lunarStr = getFullLunarDateString(date.getDate(), date.getMonth() + 1, date.getFullYear());
+    const solarDate = date.toLocaleDateString("vi-VN");
+    const lunarStr = getFullLunarDateString(
+      date.getDate(),
+      date.getMonth() + 1,
+      date.getFullYear(),
+    );
     return `${solarDate} (${lunarStr})`;
   };
 
@@ -913,7 +1247,7 @@ function DatePicker({
         className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
-        style={{ backgroundColor: '#FFFCF5' }}
+        style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value ? formatDisplayDate(value) : placeholder}
@@ -932,7 +1266,7 @@ function DatePicker({
             ref={(el) => (menuRef.current = el)}
             className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
-              backgroundColor: '#FFFCF5',
+              backgroundColor: "#FFFCF5",
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -948,9 +1282,9 @@ function DatePicker({
               >
                 <ChevronDown className="h-4 w-4 text-neutral-600 rotate-90" />
               </button>
-              
+
               <div className="flex items-center gap-2 flex-1 justify-center">
-{/* Month Dropdown */}
+                {/* Month Dropdown */}
                 <div className="relative" ref={monthDropdownRef}>
                   <button
                     type="button"
@@ -959,26 +1293,45 @@ function DatePicker({
                       setShowYearDropdown(false);
                     }}
                     className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
-                    style={{ backgroundColor: '#FFFCF5' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                    style={{ backgroundColor: "#FFFCF5" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#FFF7E6")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                    }
                   >
                     {monthNames[viewDate.getMonth()]}
-                    <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showMonthDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`h-3 w-3 text-neutral-500 transition-transform ${showMonthDropdown ? "rotate-180" : ""}`}
+                    />
                   </button>
-                  
+
                   {showMonthDropdown && (
-                    <div className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]" style={{ backgroundColor: '#FFFCF5' }}>
-                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#9B2C2C rgba(255,255,255,0.3)' }}>
+                    <div
+                      className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]"
+                      style={{ backgroundColor: "#FFFCF5" }}
+                    >
+                      <div
+                        className="max-h-48 overflow-y-auto"
+                        style={{
+                          scrollbarWidth: "thin",
+                          scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+                        }}
+                      >
                         {monthNames.map((month, index) => {
-                          const isFutureMonth = viewDate.getFullYear() === currentYear && index > currentMonth;
+                          const isFutureMonth =
+                            viewDate.getFullYear() === currentYear &&
+                            index > currentMonth;
                           return (
                             <button
                               key={month}
                               type="button"
                               onClick={() => {
                                 if (!isFutureMonth) {
-                                  setViewDate(new Date(viewDate.getFullYear(), index, 1));
+                                  setViewDate(
+                                    new Date(viewDate.getFullYear(), index, 1),
+                                  );
                                   setShowMonthDropdown(false);
                                 }
                               }}
@@ -987,8 +1340,8 @@ function DatePicker({
                                 isFutureMonth
                                   ? "text-neutral-400 cursor-not-allowed"
                                   : viewDate.getMonth() === index
-                                  ? "bg-primary-600 text-white font-medium"
-                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                    ? "bg-primary-600 text-white font-medium"
+                                    : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                               }`}
                             >
                               {month}
@@ -1009,17 +1362,32 @@ function DatePicker({
                       setShowMonthDropdown(false);
                     }}
                     className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
-                    style={{ backgroundColor: '#FFFCF5' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                    style={{ backgroundColor: "#FFFCF5" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#FFF7E6")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                    }
                   >
                     Năm {viewDate.getFullYear()}
-                    <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showYearDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`h-3 w-3 text-neutral-500 transition-transform ${showYearDropdown ? "rotate-180" : ""}`}
+                    />
                   </button>
-                  
+
                   {showYearDropdown && (
-                    <div className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]" style={{ backgroundColor: '#FFFCF5' }}>
-                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#9B2C2C rgba(255,255,255,0.3)' }}>
+                    <div
+                      className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]"
+                      style={{ backgroundColor: "#FFFCF5" }}
+                    >
+                      <div
+                        className="max-h-48 overflow-y-auto"
+                        style={{
+                          scrollbarWidth: "thin",
+                          scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+                        }}
+                      >
                         {years.map((year) => (
                           <button
                             key={year}
@@ -1027,7 +1395,10 @@ function DatePicker({
                             onClick={() => {
                               // If switching to current year and current view month is in future, adjust to current month
                               let newMonth = viewDate.getMonth();
-                              if (year === currentYear && newMonth > currentMonth) {
+                              if (
+                                year === currentYear &&
+                                newMonth > currentMonth
+                              ) {
                                 newMonth = currentMonth;
                               }
                               setViewDate(new Date(year, newMonth, 1));
@@ -1053,17 +1424,19 @@ function DatePicker({
                 onClick={handleNextMonth}
                 disabled={!canGoNext}
                 className={`p-2 rounded-full transition-colors flex-shrink-0 ${
-                  canGoNext ? "hover:bg-primary-100" : "opacity-30 cursor-not-allowed"
+                  canGoNext
+                    ? "hover:bg-primary-100"
+                    : "opacity-30 cursor-not-allowed"
                 }`}
               >
                 <ChevronDown className="h-4 w-4 text-neutral-600 -rotate-90" />
               </button>
             </div>
-            
+
             {/* Lunar Calendar Selection */}
             <div className="px-3 py-2 border-b border-neutral-200 flex items-center justify-center gap-2">
               <span className="text-xs text-neutral-500">Âm lịch:</span>
-              
+
               {/* Lunar Month Dropdown */}
               <div className="relative" ref={lunarMonthDropdownRef}>
                 <button
@@ -1075,20 +1448,40 @@ function DatePicker({
                     setShowYearDropdown(false);
                   }}
                   className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                  style={{ backgroundColor: "#FFFCF5" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#FFF7E6")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                  }
                 >
-                  Tháng {viewLunar.month}{viewLunar.leap ? ' nhuận' : ''}
-                  <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarMonthDropdown ? 'rotate-180' : ''}`} />
+                  Tháng {viewLunar.month}
+                  {viewLunar.leap ? " nhuận" : ""}
+                  <ChevronDown
+                    className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarMonthDropdown ? "rotate-180" : ""}`}
+                  />
                 </button>
-                
+
                 {showLunarMonthDropdown && (
-                  <div className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[150px]" style={{ backgroundColor: '#FFFCF5' }}>
-                    <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
+                  <div
+                    className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[150px]"
+                    style={{ backgroundColor: "#FFFCF5" }}
+                  >
+                    <div
+                      className="max-h-48 overflow-y-auto"
+                      style={{
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "#dc2626 rgba(255,255,255,0.3)",
+                      }}
+                    >
                       {lunarMonths.map((lm) => {
-                        const isFutureLunarMonth = viewLunar.year === currentLunar.year && 
-                          (lm.month > currentLunar.month || (lm.month === currentLunar.month && lm.leap && !currentLunar.leap));
+                        const isFutureLunarMonth =
+                          viewLunar.year === currentLunar.year &&
+                          (lm.month > currentLunar.month ||
+                            (lm.month === currentLunar.month &&
+                              lm.leap &&
+                              !currentLunar.leap));
                         return (
                           <button
                             key={`${lm.month}-${lm.leap}`}
@@ -1096,10 +1489,21 @@ function DatePicker({
                             onClick={() => {
                               if (!isFutureLunarMonth) {
                                 // Convert first day of lunar month to solar date
-                                const solarDate = convertLunar2Solar(1, lm.month, viewLunar.year, lm.leap);
+                                const solarDate = convertLunar2Solar(
+                                  1,
+                                  lm.month,
+                                  viewLunar.year,
+                                  lm.leap,
+                                );
                                 if (solarDate) {
                                   // Navigate to the solar month containing the first day of lunar month
-                                  setViewDate(new Date(solarDate.year, solarDate.month - 1, 1));
+                                  setViewDate(
+                                    new Date(
+                                      solarDate.year,
+                                      solarDate.month - 1,
+                                      1,
+                                    ),
+                                  );
                                 }
                                 setShowLunarMonthDropdown(false);
                               }
@@ -1108,9 +1512,10 @@ function DatePicker({
                             className={`w-full px-4 py-2 text-left text-sm transition-colors ${
                               isFutureLunarMonth
                                 ? "text-neutral-400 cursor-not-allowed"
-                                : viewLunar.month === lm.month && viewLunar.leap === lm.leap
-                                ? "bg-primary-600 text-white font-medium"
-                                : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                : viewLunar.month === lm.month &&
+                                    viewLunar.leap === lm.leap
+                                  ? "bg-primary-600 text-white font-medium"
+                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                             }`}
                           >
                             {lm.label}
@@ -1133,17 +1538,32 @@ function DatePicker({
                     setShowYearDropdown(false);
                   }}
                   className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                  style={{ backgroundColor: "#FFFCF5" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#FFF7E6")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                  }
                 >
                   Năm {getCanChi(viewLunar.year)}
-                  <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarYearDropdown ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarYearDropdown ? "rotate-180" : ""}`}
+                  />
                 </button>
-                
+
                 {showLunarYearDropdown && (
-                  <div className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[200px]" style={{ backgroundColor: '#FFFCF5' }}>
-                    <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
+                  <div
+                    className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[200px]"
+                    style={{ backgroundColor: "#FFFCF5" }}
+                  >
+                    <div
+                      className="max-h-48 overflow-y-auto"
+                      style={{
+                        scrollbarWidth: "thin",
+                        scrollbarColor: "#dc2626 rgba(255,255,255,0.3)",
+                      }}
+                    >
                       {lunarYears.map((year) => {
                         const isFutureYear = year > currentLunar.year;
                         return (
@@ -1155,18 +1575,32 @@ function DatePicker({
                                 // Convert lunar to solar and update view
                                 let targetLunarMonth = viewLunar.month;
                                 let targetLunarLeap = viewLunar.leap;
-                                
+
                                 // Check if we need to adjust month for future
-                                if (year === currentLunar.year && targetLunarMonth > currentLunar.month) {
+                                if (
+                                  year === currentLunar.year &&
+                                  targetLunarMonth > currentLunar.month
+                                ) {
                                   targetLunarMonth = currentLunar.month;
                                   targetLunarLeap = false;
                                 }
-                                
+
                                 // Convert first day of lunar month to solar date
-                                const solarDate = convertLunar2Solar(1, targetLunarMonth, year, targetLunarLeap);
+                                const solarDate = convertLunar2Solar(
+                                  1,
+                                  targetLunarMonth,
+                                  year,
+                                  targetLunarLeap,
+                                );
                                 if (solarDate) {
                                   // Navigate to the solar month containing the first day of lunar month
-                                  setViewDate(new Date(solarDate.year, solarDate.month - 1, 1));
+                                  setViewDate(
+                                    new Date(
+                                      solarDate.year,
+                                      solarDate.month - 1,
+                                      1,
+                                    ),
+                                  );
                                 }
                                 setShowLunarYearDropdown(false);
                               }
@@ -1176,8 +1610,8 @@ function DatePicker({
                               isFutureYear
                                 ? "text-neutral-400 cursor-not-allowed"
                                 : viewLunar.year === year
-                                ? "bg-primary-600 text-white font-medium"
-                                : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                  ? "bg-primary-600 text-white font-medium"
+                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                             }`}
                           >
                             Năm {getCanChi(year)} ({year})
@@ -1205,7 +1639,9 @@ function DatePicker({
               <div className="grid grid-cols-7 gap-1">
                 {days.map((day, index) => {
                   if (day === null) {
-                    return <div key={`empty-${index}`} className="aspect-[1/1.3]" />;
+                    return (
+                      <div key={`empty-${index}`} className="aspect-[1/1.3]" />
+                    );
                   }
 
                   const isSelected =
@@ -1220,12 +1656,24 @@ function DatePicker({
                     today.getMonth() === viewDate.getMonth() &&
                     today.getFullYear() === viewDate.getFullYear();
 
-                  const dayDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+                  const dayDate = new Date(
+                    viewDate.getFullYear(),
+                    viewDate.getMonth(),
+                    day,
+                  );
                   const isFuture = dayDate > today;
 
                   // Get lunar date
-                  const lunarDay = getLunarDateString(day, viewDate.getMonth() + 1, viewDate.getFullYear());
-                  const lunar = convertSolar2Lunar(day, viewDate.getMonth() + 1, viewDate.getFullYear());
+                  const lunarDay = getLunarDateString(
+                    day,
+                    viewDate.getMonth() + 1,
+                    viewDate.getFullYear(),
+                  );
+                  const lunar = convertSolar2Lunar(
+                    day,
+                    viewDate.getMonth() + 1,
+                    viewDate.getFullYear(),
+                  );
                   const isLunarFirstDay = lunar.day === 1;
 
                   return (
@@ -1238,23 +1686,27 @@ function DatePicker({
                         isFuture
                           ? "text-neutral-400 cursor-not-allowed"
                           : isSelected
-                          ? "bg-primary-600 text-white font-medium"
-                          : isToday
-                          ? "bg-primary-100 text-primary-700 font-medium"
-                          : "text-neutral-900 hover:bg-primary-50"
+                            ? "bg-primary-600 text-white font-medium"
+                            : isToday
+                              ? "bg-primary-100 text-primary-700 font-medium"
+                              : "text-neutral-900 hover:bg-primary-50"
                       }`}
                     >
                       <span className="text-sm leading-none">{day}</span>
-                      <span className={`text-[10px] leading-none mt-0.5 ${
-                        isFuture
-                          ? "text-neutral-300"
-                          : isSelected
-                          ? "text-white/70"
-                          : isLunarFirstDay
-                          ? "text-primary-600 font-medium"
-                          : "text-neutral-400"
-                      }`}>
-                        {isLunarFirstDay ? `${lunar.day}/${lunar.month}${lunar.leap ? ' nhuận' : ''}` : lunarDay}
+                      <span
+                        className={`text-[10px] leading-none mt-0.5 ${
+                          isFuture
+                            ? "text-neutral-300"
+                            : isSelected
+                              ? "text-white/70"
+                              : isLunarFirstDay
+                                ? "text-primary-600 font-medium"
+                                : "text-neutral-400"
+                        }`}
+                      >
+                        {isLunarFirstDay
+                          ? `${lunar.day}/${lunar.month}${lunar.leap ? " nhuận" : ""}`
+                          : lunarDay}
                       </span>
                     </button>
                   );
@@ -1262,7 +1714,7 @@ function DatePicker({
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -1288,7 +1740,7 @@ function TextInput({
   const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
     disabled ? "opacity-50 cursor-not-allowed" : ""
   }`;
-  const bgStyle = { backgroundColor: '#FFFCF5' };
+  const bgStyle = { backgroundColor: "#FFFCF5" };
 
   if (multiline) {
     return (
@@ -1362,12 +1814,17 @@ function SectionHeader({
         <h3 className="text-xl font-semibold text-neutral-800 flex items-center gap-2">
           {title}
           {optional && (
-            <span className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F5F0E8' }}>
+            <span
+              className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: "#F5F0E8" }}
+            >
               Tùy chọn
             </span>
           )}
         </h3>
-        {subtitle && <p className="text-sm text-neutral-800/70 mt-1">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-sm text-neutral-800/70 mt-1">{subtitle}</p>
+        )}
       </div>
     </div>
   );
@@ -1391,14 +1848,21 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+    <div
+      className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md"
+      style={{ backgroundColor: "#FFFCF5" }}
+    >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-6 flex items-center justify-between transition-colors"
-        style={{ backgroundColor: '#FFFCF5' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+        style={{ backgroundColor: "#FFFCF5" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#F5F0E8")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "#FFFCF5")
+        }
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-600/20 rounded-lg">
@@ -1408,12 +1872,17 @@ function CollapsibleSection({
             <h3 className="text-lg font-semibold text-neutral-800 flex items-center gap-2">
               {title}
               {optional && (
-                <span className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full border border-neutral-300" style={{ backgroundColor: '#F5F0E8' }}>
+                <span
+                  className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full border border-neutral-300"
+                  style={{ backgroundColor: "#F5F0E8" }}
+                >
                   Tùy chọn
                 </span>
               )}
             </h3>
-            {subtitle && <p className="text-sm text-neutral-800/70">{subtitle}</p>}
+            {subtitle && (
+              <p className="text-sm text-neutral-800/70">{subtitle}</p>
+            )}
           </div>
         </div>
         <ChevronDown
@@ -1476,12 +1945,18 @@ export default function UploadMusic() {
   const [catalogId, setCatalogId] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const requiresInstruments = performanceType === "instrumental" || performanceType === "vocal_accompaniment";
-  const allowsLyrics = performanceType === "acappella" || performanceType === "vocal_accompaniment";
+  const requiresInstruments =
+    performanceType === "instrumental" ||
+    performanceType === "vocal_accompaniment";
+  const allowsLyrics =
+    performanceType === "acappella" ||
+    performanceType === "vocal_accompaniment";
 
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
@@ -1501,7 +1976,10 @@ export default function UploadMusic() {
     // Kiểm tra kích thước file (giới hạn 50MB như đã ghi trong UI)
     const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
     if (selected.size > maxSizeInBytes) {
-      setErrors((prev) => ({ ...prev, file: "File quá lớn. Vui lòng chọn file nhỏ hơn 50MB" }));
+      setErrors((prev) => ({
+        ...prev,
+        file: "File quá lớn. Vui lòng chọn file nhỏ hơn 50MB",
+      }));
       setFile(null);
       setAudioInfo(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1510,7 +1988,10 @@ export default function UploadMusic() {
 
     const mime = selected.type || inferMimeFromName(selected.name);
     if (!SUPPORTED_FORMATS.includes(mime)) {
-      setErrors((prev) => ({ ...prev, file: "Chỉ hỗ trợ file MP3, WAV hoặc FLAC" }));
+      setErrors((prev) => ({
+        ...prev,
+        file: "Chỉ hỗ trợ file MP3, WAV hoặc FLAC",
+      }));
       setFile(null);
       setAudioInfo(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1531,11 +2012,14 @@ export default function UploadMusic() {
 
     const onLoaded = () => {
       if (cleanedUp) return;
-      const durationSeconds = isFinite(audio.duration) ? Math.round(audio.duration) : 0;
-      
-      const bitrate = durationSeconds > 0 
-        ? Math.round((selected.size * 8) / durationSeconds / 1000) 
-        : undefined;
+      const durationSeconds = isFinite(audio.duration)
+        ? Math.round(audio.duration)
+        : 0;
+
+      const bitrate =
+        durationSeconds > 0
+          ? Math.round((selected.size * 8) / durationSeconds / 1000)
+          : undefined;
 
       setAudioInfo({
         name: selected.name,
@@ -1544,19 +2028,22 @@ export default function UploadMusic() {
         duration: durationSeconds,
         bitrate,
       });
-      
+
       if (!title) {
         const nameWithoutExt = selected.name.replace(/\.[^/.]+$/, "");
         setTitle(nameWithoutExt);
       }
-      
+
       setIsAnalyzing(false);
       cleanup();
     };
 
     const onError = () => {
       if (cleanedUp) return;
-      setErrors((prev) => ({ ...prev, file: "Không thể phân tích file âm thanh" }));
+      setErrors((prev) => ({
+        ...prev,
+        file: "Không thể phân tích file âm thanh",
+      }));
       setFile(null);
       setAudioInfo(null);
       setIsAnalyzing(false);
@@ -1593,7 +2080,8 @@ export default function UploadMusic() {
       newErrors.artist = "Vui lòng nhập tên nghệ sĩ hoặc chọn 'Không rõ'";
     }
     if (!composerUnknown && !composer.trim()) {
-      newErrors.composer = "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
+      newErrors.composer =
+        "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
     }
     if (!genre) newErrors.genre = "Vui lòng chọn thể loại";
     if (requiresInstruments && instruments.length === 0) {
@@ -1709,10 +2197,15 @@ export default function UploadMusic() {
         if (sizeInMB > 8) {
           // Nếu quá lớn, chỉ giữ lại 2 bản ghi mới nhất
           const reducedRecordings = recordings.slice(0, 2);
-          localStorage.setItem("localRecordings", JSON.stringify(reducedRecordings));
+          localStorage.setItem(
+            "localRecordings",
+            JSON.stringify(reducedRecordings),
+          );
 
           setSubmitStatus("success");
-          setSubmitMessage(`Đã đóng góp bản thu thành công: ${title} (Đã tự động xóa các bản ghi cũ do giới hạn bộ nhớ)`);
+          setSubmitMessage(
+            `Đã đóng góp bản thu thành công: ${title} (Đã tự động xóa các bản ghi cũ do giới hạn bộ nhớ)`,
+          );
         } else {
           localStorage.setItem("localRecordings", dataToSave);
 
@@ -1731,13 +2224,22 @@ export default function UploadMusic() {
 
         // Cung cấp thông báo lỗi chi tiết hơn
         if (error instanceof Error) {
-          if (error.name === "QuotaExceededError" || error.message.includes("quota")) {
-            setSubmitMessage("Dung lượng lưu trữ đã đầy. Vui lòng xóa một số bản ghi cũ hoặc sử dụng file nhỏ hơn.");
+          if (
+            error.name === "QuotaExceededError" ||
+            error.message.includes("quota")
+          ) {
+            setSubmitMessage(
+              "Dung lượng lưu trữ đã đầy. Vui lòng xóa một số bản ghi cũ hoặc sử dụng file nhỏ hơn.",
+            );
           } else {
-            setSubmitMessage(`Lỗi: ${error.message}. Vui lòng thử lại hoặc sử dụng file nhỏ hơn.`);
+            setSubmitMessage(
+              `Lỗi: ${error.message}. Vui lòng thử lại hoặc sử dụng file nhỏ hơn.`,
+            );
           }
         } else {
-          setSubmitMessage("Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại với file nhỏ hơn.");
+          setSubmitMessage(
+            "Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại với file nhỏ hơn.",
+          );
         }
       }
     };
@@ -1805,7 +2307,7 @@ export default function UploadMusic() {
           <p className="text-green-700">{submitMessage}</p>
         </div>
       )}
-      
+
       {submitStatus === "error" && (
         <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
           <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
@@ -1813,21 +2315,24 @@ export default function UploadMusic() {
         </div>
       )}
 
-      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+      <div
+        className="border border-neutral-200 rounded-2xl p-8 shadow-md"
+        style={{ backgroundColor: "#FFFCF5" }}
+      >
         <SectionHeader
           icon={Upload}
           title="Tải lên file âm thanh"
           subtitle="Hỗ trợ định dạng MP3, WAV, FLAC"
         />
-        
+
         <div className="mt-4">
           <div
             onClick={() => !isAnalyzing && fileInputRef.current?.click()}
             className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-              errors.file 
-                ? "border-red-500/50 bg-red-500/5" 
-                : file 
-                  ? "border-primary-500/50 bg-primary-600/5" 
+              errors.file
+                ? "border-red-500/50 bg-red-500/5"
+                : file
+                  ? "border-primary-500/50 bg-primary-600/5"
                   : "border-neutral-200 hover:border-primary-400"
             } ${isAnalyzing ? "opacity-60 cursor-wait" : "cursor-pointer"}`}
           >
@@ -1839,7 +2344,7 @@ export default function UploadMusic() {
               className="sr-only"
               disabled={isAnalyzing}
             />
-            
+
             {isAnalyzing ? (
               <div className="space-y-3">
                 <div className="animate-spin h-10 w-10 border-3 border-primary-600 border-t-transparent rounded-full mx-auto" />
@@ -1851,7 +2356,9 @@ export default function UploadMusic() {
                   <FileAudio className="h-8 w-8 text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-neutral-800 font-medium">{audioInfo.name}</p>
+                  <p className="text-neutral-800 font-medium">
+                    {audioInfo.name}
+                  </p>
                   <div className="flex items-center justify-center gap-4 mt-2 text-sm text-neutral-800/60">
                     <span>{formatFileSize(audioInfo.size)}</span>
                     <span>•</span>
@@ -1883,8 +2390,12 @@ export default function UploadMusic() {
                   <Upload className="h-8 w-8 text-primary-600" />
                 </div>
                 <div>
-                  <p className="text-neutral-800">Kéo thả file hoặc click để chọn</p>
-                  <p className="text-sm text-neutral-800/60 mt-1">MP3, WAV, FLAC - Tối đa 50MB</p>
+                  <p className="text-neutral-800">
+                    Kéo thả file hoặc click để chọn
+                  </p>
+                  <p className="text-sm text-neutral-800/60 mt-1">
+                    MP3, WAV, FLAC - Tối đa 50MB
+                  </p>
                 </div>
               </div>
             )}
@@ -1898,13 +2409,16 @@ export default function UploadMusic() {
         </div>
       </div>
 
-      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+      <div
+        className="border border-neutral-200 rounded-2xl p-8 shadow-md"
+        style={{ backgroundColor: "#FFFCF5" }}
+      >
         <SectionHeader
           icon={Music}
           title="Thông tin mô tả cơ bản"
           subtitle="Thông tin chính về bản nhạc"
         />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Tiêu đề/Tên bản nhạc" required>
             <TextInput
@@ -1919,7 +2433,10 @@ export default function UploadMusic() {
           </FormField>
 
           <div className="space-y-2">
-            <FormField label="Nghệ sĩ/Người biểu diễn" required={!artistUnknown}>
+            <FormField
+              label="Nghệ sĩ/Người biểu diễn"
+              required={!artistUnknown}
+            >
               <TextInput
                 value={artist}
                 onChange={setArtist}
@@ -1937,7 +2454,7 @@ export default function UploadMusic() {
                   if (e.target.checked) setArtist("");
                 }}
                 className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: '#FFFCF5' }}
+                style={{ backgroundColor: "#FFFCF5" }}
               />
               Không rõ
             </label>
@@ -1964,7 +2481,7 @@ export default function UploadMusic() {
                   if (e.target.checked) setComposer("");
                 }}
                 className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: '#FFFCF5' }}
+                style={{ backgroundColor: "#FFFCF5" }}
               />
               Dân gian/Không rõ tác giả
             </label>
@@ -2005,7 +2522,7 @@ export default function UploadMusic() {
                   }
                 }}
                 className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: '#FFFCF5' }}
+                style={{ backgroundColor: "#FFFCF5" }}
               />
               Không có ngôn ngữ
             </label>
@@ -2053,7 +2570,7 @@ export default function UploadMusic() {
                   if (e.target.checked) setRecordingDate("");
                 }}
                 className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: '#FFFCF5' }}
+                style={{ backgroundColor: "#FFFCF5" }}
               />
               Ngày ước tính/không chính xác
             </label>
@@ -2066,7 +2583,10 @@ export default function UploadMusic() {
             )}
           </div>
 
-          <FormField label="Địa điểm ghi âm" hint="Ví dụ: Đình làng X, Nhà văn hóa Y">
+          <FormField
+            label="Địa điểm ghi âm"
+            hint="Ví dụ: Đình làng X, Nhà văn hóa Y"
+          >
             <TextInput
               value={recordingLocation}
               onChange={setRecordingLocation}
@@ -2085,7 +2605,9 @@ export default function UploadMusic() {
         {genreEthnicityWarning && (
           <div className="mb-4 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
             <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+            <p className="text-yellow-200 text-sm leading-relaxed">
+              {genreEthnicityWarning}
+            </p>
           </div>
         )}
 
@@ -2169,15 +2691,19 @@ export default function UploadMusic() {
                         ? "bg-primary-600 text-white"
                         : "text-neutral-700"
                     }`}
-                    style={performanceType !== pt.key ? { backgroundColor: '#FFFCF5' } : undefined}
+                    style={
+                      performanceType !== pt.key
+                        ? { backgroundColor: "#FFFCF5" }
+                        : undefined
+                    }
                     onMouseEnter={(e) => {
                       if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = '#F5F0E8';
+                        e.currentTarget.style.backgroundColor = "#F5F0E8";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = '#FFFCF5';
+                        e.currentTarget.style.backgroundColor = "#FFFCF5";
                       }
                     }}
                   >
@@ -2190,8 +2716,8 @@ export default function UploadMusic() {
 
           {requiresInstruments && (
             <div className="md:col-span-2">
-              <FormField 
-                label="Nhạc cụ sử dụng" 
+              <FormField
+                label="Nhạc cụ sử dụng"
                 required={requiresInstruments}
                 hint="Chọn một hoặc nhiều nhạc cụ"
               >
@@ -2210,13 +2736,20 @@ export default function UploadMusic() {
 
           {allowsLyrics && (
             <div className="md:col-span-2">
-              <FormField label="Tải lên lời bài hát (nếu có)" hint="File .txt hoặc .docx">
+              <FormField
+                label="Tải lên lời bài hát (nếu có)"
+                hint="File .txt hoặc .docx"
+              >
                 <div className="flex items-center gap-3">
-                  <label 
+                  <label
                     className="px-4 py-2 rounded-xl cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
-                    style={{ backgroundColor: '#FFFCF5' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                    style={{ backgroundColor: "#FFFCF5" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#F5F0E8")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                    }
                   >
                     Chọn file
                     <input
@@ -2243,7 +2776,10 @@ export default function UploadMusic() {
         defaultOpen={false}
       >
         <div className="space-y-4">
-          <FormField label="Mô tả nội dung" hint="Lời bài hát, chủ đề, ý nghĩa văn hóa">
+          <FormField
+            label="Mô tả nội dung"
+            hint="Lời bài hát, chủ đề, ý nghĩa văn hóa"
+          >
             <TextInput
               value={description}
               onChange={setDescription}
@@ -2253,7 +2789,10 @@ export default function UploadMusic() {
             />
           </FormField>
 
-          <FormField label="Ghi chú thực địa" hint="Quan sát về bối cảnh, phong cách trình diễn">
+          <FormField
+            label="Ghi chú thực địa"
+            hint="Quan sát về bối cảnh, phong cách trình diễn"
+          >
             <TextInput
               value={fieldNotes}
               onChange={setFieldNotes}
@@ -2263,7 +2802,10 @@ export default function UploadMusic() {
             />
           </FormField>
 
-          <FormField label="Phiên âm/Bản dịch" hint="Nếu sử dụng ngôn ngữ dân tộc thiểu số">
+          <FormField
+            label="Phiên âm/Bản dịch"
+            hint="Nếu sử dụng ngôn ngữ dân tộc thiểu số"
+          >
             <TextInput
               value={transcription}
               onChange={setTranscription}
@@ -2323,9 +2865,15 @@ export default function UploadMusic() {
             onClick={resetForm}
             disabled={isSubmitting}
             className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
-            style={{ backgroundColor: '#FFFCF5' }}
-            onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#F5F0E8')}
-            onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#FFFCF5')}
+            style={{ backgroundColor: "#FFFCF5" }}
+            onMouseEnter={(e) =>
+              !isSubmitting &&
+              (e.currentTarget.style.backgroundColor = "#F5F0E8")
+            }
+            onMouseLeave={(e) =>
+              !isSubmitting &&
+              (e.currentTarget.style.backgroundColor = "#FFFCF5")
+            }
           >
             Đặt lại
           </button>

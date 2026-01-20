@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Upload, Search, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Music, Users } from "lucide-react";
+import { Upload, Search, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Music, Users, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -46,7 +46,9 @@ function SectionHeader({
         </div>
         <div>
           <h2 className="text-2xl font-semibold text-neutral-800">{title}</h2>
-          {subtitle && <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>
+          )}
         </div>
       </div>
       {action && (
@@ -73,7 +75,10 @@ function StatCard({
   label: string;
 }) {
   return (
-    <div className="p-4 border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow" style={{ backgroundColor: '#FFFCF5' }}>
+    <div
+      className="p-4 border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow"
+      style={{ backgroundColor: "#FFFCF5" }}
+    >
       <div className="p-2 bg-secondary-100 rounded-lg w-fit mx-auto mb-2">
         <Icon className="h-5 w-5 text-secondary-600" />
       </div>
@@ -99,9 +104,9 @@ function FeatureCard({
     <Link
       to={to}
       className="group p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all"
-      style={{ backgroundColor: '#FFFCF5' }}
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+      style={{ backgroundColor: "#FFFCF5" }}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7E6")}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FFFCF5")}
     >
       <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4 group-hover:bg-primary-200 transition-colors">
         <Icon className="h-6 w-6 text-primary-600" />
@@ -134,9 +139,13 @@ function QuickActionButton({
             ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
             : "text-primary-600 border-2 border-primary-600 shadow-md hover:shadow-lg"
         }`}
-        style={!primary ? { backgroundColor: '#FFFCF5' } : undefined}
-        onMouseEnter={(e) => !primary && (e.currentTarget.style.backgroundColor = '#F5F0E8')}
-        onMouseLeave={(e) => !primary && (e.currentTarget.style.backgroundColor = '#FFFCF5')}
+        style={!primary ? { backgroundColor: "#FFFCF5" } : undefined}
+        onMouseEnter={(e) =>
+          !primary && (e.currentTarget.style.backgroundColor = "#F5F0E8")
+        }
+        onMouseLeave={(e) =>
+          !primary && (e.currentTarget.style.backgroundColor = "#FFFCF5")
+        }
       >
         <Icon className="h-5 w-5" />
         {label}
@@ -172,7 +181,7 @@ export default function HomePage() {
   };
 
   const handleDeleteRecording = (id: string) => {
-    const updated = localRecordings.filter(rec => rec.id !== id);
+    const updated = localRecordings.filter((rec) => rec.id !== id);
     setLocalRecordings(updated);
     localStorage.setItem("localRecordings", JSON.stringify(updated));
   };
@@ -190,19 +199,22 @@ export default function HomePage() {
     {
       icon: Compass,
       title: "Khám phá bản thu",
-      description: "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
+      description:
+        "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
       to: "/explore",
     },
     {
       icon: Search,
       title: "Tìm kiếm bản thu",
-      description: "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
+      description:
+        "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
       to: "/search",
     },
     {
       icon: Upload,
       title: "Đóng góp bản thu",
-      description: "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
+      description:
+        "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
       to: "/upload",
     },
   ];
@@ -210,9 +222,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
         {/* Hero Section */}
-        <div className="rounded-2xl shadow-lg p-8 md:p-12 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+        <div
+          className="rounded-2xl shadow-lg p-8 md:p-12 mb-8"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
           <div className="text-center">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -227,12 +241,12 @@ export default function HomePage() {
             <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
               VietTune
             </h1>
-            
+
             {/* Tagline */}
             <p className="text-xl md:text-2xl text-primary-700 font-medium mb-4">
               Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
             </p>
-            
+
             {/* Description */}
             <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto mb-8">
               Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
@@ -270,7 +284,10 @@ export default function HomePage() {
         </div>
 
         {/* Features Section */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+        <div
+          className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800">
             Tính năng chính
           </h2>
@@ -290,10 +307,17 @@ export default function HomePage() {
 
         {/* Local Recordings Section */}
         {localRecordings.length > 0 && (
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+            style={{ backgroundColor: "#FFFCF5" }}
+          >
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-neutral-800">Bản thu của bạn</h2>
-              <p className="text-sm text-neutral-500 mt-1">Các bản thu bạn đã tải lên gần đây</p>
+              <h2 className="text-2xl font-semibold text-neutral-800">
+                Bản thu của bạn
+              </h2>
+              <p className="text-sm text-neutral-500 mt-1">
+                Các bản thu bạn đã tải lên gần đây
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -325,7 +349,10 @@ export default function HomePage() {
 
         {/* Popular Recordings Section */}
         {popularRecordings.length > 0 && (
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+            style={{ backgroundColor: "#FFFCF5" }}
+          >
             <SectionHeader
               icon={TrendingUp}
               title="Bản thu phổ biến"
@@ -343,7 +370,10 @@ export default function HomePage() {
 
         {/* Recent Recordings Section */}
         {recentRecordings.length > 0 && (
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+            style={{ backgroundColor: "#FFFCF5" }}
+          >
             <SectionHeader
               icon={Clock}
               title="Tải lên gần đây"
@@ -360,22 +390,27 @@ export default function HomePage() {
         )}
 
         {/* Call to Action Section */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+        <div
+          className="rounded-2xl shadow-md border border-neutral-200 p-8"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
           <div className="text-center max-w-2xl mx-auto">
             <div className="p-3 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
               <Heart className="h-8 w-8 text-primary-600" />
             </div>
-            
+
             <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
               Hãy cùng gìn giữ di sản
             </h2>
-            
+
             <p className="text-neutral-600 leading-relaxed mb-6 max-w-6xl mx-auto">
-              Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân tộc.
+              Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân
+              tộc.
               <br />
               Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn hóa
               <br />
-              chung tay bảo tồn âm nhạc truyền thống Việt Nam cho thế hệ mai sau.
+              chung tay bảo tồn âm nhạc truyền thống Việt Nam cho thế hệ mai
+              sau.
             </p>
 
             <div className="flex justify-center">

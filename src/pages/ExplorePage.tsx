@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Compass, Filter, Search, ChevronDown, Play, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
-import { Recording, Region, RecordingType, VerificationStatus, RecordingQuality } from "@/types";
+import { Recording, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import Pagination from "@/components/common/Pagination";
@@ -88,18 +88,22 @@ const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
   "Đờn ca tài tử": ["Kinh"],
   "Hát bội": ["Kinh"],
   "Cải lương": ["Kinh"],
-  "Tuồng": ["Kinh"],
-  "Chèo": ["Kinh"],
+  Tuồng: ["Kinh"],
+  Chèo: ["Kinh"],
   "Hát xẩm": ["Kinh"],
   "Hát then": ["Tày", "Nùng"],
-  "Khèn": ["H'Mông"],
+  Khèn: ["H'Mông"],
   "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
 };
 
 // Check if click is on scrollbar
 const isClickOnScrollbar = (event: MouseEvent): boolean => {
-  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-  if (scrollbarWidth > 0 && event.clientX >= document.documentElement.clientWidth) {
+  const scrollbarWidth =
+    window.innerWidth - document.documentElement.clientWidth;
+  if (
+    scrollbarWidth > 0 &&
+    event.clientX >= document.documentElement.clientWidth
+  ) {
     return true;
   }
   return false;
@@ -109,10 +113,10 @@ const isClickOnScrollbar = (event: MouseEvent): boolean => {
 const getAudioDuration = (audioDataUrl: string): Promise<number> => {
   return new Promise((resolve) => {
     const audio = new Audio();
-    audio.addEventListener('loadedmetadata', () => {
+    audio.addEventListener("loadedmetadata", () => {
       resolve(Math.floor(audio.duration));
     });
-    audio.addEventListener('error', () => {
+    audio.addEventListener("error", () => {
       resolve(0); // Return 0 if error loading
     });
     audio.src = audioDataUrl;
@@ -120,10 +124,12 @@ const getAudioDuration = (audioDataUrl: string): Promise<number> => {
 };
 
 // Convert LocalRecording to Recording format for display (async to get duration)
-const convertLocalToRecording = async (local: LocalRecording): Promise<Recording> => {
+const convertLocalToRecording = async (
+  local: LocalRecording,
+): Promise<Recording> => {
   // Get actual audio duration
   const duration = await getAudioDuration(local.audioData);
-  
+
   return {
     id: local.id,
     title: local.basicInfo?.title || local.name,
@@ -148,11 +154,13 @@ const convertLocalToRecording = async (local: LocalRecording): Promise<Recording
       username: "Bạn",
       email: "",
       fullName: "Người tải lên",
-      role: { toString: () => "USER" } as any,
+      role: UserRole.USER,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-    tags: [local.basicInfo?.genre || local.userType || local.detectedType || ""].filter(Boolean),
+    tags: [
+      local.basicInfo?.genre || local.userType || local.detectedType || "",
+    ].filter(Boolean),
     metadata: {
       recordingQuality: RecordingQuality.FIELD_RECORDING,
       lyrics: "",
@@ -190,7 +198,7 @@ function SearchableDropdown({
   const filteredOptions = useMemo(() => {
     if (!search) return options;
     return options.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
+      opt.toLowerCase().includes(search.toLowerCase()),
     );
   }, [options, search]);
 
@@ -202,7 +210,10 @@ function SearchableDropdown({
         dropdownRef.current && !dropdownRef.current.contains(target);
       const clickedOutsideMenu =
         menuRef.current && !menuRef.current.contains(target);
-      if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
+      if (
+        clickedOutsideDropdown &&
+        (menuRef.current ? clickedOutsideMenu : true)
+      ) {
         setIsOpen(false);
         setSearch("");
       }
@@ -213,7 +224,8 @@ function SearchableDropdown({
 
   useEffect(() => {
     const updateRect = () => {
-      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+      if (buttonRef.current)
+        setMenuRect(buttonRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
     window.addEventListener("resize", updateRect);
@@ -234,7 +246,7 @@ function SearchableDropdown({
         className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
-        style={{ backgroundColor: '#FFFCF5' }}
+        style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value || placeholder}
@@ -253,7 +265,7 @@ function SearchableDropdown({
             ref={(el) => (menuRef.current = el)}
             className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
-              backgroundColor: '#FFFCF5',
+              backgroundColor: "#FFFCF5",
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -271,7 +283,7 @@ function SearchableDropdown({
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
                     className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                    style={{ backgroundColor: '#FFFCF5' }}
+                    style={{ backgroundColor: "#FFFCF5" }}
                     autoFocus
                   />
                 </div>
@@ -310,7 +322,7 @@ function SearchableDropdown({
               )}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -329,17 +341,24 @@ export default function ExplorePage() {
   const [selectedRegion, setSelectedRegion] = useState("Tất cả khu vực");
   const [selectedEthnicity, setSelectedEthnicity] = useState("Tất cả dân tộc");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Custom input for "Khác" selections
   const [customGenre, setCustomGenre] = useState("");
   const [customEthnicity, setCustomEthnicity] = useState("");
 
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
-    if (selectedGenre && selectedGenre !== "Tất cả thể loại" && 
-        selectedEthnicity && selectedEthnicity !== "Tất cả dân tộc") {
+    if (
+      selectedGenre &&
+      selectedGenre !== "Tất cả thể loại" &&
+      selectedEthnicity &&
+      selectedEthnicity !== "Tất cả dân tộc"
+    ) {
       const expectedEthnicities = GENRE_ETHNICITY_MAP[selectedGenre];
-      if (expectedEthnicities && !expectedEthnicities.includes(selectedEthnicity)) {
+      if (
+        expectedEthnicities &&
+        !expectedEthnicities.includes(selectedEthnicity)
+      ) {
         return `Lưu ý: Thể loại "${selectedGenre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
       }
     }
@@ -351,35 +370,35 @@ export default function ExplorePage() {
     try {
       // Fetch API recordings
       const response = await recordingService.getRecordings(currentPage, 12);
-      
+
       // Load local recordings from localStorage
       const localRecordingsRaw = localStorage.getItem("localRecordings");
-      const localRecordings: LocalRecording[] = localRecordingsRaw 
-        ? JSON.parse(localRecordingsRaw) 
+      const localRecordings: LocalRecording[] = localRecordingsRaw
+        ? JSON.parse(localRecordingsRaw)
         : [];
-      
+
       // Convert local recordings to Recording format (async to get durations)
       const convertedLocalRecordings = await Promise.all(
-        localRecordings.map(convertLocalToRecording)
+        localRecordings.map(convertLocalToRecording),
       );
-      
+
       // Merge: put local recordings first, then API recordings
       const allRecordings = [...convertedLocalRecordings, ...response.items];
-      
+
       setRecordings(allRecordings);
       setTotalPages(response.totalPages);
       setTotalResults(response.total + localRecordings.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
-      
+
       // Even if API fails, try to show local recordings
       try {
         const localRecordingsRaw = localStorage.getItem("localRecordings");
-        const localRecordings: LocalRecording[] = localRecordingsRaw 
-          ? JSON.parse(localRecordingsRaw) 
+        const localRecordings: LocalRecording[] = localRecordingsRaw
+          ? JSON.parse(localRecordingsRaw)
           : [];
         const convertedLocalRecordings = await Promise.all(
-          localRecordings.map(convertLocalToRecording)
+          localRecordings.map(convertLocalToRecording),
         );
         setRecordings(convertedLocalRecordings);
         setTotalResults(localRecordings.length);
@@ -421,16 +440,26 @@ export default function ExplorePage() {
         </div>
 
         {/* Main Content */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+        <div
+          className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
           {/* Search & Filters Section */}
-          <div className="border border-neutral-200 rounded-2xl p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className="border border-neutral-200 rounded-2xl p-8 mb-8"
+            style={{ backgroundColor: "#FFFCF5" }}
+          >
             <div className="flex items-start gap-3 mb-6">
               <div className="p-2 bg-primary-600/20 rounded-lg">
                 <Filter className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-neutral-800">Bộ lọc nhanh</h2>
-                <p className="text-sm text-neutral-800/70 mt-1">Lọc theo thể loại, khu vực và dân tộc</p>
+                <h2 className="text-xl font-semibold text-neutral-800">
+                  Bộ lọc nhanh
+                </h2>
+                <p className="text-sm text-neutral-800/70 mt-1">
+                  Lọc theo thể loại, khu vực và dân tộc
+                </p>
               </div>
             </div>
 
@@ -438,7 +467,9 @@ export default function ExplorePage() {
             {genreEthnicityWarning && (
               <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-300 rounded-2xl">
                 <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <p className="text-yellow-700 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+                <p className="text-yellow-700 text-sm leading-relaxed">
+                  {genreEthnicityWarning}
+                </p>
               </div>
             )}
 
@@ -451,14 +482,16 @@ export default function ExplorePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm bản thu, nghệ nhân, nhạc cụ,..."
                 className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                style={{ backgroundColor: '#FFFCF5' }}
+                style={{ backgroundColor: "#FFFCF5" }}
               />
             </div>
 
             {/* Filter Dropdowns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-800">Thể loại</label>
+                <label className="block text-sm font-medium text-neutral-800">
+                  Thể loại
+                </label>
                 <SearchableDropdown
                   value={selectedGenre}
                   onChange={(value) => {
@@ -477,13 +510,15 @@ export default function ExplorePage() {
                     onChange={(e) => setCustomGenre(e.target.value)}
                     placeholder="Nhập tên thể loại..."
                     className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                    style={{ backgroundColor: '#FFFCF5' }}
+                    style={{ backgroundColor: "#FFFCF5" }}
                   />
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-800">Khu vực</label>
+                <label className="block text-sm font-medium text-neutral-800">
+                  Khu vực
+                </label>
                 <SearchableDropdown
                   value={selectedRegion}
                   onChange={setSelectedRegion}
@@ -494,7 +529,9 @@ export default function ExplorePage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-800">Dân tộc</label>
+                <label className="block text-sm font-medium text-neutral-800">
+                  Dân tộc
+                </label>
                 <SearchableDropdown
                   value={selectedEthnicity}
                   onChange={(value) => {
@@ -513,7 +550,7 @@ export default function ExplorePage() {
                     onChange={(e) => setCustomEthnicity(e.target.value)}
                     placeholder="Nhập tên dân tộc..."
                     className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                    style={{ backgroundColor: '#FFFCF5' }}
+                    style={{ backgroundColor: "#FFFCF5" }}
                   />
                 )}
               </div>
@@ -525,9 +562,13 @@ export default function ExplorePage() {
                 <button
                   onClick={handleClearFilters}
                   className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                  style={{ backgroundColor: "#FFFCF5" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#F5F0E8")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                  }
                 >
                   Xóa bộ lọc
                 </button>
@@ -538,10 +579,13 @@ export default function ExplorePage() {
           {/* Results Header */}
           <div className="flex items-center justify-between mb-6 pt-8 border-t border-neutral-200">
             <div>
-              <h2 className="text-2xl font-semibold text-neutral-800">Tất cả bản thu</h2>
+              <h2 className="text-2xl font-semibold text-neutral-800">
+                Tất cả bản thu
+              </h2>
               {!loading && (
                 <p className="text-neutral-500 mt-1">
-                  Hiển thị {recordings.length} trong số {totalResults.toLocaleString()} bản thu
+                  Hiển thị {recordings.length} trong số{" "}
+                  {totalResults.toLocaleString()} bản thu
                 </p>
               )}
             </div>
@@ -553,7 +597,10 @@ export default function ExplorePage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : recordings.length === 0 ? (
-            <div className="p-12 text-center rounded-xl border border-neutral-200" style={{ backgroundColor: '#FFFCF5' }}>
+            <div
+              className="p-12 text-center rounded-xl border border-neutral-200"
+              style={{ backgroundColor: "#FFFCF5" }}
+            >
               <div className="p-4 bg-primary-600/20 rounded-2xl w-fit mx-auto mb-4">
                 <Search className="h-8 w-8 text-primary-600" />
               </div>
@@ -584,7 +631,10 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+        <div
+          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800 flex items-center gap-3">
             <div className="p-2 bg-primary-600/20 rounded-lg">
               <Compass className="h-5 w-5 text-primary-600" />
@@ -595,9 +645,13 @@ export default function ExplorePage() {
             <Link
               to="/search"
               className="p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
-              style={{ backgroundColor: '#FFFCF5' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+              style={{ backgroundColor: "#FFFCF5" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#F5F0E8")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FFFCF5")
+              }
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-primary-600/20 rounded-lg">
@@ -616,9 +670,13 @@ export default function ExplorePage() {
             <Link
               to="/upload"
               className="p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
-              style={{ backgroundColor: '#FFFCF5' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+              style={{ backgroundColor: "#FFFCF5" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#F5F0E8")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FFFCF5")
+              }
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-primary-600/20 rounded-lg">
