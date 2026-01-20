@@ -1,28 +1,4 @@
-import { useEffect, useRef } from "react";
-import { addSpotlightEffect } from "@/utils/spotlight";
-
 export default function MastersPage() {
-  const introRef = useRef<HTMLDivElement>(null);
-  const rolesRef = useRef<HTMLDivElement>(null);
-  const notableRef = useRef<HTMLDivElement>(null);
-  const challengesRef = useRef<HTMLDivElement>(null);
-  const contributeRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (introRef.current)
-      cleanupFunctions.push(addSpotlightEffect(introRef.current));
-    if (rolesRef.current)
-      cleanupFunctions.push(addSpotlightEffect(rolesRef.current));
-    if (notableRef.current)
-      cleanupFunctions.push(addSpotlightEffect(notableRef.current));
-    if (challengesRef.current)
-      cleanupFunctions.push(addSpotlightEffect(challengesRef.current));
-    if (contributeRef.current)
-      cleanupFunctions.push(addSpotlightEffect(contributeRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -31,23 +7,16 @@ export default function MastersPage() {
         </h1>
 
         {/* Introduction */}
-        <div
-          ref={introRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Những người giữ lửa truyền thống
           </h2>
-          <p className="text-white leading-relaxed mb-4">
+          <p className="text-secondary-600 leading-relaxed mb-4">
             Các nghệ nhân là kho kiến thức sống về âm nhạc truyền thống. Họ nắm
             giữ cách làm nhạc cụ, kỹ thuật biểu diễn và ý nghĩa của từng giai
             điệu - đều được học qua nhiều đời.
           </p>
-          <p className="text-white leading-relaxed">
+          <p className="text-secondary-600 leading-relaxed">
             Việc ghi chép lại công trình của họ là cấp thiết - đây có thể là thế
             hệ cuối còn kết nối trực tiếp với truyền thống xưa. VietTune là nơi
             tôn vinh và lưu giữ di sản quý báu này.
@@ -55,20 +24,13 @@ export default function MastersPage() {
         </div>
 
         {/* Roles and Significance */}
-        <div
-          ref={rolesRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Vai trò của nghệ nhân âm nhạc
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Chuyên gia nghi lễ và thầy cúng
               </h3>
               <p className="leading-relaxed">
@@ -82,7 +44,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Thợ làm nhạc cụ và người đổi mới
               </h3>
               <p className="leading-relaxed">
@@ -96,7 +58,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Ca sử thi và sử gia truyền miệng
               </h3>
               <p className="leading-relaxed">
@@ -109,7 +71,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Chỉ huy dàn cồng chiêng
               </h3>
               <p className="leading-relaxed">
@@ -123,7 +85,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Giáo viên và người truyền văn hóa
               </h3>
               <p className="leading-relaxed">
@@ -138,20 +100,13 @@ export default function MastersPage() {
         </div>
 
         {/* Notable Traditions */}
-        <div
-          ref={notableRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Các truyền thống âm nhạc tiêu biểu và nghệ nhân
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Hát thần (Tày, Nùng, Thái)
               </h3>
               <p className="leading-relaxed">
@@ -164,7 +119,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Thổi khèn (H'Mông)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">Thổi khèn (H'Mông)</h3>
               <p className="leading-relaxed">
                 Nghệ nhân <em>khèn</em> có thể thực hiện giai điệu đa thanh phức
                 tạp đồng thời với âm trầm kéo dài, tạo không gian âm thanh tinh
@@ -176,21 +131,21 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Hòa tấu cồng chiêng (Cao nguyên Trung Bộ)
               </h3>
               <p className="leading-relaxed">
                 Nghệ nhân cồng chiêng ở Ê Đê, Ba Na, Gia Rai và các dân tộc Tây
                 Nguyên khác điều phối nhịp đa phức hợp tinh vi qua nhiều cồng
                 chiêng cỡ khác nhau. Mỗi chiếc cồng chiêng là thực thể tâm linh
-                với tên riêng và cá tính riêng. Nghệ nhân biết kỹ thuật gó đúng
+                với tên riêng và cá tính riêng. Nghệ nhân biết kỹ thuật gõ đúng
                 cách, quy trình nghi lễ, phương pháp điều cồng chiêng và ý nghĩa
                 tâm linh của các chu kỳ nhịp khác nhau.
               </p>
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Ca trù (Nhạc cổ điển miền Bắc)
               </h3>
               <p className="leading-relaxed">
@@ -204,7 +159,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đờn ca tài tử (Nhạc tài tử miền Nam)
               </h3>
               <p className="leading-relaxed">
@@ -220,20 +175,13 @@ export default function MastersPage() {
         </div>
 
         {/* Challenges and Preservation */}
-        <div
-          ref={challengesRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Thách thức của việc truyền thống
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <div>
-              <h3 className="text-xl font-semibold mb-2">Nghệ nhân già cỗ</h3>
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">Nghệ nhân già cỗ</h3>
               <p className="leading-relaxed">
                 Nhiều nghệ nhân đã ngoài 70, 80 tuổi hoặc hơn. Khi họ qua đời,
                 kiến thức quý giá biến mất. Tính chất truyền miệng có nghĩa buổi
@@ -243,7 +191,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Giới trẻ không quan tâm và di cư
               </h3>
               <p className="leading-relaxed">
@@ -256,7 +204,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Mất bối cảnh biểu diễn
               </h3>
               <p className="leading-relaxed">
@@ -269,14 +217,14 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Thiếu tài liệu và công nhận
               </h3>
               <p className="leading-relaxed">
                 Hầu hết nghệ nhân vẫn không được biết đến ngoài cộng đồng địa
                 phương. Thiếu tài liệu hóa hệ thống có nghĩa đóng góp của họ
                 không được ghi nhận. Khó khăn kinh tế thường buộc nghệ nhân phải
-                bỏ công việc văn hóa để muôn sinh. Công nhận là bảo vật văn hóa
+                bỏ công việc văn hóa để mưu sinh. Công nhận là bảo vật văn hóa
                 có thể mang lại cả hỗ trợ vật chất và động lực tiếp tục truyền
                 thống.
               </p>
@@ -285,18 +233,11 @@ export default function MastersPage() {
         </div>
 
         {/* How to Contribute */}
-        <div
-          ref={contributeRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Đóng góp tài liệu hóa nghệ nhân
           </h2>
-          <div className="text-white">
+          <div className="text-secondary-600">
             <p className="leading-relaxed mb-4">
               VietTune chào đón mọi đóng góp tài liệu hóa nghệ nhân và truyền
               thống của họ. Tài liệu giá trị bao gồm:

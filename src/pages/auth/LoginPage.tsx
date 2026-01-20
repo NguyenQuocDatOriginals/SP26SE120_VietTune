@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
@@ -8,20 +8,11 @@ import { LoginForm } from "@/types";
 import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
-import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (formRef.current)
-      cleanupFunctions.push(addSpotlightEffect(formRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
 
   const {
     register,
@@ -54,7 +45,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex items-center justify-center py-1 px-4 sm:px-6 lg:px-8"
       style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${backgroundImage})`,
+        backgroundImage: `linear-gradient(rgba(185, 28, 28, 0.85), rgba(127, 29, 29, 0.9)), url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -62,39 +53,34 @@ export default function LoginPage() {
     >
       <div className="max-w-lg w-full">
         <form
-          ref={formRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 p-3 rounded-2xl shadow-2xl border border-white/40 space-y-0.5"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
+          className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 space-y-4"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col items-center">
             <img
               src={logo}
               alt="VietTune Logo"
-              className="w-12 h-12 object-contain mb-0.5 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-16 h-16 object-contain mb-2 rounded-2xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />
-            <h2 className="text-center text-lg font-bold text-white">
+            <h2 className="text-center text-2xl font-bold text-secondary-800">
               Đăng nhập vào VietTune
             </h2>
-            <p className="mt-0.5 text-center text-sm text-white">
+            <p className="mt-2 text-center text-sm text-secondary-600">
               Hoặc{" "}
               <Link
                 to="/register"
-                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
+                className="font-medium text-primary-600 hover:text-primary-700 active:text-primary-800"
               >
                 tạo tài khoản mới
               </Link>
             </p>
           </div>
 
-          <div className="space-y-0.5">
+          <div className="space-y-4">
             <Input
               label="Tên người dùng hoặc Email"
               {...register("usernameOrEmail", {
@@ -123,11 +109,11 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 bg-white text-blue-600 focus:ring-blue-500 border-2 border-secondary-400 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-2 border-gray-300 rounded"
               />
               <label
                 htmlFor="remember-me"
-                className="ml-2 block text-sm text-white"
+                className="ml-2 block text-sm text-secondary-600"
               >
                 Ghi nhớ tôi
               </label>
@@ -136,7 +122,7 @@ export default function LoginPage() {
             <div className="text-sm">
               <a
                 href="#"
-                className="font-medium text-emerald-300 hover:text-green-500 active:text-green-700"
+                className="font-medium text-primary-600 hover:text-primary-700 active:text-primary-800"
               >
                 Quên mật khẩu?
               </a>

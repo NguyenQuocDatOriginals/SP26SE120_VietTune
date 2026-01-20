@@ -52,9 +52,9 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-full text-secondary-700 hover:bg-gray-50 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Previous
+        Trước
       </button>
 
       {getPageNumbers().map((page, index) => (
@@ -65,8 +65,8 @@ export default function Pagination({
           className={clsx(
             "px-3 py-2 text-sm font-medium rounded-full transition-all",
             page === currentPage
-              ? "btn-liquid-glass-primary"
-              : "btn-liquid-glass-secondary",
+              ? "bg-primary-600 text-white shadow-md"
+              : "bg-white border border-gray-200 text-secondary-700 hover:bg-gray-50 hover:border-primary-200",
             page === "..." && "cursor-default opacity-50"
           )}
         >
@@ -77,9 +77,9 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="btn-liquid-glass-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-full text-secondary-700 hover:bg-gray-50 hover:border-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        Next
+        Sau
       </button>
     </div>
   );

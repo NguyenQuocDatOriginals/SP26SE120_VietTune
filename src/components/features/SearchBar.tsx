@@ -151,7 +151,7 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
       >
@@ -170,19 +170,17 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+            className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
             style={{
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
               width: menuRect.width,
               zIndex: 200000,
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
             {searchable && (
-              <div className="p-3 border-b border-secondary-200">
+              <div className="p-3 border-b border-gray-200">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-400" />
                   <input
@@ -190,7 +188,7 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 bg-secondary-50 text-secondary-900 placeholder-secondary-400 border border-secondary-200 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 text-secondary-900 placeholder-secondary-400 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     autoFocus
                   />
                 </div>
@@ -200,7 +198,7 @@ function SearchableDropdown({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#10b981 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#dc2626 rgba(0, 0, 0, 0.1)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -219,8 +217,8 @@ function SearchableDropdown({
                     }}
                     className={`w-full px-5 py-3 text-left text-sm transition-colors ${
                       value === option
-                        ? "bg-emerald-500 text-white font-medium"
-                        : "text-secondary-900 hover:bg-emerald-100 hover:text-emerald-900"
+                        ? "bg-primary-600 text-white font-medium"
+                        : "text-secondary-900 hover:bg-primary-50 hover:text-primary-700"
                     }`}
                   >
                     {option}
@@ -306,7 +304,7 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 bg-white border border-secondary-300 rounded-2xl focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all ${
+        className={`min-h-[48px] px-4 py-2.5 bg-white border border-gray-300 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
       >
@@ -314,7 +312,7 @@ function MultiSelectTags({
           {values.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500 text-white text-xs rounded-full font-medium"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
             >
               {tag}
               {!disabled && (
@@ -324,7 +322,7 @@ function MultiSelectTags({
                     e.stopPropagation();
                     removeTag(tag);
                   }}
-                  className="hover:bg-emerald-600 rounded-full p-0.5 transition-colors"
+                  className="hover:bg-primary-700 rounded-full p-0.5 transition-colors"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -350,22 +348,20 @@ function MultiSelectTags({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+            className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
             style={{
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
               width: menuRect.width,
               zIndex: 200000,
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
             <div
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#10b981 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#dc2626 rgba(0, 0, 0, 0.1)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -378,9 +374,9 @@ function MultiSelectTags({
                     key={option}
                     type="button"
                     onClick={() => addTag(option)}
-                    className="w-full px-5 py-3 text-left text-sm text-secondary-900 hover:bg-emerald-100 hover:text-emerald-900 transition-colors flex items-center gap-2"
+                    className="w-full px-5 py-3 text-left text-sm text-secondary-900 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center gap-2"
                   >
-                    <Plus className="h-4 w-4 text-emerald-500" />
+                    <Plus className="h-4 w-4 text-primary-600" />
                     {option}
                   </button>
                 ))
@@ -404,11 +400,11 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-white">
+      <label className="block text-sm font-medium text-secondary-700">
         {label}
       </label>
       {children}
-      {hint && <p className="text-xs text-white/60">{hint}</p>}
+      {hint && <p className="text-xs text-secondary-500">{hint}</p>}
     </div>
   );
 }
@@ -424,12 +420,12 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3 mb-6">
-      <div className="p-2 bg-emerald-500/20 rounded-lg">
-        <Icon className="h-5 w-5 text-emerald-400" />
+      <div className="p-2 bg-primary-100 rounded-lg">
+        <Icon className="h-5 w-5 text-primary-600" />
       </div>
       <div>
-        <h3 className="text-xl font-semibold text-white">{title}</h3>
-        {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
+        <h3 className="text-xl font-semibold text-secondary-800">{title}</h3>
+        {subtitle && <p className="text-sm text-secondary-500 mt-1">{subtitle}</p>}
       </div>
     </div>
   );
@@ -451,28 +447,28 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
+    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-gray-50">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
+        className="w-full p-6 flex items-center justify-between hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-500/20 rounded-lg">
-            <Icon className="h-5 w-5 text-emerald-400" />
+          <div className="p-2 bg-primary-100 rounded-lg">
+            <Icon className="h-5 w-5 text-primary-600" />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            {subtitle && <p className="text-sm text-white/70">{subtitle}</p>}
+            <h3 className="text-lg font-semibold text-secondary-800">{title}</h3>
+            {subtitle && <p className="text-sm text-secondary-500">{subtitle}</p>}
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-white/70 transition-transform duration-200 ${
+          className={`h-5 w-5 text-secondary-500 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
-      {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
+      {isOpen && <div className="p-6 pt-2 space-y-4 bg-white">{children}</div>}
     </div>
   );
 }
@@ -562,7 +558,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input */}
-      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
+      <div className="border border-gray-200 rounded-2xl p-8 bg-gray-50">
         <SectionHeader
           icon={Search}
           title="Tìm kiếm bản thu"
@@ -578,7 +574,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Tìm kiếm bản thu, nhạc cụ, nghệ nhân,..."
-              className="w-full pl-14 pr-5 py-3 bg-white text-secondary-900 placeholder-secondary-400 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+              className="w-full pl-14 pr-5 py-3 bg-white text-secondary-900 placeholder-secondary-400 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
             />
           </div>
           <button
@@ -593,16 +589,16 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <button
               type="button"
               onClick={handleClearAll}
-              className="btn-liquid-glass-close w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full"
+              className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-secondary-600 transition-colors"
             >
-              <X className="h-5 w-5 text-white" strokeWidth={2.5} />
+              <X className="h-5 w-5" strokeWidth={2.5} />
             </button>
           )}
         </div>
 
         {activeFilterCount > 0 && (
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-white/60">
+            <span className="text-sm text-secondary-500">
               {activeFilterCount} bộ lọc đang áp dụng
             </span>
           </div>
@@ -610,7 +606,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       </div>
 
       {/* Basic Filters */}
-      <div className="border border-white/10 rounded-2xl p-8 bg-white/5 backdrop-blur-sm">
+      <div className="border border-gray-200 rounded-2xl p-8 bg-gray-50">
         <SectionHeader
           icon={Music}
           title="Bộ lọc cơ bản"
@@ -619,9 +615,9 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
         {/* Genre-Ethnicity Warning */}
         {genreEthnicityWarning && (
-          <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
-            <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+          <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
+            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <p className="text-yellow-700 text-sm leading-relaxed">{genreEthnicityWarning}</p>
           </div>
         )}
 
@@ -740,7 +736,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleClearAll}
-          className="px-6 py-2.5 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
+          className="px-6 py-2.5 bg-gray-200 text-secondary-700 rounded-xl hover:bg-gray-300 transition-colors"
         >
           Xóa bộ lọc
         </button>

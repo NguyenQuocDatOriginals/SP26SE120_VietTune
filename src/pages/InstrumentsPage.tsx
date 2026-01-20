@@ -1,34 +1,4 @@
-import { useEffect, useRef } from "react";
-import { addSpotlightEffect } from "@/utils/spotlight";
-
 export default function InstrumentsPage() {
-  const introRef = useRef<HTMLDivElement>(null);
-  const classificationRef = useRef<HTMLDivElement>(null);
-  const bambooRef = useRef<HTMLDivElement>(null);
-  const gongRef = useRef<HTMLDivElement>(null);
-  const stringRef = useRef<HTMLDivElement>(null);
-  const constructionRef = useRef<HTMLDivElement>(null);
-  const preservationRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (introRef.current)
-      cleanupFunctions.push(addSpotlightEffect(introRef.current));
-    if (classificationRef.current)
-      cleanupFunctions.push(addSpotlightEffect(classificationRef.current));
-    if (bambooRef.current)
-      cleanupFunctions.push(addSpotlightEffect(bambooRef.current));
-    if (gongRef.current)
-      cleanupFunctions.push(addSpotlightEffect(gongRef.current));
-    if (stringRef.current)
-      cleanupFunctions.push(addSpotlightEffect(stringRef.current));
-    if (constructionRef.current)
-      cleanupFunctions.push(addSpotlightEffect(constructionRef.current));
-    if (preservationRef.current)
-      cleanupFunctions.push(addSpotlightEffect(preservationRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -37,23 +7,16 @@ export default function InstrumentsPage() {
         </h1>
 
         {/* Introduction */}
-        <div
-          ref={introRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Kể chuyện qua nhạc cụ
           </h2>
-          <p className="text-white leading-relaxed mb-4">
+          <p className="text-secondary-600 leading-relaxed mb-4">
             54 dân tộc Việt Nam có kho nhạc cụ đa dạng đặc sắc. Từ dàn chiêng
             đồng hùng vĩ đến sáo trúc thanh tao, từ kèn sừng trâu mạnh mẽ đến
             đàn dây du dương - mỗi nhạc cụ kể một câu chuyện văn hóa riêng.
           </p>
-          <p className="text-white leading-relaxed">
+          <p className="text-secondary-600 leading-relaxed">
             Nhạc cụ không chỉ tạo ra âm thanh - chúng mang theo niềm tin tâm
             linh, kết nối cộng đồng và trí tuệ làm nghề truyền thống. Mỗi âm
             sắc, mỗi giai điệu đều có ý nghĩa văn hóa riêng và phản ánh sự thích
@@ -65,25 +28,18 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Classification */}
-        <div
-          ref={classificationRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Hệ thống phân loại
           </h2>
-          <div className="text-white">
+          <div className="text-secondary-600">
             <p className="leading-relaxed mb-4">
               Nhạc cụ truyền thống Việt Nam có thể phân loại theo hệ thống
               Hornbostel-Sachs dựa trên phương thức tạo âm thanh:
             </p>
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                   Thể rắn (Cơ thể nhạc cụ tự rung)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -113,7 +69,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                   Màng rắn (Trống với màng căng)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -138,7 +94,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                   Hòa rắn (Nhạc cụ dây)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -168,7 +124,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                   Khí rắn (Nhạc cụ hơi)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -201,18 +157,11 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Bamboo Instruments */}
-        <div
-          ref={bambooRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Nhạc cụ tre trúc: Sáng tạo và thích nghi
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <p className="leading-relaxed">
               Tre trúc dồi dào ở Việt Nam đã tạo nên sự đa dạng nhạc cụ phi
               thường. Các loài tre khác nhau tạo ra âm sắc riêng biệt, và các
@@ -221,7 +170,7 @@ export default function InstrumentsPage() {
             </p>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn t'rưng (Đàn mộc cầm trúc)
               </h3>
               <p className="leading-relaxed">
@@ -234,7 +183,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn goong (Đàn tranh ống trúc)
               </h3>
               <p className="leading-relaxed">
@@ -246,7 +195,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đing păng (Ống tre gõ)
               </h3>
               <p className="leading-relaxed">
@@ -258,7 +207,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Sáo trúc (Nhiều loại)
               </h3>
               <p className="leading-relaxed">
@@ -272,18 +221,11 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Gong Culture */}
-        <div
-          ref={gongRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Văn hóa cồng chiêng: Nhạc cụ thiêng liêng của cao nguyên Trung Bộ
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <p className="leading-relaxed">
               UNESCO công nhận Không gian văn hóa cồng chiêng cao nguyên Trung
               Bộ Việt Nam là Kiệt tác Di sản truyền khẩu và phi vật thể của Nhân
@@ -293,7 +235,7 @@ export default function InstrumentsPage() {
             </p>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Các loại cồng chiêng
               </h3>
               <ul className="list-disc list-inside space-y-2 ml-4">
@@ -315,7 +257,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">Ý nghĩa văn hóa</h3>
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">Ý nghĩa văn hóa</h3>
               <p className="leading-relaxed">
                 Cồng chiêng được coi là sinh linh có tính cách riêng. Mỗi chiếc
                 có tên, giới tính và sức mạnh tâm linh. Sở hữu cồng chiêng thể
@@ -328,7 +270,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Nghệ thuật trình diễn
               </h3>
               <p className="leading-relaxed">
@@ -344,20 +286,13 @@ export default function InstrumentsPage() {
         </div>
 
         {/* String Instruments */}
-        <div
-          ref={stringRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Nhạc cụ dây: Thẩm mỹ tinh tế và kỹ thuật điêu luyện
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn bầu (Đàn một dây)
               </h3>
               <p className="leading-relaxed">
@@ -370,7 +305,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn tranh (Đàn 16 dây)
               </h3>
               <p className="leading-relaxed">
@@ -384,7 +319,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn tính (Đàn hai dây)
               </h3>
               <p className="leading-relaxed">
@@ -397,7 +332,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Đàn nhị (Đàn hai dây kéo)
               </h3>
               <p className="leading-relaxed">
@@ -412,20 +347,13 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Construction and Materials */}
-        <div
-          ref={constructionRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Tri thức truyền thống: Chế tác và vật liệu
           </h2>
-          <div className="space-y-4 text-white">
+          <div className="space-y-4 text-secondary-600">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Lựa chọn và chuẩn bị vật liệu
               </h3>
               <p className="leading-relaxed">
@@ -439,7 +367,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Hệ thống điệu và âm luật
               </h3>
               <p className="leading-relaxed">
@@ -453,7 +381,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Nguyên lý âm học và đổi mới
               </h3>
               <p className="leading-relaxed">
@@ -467,7 +395,7 @@ export default function InstrumentsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2">
+              <h3 className="text-xl font-semibold mb-2 text-secondary-800">
                 Trang trí biểu tượng và ý nghĩa văn hóa
               </h3>
               <p className="leading-relaxed">
@@ -484,18 +412,11 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Preservation Challenges */}
-        <div
-          ref={preservationRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+          <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
             Bảo tồn và nhu cầu tài liệu hóa
           </h2>
-          <div className="text-white">
+          <div className="text-secondary-600">
             <p className="leading-relaxed mb-4">
               Nhiều nhạc cụ truyền thống đối mặt thách thức bảo tồn:
             </p>

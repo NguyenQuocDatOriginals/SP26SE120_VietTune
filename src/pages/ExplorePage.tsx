@@ -4,7 +4,6 @@ import { Compass, Music2, Globe, Users, Filter, Search, ChevronDown, Play, Disc,
 import { createPortal } from "react-dom";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
-import { addSpotlightEffect } from "@/utils/spotlight";
 import RecordingCard from "@/components/features/RecordingCard";
 import Pagination from "@/components/common/Pagination";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -144,7 +143,7 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 bg-white text-secondary-900 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
       >
@@ -163,19 +162,17 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="backdrop-blur-xl bg-white rounded-2xl shadow-2xl border border-white/40 overflow-hidden"
+            className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
             style={{
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
               width: menuRect.width,
               zIndex: 200000,
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
             }}
           >
             {searchable && (
-              <div className="p-3 border-b border-secondary-200">
+              <div className="p-3 border-b border-gray-200">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-400" />
                   <input
@@ -183,7 +180,7 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 bg-secondary-50 text-secondary-900 placeholder-secondary-400 border border-secondary-200 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 bg-gray-50 text-secondary-900 placeholder-secondary-400 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
                     autoFocus
                   />
                 </div>
@@ -193,7 +190,7 @@ function SearchableDropdown({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#10b981 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#dc2626 rgba(0, 0, 0, 0.1)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -212,8 +209,8 @@ function SearchableDropdown({
                     }}
                     className={`w-full px-5 py-3 text-left text-sm transition-colors ${
                       value === option
-                        ? "bg-emerald-500 text-white font-medium"
-                        : "text-secondary-900 hover:bg-emerald-100 hover:text-emerald-900"
+                        ? "bg-primary-600 text-white font-medium"
+                        : "text-secondary-900 hover:bg-primary-50 hover:text-primary-700"
                     }`}
                   >
                     {option}
@@ -247,15 +244,15 @@ function CategoryCard({
       onClick={onClick}
       className={`p-4 rounded-xl border transition-all text-left ${
         isActive
-          ? "bg-emerald-500/20 border-emerald-500/40"
-          : "bg-white/5 border-white/10 hover:bg-white/10"
+          ? "bg-primary-50 border-primary-200"
+          : "bg-gray-50 border-gray-200 hover:bg-white hover:border-primary-200"
       }`}
     >
-      <div className={`p-2 rounded-lg w-fit mb-3 ${isActive ? "bg-emerald-500/30" : "bg-white/10"}`}>
-        <Icon className={`h-5 w-5 ${isActive ? "text-emerald-400" : "text-white/70"}`} />
+      <div className={`p-2 rounded-lg w-fit mb-3 ${isActive ? "bg-primary-100" : "bg-gray-100"}`}>
+        <Icon className={`h-5 w-5 ${isActive ? "text-primary-600" : "text-secondary-600"}`} />
       </div>
-      <h3 className={`font-medium ${isActive ? "text-emerald-300" : "text-white"}`}>{title}</h3>
-      <p className="text-sm text-white/60">{count.toLocaleString()} bản thu</p>
+      <h3 className={`font-medium ${isActive ? "text-primary-700" : "text-secondary-800"}`}>{title}</h3>
+      <p className="text-sm text-secondary-500">{count.toLocaleString()} bản thu</p>
     </button>
   );
 }
@@ -263,7 +260,6 @@ function CategoryCard({
 // ===== MAIN COMPONENT =====
 export default function ExplorePage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const guidelinesRef = useRef<HTMLDivElement>(null);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -295,15 +291,6 @@ export default function ExplorePage() {
     }
     return null;
   }, [selectedGenre, selectedEthnicity]);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (containerRef.current)
-      cleanupFunctions.push(addSpotlightEffect(containerRef.current));
-    if (guidelinesRef.current)
-      cleanupFunctions.push(addSpotlightEffect(guidelinesRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
 
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
@@ -362,7 +349,7 @@ export default function ExplorePage() {
           <h1 className="text-3xl font-bold text-white mb-4">
             Khám phá bản thu
           </h1>
-          <p className="text-white leading-relaxed">
+          <p className="text-white/80 leading-relaxed">
             Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước
           </p>
         </div>
@@ -372,19 +359,15 @@ export default function ExplorePage() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-6 shadow-2xl"
-              style={{
-                boxShadow:
-                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-              }}
+              className="bg-white border border-gray-100 rounded-2xl p-6 shadow-lg"
             >
-              <div className="p-3 bg-emerald-500/20 rounded-xl w-fit mb-4">
-                <feature.icon className="h-6 w-6 text-emerald-400" />
+              <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4">
+                <feature.icon className="h-6 w-6 text-primary-600" />
               </div>
-              <h3 className="text-white font-semibold text-lg mb-2">
+              <h3 className="text-secondary-800 font-semibold text-lg mb-2">
                 {feature.title}
               </h3>
-              <p className="text-white/70 leading-relaxed">
+              <p className="text-secondary-600 leading-relaxed">
                 {feature.description}
               </p>
             </div>
@@ -394,29 +377,25 @@ export default function ExplorePage() {
         {/* Main Content */}
         <div
           ref={containerRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
+          className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8"
         >
           {/* Search & Filters Section */}
-          <div className="border border-white/10 rounded-2xl p-8 bg-white/5 mb-8">
+          <div className="border border-gray-200 rounded-2xl p-8 bg-gray-50 mb-8">
             <div className="flex items-start gap-3 mb-6">
-              <div className="p-2 bg-emerald-500/20 rounded-lg">
-                <Filter className="h-5 w-5 text-emerald-400" />
+              <div className="p-2 bg-primary-100 rounded-lg">
+                <Filter className="h-5 w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">Bộ lọc nhanh</h2>
-                <p className="text-sm text-white/70 mt-1">Lọc theo thể loại, khu vực và dân tộc</p>
+                <h2 className="text-xl font-semibold text-secondary-800">Bộ lọc nhanh</h2>
+                <p className="text-sm text-secondary-500 mt-1">Lọc theo thể loại, khu vực và dân tộc</p>
               </div>
             </div>
 
             {/* Genre-Ethnicity Warning */}
             {genreEthnicityWarning && (
-              <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
-                <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                <p className="text-yellow-200 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+              <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-2xl">
+                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-yellow-700 text-sm leading-relaxed">{genreEthnicityWarning}</p>
               </div>
             )}
 
@@ -428,14 +407,14 @@ export default function ExplorePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm bản thu, nghệ nhân, nhạc cụ,..."
-                className="w-full pl-14 pr-5 py-3 bg-white text-secondary-900 placeholder-secondary-400 border border-secondary-300 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                className="w-full pl-14 pr-5 py-3 bg-white text-secondary-900 placeholder-secondary-400 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
               />
             </div>
 
             {/* Filter Dropdowns */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-white">Thể loại</label>
+                <label className="block text-sm font-medium text-secondary-700">Thể loại</label>
                 <SearchableDropdown
                   value={selectedGenre}
                   onChange={setSelectedGenre}
@@ -445,7 +424,7 @@ export default function ExplorePage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-white">Khu vực</label>
+                <label className="block text-sm font-medium text-secondary-700">Khu vực</label>
                 <SearchableDropdown
                   value={selectedRegion}
                   onChange={setSelectedRegion}
@@ -456,7 +435,7 @@ export default function ExplorePage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-white">Dân tộc</label>
+                <label className="block text-sm font-medium text-secondary-700">Dân tộc</label>
                 <SearchableDropdown
                   value={selectedEthnicity}
                   onChange={setSelectedEthnicity}
@@ -471,7 +450,7 @@ export default function ExplorePage() {
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-6 py-2.5 bg-white/10 text-white hover:bg-white/20 rounded-xl transition-colors"
+                  className="px-6 py-2.5 bg-gray-200 text-secondary-700 hover:bg-gray-300 rounded-xl transition-colors"
                 >
                   Xóa bộ lọc
                 </button>
@@ -481,9 +460,9 @@ export default function ExplorePage() {
 
           {/* Popular Categories */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/20 rounded-lg">
-                <Disc className="h-5 w-5 text-emerald-400" />
+            <h3 className="text-xl font-semibold text-secondary-800 mb-6 flex items-center gap-3">
+              <div className="p-2 bg-primary-100 rounded-lg">
+                <Disc className="h-5 w-5 text-primary-600" />
               </div>
               Thể loại phổ biến
             </h3>
@@ -502,11 +481,11 @@ export default function ExplorePage() {
           </div>
 
           {/* Results Header */}
-          <div className="flex items-center justify-between mb-6 pt-8 border-t border-white/10">
+          <div className="flex items-center justify-between mb-6 pt-8 border-t border-gray-200">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Tất cả bản thu</h2>
+              <h2 className="text-2xl font-semibold text-secondary-800">Tất cả bản thu</h2>
               {!loading && (
-                <p className="text-white/70 mt-1">
+                <p className="text-secondary-500 mt-1">
                   Hiển thị {recordings.length} trong số {totalResults.toLocaleString()} bản thu
                 </p>
               )}
@@ -519,14 +498,14 @@ export default function ExplorePage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : recordings.length === 0 ? (
-            <div className="p-12 text-center bg-white/5 rounded-xl border border-white/10">
-              <div className="p-4 bg-emerald-500/20 rounded-2xl w-fit mx-auto mb-4">
-                <Search className="h-8 w-8 text-emerald-400" />
+            <div className="p-12 text-center bg-gray-50 rounded-xl border border-gray-200">
+              <div className="p-4 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
+                <Search className="h-8 w-8 text-primary-600" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-secondary-800 mb-2">
                 Không tìm thấy bản thu
               </h3>
-              <p className="text-white/70 mx-auto leading-relaxed">
+              <p className="text-secondary-600 mx-auto leading-relaxed">
                 Thử thay đổi bộ lọc hoặc từ khóa để tìm kiếm kết quả phù hợp hơn
               </p>
             </div>
@@ -550,34 +529,27 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div
-          ref={guidelinesRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-8 shadow-2xl"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold mb-6 text-white flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/20 rounded-lg">
-              <Compass className="h-5 w-5 text-emerald-400" />
+        <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-lg">
+          <h2 className="text-2xl font-semibold mb-6 text-secondary-800 flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Compass className="h-5 w-5 text-primary-600" />
             </div>
             Khám phá thêm
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               to="/search"
-              className="p-6 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+              className="p-6 bg-gray-50 rounded-xl border border-gray-200 hover:bg-white hover:border-primary-200 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-emerald-500/10 rounded-lg">
-                  <Search className="h-6 w-6 text-emerald-400" />
+                <div className="p-3 bg-primary-100 rounded-lg">
+                  <Search className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold text-lg group-hover:text-emerald-300 transition-colors">
+                  <h4 className="text-secondary-800 font-semibold text-lg group-hover:text-primary-600 transition-colors">
                     Tìm kiếm bản thu
                   </h4>
-                  <p className="text-white/70 leading-relaxed">
+                  <p className="text-secondary-600 leading-relaxed">
                     Lọc chi tiết theo nhạc cụ, sự kiện, năm ghi âm
                   </p>
                 </div>
@@ -585,17 +557,17 @@ export default function ExplorePage() {
             </Link>
             <Link
               to="/upload"
-              className="p-6 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors group"
+              className="p-6 bg-gray-50 rounded-xl border border-gray-200 hover:bg-white hover:border-primary-200 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-emerald-500/10 rounded-lg">
-                  <Play className="h-6 w-6 text-emerald-400" />
+                <div className="p-3 bg-primary-100 rounded-lg">
+                  <Play className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <h4 className="text-white font-semibold text-lg group-hover:text-emerald-300 transition-colors">
+                  <h4 className="text-secondary-800 font-semibold text-lg group-hover:text-primary-600 transition-colors">
                     Đóng góp bản thu
                   </h4>
-                  <p className="text-white/70 leading-relaxed">
+                  <p className="text-secondary-600 leading-relaxed">
                     Chia sẻ bản thu âm nhạc truyền thống của bạn
                   </p>
                 </div>

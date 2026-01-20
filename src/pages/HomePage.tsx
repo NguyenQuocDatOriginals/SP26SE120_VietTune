@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
 import { Music, Upload, Search, Users, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Clock, MapPin } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import AudioPlayer from "@/components/features/AudioPlayer";
-import { addSpotlightEffect } from "@/utils/spotlight";
 import logo from "@/components/image/VietTune logo.png";
 
 // Local recording type for client-saved uploads
@@ -42,18 +41,18 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-emerald-500/20 rounded-lg">
-          <Icon className="h-5 w-5 text-emerald-400" />
+        <div className="p-2 bg-primary-100 rounded-lg">
+          <Icon className="h-5 w-5 text-primary-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-white">{title}</h2>
-          {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
+          <h2 className="text-2xl font-semibold text-secondary-800">{title}</h2>
+          {subtitle && <p className="text-sm text-secondary-500 mt-1">{subtitle}</p>}
         </div>
       </div>
       {action && (
         <Link
           to={action.to}
-          className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1"
+          className="text-sm text-primary-600 hover:text-primary-700 transition-colors flex items-center gap-1"
         >
           {action.label}
           <ArrowRight className="h-4 w-4" />
@@ -74,12 +73,12 @@ function StatCard({
   label: string;
 }) {
   return (
-    <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-center hover:bg-white/10 transition-colors">
-      <div className="p-2 bg-emerald-500/10 rounded-lg w-fit mx-auto mb-2">
-        <Icon className="h-5 w-5 text-emerald-400" />
+    <div className="p-4 bg-white border border-gray-200 rounded-xl text-center hover:border-primary-200 hover:shadow-md transition-all">
+      <div className="p-2 bg-primary-100 rounded-lg w-fit mx-auto mb-2">
+        <Icon className="h-5 w-5 text-primary-600" />
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
-      <div className="text-sm text-white/60">{label}</div>
+      <div className="text-2xl font-bold text-secondary-800">{value}</div>
+      <div className="text-sm text-secondary-500">{label}</div>
     </div>
   );
 }
@@ -99,15 +98,15 @@ function FeatureCard({
   return (
     <Link
       to={to}
-      className="group p-6 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 hover:border-emerald-500/30 transition-all"
+      className="group p-6 bg-gray-50 rounded-xl border border-gray-200 hover:bg-white hover:border-primary-200 hover:shadow-lg transition-all"
     >
-      <div className="p-3 bg-emerald-500/10 rounded-xl w-fit mb-4 group-hover:bg-emerald-500/20 transition-colors">
-        <Icon className="h-6 w-6 text-emerald-400" />
+      <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4 group-hover:bg-primary-200 transition-colors">
+        <Icon className="h-6 w-6 text-primary-600" />
       </div>
-      <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-emerald-300 transition-colors">
+      <h3 className="text-xl font-semibold text-secondary-800 mb-2 group-hover:text-primary-600 transition-colors">
         {title}
       </h3>
-      <p className="text-white/70 leading-relaxed">{description}</p>
+      <p className="text-secondary-600 leading-relaxed">{description}</p>
     </Link>
   );
 }
@@ -130,7 +129,7 @@ function QuickActionButton({
         className={`w-full px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
           primary
             ? "btn-liquid-glass-primary"
-            : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
+            : "bg-white text-secondary-700 hover:bg-gray-50 border border-gray-200 hover:border-primary-200"
         }`}
       >
         <Icon className="h-5 w-5" />
@@ -145,44 +144,13 @@ export default function HomePage() {
   const [recentRecordings, setRecentRecordings] = useState<Recording[]>([]);
   const [localRecordings, setLocalRecordings] = useState<LocalRecording[]>([]);
 
-  // Refs for spotlight effects
-  const heroRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const localRef = useRef<HTMLDivElement>(null);
-  const popularRef = useRef<HTMLDivElement>(null);
-  const recentRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     fetchRecordings();
 
     // Load local recordings
     const local = JSON.parse(localStorage.getItem("localRecordings") || "[]");
     setLocalRecordings(local as LocalRecording[]);
-
-    // Add spotlight effects for static containers
-    const cleanupFunctions: (() => void)[] = [];
-    const staticRefs = [heroRef, statsRef, featuresRef, popularRef, recentRef, ctaRef];
-
-    staticRefs.forEach((ref) => {
-      if (ref.current) {
-        cleanupFunctions.push(addSpotlightEffect(ref.current));
-      }
-    });
-
-    return () => {
-      cleanupFunctions.forEach((cleanup) => cleanup());
-    };
   }, []);
-
-  // Separate useEffect for localRef spotlight (depends on localRecordings)
-  useEffect(() => {
-    if (localRef.current && localRecordings.length > 0) {
-      const cleanup = addSpotlightEffect(localRef.current);
-      return cleanup;
-    }
-  }, [localRecordings]);
 
   const fetchRecordings = async () => {
     try {
@@ -232,14 +200,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Hero Section */}
-        <div
-          ref={heroRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 md:p-12 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-12 mb-8">
           <div className="text-center">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -251,17 +212,17 @@ export default function HomePage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-secondary-800 mb-4">
               VietTune
             </h1>
             
             {/* Tagline */}
-            <p className="text-xl md:text-2xl text-emerald-300 mb-4">
+            <p className="text-xl md:text-2xl text-primary-600 mb-4">
               Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
             </p>
             
             {/* Description */}
-            <p className="text-white leading-relaxed max-w-2xl mx-auto mb-8">
+            <p className="text-secondary-600 leading-relaxed max-w-2xl mx-auto mb-8">
               Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
               <br />
               qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
@@ -297,15 +258,8 @@ export default function HomePage() {
         </div>
 
         {/* Features Section */}
-        <div
-          ref={featuresRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
-          <h2 className="text-2xl font-semibold mb-6 text-white">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-6 text-secondary-800">
             Tính năng chính
           </h2>
 
@@ -324,24 +278,17 @@ export default function HomePage() {
 
         {/* Local Recordings Section */}
         {localRecordings.length > 0 && (
-          <div
-            ref={localRef}
-            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-            style={{
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-            }}
-          >
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-white">Bản thu của bạn</h2>
-              <p className="text-sm text-white/70 mt-1">Các bản thu bạn đã tải lên gần đây</p>
+              <h2 className="text-2xl font-semibold text-secondary-800">Bản thu của bạn</h2>
+              <p className="text-sm text-secondary-500 mt-1">Các bản thu bạn đã tải lên gần đây</p>
             </div>
 
             <div className="space-y-4">
               {localRecordings.slice(0, 3).map((rec) => (
                 <div
                   key={rec.id}
-                  className="p-5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                  className="p-5 bg-gray-50 rounded-xl border border-gray-200 hover:border-primary-200 hover:shadow-md transition-all"
                 >
                   <AudioPlayer
                     src={rec.audioData}
@@ -351,27 +298,27 @@ export default function HomePage() {
                   />
                   
                   {/* Metadata Tags */}
-                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-white/10">
+                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-200">
                     {(rec.basicInfo?.genre || rec.userType || rec.detectedType) && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-primary-100 text-primary-700 rounded-full">
                         <Music className="h-3 w-3" />
                         {rec.basicInfo?.genre || rec.userType || rec.detectedType}
                       </span>
                     )}
                     {rec.culturalContext?.ethnicity && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-white/10 text-white/70 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-100 text-secondary-600 rounded-full">
                         <Users className="h-3 w-3" />
                         {rec.culturalContext.ethnicity}
                       </span>
                     )}
                     {rec.culturalContext?.region && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-white/10 text-white/70 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-100 text-secondary-600 rounded-full">
                         <MapPin className="h-3 w-3" />
                         {rec.culturalContext.region}
                       </span>
                     )}
                     {rec.uploadedAt && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-white/10 text-white/50 rounded-full ml-auto">
+                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-100 text-secondary-500 rounded-full ml-auto">
                         <Clock className="h-3 w-3" />
                         {new Date(rec.uploadedAt).toLocaleDateString("vi-VN")}
                       </span>
@@ -385,7 +332,7 @@ export default function HomePage() {
               <div className="mt-4 text-center">
                 <Link
                   to="/my-recordings"
-                  className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+                  className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
                 >
                   Xem tất cả {localRecordings.length} bản thu →
                 </Link>
@@ -396,14 +343,7 @@ export default function HomePage() {
 
         {/* Popular Recordings Section */}
         {popularRecordings.length > 0 && (
-          <div
-            ref={popularRef}
-            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-            style={{
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-            }}
-          >
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
             <SectionHeader
               icon={TrendingUp}
               title="Bản thu phổ biến"
@@ -421,14 +361,7 @@ export default function HomePage() {
 
         {/* Recent Recordings Section */}
         {recentRecordings.length > 0 && (
-          <div
-            ref={recentRef}
-            className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8 mb-8"
-            style={{
-              boxShadow:
-                "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-            }}
-          >
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
             <SectionHeader
               icon={Clock}
               title="Tải lên gần đây"
@@ -445,24 +378,17 @@ export default function HomePage() {
         )}
 
         {/* Call to Action Section */}
-        <div
-          ref={ctaRef}
-          className="spotlight-container backdrop-blur-xl bg-white/20 rounded-2xl shadow-2xl border border-white/40 p-8"
-          style={{
-            boxShadow:
-              "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-          }}
-        >
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           <div className="text-center max-w-2xl mx-auto">
-            <div className="p-3 bg-emerald-500/20 rounded-2xl w-fit mx-auto mb-4">
-              <Heart className="h-8 w-8 text-emerald-400" />
+            <div className="p-3 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
+              <Heart className="h-8 w-8 text-primary-600" />
             </div>
             
-            <h2 className="text-2xl font-semibold text-white mb-4">
+            <h2 className="text-2xl font-semibold text-secondary-800 mb-4">
               Hãy cùng gìn giữ di sản
             </h2>
             
-            <p className="text-white leading-relaxed mb-6 max-w-6xl mx-auto">
+            <p className="text-secondary-600 leading-relaxed mb-6 max-w-6xl mx-auto">
               Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân tộc.
               <br />
               Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn hóa

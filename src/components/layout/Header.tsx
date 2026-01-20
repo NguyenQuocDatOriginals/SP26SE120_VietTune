@@ -1,23 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Upload, User, LogOut, Menu, X } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
-import { addSpotlightEffect } from "@/utils/spotlight";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
-  const headerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const cleanupFunctions: (() => void)[] = [];
-    if (headerRef.current)
-      cleanupFunctions.push(addSpotlightEffect(headerRef.current));
-    return () => cleanupFunctions.forEach((cleanup) => cleanup());
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -26,14 +17,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 pt-4 px-4">
-      <nav
-        ref={headerRef}
-        className="spotlight-container backdrop-blur-xl bg-white/20 rounded-full shadow-2xl border border-white/40"
-        style={{
-          boxShadow:
-            "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)",
-        }}
-      >
+      <nav className="bg-white rounded-full shadow-lg border border-gray-100">
         <div className="px-6 py-2.5">
           <div className="grid grid-cols-3 items-center">
             {/* Logo */}
@@ -44,7 +28,7 @@ export default function Header() {
                   alt="VietTune Logo"
                   className="h-9 w-9 object-contain rounded-lg"
                 />
-                <span className="text-xl font-bold text-white drop-shadow-lg">
+                <span className="text-xl font-bold text-primary-600">
                   {APP_NAME}
                 </span>
               </Link>
@@ -54,31 +38,31 @@ export default function Header() {
             <div className="hidden lg:flex lg:flex-nowrap lg:items-center lg:justify-center lg:space-x-4">
               <Link
                 to="/upload"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
+                className="text-secondary-700 text-sm font-medium hover:text-primary-600 active:text-primary-700 transition-colors whitespace-nowrap"
               >
                 Đóng góp bản thu
               </Link>
               <Link
                 to="/instruments"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
+                className="text-secondary-700 text-sm font-medium hover:text-primary-600 active:text-primary-700 transition-colors whitespace-nowrap"
               >
                 Nhạc cụ truyền thống
               </Link>
               <Link
                 to="/ethnicities"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
+                className="text-secondary-700 text-sm font-medium hover:text-primary-600 active:text-primary-700 transition-colors whitespace-nowrap"
               >
                 Dân tộc Việt Nam
               </Link>
               <Link
                 to="/masters"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
+                className="text-secondary-700 text-sm font-medium hover:text-primary-600 active:text-primary-700 transition-colors whitespace-nowrap"
               >
                 Nghệ nhân âm nhạc
               </Link>
               <Link
                 to="/about"
-                className="text-white text-sm font-medium hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow whitespace-nowrap"
+                className="text-secondary-700 text-sm font-medium hover:text-primary-600 active:text-primary-700 transition-colors whitespace-nowrap"
               >
                 Giới thiệu VietTune
               </Link>
@@ -88,7 +72,7 @@ export default function Header() {
             <div className="hidden lg:flex lg:items-center lg:justify-end lg:space-x-3">
               <Link
                 to="/search"
-                className="p-2 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                className="p-2 text-secondary-600 hover:text-primary-600 active:text-primary-700 transition-colors"
               >
                 <Search className="h-5 w-5" />
               </Link>
@@ -104,32 +88,27 @@ export default function Header() {
                   </Link>
                   <div className="relative group">
                     <button className="btn-liquid-glass-secondary flex items-center gap-1.5 text-sm px-4 py-2">
-                      <User className="h-4 w-4 text-white" />
-                      <span className="text-xs font-medium text-white">
+                      <User className="h-4 w-4 text-secondary-600" />
+                      <span className="text-xs font-medium text-secondary-700">
                         {user?.username}
                       </span>
                     </button>
-                    <div
-                      className="absolute right-0 mt-2 w-56 backdrop-blur-xl bg-white/90 rounded-xl shadow-2xl border border-white/40 py-2 hidden group-hover:block"
-                      style={{
-                        boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.3)",
-                      }}
-                    >
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 hidden group-hover:block">
                       <Link
                         to="/profile"
-                        className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-emerald-100 hover:text-emerald-900 transition-colors"
+                        className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                       >
                         Hồ sơ
                       </Link>
                       {user?.role === "ADMIN" && (
                         <Link
                           to="/admin"
-                          className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-emerald-100 hover:text-emerald-900 transition-colors"
+                          className="block px-4 py-3 text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
                         >
                           Quản trị hệ thống
                         </Link>
                       )}
-                      <div className="border-t border-secondary-200 my-1"></div>
+                      <div className="border-t border-gray-100 my-1"></div>
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors"
@@ -144,7 +123,7 @@ export default function Header() {
                 <>
                   <Link
                     to="/login"
-                    className="px-4 py-2 text-sm text-white font-semibold hover:text-emerald-300 active:text-emerald-400 transition-colors drop-shadow"
+                    className="px-4 py-2 text-sm text-secondary-700 font-semibold hover:text-primary-600 active:text-primary-700 transition-colors"
                   >
                     Đăng nhập
                   </Link>
@@ -159,10 +138,10 @@ export default function Header() {
             </div>
 
             {/* Mobile menu button */}
-            <div className="lg:hidden flex items-center">
+            <div className="lg:hidden flex items-center justify-end">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1.5 text-white hover:text-emerald-300 active:text-emerald-400 transition-colors"
+                className="p-1.5 text-secondary-600 hover:text-primary-600 active:text-primary-700 transition-colors"
               >
                 {isMobileMenuOpen ? (
                   <X className="h-6 w-6" />
@@ -175,38 +154,38 @@ export default function Header() {
 
           {/* Mobile menu */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden pt-4 mt-4 space-y-2 border-t border-white/30">
+            <div className="lg:hidden pt-4 mt-4 space-y-2 border-t border-gray-100">
               <Link
                 to="/upload"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Đóng góp
               </Link>
               <Link
                 to="/instruments"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Nhạc cụ truyền thống
               </Link>
               <Link
                 to="/ethnicities"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Dân tộc Việt Nam
               </Link>
               <Link
                 to="/masters"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Nghệ nhân âm nhạc
               </Link>
               <Link
                 to="/about"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Về VietTune
@@ -215,14 +194,14 @@ export default function Header() {
                 <>
                   <Link
                     to="/upload"
-                    className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Tải lên
                   </Link>
                   <Link
                     to="/profile"
-                    className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Hồ sơ
@@ -230,7 +209,7 @@ export default function Header() {
                   {user?.role === "ADMIN" && (
                     <Link
                       to="/admin"
-                      className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                      className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Quản trị hệ thống
@@ -241,7 +220,7 @@ export default function Header() {
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-3 text-red-300 font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    className="w-full text-left px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors"
                   >
                     Đăng xuất
                   </button>
@@ -250,14 +229,14 @@ export default function Header() {
                 <>
                   <Link
                     to="/login"
-                    className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    className="block px-4 py-3 text-secondary-700 font-medium hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Đăng nhập
                   </Link>
                   <Link
                     to="/register"
-                    className="block px-4 py-3 text-emerald-300 font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    className="block px-4 py-3 text-primary-600 font-medium hover:bg-primary-50 rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Đăng ký
