@@ -10,7 +10,7 @@ export default function AboutPage() {
         </h1>
 
         <div className="prose max-w-none">
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">Sứ mệnh</h2>
             <p className="text-neutral-700 leading-relaxed mb-4">
               54 dân tộc Việt Nam có kho tàng âm nhạc phong phú được truyền
@@ -29,7 +29,7 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-6">
+            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                 <Target className="h-6 w-6 text-primary-600" />
               </div>
@@ -44,7 +44,7 @@ export default function AboutPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-6">
+            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="bg-secondary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                 <Users className="h-6 w-6 text-secondary-600" />
               </div>
@@ -58,7 +58,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="bg-secondary-50 rounded-2xl border border-neutral-200 p-6 mb-8 shadow-md">
+          <div className="rounded-2xl border border-neutral-200 p-6 mb-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Heart className="h-6 w-6 text-primary-600" />
             </div>
@@ -70,7 +70,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Tính năng chính
             </h2>
@@ -107,7 +107,7 @@ export default function AboutPage() {
           </div>
 
           {/* Terms and Conditions Link */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 text-center">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 text-center" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="bg-neutral-100 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto">
               <FileText className="h-6 w-6 text-neutral-600" />
             </div>

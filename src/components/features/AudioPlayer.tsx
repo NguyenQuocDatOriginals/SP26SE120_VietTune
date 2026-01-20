@@ -1,8 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Music, Users, MapPin, Clock, Repeat } from "lucide-react";
 
 // Module-scoped active audio so only one player plays at a time
 let activeAudio: HTMLAudioElement | null = null;
+
+// Recording metadata type (matches LocalRecording from HomePage)
+interface RecordingMetadata {
+  id: string;
+  name: string;
+  audioData: string;
+  userType?: string;
+  detectedType?: string;
+  basicInfo?: {
+    title?: string;
+    artist?: string;
+    genre?: string;
+  };
+  culturalContext?: {
+    ethnicity?: string;
+    region?: string;
+  };
+  uploadedAt?: string;
+}
 
 type Props = {
   src: string;
@@ -10,6 +29,10 @@ type Props = {
   artist?: string;
   compact?: boolean;
   className?: string;
+  // New props for container mode
+  recording?: RecordingMetadata;
+  onDelete?: (id: string) => void;
+  showContainer?: boolean;
 };
 
 export default function AudioPlayer({ 
@@ -17,7 +40,10 @@ export default function AudioPlayer({
   title, 
   artist, 
   compact = false, 
-  className = "" 
+  className = "",
+  recording,
+  onDelete,
+  showContainer = false
 }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -27,6 +53,7 @@ export default function AudioPlayer({
   const [savedVolume, setSavedVolume] = useState(1); // Store volume before muting
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLooping, setIsLooping] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -152,7 +179,224 @@ export default function AudioPlayer({
     }
   };
 
+  const toggleLoop = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.loop = !isLooping;
+    setIsLooping(!isLooping);
+  };
+
   const progressPercent = duration ? (currentTime / duration) * 100 : 0;
+
+  // Container version with delete button and metadata
+  if (showContainer && recording) {
+    return (
+      <div className={className}>
+        <div
+          className="p-5 rounded-xl border border-neutral-200"
+          style={{ backgroundColor: '#FFFCF5' }}
+        >
+          {/* Audio Player (Full Version) */}
+          <div className="w-full">
+            <audio ref={audioRef} src={src} preload="metadata" />
+
+            <div className="p-4 border border-neutral-200 rounded-2xl" style={{ backgroundColor: '#FFFCF5' }}>
+              {/* Title & Artist */}
+              {(title || artist) && (
+                <div className="mb-4">
+                  {title && (
+                    <h4 className="text-neutral-800 font-medium truncate">{title}</h4>
+                  )}
+                  {artist && (
+                    <p className="text-neutral-500 text-sm truncate">{artist}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div 
+                  className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
+                  onMouseDown={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const updateProgress = (clientX: number) => {
+                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                      seekTo(percent * duration);
+                    };
+                    updateProgress(e.clientX);
+                    
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      updateProgress(moveEvent.clientX);
+                    };
+                    const onMouseUp = () => {
+                      document.removeEventListener('mousemove', onMouseMove);
+                      document.removeEventListener('mouseup', onMouseUp);
+                    };
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                  }}
+                >
+                  <div 
+                    className="h-full bg-primary-600 rounded-full transition-none"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                  {/* Thumb */}
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                    style={{ left: `calc(${progressPercent}% - 8px)` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2">
+                  <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
+                  <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
+                </div>
+              </div>
+
+              {/* Controls */}
+              <div className="relative flex items-center justify-center">
+                {/* Left: Delete Button - Positioned absolutely */}
+                {onDelete && (
+                  <div className="absolute left-0">
+                    <button
+                      onClick={() => onDelete(recording.id)}
+                      className="w-9 h-9 rounded-full flex items-center justify-center border border-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                      style={{ backgroundColor: '#FFFCF5' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                      title="Xóa bản thu"
+                    >
+                      <Trash2 className="w-4 h-4 text-primary-600" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Center: Play/Pause */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => seekBy(-5)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+                    title="Lùi 5 giây"
+                  >
+                    <RotateCcw className="w-6 h-6" strokeWidth={2} />
+                    <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
+                  </button>
+                  
+                  <button
+                    onClick={togglePlay}
+                    disabled={isLoading}
+                    className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg hover:shadow-xl shadow-primary-500/30"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : playing ? (
+                      <Pause className="w-6 h-6 text-white" />
+                    ) : (
+                      <Play className="w-6 h-6 text-white ml-1" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => seekBy(5)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+                    title="Tiến 5 giây"
+                  >
+                    <RotateCw className="w-6 h-6" strokeWidth={2} />
+                    <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
+                  </button>
+                </div>
+
+                {/* Right: Repeat & Volume - Positioned absolutely */}
+                <div className="absolute right-0 flex items-center gap-2">
+                  <button
+                    onClick={toggleLoop}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${
+                      isLooping 
+                        ? 'bg-primary-600 text-white' 
+                        : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+                    }`}
+                    title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+                  >
+                    <Repeat className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={toggleMute}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                  >
+                    {isMuted || volume === 0 ? (
+                      <VolumeX className="w-4 h-4" />
+                    ) : (
+                      <Volume2 className="w-4 h-4" />
+                    )}
+                  </button>
+                  <div 
+                    className="w-20 hidden sm:block relative"
+                    onMouseDown={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const updateVolume = (clientX: number) => {
+                        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                        handleVolume(percent);
+                      };
+                      updateVolume(e.clientX);
+                      
+                      const onMouseMove = (moveEvent: MouseEvent) => {
+                        updateVolume(moveEvent.clientX);
+                      };
+                      const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                      };
+                      document.addEventListener('mousemove', onMouseMove);
+                      document.addEventListener('mouseup', onMouseUp);
+                    }}
+                  >
+                    <div className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer">
+                      <div 
+                        className="h-full bg-primary-600 rounded-full transition-none"
+                        style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+                      />
+                      {/* Thumb */}
+                      <div 
+                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                        style={{ left: `calc(${(isMuted ? 0 : volume) * 100}% - 6px)` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Metadata Tags */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-neutral-200">
+            {(recording.basicInfo?.genre || recording.userType || recording.detectedType) && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-primary-100 text-primary-700 rounded-full">
+                <Music className="h-3 w-3" />
+                {recording.basicInfo?.genre || recording.userType || recording.detectedType}
+              </span>
+            )}
+            {recording.culturalContext?.ethnicity && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-secondary-100 text-secondary-700 rounded-full">
+                <Users className="h-3 w-3" />
+                {recording.culturalContext.ethnicity}
+              </span>
+            )}
+            {recording.culturalContext?.region && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full">
+                <MapPin className="h-3 w-3" />
+                {recording.culturalContext.region}
+              </span>
+            )}
+            {recording.uploadedAt && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-500 rounded-full ml-auto">
+                <Clock className="h-3 w-3" />
+                {new Date(recording.uploadedAt).toLocaleDateString("vi-VN")}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Compact version for cards
   if (compact) {
@@ -224,7 +468,7 @@ export default function AudioPlayer({
     <div className={`${className} w-full`}>
       <audio ref={audioRef} src={src} preload="metadata" />
 
-      <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl">
+      <div className="p-4 border border-neutral-200 rounded-2xl" style={{ backgroundColor: '#FFFCF5' }}>
         {/* Title & Artist */}
         {(title || artist) && (
           <div className="mb-4">
@@ -313,8 +557,19 @@ export default function AudioPlayer({
             </button>
           </div>
 
-          {/* Right: Volume - Positioned absolutely */}
+          {/* Right: Repeat & Volume - Positioned absolutely */}
           <div className="absolute right-0 flex items-center gap-2">
+            <button
+              onClick={toggleLoop}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${
+                isLooping 
+                  ? 'bg-primary-600 text-white' 
+                  : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+              }`}
+              title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+            >
+              <Repeat className="w-4 h-4" />
+            </button>
             <button
               onClick={toggleMute}
               className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"

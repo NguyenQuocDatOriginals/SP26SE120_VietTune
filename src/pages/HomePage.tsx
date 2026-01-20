@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Music, Upload, Search, Users, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Clock, MapPin } from "lucide-react";
+import { Upload, Search, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Music, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -73,7 +73,7 @@ function StatCard({
   label: string;
 }) {
   return (
-    <div className="p-4 bg-white border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow">
+    <div className="p-4 border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow" style={{ backgroundColor: '#FFFCF5' }}>
       <div className="p-2 bg-secondary-100 rounded-lg w-fit mx-auto mb-2">
         <Icon className="h-5 w-5 text-secondary-600" />
       </div>
@@ -98,7 +98,10 @@ function FeatureCard({
   return (
     <Link
       to={to}
-      className="group p-6 bg-neutral-50 rounded-xl border border-neutral-200 hover:bg-white hover:border-primary-300 hover:shadow-md transition-all"
+      className="group p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all"
+      style={{ backgroundColor: '#FFFCF5' }}
+      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
+      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
     >
       <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4 group-hover:bg-primary-200 transition-colors">
         <Icon className="h-6 w-6 text-primary-600" />
@@ -129,8 +132,11 @@ function QuickActionButton({
         className={`w-full px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
           primary
             ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
-            : "bg-white text-primary-600 border-2 border-primary-600 hover:bg-primary-50 shadow-md hover:shadow-lg"
+            : "text-primary-600 border-2 border-primary-600 shadow-md hover:shadow-lg"
         }`}
+        style={!primary ? { backgroundColor: '#FFFCF5' } : undefined}
+        onMouseEnter={(e) => !primary && (e.currentTarget.style.backgroundColor = '#F5F0E8')}
+        onMouseLeave={(e) => !primary && (e.currentTarget.style.backgroundColor = '#FFFCF5')}
       >
         <Icon className="h-5 w-5" />
         {label}
@@ -163,6 +169,12 @@ export default function HomePage() {
     } catch (error) {
       console.error("Error fetching recordings:", error);
     }
+  };
+
+  const handleDeleteRecording = (id: string) => {
+    const updated = localRecordings.filter(rec => rec.id !== id);
+    setLocalRecordings(updated);
+    localStorage.setItem("localRecordings", JSON.stringify(updated));
   };
 
   // Stats data
@@ -200,7 +212,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Hero Section */}
-        <div className="bg-secondary-50 rounded-2xl shadow-lg p-8 md:p-12 mb-8">
+        <div className="rounded-2xl shadow-lg p-8 md:p-12 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <div className="text-center">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
@@ -258,7 +270,7 @@ export default function HomePage() {
         </div>
 
         {/* Features Section */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800">
             Tính năng chính
           </h2>
@@ -278,7 +290,7 @@ export default function HomePage() {
 
         {/* Local Recordings Section */}
         {localRecordings.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-neutral-800">Bản thu của bạn</h2>
               <p className="text-sm text-neutral-500 mt-1">Các bản thu bạn đã tải lên gần đây</p>
@@ -286,45 +298,15 @@ export default function HomePage() {
 
             <div className="space-y-4">
               {localRecordings.slice(0, 3).map((rec) => (
-                <div
+                <AudioPlayer
                   key={rec.id}
-                  className="p-5 bg-neutral-50 rounded-xl border border-neutral-200 hover:bg-neutral-100 transition-colors"
-                >
-                  <AudioPlayer
-                    src={rec.audioData}
-                    title={rec.basicInfo?.title || rec.name}
-                    artist={rec.basicInfo?.artist}
-                    className="w-full"
-                  />
-                  
-                  {/* Metadata Tags */}
-                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-neutral-200">
-                    {(rec.basicInfo?.genre || rec.userType || rec.detectedType) && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-primary-100 text-primary-700 rounded-full">
-                        <Music className="h-3 w-3" />
-                        {rec.basicInfo?.genre || rec.userType || rec.detectedType}
-                      </span>
-                    )}
-                    {rec.culturalContext?.ethnicity && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-secondary-100 text-secondary-700 rounded-full">
-                        <Users className="h-3 w-3" />
-                        {rec.culturalContext.ethnicity}
-                      </span>
-                    )}
-                    {rec.culturalContext?.region && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full">
-                        <MapPin className="h-3 w-3" />
-                        {rec.culturalContext.region}
-                      </span>
-                    )}
-                    {rec.uploadedAt && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-500 rounded-full ml-auto">
-                        <Clock className="h-3 w-3" />
-                        {new Date(rec.uploadedAt).toLocaleDateString("vi-VN")}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                  src={rec.audioData}
+                  title={rec.basicInfo?.title || rec.name}
+                  artist={rec.basicInfo?.artist}
+                  recording={rec}
+                  onDelete={handleDeleteRecording}
+                  showContainer={true}
+                />
               ))}
             </div>
 
@@ -343,7 +325,7 @@ export default function HomePage() {
 
         {/* Popular Recordings Section */}
         {popularRecordings.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <SectionHeader
               icon={TrendingUp}
               title="Bản thu phổ biến"
@@ -361,7 +343,7 @@ export default function HomePage() {
 
         {/* Recent Recordings Section */}
         {recentRecordings.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <SectionHeader
               icon={Clock}
               title="Tải lên gần đây"
@@ -378,7 +360,7 @@ export default function HomePage() {
         )}
 
         {/* Call to Action Section */}
-        <div className="bg-secondary-50 rounded-2xl shadow-md border border-neutral-200 p-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
           <div className="text-center max-w-2xl mx-auto">
             <div className="p-3 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
               <Heart className="h-8 w-8 text-primary-600" />

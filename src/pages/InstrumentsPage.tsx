@@ -7,7 +7,7 @@ export default function InstrumentsPage() {
         </h1>
 
         {/* Introduction */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Kể chuyện qua nhạc cụ
           </h2>
@@ -28,7 +28,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Classification */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Hệ thống phân loại
           </h2>
@@ -157,7 +157,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Bamboo Instruments */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Nhạc cụ tre trúc: Sáng tạo và thích nghi
           </h2>
@@ -221,7 +221,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Gong Culture */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Văn hóa cồng chiêng: Nhạc cụ thiêng liêng của cao nguyên Trung Bộ
           </h2>
@@ -286,7 +286,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* String Instruments */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Nhạc cụ dây: Thẩm mỹ tinh tế và kỹ thuật điêu luyện
           </h2>
@@ -347,7 +347,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Construction and Materials */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Tri thức truyền thống: Chế tác và vật liệu
           </h2>
@@ -412,7 +412,7 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Preservation Challenges */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
+        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Bảo tồn và nhu cầu tài liệu hóa
           </h2>

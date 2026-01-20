@@ -1,12 +1,31 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Compass, Music2, Globe, Users, Filter, Search, ChevronDown, Play, Disc, MapPin, AlertCircle } from "lucide-react";
+import { Compass, Filter, Search, ChevronDown, Play, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
-import { Recording } from "@/types";
+import { Recording, Region, RecordingType, VerificationStatus, RecordingQuality } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import Pagination from "@/components/common/Pagination";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+
+// Local recording type for client-saved uploads
+interface LocalRecording {
+  id: string;
+  name: string;
+  audioData: string;
+  userType?: string;
+  detectedType?: string;
+  basicInfo?: {
+    title?: string;
+    artist?: string;
+    genre?: string;
+  };
+  culturalContext?: {
+    ethnicity?: string;
+    region?: string;
+  };
+  uploadedAt?: string;
+}
 
 // ===== CONSTANTS =====
 const GENRES = [
@@ -86,6 +105,65 @@ const isClickOnScrollbar = (event: MouseEvent): boolean => {
   return false;
 };
 
+// Helper function to get audio duration from data URL
+const getAudioDuration = (audioDataUrl: string): Promise<number> => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.addEventListener('loadedmetadata', () => {
+      resolve(Math.floor(audio.duration));
+    });
+    audio.addEventListener('error', () => {
+      resolve(0); // Return 0 if error loading
+    });
+    audio.src = audioDataUrl;
+  });
+};
+
+// Convert LocalRecording to Recording format for display (async to get duration)
+const convertLocalToRecording = async (local: LocalRecording): Promise<Recording> => {
+  // Get actual audio duration
+  const duration = await getAudioDuration(local.audioData);
+  
+  return {
+    id: local.id,
+    title: local.basicInfo?.title || local.name,
+    titleVietnamese: local.basicInfo?.title || local.name,
+    description: `Bản thu được tải lên từ thiết bị của bạn`,
+    ethnicity: {
+      id: "local",
+      name: local.culturalContext?.ethnicity || "Không xác định",
+      nameVietnamese: local.culturalContext?.ethnicity || "Không xác định",
+      region: Region.RED_RIVER_DELTA,
+      recordingCount: 0,
+    },
+    region: Region.RED_RIVER_DELTA,
+    recordingType: RecordingType.OTHER,
+    duration: duration,
+    audioUrl: local.audioData,
+    instruments: [],
+    performers: [],
+    uploadedDate: local.uploadedAt || new Date().toISOString(),
+    uploader: {
+      id: "local-user",
+      username: "Bạn",
+      email: "",
+      fullName: "Người tải lên",
+      role: { toString: () => "USER" } as any,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    tags: [local.basicInfo?.genre || local.userType || local.detectedType || ""].filter(Boolean),
+    metadata: {
+      recordingQuality: RecordingQuality.FIELD_RECORDING,
+      lyrics: "",
+    },
+    verificationStatus: VerificationStatus.PENDING,
+    viewCount: 0,
+    likeCount: 0,
+    downloadCount: 0,
+  };
+};
+
 // ===== SEARCHABLE DROPDOWN COMPONENT =====
 function SearchableDropdown({
   value,
@@ -153,9 +231,10 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value || placeholder}
@@ -172,8 +251,9 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -190,7 +270,8 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 bg-neutral-50 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    style={{ backgroundColor: '#FFFCF5' }}
                     autoFocus
                   />
                 </div>
@@ -200,7 +281,7 @@ function SearchableDropdown({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#dc2626 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -219,7 +300,7 @@ function SearchableDropdown({
                     }}
                     className={`w-full px-5 py-3 text-left text-sm transition-colors ${
                       value === option
-                        ? "bg-primary-600 text-neutral-800 font-medium"
+                        ? "bg-primary-600 text-white font-medium"
                         : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                     }`}
                   >
@@ -232,38 +313,6 @@ function SearchableDropdown({
           document.body
         )}
     </div>
-  );
-}
-
-// ===== CATEGORY CARD COMPONENT =====
-function CategoryCard({
-  title,
-  count,
-  icon: Icon,
-  onClick,
-  isActive,
-}: {
-  title: string;
-  count: number;
-  icon: React.ElementType;
-  onClick: () => void;
-  isActive: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`p-4 rounded-xl border transition-all text-left shadow-sm hover:shadow-md ${
-        isActive
-          ? "bg-primary-50 border-primary-300"
-          : "bg-white border-neutral-200 hover:bg-neutral-50"
-      }`}
-    >
-      <div className={`p-2 rounded-lg w-fit mb-3 ${isActive ? "bg-primary-600/20" : "bg-neutral-100"}`}>
-        <Icon className={`h-5 w-5 ${isActive ? "text-primary-600" : "text-neutral-500"}`} />
-      </div>
-      <h3 className={`font-medium ${isActive ? "text-primary-700" : "text-neutral-800"}`}>{title}</h3>
-      <p className="text-sm text-neutral-500">{count.toLocaleString()} bản thu</p>
-    </button>
   );
 }
 
@@ -280,14 +329,10 @@ export default function ExplorePage() {
   const [selectedRegion, setSelectedRegion] = useState("Tất cả khu vực");
   const [selectedEthnicity, setSelectedEthnicity] = useState("Tất cả dân tộc");
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Categories data (mock)
-  const categories = [
-    { title: "Dân ca", count: 3245, icon: Music2 },
-    { title: "Ca trù", count: 892, icon: Disc },
-    { title: "Quan họ", count: 1567, icon: Users },
-    { title: "Chầu văn", count: 734, icon: MapPin },
-  ];
+  
+  // Custom input for "Khác" selections
+  const [customGenre, setCustomGenre] = useState("");
+  const [customEthnicity, setCustomEthnicity] = useState("");
 
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
@@ -304,12 +349,43 @@ export default function ExplorePage() {
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch API recordings
       const response = await recordingService.getRecordings(currentPage, 12);
-      setRecordings(response.items);
+      
+      // Load local recordings from localStorage
+      const localRecordingsRaw = localStorage.getItem("localRecordings");
+      const localRecordings: LocalRecording[] = localRecordingsRaw 
+        ? JSON.parse(localRecordingsRaw) 
+        : [];
+      
+      // Convert local recordings to Recording format (async to get durations)
+      const convertedLocalRecordings = await Promise.all(
+        localRecordings.map(convertLocalToRecording)
+      );
+      
+      // Merge: put local recordings first, then API recordings
+      const allRecordings = [...convertedLocalRecordings, ...response.items];
+      
+      setRecordings(allRecordings);
       setTotalPages(response.totalPages);
-      setTotalResults(response.total);
+      setTotalResults(response.total + localRecordings.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
+      
+      // Even if API fails, try to show local recordings
+      try {
+        const localRecordingsRaw = localStorage.getItem("localRecordings");
+        const localRecordings: LocalRecording[] = localRecordingsRaw 
+          ? JSON.parse(localRecordingsRaw) 
+          : [];
+        const convertedLocalRecordings = await Promise.all(
+          localRecordings.map(convertLocalToRecording)
+        );
+        setRecordings(convertedLocalRecordings);
+        setTotalResults(localRecordings.length);
+      } catch (localError) {
+        console.error("Error loading local recordings:", localError);
+      }
     } finally {
       setLoading(false);
     }
@@ -324,6 +400,8 @@ export default function ExplorePage() {
     setSelectedRegion("Tất cả khu vực");
     setSelectedEthnicity("Tất cả dân tộc");
     setSearchQuery("");
+    setCustomGenre("");
+    setCustomEthnicity("");
   };
 
   const hasActiveFilters =
@@ -332,61 +410,20 @@ export default function ExplorePage() {
     selectedEthnicity !== "Tất cả dân tộc" ||
     searchQuery !== "";
 
-  const features = [
-    {
-      icon: Music2,
-      title: "Đa dạng thể loại",
-      description: "Từ dân ca đến nhã nhạc cung đình",
-    },
-    {
-      icon: Globe,
-      title: "7 khu vực",
-      description: "Trải dài khắp đất nước Việt Nam",
-    },
-    {
-      icon: Users,
-      title: "54 dân tộc",
-      description: "Âm nhạc đặc trưng của mỗi dân tộc",
-    },
-  ];
-
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800 mb-4">
+          <h1 className="text-3xl font-bold text-neutral-800">
             Khám phá bản thu
           </h1>
-          <p className="text-neutral-600 leading-relaxed">
-            Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước
-          </p>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-md"
-            >
-              <div className="p-3 bg-primary-600/20 rounded-xl w-fit mb-4">
-                <feature.icon className="h-6 w-6 text-primary-600" />
-              </div>
-              <h3 className="text-neutral-800 font-semibold text-lg mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-neutral-600 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           {/* Search & Filters Section */}
-          <div className="border border-neutral-200 rounded-2xl p-8 bg-neutral-50 mb-8">
+          <div className="border border-neutral-200 rounded-2xl p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="flex items-start gap-3 mb-6">
               <div className="p-2 bg-primary-600/20 rounded-lg">
                 <Filter className="h-5 w-5 text-primary-600" />
@@ -413,7 +450,8 @@ export default function ExplorePage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm kiếm bản thu, nghệ nhân, nhạc cụ,..."
-                className="w-full pl-14 pr-5 py-3 bg-white text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                style={{ backgroundColor: '#FFFCF5' }}
               />
             </div>
 
@@ -423,10 +461,25 @@ export default function ExplorePage() {
                 <label className="block text-sm font-medium text-neutral-800">Thể loại</label>
                 <SearchableDropdown
                   value={selectedGenre}
-                  onChange={setSelectedGenre}
+                  onChange={(value) => {
+                    setSelectedGenre(value);
+                    if (value !== "Khác") {
+                      setCustomGenre("");
+                    }
+                  }}
                   options={GENRES}
                   placeholder="Chọn thể loại"
                 />
+                {selectedGenre === "Khác" && (
+                  <input
+                    type="text"
+                    value={customGenre}
+                    onChange={(e) => setCustomGenre(e.target.value)}
+                    placeholder="Nhập tên thể loại..."
+                    className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                  />
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -444,10 +497,25 @@ export default function ExplorePage() {
                 <label className="block text-sm font-medium text-neutral-800">Dân tộc</label>
                 <SearchableDropdown
                   value={selectedEthnicity}
-                  onChange={setSelectedEthnicity}
+                  onChange={(value) => {
+                    setSelectedEthnicity(value);
+                    if (value !== "Khác") {
+                      setCustomEthnicity("");
+                    }
+                  }}
                   options={ETHNICITIES}
                   placeholder="Chọn dân tộc"
                 />
+                {selectedEthnicity === "Khác" && (
+                  <input
+                    type="text"
+                    value={customEthnicity}
+                    onChange={(e) => setCustomEthnicity(e.target.value)}
+                    placeholder="Nhập tên dân tộc..."
+                    className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                  />
+                )}
               </div>
             </div>
 
@@ -456,33 +524,14 @@ export default function ExplorePage() {
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-6 py-2.5 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors shadow-sm hover:shadow-md"
+                  className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
+                  style={{ backgroundColor: '#FFFCF5' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
                 >
                   Xóa bộ lọc
                 </button>
               )}
-            </div>
-          </div>
-
-          {/* Popular Categories */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-neutral-800 mb-6 flex items-center gap-3">
-              <div className="p-2 bg-primary-600/20 rounded-lg">
-                <Disc className="h-5 w-5 text-primary-600" />
-              </div>
-              Thể loại phổ biến
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {categories.map((category, index) => (
-                <CategoryCard
-                  key={index}
-                  title={category.title}
-                  count={category.count}
-                  icon={category.icon}
-                  onClick={() => setSelectedGenre(category.title)}
-                  isActive={selectedGenre === category.title}
-                />
-              ))}
             </div>
           </div>
 
@@ -504,7 +553,7 @@ export default function ExplorePage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : recordings.length === 0 ? (
-            <div className="p-12 text-center bg-neutral-50 rounded-xl border border-neutral-200">
+            <div className="p-12 text-center rounded-xl border border-neutral-200" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="p-4 bg-primary-600/20 rounded-2xl w-fit mx-auto mb-4">
                 <Search className="h-8 w-8 text-primary-600" />
               </div>
@@ -535,7 +584,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
+        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800 flex items-center gap-3">
             <div className="p-2 bg-primary-600/20 rounded-lg">
               <Compass className="h-5 w-5 text-primary-600" />
@@ -545,7 +594,10 @@ export default function ExplorePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Link
               to="/search"
-              className="p-6 bg-white rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
+              className="p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
+              style={{ backgroundColor: '#FFFCF5' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-primary-600/20 rounded-lg">
@@ -563,7 +615,10 @@ export default function ExplorePage() {
             </Link>
             <Link
               to="/upload"
-              className="p-6 bg-white rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
+              className="p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all group"
+              style={{ backgroundColor: '#FFFCF5' }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-primary-600/20 rounded-lg">

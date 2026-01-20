@@ -2,8 +2,21 @@ import { Link } from "react-router-dom";
 import { Mail, Facebook, Youtube } from "lucide-react";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
+import toast from "react-hot-toast";
 
 export default function Footer() {
+  const handleCopyEmail = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const email = "contact@viettune.com";
+    
+    navigator.clipboard.writeText(email).then(() => {
+      toast.success("Đã sao chép địa chỉ email thành công!", {
+        duration: 2000,
+      });
+    }).catch(() => {
+      toast.error("Không thể copy email. Vui lòng thử lại!");
+    });
+  };
   return (
     <footer className="pb-4 px-4">
         <div className="bg-primary-700 rounded-2xl shadow-2xl shadow-black/50 px-8 py-12">
@@ -100,20 +113,29 @@ export default function Footer() {
               </h3>
               <div className="flex space-x-4 mb-6">
                 <a
-                  href="#"
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                  title="Facebook"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
                 <a
-                  href="#"
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                  title="YouTube"
                 >
                   <Youtube className="h-5 w-5" />
                 </a>
                 <a
-                  href="mailto:contact@viettune.com"
+                  href="https://mail.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                  title="Email"
                 >
                   <Mail className="h-5 w-5" />
                 </a>
@@ -124,7 +146,9 @@ export default function Footer() {
                 </p>
                 <a
                   href="mailto:contact@viettune.com"
-                  className="text-white/90 text-sm hover:text-secondary-300 transition-colors"
+                  onClick={handleCopyEmail}
+                  className="text-white/90 text-sm hover:text-secondary-300 transition-colors cursor-pointer"
+                  title="Click để copy email"
                 >
                   contact@viettune.com
                 </a>

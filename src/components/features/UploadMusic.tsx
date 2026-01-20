@@ -494,9 +494,10 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value || placeholder}
@@ -513,8 +514,9 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -531,7 +533,8 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 bg-neutral-50 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    style={{ backgroundColor: '#FFFCF5' }}
                     autoFocus
                   />
                 </div>
@@ -541,7 +544,7 @@ function SearchableDropdown({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#dc2626 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -560,7 +563,7 @@ function SearchableDropdown({
                     }}
                     className={`w-full px-5 py-3 text-left text-sm transition-colors ${
                       value === option
-                        ? "bg-primary-600 text-neutral-800 font-medium"
+                        ? "bg-primary-600 text-white font-medium"
                         : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                     }`}
                   >
@@ -648,29 +651,18 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 bg-white border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <div className="flex flex-wrap gap-1.5">
           {values.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-neutral-800 text-xs rounded-full font-medium"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
             >
               {tag}
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeTag(tag);
-                  }}
-                  className="hover:bg-primary-700 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
             </span>
           ))}
           {!disabled && (
@@ -692,8 +684,9 @@ function MultiSelectTags({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -705,7 +698,7 @@ function MultiSelectTags({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#dc2626 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -917,9 +910,10 @@ function DatePicker({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value ? formatDisplayDate(value) : placeholder}
@@ -936,8 +930,9 @@ function DatePicker({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -963,15 +958,18 @@ function DatePicker({
                       setShowMonthDropdown(!showMonthDropdown);
                       setShowYearDropdown(false);
                     }}
-                    className="px-4 py-1.5 bg-white border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-1"
+                    className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
                   >
                     {monthNames[viewDate.getMonth()]}
                     <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showMonthDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {showMonthDropdown && (
-                    <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]">
-                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
+                    <div className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]" style={{ backgroundColor: '#FFFCF5' }}>
+                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#9B2C2C rgba(255,255,255,0.3)' }}>
                         {monthNames.map((month, index) => {
                           const isFutureMonth = viewDate.getFullYear() === currentYear && index > currentMonth;
                           return (
@@ -1010,15 +1008,18 @@ function DatePicker({
                       setShowYearDropdown(!showYearDropdown);
                       setShowMonthDropdown(false);
                     }}
-                    className="px-4 py-1.5 bg-white border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-1"
+                    className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
                   >
                     Năm {viewDate.getFullYear()}
                     <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showYearDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   
                   {showYearDropdown && (
-                    <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]">
-                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
+                    <div className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[120px]" style={{ backgroundColor: '#FFFCF5' }}>
+                      <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#9B2C2C rgba(255,255,255,0.3)' }}>
                         {years.map((year) => (
                           <button
                             key={year}
@@ -1073,14 +1074,17 @@ function DatePicker({
                     setShowMonthDropdown(false);
                     setShowYearDropdown(false);
                   }}
-                  className="px-4 py-1.5 bg-white border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-1"
+                  className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
+                  style={{ backgroundColor: '#FFFCF5' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
                 >
                   Tháng {viewLunar.month}{viewLunar.leap ? ' nhuận' : ''}
                   <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarMonthDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {showLunarMonthDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[150px]">
+                  <div className="absolute top-full left-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[150px]" style={{ backgroundColor: '#FFFCF5' }}>
                     <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
                       {lunarMonths.map((lm) => {
                         const isFutureLunarMonth = viewLunar.year === currentLunar.year && 
@@ -1128,14 +1132,17 @@ function DatePicker({
                     setShowMonthDropdown(false);
                     setShowYearDropdown(false);
                   }}
-                  className="px-4 py-1.5 bg-white border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-1"
+                  className="px-4 py-1.5 border border-neutral-400 rounded-full text-sm font-medium text-neutral-900 transition-colors flex items-center gap-1"
+                  style={{ backgroundColor: '#FFFCF5' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF7E6'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
                 >
                   Năm {getCanChi(viewLunar.year)}
                   <ChevronDown className={`h-3 w-3 text-neutral-500 transition-transform ${showLunarYearDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {showLunarYearDropdown && (
-                  <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[200px]">
+                  <div className="absolute top-full right-0 mt-1 rounded-xl shadow-xl border border-neutral-300 overflow-hidden z-10 min-w-[200px]" style={{ backgroundColor: '#FFFCF5' }}>
                     <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#dc2626 rgba(255,255,255,0.3)' }}>
                       {lunarYears.map((year) => {
                         const isFutureYear = year > currentLunar.year;
@@ -1278,9 +1285,10 @@ function TextInput({
   multiline?: boolean;
   rows?: number;
 }) {
-  const baseClasses = `w-full px-5 py-3 bg-white text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+  const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
     disabled ? "opacity-50 cursor-not-allowed" : ""
   }`;
+  const bgStyle = { backgroundColor: '#FFFCF5' };
 
   if (multiline) {
     return (
@@ -1292,6 +1300,7 @@ function TextInput({
         disabled={disabled}
         rows={rows}
         className={`${baseClasses} rounded-2xl resize-none`}
+        style={bgStyle}
       />
     );
   }
@@ -1305,6 +1314,7 @@ function TextInput({
       required={required}
       disabled={disabled}
       className={`${baseClasses} rounded-full`}
+      style={bgStyle}
     />
   );
 }
@@ -1352,7 +1362,7 @@ function SectionHeader({
         <h3 className="text-xl font-semibold text-neutral-800 flex items-center gap-2">
           {title}
           {optional && (
-            <span className="text-xs font-normal text-neutral-800/50 bg-neutral-100 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F5F0E8' }}>
               Tùy chọn
             </span>
           )}
@@ -1381,11 +1391,14 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
+    <div className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between bg-neutral-50 hover:bg-neutral-100 transition-colors"
+        className="w-full p-6 flex items-center justify-between transition-colors"
+        style={{ backgroundColor: '#FFFCF5' }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-600/20 rounded-lg">
@@ -1395,7 +1408,7 @@ function CollapsibleSection({
             <h3 className="text-lg font-semibold text-neutral-800 flex items-center gap-2">
               {title}
               {optional && (
-                <span className="text-xs font-normal text-neutral-800/50 bg-neutral-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full border border-neutral-300" style={{ backgroundColor: '#F5F0E8' }}>
                   Tùy chọn
                 </span>
               )}
@@ -1800,7 +1813,7 @@ export default function UploadMusic() {
         </div>
       )}
 
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
+      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Upload}
           title="Tải lên file âm thanh"
@@ -1815,7 +1828,7 @@ export default function UploadMusic() {
                 ? "border-red-500/50 bg-red-500/5" 
                 : file 
                   ? "border-primary-500/50 bg-primary-600/5" 
-                  : "border-neutral-200 hover:border-primary-400 hover:bg-neutral-50"
+                  : "border-neutral-200 hover:border-primary-400"
             } ${isAnalyzing ? "opacity-60 cursor-wait" : "cursor-pointer"}`}
           >
             <input
@@ -1885,7 +1898,7 @@ export default function UploadMusic() {
         </div>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
+      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Music}
           title="Thông tin mô tả cơ bản"
@@ -1923,7 +1936,8 @@ export default function UploadMusic() {
                   setArtistUnknown(e.target.checked);
                   if (e.target.checked) setArtist("");
                 }}
-                className="w-4 h-4 rounded border-neutral-400 bg-white text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                style={{ backgroundColor: '#FFFCF5' }}
               />
               Không rõ
             </label>
@@ -1949,7 +1963,8 @@ export default function UploadMusic() {
                   setComposerUnknown(e.target.checked);
                   if (e.target.checked) setComposer("");
                 }}
-                className="w-4 h-4 rounded border-neutral-400 bg-white text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                style={{ backgroundColor: '#FFFCF5' }}
               />
               Dân gian/Không rõ tác giả
             </label>
@@ -1989,7 +2004,8 @@ export default function UploadMusic() {
                     setCustomLanguage("");
                   }
                 }}
-                className="w-4 h-4 rounded border-neutral-400 bg-white text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                style={{ backgroundColor: '#FFFCF5' }}
               />
               Không có ngôn ngữ
             </label>
@@ -2036,7 +2052,8 @@ export default function UploadMusic() {
                   setDateEstimated(e.target.checked);
                   if (e.target.checked) setRecordingDate("");
                 }}
-                className="w-4 h-4 rounded border-neutral-400 bg-white text-primary-600 focus:ring-primary-500"
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                style={{ backgroundColor: '#FFFCF5' }}
               />
               Ngày ước tính/không chính xác
             </label>
@@ -2147,11 +2164,22 @@ export default function UploadMusic() {
                         setInstruments([]);
                       }
                     }}
-                    className={`px-4 py-2 rounded-xl text-sm transition-all ${
+                    className={`px-4 py-2 rounded-xl text-sm transition-all border border-neutral-200 ${
                       performanceType === pt.key
                         ? "bg-primary-600 text-white"
-                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-200"
+                        : "text-neutral-700"
                     }`}
+                    style={performanceType !== pt.key ? { backgroundColor: '#FFFCF5' } : undefined}
+                    onMouseEnter={(e) => {
+                      if (performanceType !== pt.key) {
+                        e.currentTarget.style.backgroundColor = '#F5F0E8';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (performanceType !== pt.key) {
+                        e.currentTarget.style.backgroundColor = '#FFFCF5';
+                      }
+                    }}
                   >
                     {pt.label}
                   </button>
@@ -2184,7 +2212,12 @@ export default function UploadMusic() {
             <div className="md:col-span-2">
               <FormField label="Tải lên lời bài hát (nếu có)" hint="File .txt hoặc .docx">
                 <div className="flex items-center gap-3">
-                  <label className="btn-liquid-glass-secondary px-4 py-2 rounded-xl cursor-pointer text-sm">
+                  <label 
+                    className="px-4 py-2 rounded-xl cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+                  >
                     Chọn file
                     <input
                       type="file"
@@ -2289,7 +2322,10 @@ export default function UploadMusic() {
             type="button"
             onClick={resetForm}
             disabled={isSubmitting}
-            className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+            className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
+            style={{ backgroundColor: '#FFFCF5' }}
+            onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#F5F0E8')}
+            onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#FFFCF5')}
           >
             Đặt lại
           </button>

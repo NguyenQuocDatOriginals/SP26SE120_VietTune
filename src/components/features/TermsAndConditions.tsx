@@ -14,7 +14,8 @@ export default function TermsAndConditions({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div
-        className="bg-white rounded-2xl shadow-xl border border-neutral-300 max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+        className="rounded-2xl shadow-xl border border-neutral-300 max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+        style={{ backgroundColor: '#FFF2D6' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200 bg-primary-600">
@@ -32,18 +33,18 @@ export default function TermsAndConditions({
           className="overflow-y-auto p-6 space-y-6"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: "#dc2626 rgba(255,255,255,0.3)",
+            scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
           }}
         >
           {/* Preamble */}
-          <div className="bg-secondary-50 rounded-2xl shadow-md border border-neutral-200 p-6">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
             <p className="text-neutral-700 leading-relaxed">
               <strong className="text-neutral-900">Lưu ý quan trọng:</strong> Vui lòng đọc kỹ các Điều khoản và Điều kiện này trước khi sử dụng Nền tảng VietTune. Bằng việc truy cập, đăng ký tài khoản hoặc sử dụng bất kỳ tính năng nào của Nền tảng, Người dùng được xem là đã đọc, hiểu rõ và đồng ý ràng buộc bởi toàn bộ nội dung của văn bản này.
             </p>
           </div>
 
           {/* 1. Definitions */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 1. Định nghĩa và giải thích thuật ngữ
             </h2>
@@ -73,7 +74,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 2. General Provisions */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 2. Quy định chung
             </h2>
@@ -94,7 +95,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 3. Mission and Purpose */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 3. Sứ mệnh và mục đích hoạt động
             </h2>
@@ -119,7 +120,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 4. User Account */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 4. Đăng ký và quản lý Tài khoản
             </h2>
@@ -152,7 +153,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 5. Content Contribution */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 5. Đóng góp và sử dụng Nội dung
             </h2>
@@ -190,7 +191,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 6. Intellectual Property */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 6. Quyền sở hữu trí tuệ
             </h2>
@@ -222,7 +223,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 7. Verification Process */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 7. Quy trình xác minh và kiểm duyệt
             </h2>
@@ -253,7 +254,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 8. Privacy and Data Protection */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 8. Quyền riêng tư và bảo vệ dữ liệu cá nhân
             </h2>
@@ -286,7 +287,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 9. Community Standards */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 9. Quy tắc ứng xử cộng đồng
             </h2>
@@ -318,7 +319,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 10. Prohibited Activities */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 10. Các hành vi bị nghiêm cấm
             </h2>
@@ -347,7 +348,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* 11-20 Combined */}
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Điều 11. Ghi nhận nguồn và trích dẫn
             </h2>
@@ -426,7 +427,7 @@ export default function TermsAndConditions({
           </div>
 
           {/* Last Updated */}
-          <div className="bg-secondary-50 rounded-2xl shadow-md border border-neutral-200 p-6">
+          <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
             <p className="text-neutral-700">
               <strong className="text-neutral-900">Ngày có hiệu lực:</strong> 20 tháng 1 năm 2026
             </p>

@@ -9,7 +9,7 @@
 
   color-scheme: light;
   color: #171717;
-  background-color: #fafafa;
+  background-color: #FFF2D6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,14 +21,23 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #FFF2D6 !important;
 }
 
 #root {
   min-height: 100vh;
+  background-color: #FFF2D6 !important;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Override bg-white to use cream background */
+@layer utilities {
+  .bg-white {
+    background-color: #FFF2D6 !important;
+  }
 }
 
 @layer components {
@@ -53,7 +62,8 @@ body {
   }
 
   .card {
-    @apply bg-white rounded-2xl shadow-md p-6;
+    @apply rounded-2xl shadow-md p-6;
+    background-color: #FFF2D6;
   }
 
   .badge {
@@ -82,7 +92,8 @@ body {
 
   /* Container - Clean solid background with subtle shadow */
   .vt-container {
-    @apply relative overflow-hidden bg-white rounded-2xl;
+    @apply relative overflow-hidden rounded-2xl;
+    background-color: #FFF2D6;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
@@ -101,9 +112,10 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
-  /* Section with yellow accent */
+  /* Section with cream accent */
   .vt-section-accent {
-    @apply relative overflow-hidden bg-secondary-50 rounded-2xl border border-neutral-200 shadow-md;
+    @apply relative overflow-hidden rounded-2xl border border-neutral-200 shadow-md;
+    background-color: #FFFEF9;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
@@ -127,7 +139,8 @@ body {
 
   /* Outline Button - Red border */
   .btn-vt-outline {
-    @apply px-6 py-3 bg-white text-primary-600 font-semibold rounded-full shadow-md;
+    @apply px-6 py-3 text-primary-600 font-semibold rounded-full shadow-md;
+    background-color: #FFF2D6;
     @apply border-2 border-primary-600;
     @apply transition-all duration-200;
     @apply hover:bg-primary-50 hover:shadow-lg;

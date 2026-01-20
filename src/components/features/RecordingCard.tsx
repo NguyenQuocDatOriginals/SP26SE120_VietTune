@@ -3,6 +3,7 @@ import { Play, Heart, Download, Eye } from "lucide-react";
 import { usePlayerStore } from "@/stores/playerStore";
 import Badge from "../common/Badge";
 import { RECORDING_TYPE_NAMES } from "@/config/constants";
+import logo from "@/components/image/VietTune logo.png";
 
 interface RecordingCardProps {
   recording: Recording;
@@ -17,7 +18,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow" style={{ backgroundColor: '#FFFCF5' }}>
       {/* Cover Image */}
       <div className="relative h-48 bg-neutral-100">
         {recording.coverImage ? (
@@ -29,7 +30,11 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
         ) : (
           <div className="w-full h-full flex items-center justify-center text-neutral-400">
             <div className="text-center">
-              <p className="text-4xl mb-2">🎵</p>
+              <img 
+                src={logo} 
+                alt="VietTune Logo" 
+                className="w-24 h-24 mb-2 mx-auto object-contain opacity-40"
+              />
               <p className="text-sm">Chưa có ảnh bìa</p>
             </div>
           </div>

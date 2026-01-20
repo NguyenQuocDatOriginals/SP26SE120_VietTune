@@ -15,7 +15,7 @@ export default function MainLayout() {
   }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#FFF2D6' }}>
       <Header />
       <main className="flex-grow">
         <Outlet />

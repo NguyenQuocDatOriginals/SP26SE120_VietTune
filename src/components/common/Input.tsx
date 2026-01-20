@@ -25,12 +25,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={clsx(
             "w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm",
-            "bg-white text-neutral-900 placeholder:text-neutral-500",
+            "text-neutral-900 placeholder:text-neutral-500",
             error
               ? "border-primary-400 focus:border-primary-500"
               : "border-neutral-400 focus:border-transparent",
             className
           )}
+          style={{ backgroundColor: '#FFFCF5' }}
           {...props}
         />
         {error && <p className="mt-0.5 text-xs text-primary-600">{error}</p>}

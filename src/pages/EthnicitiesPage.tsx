@@ -5,7 +5,7 @@ export default function EthnicitiesPage() {
         <h1 className="text-3xl font-bold text-neutral-800 mb-8">Dân tộc Việt Nam</h1>
 
         {/* Introduction */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Bức tranh đa sắc của các dân tộc
           </h2>
@@ -21,7 +21,7 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Northern Region */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc trung du và miền núi Bắc Bộ
           </h2>
@@ -93,7 +93,7 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Central Highlands */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc cao nguyên Trung Bộ
           </h2>
@@ -153,7 +153,7 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Southern and Coastal */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Dân tộc Nam Trung Bộ, Đông Nam Bộ và Tây Nam Bộ
           </h2>
@@ -195,7 +195,7 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Musical Characteristics */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Đặc điểm âm nhạc chung
           </h2>
@@ -265,7 +265,7 @@ export default function EthnicitiesPage() {
         </div>
 
         {/* Additional Groups */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
+        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Các dân tộc đáng chú ý khác
           </h2>

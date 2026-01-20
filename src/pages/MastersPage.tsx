@@ -7,7 +7,7 @@ export default function MastersPage() {
         </h1>
 
         {/* Introduction */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Những người giữ lửa truyền thống
           </h2>
@@ -24,7 +24,7 @@ export default function MastersPage() {
         </div>
 
         {/* Roles and Significance */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Vai trò của nghệ nhân âm nhạc
           </h2>
@@ -100,7 +100,7 @@ export default function MastersPage() {
         </div>
 
         {/* Notable Traditions */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Các truyền thống âm nhạc tiêu biểu và nghệ nhân
           </h2>
@@ -175,7 +175,7 @@ export default function MastersPage() {
         </div>
 
         {/* Challenges and Preservation */}
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
+        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Thách thức của việc truyền thống
           </h2>
@@ -233,7 +233,7 @@ export default function MastersPage() {
         </div>
 
         {/* How to Contribute */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
+        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Đóng góp tài liệu hóa nghệ nhân
           </h2>

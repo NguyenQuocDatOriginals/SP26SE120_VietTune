@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Search, MapPin, Music, Filter, X, Plus, AlertCircle } from "lucide-react";
+import { ChevronDown, Search, MapPin, Music, Filter, Plus, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import { SearchFilters, Region, RecordingType, VerificationStatus } from "@/types";
 
@@ -161,9 +161,10 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 bg-white text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-500"}>
           {value || placeholder}
@@ -180,8 +181,9 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -198,7 +200,8 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 bg-neutral-50 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    style={{ backgroundColor: '#FFFCF5' }}
                     autoFocus
                   />
                 </div>
@@ -208,7 +211,7 @@ function SearchableDropdown({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#dc2626 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -227,7 +230,7 @@ function SearchableDropdown({
                     }}
                     className={`w-full px-5 py-3 text-left text-sm transition-colors ${
                       value === option
-                        ? "bg-primary-600 text-neutral-800 font-medium"
+                        ? "bg-primary-600 text-white font-medium"
                         : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
                     }`}
                   >
@@ -301,10 +304,6 @@ function MultiSelectTags({
     };
   }, [isOpen]);
 
-  const removeTag = (tag: string) => {
-    onChange(values.filter((v) => v !== tag));
-  };
-
   const addTag = (tag: string) => {
     onChange([...values, tag]);
     setSearch("");
@@ -315,29 +314,18 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 bg-white border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
+        style={{ backgroundColor: '#FFFCF5' }}
       >
         <div className="flex flex-wrap gap-1.5">
           {values.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-neutral-800 text-xs rounded-full font-medium"
+              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
             >
               {tag}
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeTag(tag);
-                  }}
-                  className="hover:bg-primary-700 rounded-full p-0.5 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
             </span>
           ))}
           {!disabled && (
@@ -359,8 +347,9 @@ function MultiSelectTags({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="bg-white rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
             style={{
+              backgroundColor: '#FFFCF5',
               position: "absolute",
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -372,7 +361,7 @@ function MultiSelectTags({
               className="max-h-60 overflow-y-auto"
               style={{
                 scrollbarWidth: "thin",
-                scrollbarColor: "#dc2626 rgba(255, 255, 255, 0.3)",
+                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -458,11 +447,14 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
+    <div className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between bg-neutral-50 hover:bg-neutral-100 transition-colors"
+        className="w-full p-6 flex items-center justify-between transition-colors"
+        style={{ backgroundColor: '#FFFCF5' }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-600/20 rounded-lg">
@@ -569,7 +561,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input */}
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
+      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Search}
           title="Tìm kiếm bản thu"
@@ -585,7 +577,8 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Tìm kiếm bản thu, nhạc cụ, nghệ nhân,..."
-              className="w-full pl-14 pr-5 py-3 bg-white text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+              className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+              style={{ backgroundColor: '#FFFCF5' }}
             />
           </div>
           <button
@@ -596,28 +589,19 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <Search className="h-5 w-5" />
             Tìm kiếm
           </button>
-          {(query || activeFilterCount > 0) && (
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="bg-neutral-100 hover:bg-neutral-200 w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm hover:shadow-md"
-            >
-              <X className="h-5 w-5 text-neutral-700" strokeWidth={2.5} />
-            </button>
-          )}
         </div>
 
         {activeFilterCount > 0 && (
           <div className="mt-3 flex items-center gap-2">
             <span className="text-sm text-neutral-500">
-              {activeFilterCount} bộ lọc đang áp dụng
+              {activeFilterCount} bộ lọc đang được áp dụng
             </span>
           </div>
         )}
       </div>
 
       {/* Basic Filters */}
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
+      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Music}
           title="Bộ lọc cơ bản"
@@ -747,7 +731,10 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleClearAll}
-          className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors shadow-sm hover:shadow-md"
+          className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
+          style={{ backgroundColor: '#FFFCF5' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
         >
           Xóa bộ lọc
         </button>
