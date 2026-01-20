@@ -73,7 +73,7 @@ function StatCard({
   label: string;
 }) {
   return (
-    <div className="p-4 bg-white border border-neutral-200 rounded-xl text-center hover:shadow-md transition-shadow">
+    <div className="p-4 bg-white border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow">
       <div className="p-2 bg-secondary-100 rounded-lg w-fit mx-auto mb-2">
         <Icon className="h-5 w-5 text-secondary-600" />
       </div>
@@ -129,7 +129,7 @@ function QuickActionButton({
         className={`w-full px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
           primary
             ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
-            : "bg-white text-primary-600 border-2 border-primary-600 hover:bg-primary-50"
+            : "bg-white text-primary-600 border-2 border-primary-600 hover:bg-primary-50 shadow-md hover:shadow-lg"
         }`}
       >
         <Icon className="h-5 w-5" />

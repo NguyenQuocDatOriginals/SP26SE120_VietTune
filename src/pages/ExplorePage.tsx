@@ -252,7 +252,7 @@ function CategoryCard({
   return (
     <button
       onClick={onClick}
-      className={`p-4 rounded-xl border transition-all text-left ${
+      className={`p-4 rounded-xl border transition-all text-left shadow-sm hover:shadow-md ${
         isActive
           ? "bg-primary-50 border-primary-300"
           : "bg-white border-neutral-200 hover:bg-neutral-50"
@@ -456,7 +456,7 @@ export default function ExplorePage() {
               {hasActiveFilters && (
                 <button
                   onClick={handleClearFilters}
-                  className="px-6 py-2.5 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors"
+                  className="px-6 py-2.5 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 rounded-xl transition-colors shadow-sm hover:shadow-md"
                 >
                   Xóa bộ lọc
                 </button>
@@ -535,7 +535,7 @@ export default function ExplorePage() {
         </div>
 
         {/* Explore More Section */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-sm">
+        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
           <h2 className="text-2xl font-semibold mb-6 text-neutral-800 flex items-center gap-3">
             <div className="p-2 bg-primary-600/20 rounded-lg">
               <Compass className="h-5 w-5 text-primary-600" />

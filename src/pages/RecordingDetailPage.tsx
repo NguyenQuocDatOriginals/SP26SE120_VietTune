@@ -140,7 +140,7 @@ export default function RecordingDetailPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
               <div className="flex items-center space-x-8 text-neutral-700">
                 <div className="flex items-center">
                   <Eye className="h-5 w-5 mr-2 text-primary-600" />
@@ -159,7 +159,7 @@ export default function RecordingDetailPage() {
 
             {/* Description */}
             {recording.description && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">Mô tả</h2>
                 <p className="text-neutral-700 whitespace-pre-wrap">
                   {recording.description}
@@ -169,7 +169,7 @@ export default function RecordingDetailPage() {
 
             {/* Metadata */}
             {recording.metadata && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Thông tin chuyên môn
                 </h2>
@@ -220,7 +220,7 @@ export default function RecordingDetailPage() {
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Lời bài hát
                 </h2>
@@ -242,7 +242,7 @@ export default function RecordingDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Basic Info */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Thông tin
               </h3>
@@ -291,7 +291,7 @@ export default function RecordingDetailPage() {
 
             {/* Instruments */}
             {recording.instruments.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nhạc cụ
                 </h3>
@@ -307,7 +307,7 @@ export default function RecordingDetailPage() {
 
             {/* Performers */}
             {recording.performers.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nghệ nhân
                 </h3>
@@ -332,7 +332,7 @@ export default function RecordingDetailPage() {
 
             {/* Tags */}
             {recording.tags.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">Thẻ</h3>
                 <div className="flex flex-wrap gap-2">
                   {recording.tags.map((tag, index) => (
@@ -345,7 +345,7 @@ export default function RecordingDetailPage() {
             )}
 
             {/* Uploader */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Người tải lên
               </h3>

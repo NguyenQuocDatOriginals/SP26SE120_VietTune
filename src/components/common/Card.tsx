@@ -14,7 +14,7 @@ export default function Card({
 }: CardProps) {
   const variants = {
     default: "bg-white shadow-md",
-    bordered: "bg-white border border-neutral-200 shadow-sm",
+    bordered: "bg-white border border-neutral-200 shadow-md",
     elevated: "bg-white shadow-lg",
   };
 

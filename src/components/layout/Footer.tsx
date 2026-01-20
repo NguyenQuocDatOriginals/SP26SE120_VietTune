@@ -2,16 +2,11 @@ import { Link } from "react-router-dom";
 import { Mail, Facebook, Youtube } from "lucide-react";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
-import { useState } from "react";
-import TermsAndConditions from "@/components/features/TermsAndConditions";
 
 export default function Footer() {
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
-
   return (
-    <>
-      <footer className="pb-4 px-4">
-        <div className="bg-primary-700 rounded-2xl shadow-lg px-8 py-12">
+    <footer className="pb-4 px-4">
+        <div className="bg-primary-700 rounded-2xl shadow-2xl shadow-black/50 px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-48">
             {/* About */}
             <div className="min-w-[350px]">
@@ -88,12 +83,12 @@ export default function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    onClick={() => setIsTermsOpen(true)}
-                    className="text-white/90 font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors text-left"
+                  <Link
+                    to="/terms"
+                    className="text-white/90 font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors"
                   >
                     Điều khoản và Điều kiện
-                  </button>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -145,12 +140,5 @@ export default function Footer() {
           </div>
         </div>
       </footer>
-
-      {/* Terms and Conditions Modal */}
-      <TermsAndConditions 
-        isOpen={isTermsOpen} 
-        onClose={() => setIsTermsOpen(false)} 
-      />
-    </>
   );
 }

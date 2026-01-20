@@ -17,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 pt-4 px-4">
-      <nav className="bg-primary-700 rounded-full shadow-lg">
+      <nav className="bg-primary-700 rounded-full shadow-2xl shadow-black/50">
         <div className="px-6 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -87,7 +87,7 @@ export default function Header() {
                     Tải lên
                   </Link>
                   <div className="relative group">
-                    <button className="flex items-center gap-1.5 text-sm px-4 py-2 bg-white/10 text-white font-medium rounded-full hover:bg-white/20 transition-colors">
+                    <button className="flex items-center gap-1.5 text-sm px-4 py-2 bg-white/10 text-white font-medium rounded-full hover:bg-white/20 transition-colors shadow-md hover:shadow-lg">
                       <User className="h-4 w-4" />
                       <span className="text-xs font-medium">
                         {user?.username}
@@ -111,7 +111,7 @@ export default function Header() {
                       <div className="border-t border-neutral-200 my-1"></div>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-3 text-sm font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-700 flex items-center transition-colors"
+                        className="w-full text-left px-4 py-3 text-sm font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-700 flex items-center transition-colors shadow-sm hover:shadow-md"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
                         Đăng xuất

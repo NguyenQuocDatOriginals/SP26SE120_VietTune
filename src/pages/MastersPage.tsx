@@ -233,7 +233,7 @@ export default function MastersPage() {
         </div>
 
         {/* How to Contribute */}
-        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-sm">
+        <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Đóng góp tài liệu hóa nghệ nhân
           </h2>

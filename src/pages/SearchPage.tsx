@@ -163,7 +163,7 @@ export default function SearchPage() {
 
         {/* Initial State - Search Tips */}
         {!hasSearched && (
-          <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-sm">
+          <div className="bg-secondary-50 border border-neutral-200 rounded-2xl p-8 shadow-md">
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800 flex items-center gap-3">
               <div className="p-2 bg-primary-100 rounded-lg">
                 <Search className="h-5 w-5 text-primary-600" />

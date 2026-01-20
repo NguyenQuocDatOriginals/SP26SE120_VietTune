@@ -165,7 +165,7 @@ export default function AudioPlayer({
           <button
             onClick={togglePlay}
             disabled={isLoading}
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0 shadow-md hover:shadow-lg"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -277,15 +277,12 @@ export default function AudioPlayer({
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between">
-          {/* Left: Empty placeholder for balance */}
-          <div className="w-9 h-9" />
-
+        <div className="relative flex items-center justify-center">
           {/* Center: Play/Pause */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => seekBy(-5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
               title="Lùi 5 giây"
             >
               <RotateCcw className="w-6 h-6" strokeWidth={2} />
@@ -295,7 +292,7 @@ export default function AudioPlayer({
             <button
               onClick={togglePlay}
               disabled={isLoading}
-              className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg shadow-primary-500/30"
+              className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg hover:shadow-xl shadow-primary-500/30"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -308,7 +305,7 @@ export default function AudioPlayer({
 
             <button
               onClick={() => seekBy(5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
               title="Tiến 5 giây"
             >
               <RotateCw className="w-6 h-6" strokeWidth={2} />
@@ -316,11 +313,11 @@ export default function AudioPlayer({
             </button>
           </div>
 
-          {/* Right: Volume */}
-          <div className="flex items-center gap-2">
+          {/* Right: Volume - Positioned absolutely */}
+          <div className="absolute right-0 flex items-center gap-2">
             <button
               onClick={toggleMute}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-4 h-4" />

@@ -1,4 +1,5 @@
-import { Target, Users, Heart } from "lucide-react";
+import { Target, Users, Heart, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function AboutPage() {
   return (
@@ -57,7 +58,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="bg-secondary-50 rounded-2xl border border-neutral-200 p-6 mb-8 shadow-sm">
+          <div className="bg-secondary-50 rounded-2xl border border-neutral-200 p-6 mb-8 shadow-md">
             <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
               <Heart className="h-6 w-6 text-primary-600" />
             </div>
@@ -69,7 +70,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8">
+          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 mb-8">
             <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
               Tính năng chính
             </h2>
@@ -103,6 +104,26 @@ export default function AboutPage() {
                 </span>
               </li>
             </ul>
+          </div>
+
+          {/* Terms and Conditions Link */}
+          <div className="bg-white rounded-2xl shadow-md border border-neutral-200 p-8 text-center">
+            <div className="bg-neutral-100 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto">
+              <FileText className="h-6 w-6 text-neutral-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3 text-neutral-800">
+              Điều khoản và Điều kiện
+            </h3>
+            <p className="text-neutral-700 mb-6">
+              Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
+            </p>
+            <Link
+              to="/terms"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-full hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+            >
+              <FileText className="h-5 w-5" />
+              Xem Điều khoản và Điều kiện
+            </Link>
           </div>
         </div>
       </div>

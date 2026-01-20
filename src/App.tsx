@@ -9,6 +9,7 @@ import InstrumentsPage from "./pages/InstrumentsPage";
 import EthnicitiesPage from "./pages/EthnicitiesPage";
 import MastersPage from "./pages/MastersPage";
 import AboutPage from "./pages/AboutPage";
+import TermsPage from "./pages/TermsPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -31,6 +32,7 @@ function App() {
           <Route path="ethnicities" element={<EthnicitiesPage />} />
           <Route path="masters" element={<MastersPage />} />
           <Route path="about" element={<AboutPage />} />
+          <Route path="terms" element={<TermsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="admin/*" element={<AdminDashboard />} />
         </Route>

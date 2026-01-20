@@ -458,7 +458,7 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -569,7 +569,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input */}
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
         <SectionHeader
           icon={Search}
           title="Tìm kiếm bản thu"
@@ -600,7 +600,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <button
               type="button"
               onClick={handleClearAll}
-              className="bg-neutral-100 hover:bg-neutral-200 w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full"
+              className="bg-neutral-100 hover:bg-neutral-200 w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full shadow-sm hover:shadow-md"
             >
               <X className="h-5 w-5 text-neutral-700" strokeWidth={2.5} />
             </button>
@@ -617,7 +617,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       </div>
 
       {/* Basic Filters */}
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
         <SectionHeader
           icon={Music}
           title="Bộ lọc cơ bản"
@@ -747,7 +747,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleClearAll}
-          className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors"
+          className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors shadow-sm hover:shadow-md"
         >
           Xóa bộ lọc
         </button>

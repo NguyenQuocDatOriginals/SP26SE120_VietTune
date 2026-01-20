@@ -6,7 +6,7 @@ export default function AdminDashboard() {
           Bảng điều khiển quản trị
         </h1>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-neutral-300 p-8">
+        <div className="bg-white rounded-2xl shadow-md border border-neutral-300 p-8">
           <p className="text-neutral-700">
             Bảng điều khiển quản trị với các tính năng quản lý người dùng, kiểm
             duyệt nội dung và phân tích dữ liệu sẽ được triển khai tại đây.

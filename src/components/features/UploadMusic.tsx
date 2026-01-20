@@ -1381,7 +1381,7 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-md">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -1800,7 +1800,7 @@ export default function UploadMusic() {
         </div>
       )}
 
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
         <SectionHeader
           icon={Upload}
           title="Tải lên file âm thanh"
@@ -1885,7 +1885,7 @@ export default function UploadMusic() {
         </div>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-md">
         <SectionHeader
           icon={Music}
           title="Thông tin mô tả cơ bản"
@@ -2289,7 +2289,7 @@ export default function UploadMusic() {
             type="button"
             onClick={resetForm}
             disabled={isSubmitting}
-            className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-neutral-100 text-neutral-800 rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
           >
             Đặt lại
           </button>

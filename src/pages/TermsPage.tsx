@@ -1,40 +1,12 @@
-import { X } from "lucide-react";
-
-interface TermsAndConditionsProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function TermsAndConditions({
-  isOpen,
-  onClose,
-}: TermsAndConditionsProps) {
-  if (!isOpen) return null;
-
+export default function TermsPage() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div
-        className="bg-white rounded-2xl shadow-xl border border-neutral-300 max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-neutral-200 bg-primary-600">
-          <h2 className="text-2xl font-bold text-white">Điều khoản và Điều kiện</h2>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-          >
-            <X className="h-5 w-5 text-white" strokeWidth={2.5} />
-          </button>
-        </div>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-neutral-800 mb-8">
+          Điều khoản và Điều kiện
+        </h1>
 
-        {/* Content */}
-        <div
-          className="overflow-y-auto p-6 space-y-6"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#dc2626 rgba(255,255,255,0.3)",
-          }}
-        >
+        <div className="prose max-w-none space-y-6">
           {/* Preamble */}
           <div className="bg-secondary-50 rounded-2xl shadow-md border border-neutral-200 p-6">
             <p className="text-neutral-700 leading-relaxed">
