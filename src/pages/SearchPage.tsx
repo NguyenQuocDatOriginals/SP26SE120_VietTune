@@ -24,6 +24,19 @@ interface LocalRecording {
     region?: string;
   };
   uploadedAt?: string;
+  moderation?: {
+    status?: string;
+    claimedBy?: string | null;
+    claimedByName?: string | null;
+    reviewedAt?: string | null;
+    reviewerId?: string | null;
+  };
+  uploader?: {
+    id?: string;
+    username?: string;
+    email?: string;
+    fullName?: string;
+  };
 }
 
 // Helper function to get audio duration from data URL
@@ -47,6 +60,8 @@ const convertLocalToRecording = async (
   // Get actual audio duration
   const duration = await getAudioDuration(local.audioData);
 
+  const isApproved = local.moderation?.status === "APPROVED";
+
   return {
     id: local.id,
     title: local.basicInfo?.title || local.name,
@@ -67,10 +82,10 @@ const convertLocalToRecording = async (
     performers: [],
     uploadedDate: local.uploadedAt || new Date().toISOString(),
     uploader: {
-      id: "local-user",
-      username: "Bạn",
-      email: "",
-      fullName: "Người tải lên",
+      id: local.uploader?.id || "local-user",
+      username: local.uploader?.username || "Bạn",
+      email: local.uploader?.email || "",
+      fullName: local.uploader?.fullName || local.uploader?.username || "Người tải lên",
       role: UserRole.USER,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -82,7 +97,7 @@ const convertLocalToRecording = async (
       recordingQuality: RecordingQuality.FIELD_RECORDING,
       lyrics: "",
     },
-    verificationStatus: VerificationStatus.PENDING,
+    verificationStatus: isApproved ? VerificationStatus.VERIFIED : VerificationStatus.PENDING,
     viewCount: 0,
     likeCount: 0,
     downloadCount: 0,
@@ -119,17 +134,24 @@ export default function SearchPage() {
         ? JSON.parse(localRecordingsRaw)
         : [];
 
-      // Convert local recordings to Recording format (async to get durations)
-      const convertedLocalRecordings = await Promise.all(
-        localRecordings.map(convertLocalToRecording),
+      // Only include approved local recordings in public results
+      const approvedLocalRecordings = localRecordings.filter(
+        (r) => r.moderation?.status === "APPROVED",
       );
 
-      // Merge: put local recordings first, then API recordings
-      const allRecordings = [...convertedLocalRecordings, ...response.items];
+      // Convert local recordings to Recording format (async to get durations)
+      const convertedLocalRecordings = await Promise.all(
+        approvedLocalRecordings.map(convertLocalToRecording),
+      );
+
+      // Merge: put local recordings first, then API recordings (defensive checks in case API returns unexpected shape)
+      const apiItems = response && Array.isArray((response as any).items) ? (response as any).items : [];
+      const allRecordings = [...convertedLocalRecordings, ...apiItems];
 
       setRecordings(allRecordings);
-      setTotalPages(response.totalPages);
-      setTotalResults(response.total + localRecordings.length);
+      setTotalPages(response?.totalPages ?? 1);
+      const apiTotal = (response && typeof (response as any).total === 'number') ? (response as any).total : apiItems.length;
+      setTotalResults(apiTotal + approvedLocalRecordings.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
 
@@ -139,11 +161,14 @@ export default function SearchPage() {
         const localRecordings: LocalRecording[] = localRecordingsRaw
           ? JSON.parse(localRecordingsRaw)
           : [];
+        const approvedLocalRecordings = localRecordings.filter(
+          (r) => r.moderation?.status === "APPROVED",
+        );
         const convertedLocalRecordings = await Promise.all(
-          localRecordings.map(convertLocalToRecording),
+          approvedLocalRecordings.map(convertLocalToRecording),
         );
         setRecordings(convertedLocalRecordings);
-        setTotalResults(localRecordings.length);
+        setTotalResults(approvedLocalRecordings.length);
       } catch (localError) {
         console.error("Error loading local recordings:", localError);
       }
@@ -229,58 +254,67 @@ export default function SearchPage() {
             ) : (
               <>
                 <div className="space-y-4 mb-8">
-                  {recordings.map((recording) => {
-                    // Check if this is a local recording
-                    const isLocalRecording =
-                      recording.uploader?.id === "local-user" ||
-                      recording.audioUrl.startsWith("data:audio");
+                  {recordings.map((recording, idx) => {
+                    try {
+                      // Check if this is a local recording (guard audioUrl access)
+                      const isLocalRecording =
+                        recording.uploader?.id === "local-user" ||
+                        (typeof recording.audioUrl === "string" && recording.audioUrl.startsWith("data:audio"));
 
-                    // Load original LocalRecording from localStorage if it's a local recording
-                    let localRecordingData: LocalRecording | undefined = undefined;
-                    if (isLocalRecording) {
-                      try {
-                        const localRecordingsRaw = localStorage.getItem("localRecordings");
-                        if (localRecordingsRaw) {
-                          const localRecordings: LocalRecording[] = JSON.parse(localRecordingsRaw);
-                          const originalLocalRecording = localRecordings.find(
-                            (r) => r.id === recording.id
-                          );
-                          if (originalLocalRecording) {
-                            localRecordingData = originalLocalRecording;
+                      // Load original LocalRecording from localStorage if it's a local recording
+                      let localRecordingData: LocalRecording | undefined = undefined;
+                      if (isLocalRecording) {
+                        try {
+                          const localRecordingsRaw = localStorage.getItem("localRecordings");
+                          if (localRecordingsRaw) {
+                            const localRecordings: LocalRecording[] = JSON.parse(localRecordingsRaw);
+                            const originalLocalRecording = localRecordings.find(
+                              (r) => r.id === recording.id
+                            );
+                            if (originalLocalRecording) {
+                              localRecordingData = originalLocalRecording;
+                            }
                           }
+                        } catch (error) {
+                          console.error("Error loading local recording:", error);
                         }
-                      } catch (error) {
-                        console.error("Error loading local recording:", error);
                       }
-                    }
 
-                    // Delete handler for local recordings
-                    const handleDelete = isLocalRecording ? handleDeleteRecording : undefined;
+                      // Delete handler for local recordings
+                      const handleDelete = isLocalRecording ? handleDeleteRecording : undefined;
 
-                    // Use LocalRecording data directly like HomePage.tsx
-                    if (localRecordingData) {
+                      // Use LocalRecording data directly like HomePage.tsx
+                      if (localRecordingData) {
+                        return (
+                          <AudioPlayer
+                            key={recording.id || `local-${idx}`}
+                            src={localRecordingData.audioData}
+                            title={localRecordingData.basicInfo?.title || localRecordingData.name}
+                            artist={localRecordingData.basicInfo?.artist}
+                            recording={localRecordingData}
+                            onDelete={handleDelete}
+                            showContainer={true}
+                          />
+                        );
+                      }
+
+                      // For API recordings, use AudioPlayer without container (guard src)
                       return (
                         <AudioPlayer
-                          key={recording.id}
-                          src={localRecordingData.audioData}
-                          title={localRecordingData.basicInfo?.title || localRecordingData.name}
-                          artist={localRecordingData.basicInfo?.artist}
-                          recording={localRecordingData}
-                          onDelete={handleDelete}
-                          showContainer={true}
+                          key={recording.id || `api-${idx}`}
+                          src={typeof recording.audioUrl === "string" ? recording.audioUrl : ""}
+                          title={recording.title}
+                          artist={recording.titleVietnamese}
                         />
                       );
+                    } catch (err) {
+                      console.error("Error rendering recording:", err, recording);
+                      return (
+                        <div key={recording.id || `err-${idx}`} className="border border-red-200 rounded-xl p-6 text-center text-red-600">
+                          <p>Có lỗi khi hiển thị bản thu.</p>
+                        </div>
+                      );
                     }
-
-                    // For API recordings, use AudioPlayer without container
-                    return (
-                      <AudioPlayer
-                        key={recording.id}
-                        src={recording.audioUrl}
-                        title={recording.title}
-                        artist={recording.titleVietnamese}
-                      />
-                    );
                   })}
                 </div>
 

@@ -15,6 +15,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ModerationPage from "./pages/ModerationPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -153,6 +154,7 @@ function App() {
           <Route path="about" element={<AboutPage />} />
           <Route path="terms" element={<TermsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="moderation" element={<ModerationPage />} />
           <Route path="admin/*" element={<AdminDashboard />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />

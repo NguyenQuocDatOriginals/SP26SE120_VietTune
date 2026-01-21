@@ -12,14 +12,16 @@
 
 #### Front-end
 
-- React 18 with TypeScript
-- Vite for build tooling and development server
-- Tailwind CSS for responsive styling
-- Zustand for state management
-- React Router Dom for navigation
-- Axios for API integration
-- React Hook Form for form handling
-- Lucide React for icons
+- React 18 with TypeScript (strict typing and modern React patterns)
+- Vite for fast build tooling and development server
+- Tailwind CSS for utility-first, responsive styling
+- Zustand for lightweight app state (auth, player, search stores)
+- React Router (react-router-dom) for client-side navigation
+- Axios for HTTP API integration
+- React Hook Form for login/register form handling
+- Lucide React for icons and lightweight SVG components
+- Local UI patterns: portal-based dropdowns & modals, toast notifications, and extensive localStorage usage (demo auth, local recordings, offline flows)
+- Tooling: ESLint + TypeScript checks, Prettier formatting, and Tailwind-based design tokens
 
 #### Back-end
 

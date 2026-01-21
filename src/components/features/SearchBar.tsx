@@ -662,14 +662,14 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (genres.length > 0) count++;
-    if (ethnicity) count++;
-    if (region) count++;
-    if (province) count++;
-    if (eventType) count++;
-    if (performanceType) count++;
+    if (ethnicity && !ethnicity.startsWith("Tất cả")) count++;
+    if (region && !region.startsWith("Tất cả")) count++;
+    if (province && !province.startsWith("Tất cả")) count++;
+    if (eventType && !eventType.startsWith("Tất cả")) count++;
+    if (performanceType && !performanceType.startsWith("Tất cả")) count++;
     if (instruments.length > 0) count++;
-    if (yearRange) count++;
-    if (verificationStatus) count++;
+    if (yearRange && !yearRange.startsWith("Tất cả")) count++;
+    if (verificationStatus && !verificationStatus.startsWith("Tất cả")) count++;
     return count;
   }, [genres, ethnicity, region, province, eventType, performanceType, instruments, yearRange, verificationStatus]);
 
@@ -678,14 +678,75 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       query: query.trim() || undefined,
     };
 
-    if (genres.length > 0) {
-      filters.recordingTypes = genres as RecordingType[];
+    // Map performanceType label to RecordingType enum when selected
+    if (performanceType && !performanceType.startsWith("Tất cả")) {
+      const perfMap: Record<string, RecordingType> = {
+        "Chỉ nhạc cụ (Instrumental)": RecordingType.INSTRUMENTAL,
+        "Chỉ giọng hát (Acappella)": RecordingType.VOCAL,
+        "Giọng hát có nhạc đệm": RecordingType.VOCAL,
+      };
+      const mapped = perfMap[performanceType];
+      if (mapped) filters.recordingTypes = [mapped];
     }
-    if (region) {
-      filters.regions = [region as Region];
+
+    // Use human-friendly selections (genres, instruments, eventType, province) as tags
+    const tags: string[] = [];
+    if (genres.length > 0) tags.push(...genres);
+    if (instruments.length > 0) tags.push(...instruments);
+    if (eventType && !eventType.startsWith("Tất cả")) tags.push(eventType);
+    if (province && !province.startsWith("Tất cả")) tags.push(province);
+    if (tags.length > 0) filters.tags = tags;
+
+    // Map region label back to Region enum
+    const regionMap: Record<string, Region> = {
+      "Trung du và miền núi Bắc Bộ": Region.NORTHERN_MOUNTAINS,
+      "Đồng bằng Bắc Bộ": Region.RED_RIVER_DELTA,
+      "Bắc Trung Bộ": Region.NORTH_CENTRAL,
+      "Nam Trung Bộ": Region.SOUTH_CENTRAL_COAST,
+      "Cao nguyên Trung Bộ": Region.CENTRAL_HIGHLANDS,
+      "Đông Nam Bộ": Region.SOUTHEAST,
+      "Tây Nam Bộ": Region.MEKONG_DELTA,
+    };
+    if (region && !region.startsWith("Tất cả")) {
+      const mapped = regionMap[region];
+      if (mapped) filters.regions = [mapped];
     }
-    if (verificationStatus) {
-      filters.verificationStatus = [verificationStatus as VerificationStatus];
+
+    // Map verification status label back to enum key
+    if (verificationStatus && !verificationStatus.startsWith("Tất cả")) {
+      const vs = VERIFICATION_STATUS.find((s) => s.label === verificationStatus);
+      if (vs) filters.verificationStatus = [vs.key as VerificationStatus];
+    }
+
+    // Map year range label to dateFrom/dateTo
+    if (yearRange && !yearRange.startsWith("Tất cả")) {
+      const yr = YEAR_RANGES.find(y => y.label === yearRange);
+      if (yr) {
+        switch (yr.key) {
+          case "before_1950":
+            filters.dateTo = "1949-12-31";
+            break;
+          case "1950_1975":
+            filters.dateFrom = "1950-01-01";
+            filters.dateTo = "1975-12-31";
+            break;
+          case "1975_2000":
+            filters.dateFrom = "1975-01-01";
+            filters.dateTo = "2000-12-31";
+            break;
+          case "2000_2010":
+            filters.dateFrom = "2000-01-01";
+            filters.dateTo = "2010-12-31";
+            break;
+          case "2010_2020":
+            filters.dateFrom = "2010-01-01";
+            filters.dateTo = "2020-12-31";
+            break;
+          case "after_2020":
+            filters.dateFrom = "2021-01-01";
+            break;
+        }
+      }
     }
 
     onSearch(filters);

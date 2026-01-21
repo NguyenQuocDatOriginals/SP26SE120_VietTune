@@ -14,6 +14,39 @@ export default function LoginPage() {
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Show overridden demo usernames if present in localStorage
+  const [demoNames, setDemoNames] = useState<Record<string, string>>({});
+
+  const loadDemoNames = () => {
+    try {
+      const oRaw = localStorage.getItem("users_overrides");
+      const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, any>) : {};
+      setDemoNames({
+        contributor: overrides["contrib_demo"]?.username || "contributor_demo",
+        expert_a: overrides["expert_a"]?.username || "expertA",
+        expert_b: overrides["expert_b"]?.username || "expertB",
+        expert_c: overrides["expert_c"]?.username || "expertC",
+      });
+    } catch (err) {
+      setDemoNames({
+        contributor: "contributor_demo",
+        expert_a: "expertA",
+        expert_b: "expertB",
+        expert_c: "expertC",
+      });
+    }
+  };
+
+  // Load on mount and listen to storage changes (cross-tab updates)
+  useState(() => {
+    loadDemoNames();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "users_overrides") loadDemoNames();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  });
+
   const {
     register,
     handleSubmit,
@@ -26,14 +59,14 @@ export default function LoginPage() {
       const response = await authService.login(data);
       if (response.success && response.data) {
         setUser(response.data.user);
-        toast.success("Đăng nhập thành công!");
+        // toast.success("Đăng nhập thành công!");
         navigate("/");
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+            ?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
           : "Đăng nhập thất bại. Vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
@@ -62,6 +95,10 @@ export default function LoginPage() {
               alt="VietTune Logo"
               className="w-12 h-12 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
+                if (!authService.isAuthenticated()) {
+                  navigate("/");
+                  return;
+                }
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
@@ -134,6 +171,97 @@ export default function LoginPage() {
           >
             {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
+
+          {/* Demo accounts for quick testing */}
+          <div className="mt-4 text-center text-sm text-neutral-600">
+            <p className="mb-2">Hoặc dùng tài khoản demo:</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("contributor");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      // toast.success("Đăng nhập demo Contributor thành công");
+                      navigate("/");
+                    }
+                  } catch (err) {
+                    toast.error("Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Contributor (${demoNames.contributor || 'contributor_demo'})`}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("expert_a");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      // toast.success("Đăng nhập demo Expert A thành công");
+                      navigate("/moderation");
+                    }
+                  } catch (err) {
+                    toast.error("Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Expert A (${demoNames.expert_a || 'expertA'})`}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("expert_b");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      // toast.success("Đăng nhập demo Expert B thành công");
+                      navigate("/moderation");
+                    }
+                  } catch (err) {
+                    toast.error("Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Expert B (${demoNames.expert_b || 'expertB'})`}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("expert_c");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      // toast.success("Đăng nhập demo Expert C thành công");
+                      navigate("/moderation");
+                    }
+                  } catch (err) {
+                    toast.error("Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Expert C (${demoNames.expert_c || 'expertC'})`}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>

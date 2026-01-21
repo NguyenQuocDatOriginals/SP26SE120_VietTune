@@ -29,6 +29,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             error
               ? "border-primary-400 focus:border-primary-500"
               : "border-neutral-400 focus:border-transparent",
+            "disabled:opacity-60 disabled:cursor-not-allowed",
             className
           )}
           style={{ backgroundColor: '#FFFCF5' }}

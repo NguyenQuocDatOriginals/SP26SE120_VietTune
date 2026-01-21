@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { ModerationStatus } from "@/types";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -1965,6 +1967,9 @@ export default function UploadMusic() {
   const [ethnicity, setEthnicity] = useState("");
   const [customEthnicity, setCustomEthnicity] = useState("");
   const [region, setRegion] = useState("");
+
+  const { user: currentUser } = useAuthStore();
+  const isFormDisabled = !currentUser || currentUser.role !== "CONTRIBUTOR";
   const [province, setProvince] = useState("");
   const [eventType, setEventType] = useState("");
   const [customEventType, setCustomEventType] = useState("");
@@ -2004,7 +2009,7 @@ export default function UploadMusic() {
   >("idle");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  // success popup removed; use submitStatus === 'success' to show confirmations
 
   const requiresInstruments =
     performanceType === "instrumental" ||
@@ -2267,7 +2272,19 @@ export default function UploadMusic() {
     if (mediaType === "youtube") {
       const newRecording = {
         ...formData,
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         audioData: null,
+        moderation: {
+          status: ModerationStatus.PENDING_REVIEW,
+          claimedBy: null,
+          claimedByName: null,
+          reviewedAt: null,
+          reviewerId: null,
+        },
+        uploader: {
+          id: currentUser?.id || "anonymous",
+          username: currentUser?.username || "Khách",
+        },
       };
 
       try {
@@ -2289,8 +2306,7 @@ export default function UploadMusic() {
         localStorage.setItem("localRecordings", JSON.stringify(recordings));
 
         setSubmitStatus("success");
-        setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
-        setShowSuccessPopup(true);
+        setSubmitMessage(`Đã đóng góp bản thu thành công!`);
         setIsSubmitting(false);
         return;
       } catch (error) {
@@ -2322,7 +2338,19 @@ export default function UploadMusic() {
 
       const newRecording = {
         ...formData,
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         audioData: mediaData,
+        moderation: {
+          status: ModerationStatus.PENDING_REVIEW,
+          claimedBy: null,
+          claimedByName: null,
+          reviewedAt: null,
+          reviewerId: null,
+        },
+        uploader: {
+          id: currentUser?.id || "anonymous",
+          username: currentUser?.username || "Khách",
+        },
       };
 
       try {
@@ -2369,8 +2397,7 @@ export default function UploadMusic() {
           setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
         }
 
-        // Show success pop-up
-        setShowSuccessPopup(true);
+        // success popup removed; use submitStatus/submitMessage for confirmations
         setIsSubmitting(false);
       } catch (error) {
         console.error("Lỗi khi lưu dữ liệu:", error);
@@ -2450,6 +2477,42 @@ export default function UploadMusic() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Pure check for whether all required fields are filled (does not mutate state)
+  const isFormComplete = useMemo(() => {
+    if (isFormDisabled) return false;
+
+    // Media presence
+    if (mediaType === "youtube") {
+      if (!youtubeUrl.trim() || !validateYoutubeUrl(youtubeUrl)) return false;
+    } else {
+      if (!file) return false;
+    }
+
+    // Basic required fields
+    if (!title.trim()) return false;
+    if (!artistUnknown && !artist.trim()) return false;
+    if (!composerUnknown && !composer.trim()) return false;
+    if (!genre) return false;
+
+    // Instruments when required
+    if (requiresInstruments && instruments.length === 0) return false;
+
+    return true;
+  }, [
+    mediaType,
+    youtubeUrl,
+    file,
+    title,
+    artist,
+    artistUnknown,
+    composer,
+    composerUnknown,
+    genre,
+    requiresInstruments,
+    instruments,
+    isFormDisabled,
+  ]);
+
   return (
     <React.Fragment>
       <form onSubmit={handleSubmit} className="w-full space-y-6">
@@ -2458,6 +2521,8 @@ export default function UploadMusic() {
           <span className="text-red-400">*</span>
           <span>Trường bắt buộc</span>
         </div>
+
+        {/* Removed duplicate yellow notice for non-Contributor users */}
 
         {submitStatus === "error" && (
           <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
@@ -2469,6 +2534,7 @@ export default function UploadMusic() {
         <div
           className="border border-neutral-200 rounded-2xl p-8 shadow-md"
           style={{ backgroundColor: "#FFFCF5" }}
+          aria-disabled={isFormDisabled}
         >
           <SectionHeader
             icon={Upload}
@@ -2482,7 +2548,9 @@ export default function UploadMusic() {
               {/* File âm thanh */}
               <button
                 type="button"
+                disabled={isFormDisabled}
                 onClick={() => {
+                  if (isFormDisabled) return;
                   setMediaType("audio");
                   setFile(null);
                   setYoutubeUrl("");
@@ -2492,18 +2560,20 @@ export default function UploadMusic() {
                 className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "audio"
                   ? "bg-primary-600 text-white"
                   : "text-neutral-700"
-                  }`}
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 style={
                   mediaType !== "audio"
                     ? { backgroundColor: "#FFFCF5" }
                     : undefined
                 }
                 onMouseEnter={e => {
+                  if (isFormDisabled) return;
                   if (mediaType !== "audio") {
                     e.currentTarget.style.backgroundColor = "#F5F0E8";
                   }
                 }}
                 onMouseLeave={e => {
+                  if (isFormDisabled) return;
                   if (mediaType !== "audio") {
                     e.currentTarget.style.backgroundColor = "#FFFCF5";
                   }
@@ -2517,7 +2587,9 @@ export default function UploadMusic() {
               {/* File video */}
               <button
                 type="button"
+                disabled={isFormDisabled}
                 onClick={() => {
+                  if (isFormDisabled) return;
                   setMediaType("video");
                   setFile(null);
                   setYoutubeUrl("");
@@ -2527,18 +2599,20 @@ export default function UploadMusic() {
                 className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "video"
                   ? "bg-primary-600 text-white"
                   : "text-neutral-700"
-                  }`}
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 style={
                   mediaType !== "video"
                     ? { backgroundColor: "#FFFCF5" }
                     : undefined
                 }
                 onMouseEnter={e => {
+                  if (isFormDisabled) return;
                   if (mediaType !== "video") {
                     e.currentTarget.style.backgroundColor = "#F5F0E8";
                   }
                 }}
                 onMouseLeave={e => {
+                  if (isFormDisabled) return;
                   if (mediaType !== "video") {
                     e.currentTarget.style.backgroundColor = "#FFFCF5";
                   }
@@ -2552,7 +2626,9 @@ export default function UploadMusic() {
               {/* YouTube */}
               <button
                 type="button"
+                disabled={isFormDisabled}
                 onClick={() => {
+                  if (isFormDisabled) return;
                   setMediaType("youtube");
                   setFile(null);
                   setAudioInfo(null);
@@ -2561,7 +2637,7 @@ export default function UploadMusic() {
                 className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "youtube"
                   ? "bg-primary-600 text-white"
                   : "text-neutral-700"
-                  }`}
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
                 style={
                   mediaType !== "youtube"
                     ? { backgroundColor: "#FFFCF5" }
@@ -2595,6 +2671,7 @@ export default function UploadMusic() {
                   onChange={handleYoutubeUrlChange}
                   placeholder="https://www.youtube.com/watch?v=..."
                   required
+                  disabled={isFormDisabled}
                 />
                 {errors.youtubeUrl && (
                   <p className="text-sm text-red-400 mt-1">{errors.youtubeUrl}</p>
@@ -2607,13 +2684,13 @@ export default function UploadMusic() {
           {mediaType !== "youtube" && (
             <div className="mt-4">
               <div
-                onClick={() => !isAnalyzing && fileInputRef.current?.click()}
+                onClick={() => { if (isFormDisabled || isAnalyzing) return; fileInputRef.current?.click(); }}
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${errors.file
                   ? "border-red-500/50 bg-red-500/5"
                   : file
                     ? "border-primary-500/50 bg-primary-600/5"
                     : "border-neutral-200 hover:border-primary-400"
-                  } ${isAnalyzing ? "opacity-60 cursor-wait" : "cursor-pointer"}`}
+                  } ${isAnalyzing ? "opacity-60 cursor-wait" : (isFormDisabled ? "cursor-not-allowed" : "cursor-pointer")}`}
               >
                 <input
                   ref={fileInputRef}
@@ -2621,7 +2698,7 @@ export default function UploadMusic() {
                   accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv" : ".mp3,.wav,.flac"}
                   onChange={handleFileChange}
                   className="sr-only"
-                  disabled={isAnalyzing}
+                  disabled={isAnalyzing || isFormDisabled}
                 />
 
                 {isAnalyzing ? (
@@ -2728,7 +2805,7 @@ export default function UploadMusic() {
                   onChange={setArtist}
                   placeholder="Tên người hát hoặc chơi nhạc cụ"
                   required={!artistUnknown}
-                  disabled={artistUnknown}
+                  disabled={isFormDisabled || artistUnknown}
                 />
               </FormField>
               <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
@@ -2741,6 +2818,7 @@ export default function UploadMusic() {
                   }}
                   className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
                   style={{ backgroundColor: "#FFFCF5" }}
+                  disabled={isFormDisabled}
                 />
                 Không rõ
               </label>
@@ -2755,7 +2833,7 @@ export default function UploadMusic() {
                   value={composer}
                   onChange={setComposer}
                   placeholder="Tên người sáng tác"
-                  disabled={composerUnknown}
+                  disabled={isFormDisabled || composerUnknown}
                 />
               </FormField>
               <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
@@ -2768,6 +2846,7 @@ export default function UploadMusic() {
                   }}
                   className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
                   style={{ backgroundColor: "#FFFCF5" }}
+                  disabled={isFormDisabled}
                 />
                 Dân gian/Không rõ tác giả
               </label>
@@ -2786,7 +2865,7 @@ export default function UploadMusic() {
                   }}
                   options={LANGUAGES}
                   placeholder="Chọn ngôn ngữ"
-                  disabled={noLanguage}
+                  disabled={isFormDisabled || noLanguage}
                 />
               </FormField>
               {language === "Khác" && !noLanguage && (
@@ -2794,6 +2873,7 @@ export default function UploadMusic() {
                   value={customLanguage}
                   onChange={setCustomLanguage}
                   placeholder="Nhập tên ngôn ngữ khác..."
+                  disabled={isFormDisabled || noLanguage}
                 />
               )}
               <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
@@ -2809,6 +2889,7 @@ export default function UploadMusic() {
                   }}
                   className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
                   style={{ backgroundColor: "#FFFCF5" }}
+                  disabled={isFormDisabled}
                 />
                 Không có ngôn ngữ
               </label>
@@ -2844,7 +2925,7 @@ export default function UploadMusic() {
                   value={recordingDate}
                   onChange={setRecordingDate}
                   placeholder="Chọn ngày/tháng/năm"
-                  disabled={dateEstimated}
+                  disabled={isFormDisabled || dateEstimated}
                 />
               </FormField>
               <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
@@ -2857,6 +2938,7 @@ export default function UploadMusic() {
                   }}
                   className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
                   style={{ backgroundColor: "#FFFCF5" }}
+                  disabled={isFormDisabled}
                 />
                 Ngày ước tính/không chính xác
               </label>
@@ -2865,6 +2947,7 @@ export default function UploadMusic() {
                   value={dateNote}
                   onChange={setDateNote}
                   placeholder="Ghi chú về ngày tháng (Ví dụ: khoảng năm 1990)"
+                  disabled={isFormDisabled || dateEstimated}
                 />
               )}
             </div>
@@ -2877,6 +2960,7 @@ export default function UploadMusic() {
                 value={recordingLocation}
                 onChange={setRecordingLocation}
                 placeholder="Nhập địa điểm cụ thể"
+                disabled={isFormDisabled}
               />
             </FormField>
           </div>
@@ -3011,6 +3095,7 @@ export default function UploadMusic() {
                     onChange={setInstruments}
                     options={INSTRUMENTS}
                     placeholder="Tìm và chọn nhạc cụ..."
+                    disabled={isFormDisabled}
                   />
                   {errors.instruments && (
                     <p className="text-sm text-red-400">{errors.instruments}</p>
@@ -3023,10 +3108,10 @@ export default function UploadMusic() {
                     <FormField label="Tải lên hình ảnh nhạc cụ (nếu có)" hint="Ảnh minh họa cho nhạc cụ sử dụng, chỉ dành cho bài độc tấu">
                       <div className="flex items-center gap-3">
                         <label
-                          className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                          className={`px-4 py-2 rounded-full text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm inline-block ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "hover:shadow-md cursor-pointer"}`}
                           style={{ backgroundColor: "#FFFCF5" }}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#F5F0E8")}
-                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#FFFCF5")}
+                          onMouseEnter={e => { if (!isFormDisabled) e.currentTarget.style.backgroundColor = "#F5F0E8" }}
+                          onMouseLeave={e => { if (!isFormDisabled) e.currentTarget.style.backgroundColor = "#FFFCF5" }}
                         >
                           Chọn ảnh
                           <input
@@ -3034,6 +3119,7 @@ export default function UploadMusic() {
                             accept="image/*"
                             onChange={handleInstrumentImageChange}
                             className="sr-only"
+                            disabled={isFormDisabled}
                           />
                         </label>
                         {instrumentImage && (
@@ -3045,11 +3131,13 @@ export default function UploadMusic() {
                         {instrumentImage && (
                           <button
                             type="button"
-                            className="ml-2 text-xs text-red-400 hover:underline"
+                            className="ml-2 text-xs text-red-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={() => {
+                              if (isFormDisabled) return;
                               setInstrumentImage(null);
                               setInstrumentImagePreview("");
                             }}
+                            disabled={isFormDisabled}
                           >
                             Xóa ảnh
                           </button>
@@ -3069,14 +3157,10 @@ export default function UploadMusic() {
                 >
                   <div className="flex items-center gap-3">
                     <label
-                      className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                      className={`px-4 py-2 rounded-full text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm inline-block ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "hover:shadow-md cursor-pointer"}`}
                       style={{ backgroundColor: "#FFFCF5" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#F5F0E8")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#FFFCF5")
-                      }
+                      onMouseEnter={(e) => { if (!isFormDisabled) e.currentTarget.style.backgroundColor = "#F5F0E8" }}
+                      onMouseLeave={(e) => { if (!isFormDisabled) e.currentTarget.style.backgroundColor = "#FFFCF5" }}
                     >
                       Chọn file
                       <input
@@ -3084,6 +3168,7 @@ export default function UploadMusic() {
                         accept=".txt,.doc,.docx"
                         onChange={handleLyricsFileChange}
                         className="sr-only"
+                        disabled={isFormDisabled}
                       />
                     </label>
                     <span className="text-neutral-800/60 text-sm">
@@ -3190,15 +3275,15 @@ export default function UploadMusic() {
             <button
               type="button"
               onClick={resetForm}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isFormDisabled}
               className="px-6 py-2.5 text-neutral-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
               style={{ backgroundColor: "#FFFCF5" }}
               onMouseEnter={(e) =>
-                !isSubmitting &&
+                !isSubmitting && !isFormDisabled &&
                 (e.currentTarget.style.backgroundColor = "#F5F0E8")
               }
               onMouseLeave={(e) =>
-                !isSubmitting &&
+                !isSubmitting && !isFormDisabled &&
                 (e.currentTarget.style.backgroundColor = "#FFFCF5")
               }
             >
@@ -3206,7 +3291,8 @@ export default function UploadMusic() {
             </button>
             <button
               type="submit"
-              disabled={!file || isAnalyzing || isSubmitting}
+              disabled={!isFormComplete || isAnalyzing || isSubmitting || isFormDisabled}
+              title={isFormDisabled ? "Bạn cần tài khoản Người đóng góp để đóng góp bản thu" : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
               className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (
@@ -3225,65 +3311,55 @@ export default function UploadMusic() {
         </div>
       </form>
 
-      {/* Success Pop-up */}
-      {showSuccessPopup &&
-        createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div
-              className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
-              style={{ backgroundColor: '#FFF2D6' }}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
-                <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
-              </div>
 
-              {/* Content */}
-              <div
-                className="overflow-y-auto p-6"
-                style={{
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
-                }}
-              >
-                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-                  <div className="flex flex-col items-center gap-4 mb-2">
-                    <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
-                      <Check className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-neutral-800 text-center">
-                      Cảm ơn bạn đã đóng góp bản thu!
-                    </h3>
+      {/* Success Pop-up (inline) */}
+      {submitStatus === "success" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div
+            className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
+            style={{ backgroundColor: '#FFF2D6' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+              <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+            </div>
+
+            {/* Content */}
+            <div
+              className="overflow-y-auto p-6"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+              }}
+            >
+              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="flex flex-col items-center gap-4 mb-2">
+                  <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
+                    <Check className="h-8 w-8 text-green-600" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-neutral-600 text-sm leading-relaxed">
-                      Bạn có thể xem bản thu đã đóng góp
-                    </p>
-                    <p className="text-neutral-600 text-sm leading-relaxed">
-                      trong phần "Bản thu của bạn" trên trang chủ hoặc trong trang "Khám phá bản thu"
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                    {submitMessage || 'Cảm ơn bạn đã đóng góp bản thu!'}
+                  </h3>
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
-                <button
-                  onClick={() => {
-                    setShowSuccessPopup(false);
-                    resetForm();
-                    setSubmitStatus("idle");
-                    setSubmitMessage("");
-                  }}
-                  className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
-                >
-                  Đóng
-                </button>
-              </div>
             </div>
-          </div>,
-          document.body
-        )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+              <button
+                onClick={() => {
+                  resetForm();
+                  setSubmitStatus("idle");
+                  setSubmitMessage("");
+                }}
+                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </React.Fragment>
   );
 }

@@ -33,7 +33,7 @@ export default function RegisterPage() {
       const errorMessage =
         error instanceof Error && "response" in error
           ? (error as { response?: { data?: { message?: string } } }).response
-              ?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+            ?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
           : "Đăng ký thất bại. Vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
@@ -62,6 +62,11 @@ export default function RegisterPage() {
               alt="VietTune Logo"
               className="w-10 h-10 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
+                // If not authenticated (e.g., right after logout), go to home for guests.
+                if (!authService.isAuthenticated()) {
+                  navigate("/");
+                  return;
+                }
                 const lastPage = localStorage.getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}

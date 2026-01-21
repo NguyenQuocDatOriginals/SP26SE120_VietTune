@@ -1,53 +1,37 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Music, Users, MapPin, Clock, Repeat, AlertTriangle } from "lucide-react";
 import { createPortal } from "react-dom";
+import { isYouTubeUrl, getYouTubeId } from "../../utils/youtube";
 
-// Module-scoped active audio so only one player plays at a time
-let activeAudio: HTMLAudioElement | null = null;
-
-// Recording metadata type (matches LocalRecording from HomePage)
-interface RecordingMetadata {
-  id: string;
-  name: string;
-  audioData: string;
-  userType?: string;
-  detectedType?: string;
-  basicInfo?: {
-    title?: string;
-    artist?: string;
-    genre?: string;
-  };
-  culturalContext?: {
-    ethnicity?: string;
-    region?: string;
-  };
-  uploadedAt?: string;
-}
-
+// Props type for AudioPlayer
 type Props = {
-  src: string;
+  src?: string;
   title?: string;
   artist?: string;
   compact?: boolean;
   className?: string;
-  // New props for container mode
-  recording?: RecordingMetadata;
+  recording?: any;
   onDelete?: (id: string) => void;
   showContainer?: boolean;
 };
 
-export default function AudioPlayer({ 
-  src, 
-  title, 
-  artist, 
-  compact = false, 
+// Global active audio element for pausing other players
+let activeAudio: HTMLAudioElement | null = null;
+
+export default function AudioPlayer({
+  src,
+  title,
+  artist,
+  compact = false,
   className = "",
   recording,
   onDelete,
   showContainer = false
 }: Props) {
+  // All hooks and variables must be declared before any return
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [showYoutubePlayer, setShowYoutubePlayer] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -56,6 +40,34 @@ export default function AudioPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [isLooping, setIsLooping] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const isYoutube = isYouTubeUrl(src);
+  const youtubeId = isYoutube ? getYouTubeId(src || "") : null;
+
+  // If YouTube, render only the YouTube player (with title/artist if present)
+  if (isYoutube && youtubeId) {
+    return (
+      <div className={className}>
+        {(title || artist) && (
+          <div className="mb-4">
+            {title && <h4 className="text-neutral-800 font-medium truncate">{title}</h4>}
+            {artist && <p className="text-neutral-500 text-sm truncate">{artist}</p>}
+          </div>
+        )}
+        <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
+          <iframe
+            title="YouTube video"
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
+            frameBorder="0"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full rounded-md"
+          />
+        </div>
+      </div>
+
+    );
+  }
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -114,6 +126,13 @@ export default function AudioPlayer({
   };
 
   const play = async () => {
+    if (isYoutube) {
+      setShowYoutubePlayer(true);
+      setPlaying(true);
+      setIsLoading(false); // Always ensure spinner is off for YouTube
+      return;
+    }
+
     const audio = audioRef.current;
     if (!audio) return;
     if (activeAudio && activeAudio !== audio) {
@@ -206,7 +225,39 @@ export default function AudioPlayer({
         >
           {/* Audio Player (Full Version) */}
           <div className="w-full">
-            <audio ref={audioRef} src={src} preload="metadata" />
+            {isYoutube ? (
+              !showYoutubePlayer ? (
+                <div className="relative rounded-md overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
+                  {youtubeId ? (
+                    <>
+                      <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
+                        className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
+                        aria-label="Phát video YouTube"
+                      >
+                        <Play className="w-6 h-6" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full h-full bg-black" />
+                  )}
+                </div>
+              ) : (
+                <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
+                  <iframe
+                    title="YouTube video"
+                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full rounded-md"
+                  />
+                </div>
+              )
+            ) : (
+              <audio ref={audioRef} src={src} preload="metadata" />
+            )}
 
             <div className="p-4 border border-neutral-200 rounded-2xl" style={{ backgroundColor: '#FFFCF5' }}>
               {/* Title & Artist */}
@@ -223,41 +274,47 @@ export default function AudioPlayer({
 
               {/* Progress Bar */}
               <div className="mb-4">
-                <div 
-                  className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
-                  onMouseDown={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const updateProgress = (clientX: number) => {
-                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                      seekTo(percent * duration);
-                    };
-                    updateProgress(e.clientX);
-                    
-                    const onMouseMove = (moveEvent: MouseEvent) => {
-                      updateProgress(moveEvent.clientX);
-                    };
-                    const onMouseUp = () => {
-                      document.removeEventListener('mousemove', onMouseMove);
-                      document.removeEventListener('mouseup', onMouseUp);
-                    };
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                  }}
-                >
-                  <div 
-                    className="h-full bg-primary-600 rounded-full transition-none"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                  {/* Thumb */}
-                  <div 
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
-                    style={{ left: `calc(${progressPercent}% - 8px)` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2">
-                  <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
-                  <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
-                </div>
+                {isYoutube ? (
+                  <div className="h-2 bg-neutral-200 rounded-full opacity-50" />
+                ) : (
+                  <>
+                    <div
+                      className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
+                      onMouseDown={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const updateProgress = (clientX: number) => {
+                          const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                          seekTo(percent * duration);
+                        };
+                        updateProgress(e.clientX);
+
+                        const onMouseMove = (moveEvent: MouseEvent) => {
+                          updateProgress(moveEvent.clientX);
+                        };
+                        const onMouseUp = () => {
+                          document.removeEventListener('mousemove', onMouseMove);
+                          document.removeEventListener('mouseup', onMouseUp);
+                        };
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                      }}
+                    >
+                      <div
+                        className="h-full bg-primary-600 rounded-full transition-none"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                      {/* Thumb */}
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                        style={{ left: `calc(${progressPercent}% - 8px)` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
+                      <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Controls */}
@@ -281,31 +338,32 @@ export default function AudioPlayer({
                 {/* Center: Play/Pause */}
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => seekBy(-5)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+                    onClick={() => !isYoutube && seekBy(-5)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
                     title="Lùi 5 giây"
                   >
                     <RotateCcw className="w-6 h-6" strokeWidth={2} />
                     <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
                   </button>
-                  
+
                   <button
                     onClick={togglePlay}
-                    disabled={isLoading}
+                    disabled={isYoutube ? false : isLoading}
                     className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg hover:shadow-xl shadow-primary-500/30"
                   >
-                    {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : playing ? (
-                      <Pause className="w-6 h-6 text-white" />
-                    ) : (
-                      <Play className="w-6 h-6 text-white ml-1" />
-                    )}
+                    {(isYoutube || showYoutubePlayer)
+                      ? (playing ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-1" />)
+                      : isLoading
+                        ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        : playing
+                          ? <Pause className="w-6 h-6 text-white" />
+                          : <Play className="w-6 h-6 text-white ml-1" />
+                    }
                   </button>
 
                   <button
-                    onClick={() => seekBy(5)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+                    onClick={() => !isYoutube && seekBy(5)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
                     title="Tiến 5 giây"
                   >
                     <RotateCw className="w-6 h-6" strokeWidth={2} />
@@ -317,18 +375,19 @@ export default function AudioPlayer({
                 <div className="absolute right-0 flex items-center gap-2">
                   <button
                     onClick={toggleLoop}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${
-                      isLooping 
-                        ? 'bg-primary-600 text-white' 
-                        : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
-                    }`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${isLooping
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+                      } ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
                     title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+                    disabled={isYoutube}
                   >
                     <Repeat className="w-4 h-4" />
                   </button>
                   <button
                     onClick={toggleMute}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    disabled={isYoutube}
                   >
                     {isMuted || volume === 0 ? (
                       <VolumeX className="w-4 h-4" />
@@ -336,16 +395,16 @@ export default function AudioPlayer({
                       <Volume2 className="w-4 h-4" />
                     )}
                   </button>
-                  <div 
-                    className="w-20 hidden sm:block relative"
-                    onMouseDown={(e) => {
+                  <div
+                    className={`w-20 hidden sm:block relative ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    onMouseDown={isYoutube ? undefined : (e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       const updateVolume = (clientX: number) => {
                         const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                         handleVolume(percent);
                       };
                       updateVolume(e.clientX);
-                      
+
                       const onMouseMove = (moveEvent: MouseEvent) => {
                         updateVolume(moveEvent.clientX);
                       };
@@ -358,12 +417,12 @@ export default function AudioPlayer({
                     }}
                   >
                     <div className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer">
-                      <div 
+                      <div
                         className="h-full bg-primary-600 rounded-full transition-none"
                         style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                       />
                       {/* Thumb */}
-                      <div 
+                      <div
                         className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
                         style={{ left: `calc(${(isMuted ? 0 : volume) * 100}% - 6px)` }}
                       />
@@ -469,61 +528,98 @@ export default function AudioPlayer({
   if (compact) {
     return (
       <div className={`${className} w-full`}>
-        <audio ref={audioRef} src={src} preload="metadata" />
-        
+        {isYoutube ? (
+          !showYoutubePlayer ? (
+            <div className="relative rounded-md overflow-hidden bg-black h-20">
+              {youtubeId ? (
+                <>
+                  <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
+                    className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
+                    aria-label="Phát video YouTube"
+                  >
+                    <Play className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <div className="w-full h-full bg-black" />
+              )}
+            </div>
+          ) : (
+            <iframe
+              title="YouTube video"
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              className="w-full h-20 rounded-md"
+            />
+          )
+        ) : (
+          <audio ref={audioRef} src={src} preload="metadata" />
+        )}
+
         <div className="flex items-center gap-3">
           {/* Play Button */}
           <button
             onClick={togglePlay}
-            disabled={isLoading}
+            disabled={isYoutube ? false : isLoading}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0 shadow-md hover:shadow-lg"
           >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : playing ? (
-              <Pause className="w-4 h-4 text-white" />
-            ) : (
-              <Play className="w-4 h-4 text-white ml-0.5" />
-            )}
+            {(isYoutube || showYoutubePlayer)
+              ? (playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />)
+              : isLoading
+                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : playing
+                  ? <Pause className="w-4 h-4 text-white" />
+                  : <Play className="w-4 h-4 text-white ml-0.5" />
+            }
           </button>
 
           {/* Progress */}
           <div className="flex-1 min-w-0">
-            <div 
-              className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer"
-              onMouseDown={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const updateProgress = (clientX: number) => {
-                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                  seekTo(percent * duration);
-                };
-                updateProgress(e.clientX);
-                
-                const onMouseMove = (moveEvent: MouseEvent) => {
-                  updateProgress(moveEvent.clientX);
-                };
-                const onMouseUp = () => {
-                  document.removeEventListener('mousemove', onMouseMove);
-                  document.removeEventListener('mouseup', onMouseUp);
-                };
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-              }}
-            >
-              <div 
-                className="h-full bg-primary-600 rounded-full transition-none"
-                style={{ width: `${progressPercent}%` }}
-              />
-              {/* Thumb */}
-              <div 
-                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing"
-                style={{ left: `calc(${progressPercent}% - 6px)` }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-neutral-500">{formatTime(currentTime)}</span>
-              <span className="text-xs text-neutral-500">{formatTime(duration)}</span>
-            </div>
+            {isYoutube ? (
+              <div className="h-1.5 bg-neutral-200 rounded-full opacity-50" />
+            ) : (
+              <>
+                <div
+                  className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer"
+                  onMouseDown={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const updateProgress = (clientX: number) => {
+                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                      seekTo(percent * duration);
+                    };
+                    updateProgress(e.clientX);
+
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      updateProgress(moveEvent.clientX);
+                    };
+                    const onMouseUp = () => {
+                      document.removeEventListener('mousemove', onMouseMove);
+                      document.removeEventListener('mouseup', onMouseUp);
+                    };
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                  }}
+                >
+                  <div
+                    className="h-full bg-primary-600 rounded-full transition-none"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                  {/* Thumb */}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing"
+                    style={{ left: `calc(${progressPercent}% - 6px)` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-xs text-neutral-500">{formatTime(currentTime)}</span>
+                  <span className="text-xs text-neutral-500">{formatTime(duration)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -533,8 +629,39 @@ export default function AudioPlayer({
   // Full version
   return (
     <div className={`${className} w-full`}>
-      <audio ref={audioRef} src={src} preload="metadata" />
-
+      {isYoutube ? (
+        !showYoutubePlayer ? (
+          <div className="relative rounded-md overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
+            {youtubeId ? (
+              <>
+                <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
+                  className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
+                  aria-label="Phát video YouTube"
+                >
+                  <Play className="w-6 h-6" />
+                </button>
+              </>
+            ) : (
+              <div className="w-full h-full bg-black" />
+            )}
+          </div>
+        ) : (
+          <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
+            <iframe
+              title="YouTube video"
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+              frameBorder="0"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full rounded-md"
+            />
+          </div>
+        )
+      ) : (
+        <audio ref={audioRef} src={src} preload="metadata" />
+      )}
       <div className="p-4 border border-neutral-200 rounded-2xl" style={{ backgroundColor: '#FFFCF5' }}>
         {/* Title & Artist */}
         {(title || artist) && (
@@ -550,41 +677,47 @@ export default function AudioPlayer({
 
         {/* Progress Bar */}
         <div className="mb-4">
-          <div 
-            className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
-            onMouseDown={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const updateProgress = (clientX: number) => {
-                const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                seekTo(percent * duration);
-              };
-              updateProgress(e.clientX);
-              
-              const onMouseMove = (moveEvent: MouseEvent) => {
-                updateProgress(moveEvent.clientX);
-              };
-              const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-              };
-              document.addEventListener('mousemove', onMouseMove);
-              document.addEventListener('mouseup', onMouseUp);
-            }}
-          >
-            <div 
-              className="h-full bg-primary-600 rounded-full transition-none"
-              style={{ width: `${progressPercent}%` }}
-            />
-            {/* Thumb */}
-            <div 
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
-              style={{ left: `calc(${progressPercent}% - 8px)` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
-            <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
-          </div>
+          {isYoutube ? (
+            <div className="h-2 bg-neutral-200 rounded-full opacity-50" />
+          ) : (
+            <>
+              <div
+                className="relative h-2 bg-neutral-200 rounded-full cursor-pointer group"
+                onMouseDown={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const updateProgress = (clientX: number) => {
+                    const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    seekTo(percent * duration);
+                  };
+                  updateProgress(e.clientX);
+
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    updateProgress(moveEvent.clientX);
+                  };
+                  const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                  };
+                  document.addEventListener('mousemove', onMouseMove);
+                  document.addEventListener('mouseup', onMouseUp);
+                }}
+              >
+                <div
+                  className="h-full bg-primary-600 rounded-full transition-none"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                {/* Thumb */}
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
+                  style={{ left: `calc(${progressPercent}% - 8px)` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2">
+                <span className="text-xs text-neutral-500 font-mono">{formatTime(currentTime)}</span>
+                <span className="text-xs text-neutral-500 font-mono">{formatTime(duration)}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Controls */}
@@ -592,31 +725,32 @@ export default function AudioPlayer({
           {/* Center: Play/Pause */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => seekBy(-5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+              onClick={() => !isYoutube && seekBy(-5)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
               title="Lùi 5 giây"
             >
               <RotateCcw className="w-6 h-6" strokeWidth={2} />
               <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
             </button>
-            
+
             <button
               onClick={togglePlay}
-              disabled={isLoading}
+              disabled={isYoutube ? false : isLoading}
               className="w-14 h-14 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-all hover:scale-105 disabled:opacity-50 shadow-lg hover:shadow-xl shadow-primary-500/30"
             >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : playing ? (
-                <Pause className="w-6 h-6 text-white" />
-              ) : (
-                <Play className="w-6 h-6 text-white ml-1" />
-              )}
+              {isYoutube
+                ? (playing ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white ml-1" />)
+                : isLoading
+                  ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : playing
+                    ? <Pause className="w-6 h-6 text-white" />
+                    : <Play className="w-6 h-6 text-white ml-1" />
+              }
             </button>
 
             <button
-              onClick={() => seekBy(5)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md"
+              onClick={() => !isYoutube && seekBy(5)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-300 hover:bg-neutral-400 transition-colors relative shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
               title="Tiến 5 giây"
             >
               <RotateCw className="w-6 h-6" strokeWidth={2} />
@@ -628,18 +762,19 @@ export default function AudioPlayer({
           <div className="absolute right-0 flex items-center gap-2">
             <button
               onClick={toggleLoop}
-              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${
-                isLooping 
-                  ? 'bg-primary-600 text-white' 
-                  : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
-              }`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors shadow-sm hover:shadow-md ${isLooping
+                ? 'bg-primary-600 text-white'
+                : 'bg-neutral-200 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+                } ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
               title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+              disabled={isYoutube}
             >
               <Repeat className="w-4 h-4" />
             </button>
             <button
               onClick={toggleMute}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200 hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              disabled={isYoutube}
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-4 h-4" />
@@ -647,16 +782,16 @@ export default function AudioPlayer({
                 <Volume2 className="w-4 h-4" />
               )}
             </button>
-            <div 
-              className="w-20 hidden sm:block relative"
-              onMouseDown={(e) => {
+            <div
+              className={`w-20 hidden sm:block relative ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              onMouseDown={isYoutube ? undefined : (e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const updateVolume = (clientX: number) => {
                   const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                   handleVolume(percent);
                 };
                 updateVolume(e.clientX);
-                
+
                 const onMouseMove = (moveEvent: MouseEvent) => {
                   updateVolume(moveEvent.clientX);
                 };
@@ -669,12 +804,12 @@ export default function AudioPlayer({
               }}
             >
               <div className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer">
-                <div 
+                <div
                   className="h-full bg-primary-600 rounded-full transition-none"
                   style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                 />
                 {/* Thumb */}
-                <div 
+                <div
                   className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing hover:scale-110 transition-transform"
                   style={{ left: `calc(${(isMuted ? 0 : volume) * 100}% - 6px)` }}
                 />
