@@ -51,10 +51,130 @@ const VERIFICATION_STATUS = [
 ];
 
 const INSTRUMENTS = [
-  "Đàn bầu (Kinh)", "Đàn tranh (Kinh)", "Đàn nguyệt (Kinh)", "Đàn nhị (Kinh)",
-  "Đàn tỳ bà (Kinh)", "Sáo ngang (Kinh)", "Tiêu (Kinh)", "Trống (Kinh)",
-  "Khèn (H'Mông)", "Đàn t'rưng (Ba Na)", "Cồng, chiêng (Gia Rai)",
-  "Tính tẩu (Thái)", "Đàn đá (Kinh)", "Khác",
+  "Alal (Ba Na)",
+  "Aráp (Ba Na)",
+  "Aráp (Ca Dong)",
+  "Aráp (Gia Rai)",
+  "Aráp (Rơ Năm)",
+  "Aráp (Stră)",
+  "Biên khánh (Kinh)",
+  "Bro (Ba Na)",
+  "Bro (Gia Rai)",
+  "Bro (Giẻ Triêng)",
+  "Bro (Xơ Đăng)",
+  "Bẳng bu (Thái)",
+  "Chul (Ba Na)",
+  "Chul (Gia Rai)",
+  "Chênh Kial (Ba Na)",
+  "Cò ke (Mường)",
+  "Cồng, chiêng (Ba Na)",
+  "Cồng, chiêng (Gia Rai)",
+  "Cồng, chiêng (Giẻ Triêng)",
+  "Cồng, chiêng (Hrê)",
+  "Cồng, chiêng (Ê Đê)",
+  "Dàn nhạc ngũ âm (Khmer)",
+  "Goong (Ba Na)",
+  "Goong (Gia Rai)",
+  "Goong (Giẻ Triêng)",
+  "Goong đe (Ba Na)",
+  "Hơgơr (Ê Đê)",
+  "Hơgơr cân (Mnâm)",
+  "Hơgơr cân (Rơ Năm)",
+  "Hơgơr prong (Gia Rai)",
+  "Hơgơr tuôn (Hà Lang)",
+  "Hơgơr tăk (Ba Na)",
+  "Khinh khung (Ba Na)",
+  "Khinh khung (Gia Rai)",
+  "Khèn (H'Mông)",
+  "Khèn (Ta Ôi)",
+  "Khèn (Ê Đê)",
+  "Khên (Vân Kiều)",
+  "Knăh ring (Ba Na)",
+  "Knăh ring (Gia Rai)",
+  "K'lông put (Gia Rai)",
+  "K'ny (Ba Na)",
+  "K'ny (Gia Rai)",
+  "K'ny (Rơ Ngao)",
+  "K'ny (Xơ Đăng)",
+  "Kèn bầu (Chăm)",
+  "Kèn bầu (Kinh)",
+  "Kèn bầu (Thái)",
+  "Kềnh (H'Mông)",
+  "M'linh (Dao)",
+  "M'linh (Mường)",
+  "M'nhum (Gia Rai)",
+  "Mõ (Kinh)",
+  "Phách (Kinh)",
+  "Pí cổng (Thái)",
+  "Pí lè (Thái)",
+  "Pí lè (Tày)",
+  "Pí một lao (Kháng)",
+  "Pí một lao (Khơ Mú)",
+  "Pí một lao (La Ha)",
+  "Pí một lao (Thái)",
+  "Pí pặp (Thái)",
+  "Pí phướng (Thái)",
+  "Pí đôi (Thái)",
+  "Púa (H'Mông)",
+  "Púa (Lô Lô)",
+  "Qeej (H'Mông)",
+  "Rang leh (Ca Dong)",
+  "Rang leh (Stră)",
+  "Rang rai (Ba Na)",
+  "Rang rai (Gia Rai)",
+  "Song lang (Kinh)",
+  "Sáo ngang (Kinh)",
+  "Sênh tiền (Kinh)",
+  "T'rum (Gia Rai)",
+  "Ta in (Hà Nhì)",
+  "Ta lư (Vân Kiều)",
+  "Ta pòl (Ba Na)",
+  "Ta pòl (Brâu)",
+  "Ta pòl (Gia Rai)",
+  "Ta pòl (Rơ Năm)",
+  "Tam thập lục (Kinh)",
+  "Teh ding (Gia Rai)",
+  "Tiêu (Kinh)",
+  "Tol alao (Ca Dong)",
+  "Tông đing (Ba Na)",
+  "Tông đing (Ca Dong)",
+  "Tơ nốt (Ba Na)",
+  "Trống bộc (Kinh)",
+  "Trống cái (Kinh)",
+  "Trống chầu (Kinh)",
+  "Trống cơm (Kinh)",
+  "Trống dẹt (Kinh)",
+  "Trống khẩu (Kinh)",
+  "Trống lắng (Kinh)",
+  "Trống mảnh (Kinh)",
+  "Trống quần (Kinh)",
+  "Trống đế (Kinh)",
+  "Trống đồng (Kinh)",
+  "Tính tẩu (Thái)",
+  "Tính tẩu (Tày)",
+  "Vang (Gia Rai)",
+  "Đinh Duar (Giẻ Triêng)",
+  "Đinh Khén (Xơ Đăng)",
+  "Đinh tuk (Ba Na)",
+  "Đao đao (Khơ Mú)",
+  "Đuk đik (Giẻ Triêng)",
+  "Đàn bầu (Kinh)",
+  "Đàn môi (H'Mông)",
+  "Đàn nguyệt (Kinh)",
+  "Đàn nhị (Chăm)",
+  "Đàn nhị (Dao)",
+  "Đàn nhị (Giáy)",
+  "Đàn nhị (Kinh)",
+  "Đàn nhị (Nùng)",
+  "Đàn nhị (Tày)",
+  "Đàn t'rưng (Ba Na)",
+  "Đàn t'rưng (Gia Rai)",
+  "Đàn tam (Kinh)",
+  "Đàn tranh (Kinh)",
+  "Đàn tứ (Kinh)",
+  "Đàn tỳ bà (Kinh)",
+  "Đàn đá (Kinh)",
+  "Đàn đáy (Kinh)",
 ];
 
 const YEAR_RANGES = [
@@ -161,18 +281,16 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
         style={{ backgroundColor: '#FFFCF5' }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-500"}>
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -228,11 +346,10 @@ function SearchableDropdown({
                       setIsOpen(false);
                       setSearch("");
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${
-                      value === option
-                        ? "bg-primary-600 text-white font-medium"
-                        : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                    }`}
+                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${value === option
+                      ? "bg-primary-600 text-white font-medium"
+                      : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                      }`}
                   >
                     {option}
                   </button>
@@ -266,12 +383,23 @@ function MultiSelectTags({
   const inputRef = useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
 
+  // Helper: remove Vietnamese accents for insensitive search
+  function removeVietnameseTones(str: string) {
+    return str
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
+  }
+
   const filteredOptions = useMemo(() => {
     const available = options.filter((opt) => !values.includes(opt));
     if (!search) return available;
-    return available.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
-    );
+    const searchNorm = removeVietnameseTones(search.toLowerCase());
+    return available.filter((opt) => {
+      const optNorm = removeVietnameseTones(opt.toLowerCase());
+      return optNorm.includes(searchNorm);
+    });
   }, [options, values, search]);
 
   useEffect(() => {
@@ -309,14 +437,17 @@ function MultiSelectTags({
     setSearch("");
   };
 
+  const removeTag = (tag: string) => {
+    onChange(values.filter((t) => t !== tag));
+  };
+
   return (
     <div ref={containerRef} className="relative">
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
-        }`}
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
+          }`}
         style={{ backgroundColor: '#FFFCF5' }}
       >
         <div className="flex flex-wrap gap-1.5">
@@ -326,6 +457,23 @@ function MultiSelectTags({
               className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
             >
               {tag}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
+                    removeTag(tag);
+                  }}
+                  className="ml-1 focus:outline-none hover:text-red-200"
+                  aria-label={`Xóa ${tag}`}
+                  tabIndex={0}
+                  style={{ lineHeight: 0, padding: 0, background: "none", border: "none" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
             </span>
           ))}
           {!disabled && (
@@ -336,6 +484,12 @@ function MultiSelectTags({
               onFocus={() => setIsOpen(true)}
               placeholder={values.length === 0 ? placeholder : ""}
               className="flex-1 min-w-[120px] bg-transparent text-neutral-900 placeholder-neutral-500 text-sm focus:outline-none py-1"
+              onKeyDown={e => {
+                if (e.key === "Backspace" && search === "" && values.length > 0) {
+                  removeTag(values[values.length - 1]);
+                  e.preventDefault();
+                }
+              }}
             />
           )}
         </div>
@@ -466,9 +620,8 @@ function CollapsibleSection({
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
       {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}

@@ -22,7 +22,7 @@ const SUPPORTED_VIDEO_FORMATS = [
   "video/x-matroska",
 ];
 
-const SUPPORTED_FORMATS = [...SUPPORTED_AUDIO_FORMATS, ...SUPPORTED_VIDEO_FORMATS];
+
 
 const GENRES = [
   "Dân ca",
@@ -770,18 +770,16 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -837,11 +835,10 @@ function SearchableDropdown({
                       setIsOpen(false);
                       setSearch("");
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${
-                      value === option
-                        ? "bg-primary-600 text-white font-medium"
-                        : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                    }`}
+                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${value === option
+                      ? "bg-primary-600 text-white font-medium"
+                      : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                      }`}
                   >
                     {option}
                   </button>
@@ -875,12 +872,23 @@ function MultiSelectTags({
   const inputRef = useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
 
+  // Helper: remove Vietnamese accents for insensitive search
+  function removeVietnameseTones(str: string) {
+    return str
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
+  }
+
   const filteredOptions = useMemo(() => {
     const available = options.filter((opt) => !values.includes(opt));
     if (!search) return available;
-    return available.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase()),
-    );
+    const searchNorm = removeVietnameseTones(search.toLowerCase());
+    return available.filter((opt) => {
+      const optNorm = removeVietnameseTones(opt.toLowerCase());
+      return optNorm.includes(searchNorm);
+    });
   }, [options, values, search]);
 
   useEffect(() => {
@@ -922,14 +930,17 @@ function MultiSelectTags({
     setSearch("");
   };
 
+  const removeTag = (tag: string) => {
+    onChange(values.filter((t) => t !== tag));
+  };
+
   return (
     <div ref={containerRef} className="relative">
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
-        }`}
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
+          }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
         <div className="flex flex-wrap gap-1.5">
@@ -939,6 +950,23 @@ function MultiSelectTags({
               className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
             >
               {tag}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
+                    removeTag(tag);
+                  }}
+                  className="ml-1 focus:outline-none hover:text-red-200"
+                  aria-label={`Xóa ${tag}`}
+                  tabIndex={0}
+                  style={{ lineHeight: 0, padding: 0, background: "none", border: "none" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )}
             </span>
           ))}
           {!disabled && (
@@ -949,6 +977,13 @@ function MultiSelectTags({
               onFocus={() => setIsOpen(true)}
               placeholder={values.length === 0 ? placeholder : ""}
               className="flex-1 min-w-[120px] bg-transparent text-neutral-900 placeholder-neutral-500 text-sm focus:outline-none py-1"
+              onKeyDown={e => {
+                if (e.key === "Backspace" && search === "" && values.length > 0) {
+                  removeTag(values[values.length - 1]);
+                  // Prevent browser navigating back
+                  e.preventDefault();
+                }
+              }}
             />
           )}
         </div>
@@ -1255,18 +1290,16 @@ function DatePicker({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900" : "text-neutral-400"}>
           {value ? formatDisplayDate(value) : placeholder}
         </span>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -1347,13 +1380,12 @@ function DatePicker({
                                 }
                               }}
                               disabled={isFutureMonth}
-                              className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                                isFutureMonth
-                                  ? "text-neutral-400 cursor-not-allowed"
-                                  : viewDate.getMonth() === index
-                                    ? "bg-primary-600 text-white font-medium"
-                                    : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                              }`}
+                              className={`w-full px-4 py-2 text-left text-sm transition-colors ${isFutureMonth
+                                ? "text-neutral-400 cursor-not-allowed"
+                                : viewDate.getMonth() === index
+                                  ? "bg-primary-600 text-white font-medium"
+                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                }`}
                             >
                               {month}
                             </button>
@@ -1415,11 +1447,10 @@ function DatePicker({
                               setViewDate(new Date(year, newMonth, 1));
                               setShowYearDropdown(false);
                             }}
-                            className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                              viewDate.getFullYear() === year
-                                ? "bg-primary-600 text-white font-medium"
-                                : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                            }`}
+                            className={`w-full px-4 py-2 text-left text-sm transition-colors ${viewDate.getFullYear() === year
+                              ? "bg-primary-600 text-white font-medium"
+                              : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                              }`}
                           >
                             Năm {year}
                           </button>
@@ -1434,11 +1465,10 @@ function DatePicker({
                 type="button"
                 onClick={handleNextMonth}
                 disabled={!canGoNext}
-                className={`p-2 rounded-full transition-colors flex-shrink-0 ${
-                  canGoNext
-                    ? "hover:bg-primary-100"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
+                className={`p-2 rounded-full transition-colors flex-shrink-0 ${canGoNext
+                  ? "hover:bg-primary-100"
+                  : "opacity-30 cursor-not-allowed"
+                  }`}
               >
                 <ChevronDown className="h-4 w-4 text-neutral-600 -rotate-90" />
               </button>
@@ -1520,14 +1550,13 @@ function DatePicker({
                               }
                             }}
                             disabled={isFutureLunarMonth}
-                            className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                              isFutureLunarMonth
-                                ? "text-neutral-400 cursor-not-allowed"
-                                : viewLunar.month === lm.month &&
-                                    viewLunar.leap === lm.leap
-                                  ? "bg-primary-600 text-white font-medium"
-                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                            }`}
+                            className={`w-full px-4 py-2 text-left text-sm transition-colors ${isFutureLunarMonth
+                              ? "text-neutral-400 cursor-not-allowed"
+                              : viewLunar.month === lm.month &&
+                                viewLunar.leap === lm.leap
+                                ? "bg-primary-600 text-white font-medium"
+                                : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                              }`}
                           >
                             {lm.label}
                           </button>
@@ -1617,13 +1646,12 @@ function DatePicker({
                               }
                             }}
                             disabled={isFutureYear}
-                            className={`w-full px-4 py-2 text-left text-sm transition-colors whitespace-nowrap ${
-                              isFutureYear
-                                ? "text-neutral-400 cursor-not-allowed"
-                                : viewLunar.year === year
-                                  ? "bg-primary-600 text-white font-medium"
-                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
-                            }`}
+                            className={`w-full px-4 py-2 text-left text-sm transition-colors whitespace-nowrap ${isFutureYear
+                              ? "text-neutral-400 cursor-not-allowed"
+                              : viewLunar.year === year
+                                ? "bg-primary-600 text-white font-medium"
+                                : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                              }`}
                           >
                             Năm {getCanChi(year)} ({year})
                           </button>
@@ -1693,27 +1721,25 @@ function DatePicker({
                       type="button"
                       onClick={() => !isFuture && handleDateClick(day)}
                       disabled={isFuture}
-                      className={`aspect-[1/1.3] rounded-lg transition-colors flex flex-col items-center justify-center py-1 ${
-                        isFuture
-                          ? "text-neutral-400 cursor-not-allowed"
-                          : isSelected
-                            ? "bg-primary-600 text-white font-medium"
-                            : isToday
-                              ? "bg-primary-100 text-primary-700 font-medium"
-                              : "text-neutral-900 hover:bg-primary-50"
-                      }`}
+                      className={`aspect-[1/1.3] rounded-lg transition-colors flex flex-col items-center justify-center py-1 ${isFuture
+                        ? "text-neutral-400 cursor-not-allowed"
+                        : isSelected
+                          ? "bg-primary-600 text-white font-medium"
+                          : isToday
+                            ? "bg-primary-100 text-primary-700 font-medium"
+                            : "text-neutral-900 hover:bg-primary-50"
+                        }`}
                     >
                       <span className="text-sm leading-none">{day}</span>
                       <span
-                        className={`text-[10px] leading-none mt-0.5 ${
-                          isFuture
-                            ? "text-neutral-300"
-                            : isSelected
-                              ? "text-white/70"
-                              : isLunarFirstDay
-                                ? "text-primary-600 font-medium"
-                                : "text-neutral-400"
-                        }`}
+                        className={`text-[10px] leading-none mt-0.5 ${isFuture
+                          ? "text-neutral-300"
+                          : isSelected
+                            ? "text-white/70"
+                            : isLunarFirstDay
+                              ? "text-primary-600 font-medium"
+                              : "text-neutral-400"
+                          }`}
                       >
                         {isLunarFirstDay
                           ? `${lunar.day}/${lunar.month}${lunar.leap ? " nhuận" : ""}`
@@ -1748,9 +1774,8 @@ function TextInput({
   multiline?: boolean;
   rows?: number;
 }) {
-  const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-    disabled ? "opacity-50 cursor-not-allowed" : ""
-  }`;
+  const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : ""
+    }`;
   const bgStyle = { backgroundColor: "#FFFCF5" };
 
   if (multiline) {
@@ -1897,9 +1922,8 @@ function CollapsibleSection({
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
       {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
@@ -1951,6 +1975,23 @@ export default function UploadMusic() {
   const [fieldNotes, setFieldNotes] = useState("");
   const [transcription, setTranscription] = useState("");
   const [lyricsFile, setLyricsFile] = useState<File | null>(null);
+  // Instrument image upload state
+  const [instrumentImage, setInstrumentImage] = useState<File | null>(null);
+  const [instrumentImagePreview, setInstrumentImagePreview] = useState<string>("");
+  // Instrument image upload handler
+  const handleInstrumentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setInstrumentImage(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setInstrumentImagePreview(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setInstrumentImagePreview("");
+    }
+  };
 
   const [collector, setCollector] = useState("");
   const [copyright, setCopyright] = useState("");
@@ -1989,14 +2030,14 @@ export default function UploadMusic() {
 
     // Không giới hạn dung lượng file
     const mime = selected.type || inferMimeFromName(selected.name);
-    
+
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
     const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
-    
+
     if (!isAudio && !isVideo) {
       setErrors((prev) => ({
         ...prev,
-        file: mediaType === "audio" 
+        file: mediaType === "audio"
           ? "Chỉ hỗ trợ file MP3, WAV hoặc FLAC"
           : "Chỉ hỗ trợ file MP4, MOV, AVI, WebM hoặc MKV",
       }));
@@ -2005,7 +2046,7 @@ export default function UploadMusic() {
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    
+
     // Tự động xác định loại media dựa trên file
     if (isVideo && mediaType === "audio") {
       setMediaType("video");
@@ -2057,7 +2098,7 @@ export default function UploadMusic() {
       if (cleanedUp) return;
       setErrors((prev) => ({
         ...prev,
-        file: isVideo 
+        file: isVideo
           ? "Không thể phân tích file video"
           : "Không thể phân tích file âm thanh",
       }));
@@ -2136,7 +2177,7 @@ export default function UploadMusic() {
       }
     } else {
       if (!file) {
-        newErrors.file = mediaType === "audio" 
+        newErrors.file = mediaType === "audio"
           ? "Vui lòng chọn file âm thanh"
           : "Vui lòng chọn file video";
       }
@@ -2411,756 +2452,838 @@ export default function UploadMusic() {
 
   return (
     <React.Fragment>
-    <form onSubmit={handleSubmit} className="w-full space-y-6">
-      {/* Required Fields Note */}
-      <div className="flex items-center gap-2 text-sm text-neutral-800/60">
-        <span className="text-red-400">*</span>
-        <span>Trường bắt buộc</span>
-      </div>
-
-      {submitStatus === "error" && (
-        <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
-          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-          <p className="text-red-200">{submitMessage}</p>
-        </div>
-      )}
-
-      <div
-        className="border border-neutral-200 rounded-2xl p-8 shadow-md"
-        style={{ backgroundColor: "#FFFCF5" }}
-      >
-        <SectionHeader
-          icon={Upload}
-          title={mediaType === "youtube" ? "Nhập link YouTube" : mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
-          subtitle={mediaType === "youtube" ? "Nhập URL video YouTube" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
-        />
-
-        {/* Media Type Selection */}
-        <div className="mt-4 mb-6">
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setMediaType("audio");
-                setFile(null);
-                setYoutubeUrl("");
-                setAudioInfo(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
-                mediaType === "audio"
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-primary-600 border-2 border-primary-600"
-              }`}
-              style={mediaType !== "audio" ? { backgroundColor: "#FFFCF5" } : undefined}
-            >
-              <div className="flex items-center gap-2">
-                <FileAudio className="h-4 w-4" />
-                <span>File âm thanh</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMediaType("video");
-                setFile(null);
-                setYoutubeUrl("");
-                setAudioInfo(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
-                mediaType === "video"
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-primary-600 border-2 border-primary-600"
-              }`}
-              style={mediaType !== "video" ? { backgroundColor: "#FFFCF5" } : undefined}
-            >
-              <div className="flex items-center gap-2">
-                <Video className="h-4 w-4" />
-                <span>File video</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMediaType("youtube");
-                setFile(null);
-                setAudioInfo(null);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-              }}
-              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
-                mediaType === "youtube"
-                  ? "bg-primary-600 text-white"
-                  : "bg-white text-primary-600 border-2 border-primary-600"
-              }`}
-              style={mediaType !== "youtube" ? { backgroundColor: "#FFFCF5" } : undefined}
-            >
-              <div className="flex items-center gap-2">
-                <Youtube className="h-4 w-4" />
-                <span>YouTube</span>
-              </div>
-            </button>
-          </div>
+      <form onSubmit={handleSubmit} className="w-full space-y-6">
+        {/* Required Fields Note */}
+        <div className="flex items-center gap-2 text-sm text-neutral-800/60">
+          <span className="text-red-400">*</span>
+          <span>Trường bắt buộc</span>
         </div>
 
-        {/* YouTube URL Input */}
-        {mediaType === "youtube" && (
-          <div className="mt-4">
-            <FormField label="URL YouTube" required>
-              <TextInput
-                value={youtubeUrl}
-                onChange={handleYoutubeUrlChange}
-                placeholder="https://www.youtube.com/watch?v=..."
-                required
-              />
-              {errors.youtubeUrl && (
-                <p className="text-sm text-red-400 mt-1">{errors.youtubeUrl}</p>
-              )}
-            </FormField>
+        {submitStatus === "error" && (
+          <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
+            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+            <p className="text-red-200">{submitMessage}</p>
           </div>
         )}
 
-        {/* File Upload */}
-        {mediaType !== "youtube" && (
-        <div className="mt-4">
-          <div
-            onClick={() => !isAnalyzing && fileInputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-              errors.file
-                ? "border-red-500/50 bg-red-500/5"
-                : file
-                  ? "border-primary-500/50 bg-primary-600/5"
-                  : "border-neutral-200 hover:border-primary-400"
-            } ${isAnalyzing ? "opacity-60 cursor-wait" : "cursor-pointer"}`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv" : ".mp3,.wav,.flac"}
-              onChange={handleFileChange}
-              className="sr-only"
-              disabled={isAnalyzing}
-            />
+        <div
+          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
+          <SectionHeader
+            icon={Upload}
+            title={mediaType === "youtube" ? "Nhập link YouTube" : mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
+            subtitle={mediaType === "youtube" ? "Nhập URL video YouTube" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
+          />
 
-            {isAnalyzing ? (
-              <div className="space-y-3">
-                <div className="animate-spin h-10 w-10 border-3 border-primary-600 border-t-transparent rounded-full mx-auto" />
-                <p className="text-neutral-800/70">Đang phân tích file...</p>
-              </div>
-            ) : file && audioInfo ? (
-              <div className="space-y-3">
-                <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
-                  {mediaType === "video" ? (
-                    <Video className="h-8 w-8 text-primary-600" />
-                  ) : (
-                    <FileAudio className="h-8 w-8 text-primary-600" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-neutral-800 font-medium">
-                    {audioInfo.name}
-                  </p>
-                  <div className="flex items-center justify-center gap-4 mt-2 text-sm text-neutral-800/60">
-                    <span>{formatFileSize(audioInfo.size)}</span>
-                    <span>•</span>
-                    <span>{formatDuration(audioInfo.duration)}</span>
-                    {audioInfo.bitrate && (
-                      <>
-                        <span>•</span>
-                        <span>~{audioInfo.bitrate} kbps</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFile(null);
-                    setAudioInfo(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                  className="text-sm text-neutral-800/60 hover:text-red-400 transition-colors"
-                >
-                  Chọn file khác
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
-                  <Upload className="h-8 w-8 text-primary-600" />
-                </div>
-                <div>
-                  <p className="text-neutral-800">
-                    Kéo thả file hoặc click để chọn
-                  </p>
-                  <p className="text-sm text-neutral-800/60 mt-1">
-                    {mediaType === "video" 
-                      ? "MP4, MOV, AVI, WebM, MKV - Không giới hạn dung lượng"
-                      : "MP3, WAV, FLAC - Không giới hạn dung lượng"}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-          {errors.file && (
-            <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
-              <AlertCircle className="h-4 w-4" />
-              {errors.file}
-            </p>
-          )}
-        </div>
-        )}
-      </div>
-
-      <div
-        className="border border-neutral-200 rounded-2xl p-8 shadow-md"
-        style={{ backgroundColor: "#FFFCF5" }}
-      >
-        <SectionHeader
-          icon={Music}
-          title="Thông tin mô tả cơ bản"
-          subtitle="Thông tin chính về bản nhạc"
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField label="Tiêu đề/Tên bản nhạc" required>
-            <TextInput
-              value={title}
-              onChange={setTitle}
-              placeholder="Nhập tên bản nhạc"
-              required
-            />
-            {errors.title && (
-              <p className="text-sm text-red-400">{errors.title}</p>
-            )}
-          </FormField>
-
-          <div className="space-y-2">
-            <FormField
-              label="Nghệ sĩ/Người biểu diễn"
-              required={!artistUnknown}
-            >
-              <TextInput
-                value={artist}
-                onChange={setArtist}
-                placeholder="Tên người hát hoặc chơi nhạc cụ"
-                required={!artistUnknown}
-                disabled={artistUnknown}
-              />
-            </FormField>
-            <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={artistUnknown}
-                onChange={(e) => {
-                  setArtistUnknown(e.target.checked);
-                  if (e.target.checked) setArtist("");
+          {/* Media Type Selection */}
+          <div className="mt-4 mb-6">
+            <div className="flex flex-wrap gap-2">
+              {/* File âm thanh */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaType("audio");
+                  setFile(null);
+                  setYoutubeUrl("");
+                  setAudioInfo(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: "#FFFCF5" }}
-              />
-              Không rõ
-            </label>
-            {errors.artist && (
-              <p className="text-sm text-red-400">{errors.artist}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <FormField label="Nhạc sĩ/Tác giả" required={!composerUnknown}>
-              <TextInput
-                value={composer}
-                onChange={setComposer}
-                placeholder="Tên người sáng tác"
-                disabled={composerUnknown}
-              />
-            </FormField>
-            <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={composerUnknown}
-                onChange={(e) => {
-                  setComposerUnknown(e.target.checked);
-                  if (e.target.checked) setComposer("");
-                }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: "#FFFCF5" }}
-              />
-              Dân gian/Không rõ tác giả
-            </label>
-            {errors.composer && (
-              <p className="text-sm text-red-400">{errors.composer}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <FormField label="Ngôn ngữ">
-              <SearchableDropdown
-                value={language}
-                onChange={(val) => {
-                  setLanguage(val);
-                  if (val !== "Khác") setCustomLanguage("");
-                }}
-                options={LANGUAGES}
-                placeholder="Chọn ngôn ngữ"
-                disabled={noLanguage}
-              />
-            </FormField>
-            {language === "Khác" && !noLanguage && (
-              <TextInput
-                value={customLanguage}
-                onChange={setCustomLanguage}
-                placeholder="Nhập tên ngôn ngữ khác..."
-              />
-            )}
-            <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={noLanguage}
-                onChange={(e) => {
-                  setNoLanguage(e.target.checked);
-                  if (e.target.checked) {
-                    setLanguage("");
-                    setCustomLanguage("");
+                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "audio"
+                  ? "bg-primary-600 text-white"
+                  : "text-neutral-700"
+                  }`}
+                style={
+                  mediaType !== "audio"
+                    ? { backgroundColor: "#FFFCF5" }
+                    : undefined
+                }
+                onMouseEnter={e => {
+                  if (mediaType !== "audio") {
+                    e.currentTarget.style.backgroundColor = "#F5F0E8";
                   }
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: "#FFFCF5" }}
-              />
-              Không có ngôn ngữ
-            </label>
-          </div>
-
-          <div className="space-y-2">
-            <FormField label="Thể loại/Loại hình" required>
-              <SearchableDropdown
-                value={genre}
-                onChange={(val) => {
-                  setGenre(val);
-                  if (val !== "Khác") setCustomGenre("");
+                onMouseLeave={e => {
+                  if (mediaType !== "audio") {
+                    e.currentTarget.style.backgroundColor = "#FFFCF5";
+                  }
                 }}
-                options={GENRES}
-                placeholder="Chọn thể loại"
-              />
-              {errors.genre && (
-                <p className="text-sm text-red-400">{errors.genre}</p>
-              )}
-            </FormField>
-            {genre === "Khác" && (
-              <TextInput
-                value={customGenre}
-                onChange={setCustomGenre}
-                placeholder="Nhập tên thể loại khác..."
-              />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <FormField label="Ngày ghi âm">
-              <DatePicker
-                value={recordingDate}
-                onChange={setRecordingDate}
-                placeholder="Chọn ngày/tháng/năm"
-                disabled={dateEstimated}
-              />
-            </FormField>
-            <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={dateEstimated}
-                onChange={(e) => {
-                  setDateEstimated(e.target.checked);
-                  if (e.target.checked) setRecordingDate("");
-                }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
-                style={{ backgroundColor: "#FFFCF5" }}
-              />
-              Ngày ước tính/không chính xác
-            </label>
-            {dateEstimated && (
-              <TextInput
-                value={dateNote}
-                onChange={setDateNote}
-                placeholder="Ghi chú về ngày tháng (Ví dụ: khoảng năm 1990)"
-              />
-            )}
-          </div>
-
-          <FormField
-            label="Địa điểm ghi âm"
-            hint="Ví dụ: Đình làng X, Nhà văn hóa Y"
-          >
-            <TextInput
-              value={recordingLocation}
-              onChange={setRecordingLocation}
-              placeholder="Nhập địa điểm cụ thể"
-            />
-          </FormField>
-        </div>
-      </div>
-
-      <CollapsibleSection
-        icon={MapPin}
-        title="Thông tin bối cảnh văn hóa"
-        subtitle="Thông tin về nguồn gốc và bối cảnh biểu diễn"
-      >
-        {/* Genre-Ethnicity Warning */}
-        {genreEthnicityWarning && (
-          <div className="mb-4 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
-            <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-200 text-sm leading-relaxed">
-              {genreEthnicityWarning}
-            </p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <FormField label="Thuộc tính dân tộc">
-              <SearchableDropdown
-                value={ethnicity}
-                onChange={(val) => {
-                  setEthnicity(val);
-                  if (val !== "Khác") setCustomEthnicity("");
-                }}
-                options={ETHNICITIES}
-                placeholder="Chọn dân tộc"
-              />
-            </FormField>
-            {ethnicity === "Khác" && (
-              <TextInput
-                value={customEthnicity}
-                onChange={setCustomEthnicity}
-                placeholder="Nhập tên dân tộc khác..."
-              />
-            )}
-          </div>
-
-          <FormField label="Khu vực">
-            <SearchableDropdown
-              value={region}
-              onChange={setRegion}
-              options={REGIONS}
-              placeholder="Chọn khu vực"
-              searchable={false}
-            />
-          </FormField>
-
-          <FormField label="Tỉnh/Thành phố">
-            <SearchableDropdown
-              value={province}
-              onChange={setProvince}
-              options={PROVINCES}
-              placeholder="Chọn tỉnh thành"
-            />
-          </FormField>
-
-          <div className="space-y-2">
-            <FormField label="Loại sự kiện">
-              <SearchableDropdown
-                value={eventType}
-                onChange={(val) => {
-                  setEventType(val);
-                  if (val !== "Khác") setCustomEventType("");
-                }}
-                options={EVENT_TYPES}
-                placeholder="Chọn loại sự kiện"
-              />
-            </FormField>
-            {eventType === "Khác" && (
-              <TextInput
-                value={customEventType}
-                onChange={setCustomEventType}
-                placeholder="Nhập loại sự kiện khác..."
-              />
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <FormField label="Loại hình biểu diễn">
-              <div className="flex flex-wrap gap-2">
-                {PERFORMANCE_TYPES.map((pt) => (
-                  <button
-                    key={pt.key}
-                    type="button"
-                    onClick={() => {
-                      setPerformanceType(pt.key);
-                      if (pt.key === "acappella") {
-                        setInstruments([]);
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${
-                      performanceType === pt.key
-                        ? "bg-primary-600 text-white"
-                        : "text-neutral-700"
-                    }`}
-                    style={
-                      performanceType !== pt.key
-                        ? { backgroundColor: "#FFFCF5" }
-                        : undefined
-                    }
-                    onMouseEnter={(e) => {
-                      if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = "#F5F0E8";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = "#FFFCF5";
-                      }
-                    }}
-                  >
-                    {pt.label}
-                  </button>
-                ))}
-              </div>
-            </FormField>
-          </div>
-
-          {requiresInstruments && (
-            <div className="md:col-span-2">
-              <FormField
-                label="Nhạc cụ sử dụng"
-                required={requiresInstruments}
-                hint="Chọn một hoặc nhiều nhạc cụ"
               >
-                <MultiSelectTags
-                  values={instruments}
-                  onChange={setInstruments}
-                  options={INSTRUMENTS}
-                  placeholder="Tìm và chọn nhạc cụ..."
+                <div className="flex items-center gap-2">
+                  <FileAudio className="h-4 w-4" />
+                  <span>File âm thanh</span>
+                </div>
+              </button>
+              {/* File video */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaType("video");
+                  setFile(null);
+                  setYoutubeUrl("");
+                  setAudioInfo(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "video"
+                  ? "bg-primary-600 text-white"
+                  : "text-neutral-700"
+                  }`}
+                style={
+                  mediaType !== "video"
+                    ? { backgroundColor: "#FFFCF5" }
+                    : undefined
+                }
+                onMouseEnter={e => {
+                  if (mediaType !== "video") {
+                    e.currentTarget.style.backgroundColor = "#F5F0E8";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (mediaType !== "video") {
+                    e.currentTarget.style.backgroundColor = "#FFFCF5";
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  <span>File video</span>
+                </div>
+              </button>
+              {/* YouTube */}
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaType("youtube");
+                  setFile(null);
+                  setAudioInfo(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "youtube"
+                  ? "bg-primary-600 text-white"
+                  : "text-neutral-700"
+                  }`}
+                style={
+                  mediaType !== "youtube"
+                    ? { backgroundColor: "#FFFCF5" }
+                    : undefined
+                }
+                onMouseEnter={e => {
+                  if (mediaType !== "youtube") {
+                    e.currentTarget.style.backgroundColor = "#F5F0E8";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (mediaType !== "youtube") {
+                    e.currentTarget.style.backgroundColor = "#FFFCF5";
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Youtube className="h-4 w-4" />
+                  <span>YouTube</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* YouTube URL Input */}
+          {mediaType === "youtube" && (
+            <div className="mt-4">
+              <FormField label="URL YouTube" required>
+                <TextInput
+                  value={youtubeUrl}
+                  onChange={handleYoutubeUrlChange}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  required
                 />
-                {errors.instruments && (
-                  <p className="text-sm text-red-400">{errors.instruments}</p>
+                {errors.youtubeUrl && (
+                  <p className="text-sm text-red-400 mt-1">{errors.youtubeUrl}</p>
                 )}
               </FormField>
             </div>
           )}
 
-          {allowsLyrics && (
-            <div className="md:col-span-2">
-              <FormField
-                label="Tải lên lời bài hát (nếu có)"
-                hint="File .txt hoặc .docx"
+          {/* File Upload */}
+          {mediaType !== "youtube" && (
+            <div className="mt-4">
+              <div
+                onClick={() => !isAnalyzing && fileInputRef.current?.click()}
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${errors.file
+                  ? "border-red-500/50 bg-red-500/5"
+                  : file
+                    ? "border-primary-500/50 bg-primary-600/5"
+                    : "border-neutral-200 hover:border-primary-400"
+                  } ${isAnalyzing ? "opacity-60 cursor-wait" : "cursor-pointer"}`}
               >
-                <div className="flex items-center gap-3">
-                  <label
-                    className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
-                    style={{ backgroundColor: "#FFFCF5" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#F5F0E8")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#FFFCF5")
-                    }
-                  >
-                    Chọn file
-                    <input
-                      type="file"
-                      accept=".txt,.doc,.docx"
-                      onChange={handleLyricsFileChange}
-                      className="sr-only"
-                    />
-                  </label>
-                  <span className="text-neutral-800/60 text-sm">
-                    {lyricsFile ? lyricsFile.name : "Chưa chọn file"}
-                  </span>
-                </div>
-              </FormField>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv" : ".mp3,.wav,.flac"}
+                  onChange={handleFileChange}
+                  className="sr-only"
+                  disabled={isAnalyzing}
+                />
+
+                {isAnalyzing ? (
+                  <div className="space-y-3">
+                    <div className="animate-spin h-10 w-10 border-3 border-primary-600 border-t-transparent rounded-full mx-auto" />
+                    <p className="text-neutral-800/70">Đang phân tích file...</p>
+                  </div>
+                ) : file && audioInfo ? (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
+                      {mediaType === "video" ? (
+                        <Video className="h-8 w-8 text-primary-600" />
+                      ) : (
+                        <FileAudio className="h-8 w-8 text-primary-600" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-neutral-800 font-medium">
+                        {audioInfo.name}
+                      </p>
+                      <div className="flex items-center justify-center gap-4 mt-2 text-sm text-neutral-800/60">
+                        <span>{formatFileSize(audioInfo.size)}</span>
+                        <span>•</span>
+                        <span>{formatDuration(audioInfo.duration)}</span>
+                        {audioInfo.bitrate && (
+                          <>
+                            <span>•</span>
+                            <span>~{audioInfo.bitrate} kbps</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFile(null);
+                        setAudioInfo(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="text-sm text-neutral-800/60 hover:text-red-400 transition-colors"
+                    >
+                      Chọn file khác
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
+                      <Upload className="h-8 w-8 text-primary-600" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-800">
+                        Kéo thả file hoặc click để chọn
+                      </p>
+                      <p className="text-sm text-neutral-800/60 mt-1">
+                        {mediaType === "video"
+                          ? "MP4, MOV, AVI, WebM, MKV - Không giới hạn dung lượng"
+                          : "MP3, WAV, FLAC - Không giới hạn dung lượng"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {errors.file && (
+                <p className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.file}
+                </p>
+              )}
             </div>
           )}
         </div>
-      </CollapsibleSection>
 
-      <CollapsibleSection
-        icon={Info}
-        title="Ghi chú bổ sung"
-        optional
-        defaultOpen={false}
-      >
-        <div className="space-y-4">
-          <FormField
-            label="Mô tả nội dung"
-            hint="Lời bài hát, chủ đề, ý nghĩa văn hóa"
-          >
-            <TextInput
-              value={description}
-              onChange={setDescription}
-              placeholder="Mô tả chi tiết về bản nhạc..."
-              multiline
-              rows={4}
-            />
-          </FormField>
+        <div
+          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
+          <SectionHeader
+            icon={Music}
+            title="Thông tin mô tả cơ bản"
+            subtitle="Thông tin chính về bản nhạc"
+          />
 
-          <FormField
-            label="Ghi chú thực địa"
-            hint="Quan sát về bối cảnh, phong cách trình diễn"
-          >
-            <TextInput
-              value={fieldNotes}
-              onChange={setFieldNotes}
-              placeholder="Những quan sát đặc biệt..."
-              multiline
-              rows={3}
-            />
-          </FormField>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="Tiêu đề/Tên bản nhạc" required>
+              <TextInput
+                value={title}
+                onChange={setTitle}
+                placeholder="Nhập tên bản nhạc"
+                required
+              />
+              {errors.title && (
+                <p className="text-sm text-red-400">{errors.title}</p>
+              )}
+            </FormField>
 
-          <FormField
-            label="Phiên âm/Bản dịch"
-            hint="Nếu sử dụng ngôn ngữ dân tộc thiểu số"
-          >
-            <TextInput
-              value={transcription}
-              onChange={setTranscription}
-              placeholder="Phiên âm hoặc bản dịch tiếng Việt..."
-              multiline
-              rows={3}
-            />
-          </FormField>
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        icon={Shield}
-        title="Thông tin quản trị và bản quyền"
-        optional
-        defaultOpen={false}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField label="Người thu thập/Ghi âm">
-            <TextInput
-              value={collector}
-              onChange={setCollector}
-              placeholder="Tên người hoặc tổ chức ghi âm"
-            />
-          </FormField>
-
-          <FormField label="Bản quyền">
-            <TextInput
-              value={copyright}
-              onChange={setCopyright}
-              placeholder="Thông tin về quyền sở hữu, giấy phép"
-            />
-          </FormField>
-
-          <FormField label="Tổ chức lưu trữ">
-            <TextInput
-              value={archiveOrg}
-              onChange={setArchiveOrg}
-              placeholder="Nơi bảo quản bản gốc"
-            />
-          </FormField>
-
-          <FormField label="Mã định danh" hint="ISRC hoặc mã catalog riêng">
-            <TextInput
-              value={catalogId}
-              onChange={setCatalogId}
-              placeholder="VD: ISRC-VN-XXX-00-00000"
-            />
-          </FormField>
-        </div>
-      </CollapsibleSection>
-
-      <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={resetForm}
-            disabled={isSubmitting}
-            className="px-6 py-2.5 text-neutral-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
-            style={{ backgroundColor: "#FFFCF5" }}
-            onMouseEnter={(e) =>
-              !isSubmitting &&
-              (e.currentTarget.style.backgroundColor = "#F5F0E8")
-            }
-            onMouseLeave={(e) =>
-              !isSubmitting &&
-              (e.currentTarget.style.backgroundColor = "#FFFCF5")
-            }
-          >
-            Đặt lại
-          </button>
-          <button
-            type="submit"
-            disabled={!file || isAnalyzing || isSubmitting}
-            className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                Đang xử lý...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" />
-                Đóng góp
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-    </form>
-
-    {/* Success Pop-up */}
-    {showSuccessPopup &&
-      createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div
-            className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
-            style={{ backgroundColor: '#FFF2D6' }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
-              <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+            <div className="space-y-2">
+              <FormField
+                label="Nghệ sĩ/Người biểu diễn"
+                required={!artistUnknown}
+              >
+                <TextInput
+                  value={artist}
+                  onChange={setArtist}
+                  placeholder="Tên người hát hoặc chơi nhạc cụ"
+                  required={!artistUnknown}
+                  disabled={artistUnknown}
+                />
+              </FormField>
+              <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={artistUnknown}
+                  onChange={(e) => {
+                    setArtistUnknown(e.target.checked);
+                    if (e.target.checked) setArtist("");
+                  }}
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  style={{ backgroundColor: "#FFFCF5" }}
+                />
+                Không rõ
+              </label>
+              {errors.artist && (
+                <p className="text-sm text-red-400">{errors.artist}</p>
+              )}
             </div>
 
-            {/* Content */}
-            <div
-              className="overflow-y-auto p-6"
-              style={{
-                scrollbarWidth: "thin",
-                scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
-              }}
+            <div className="space-y-2">
+              <FormField label="Nhạc sĩ/Tác giả" required={!composerUnknown}>
+                <TextInput
+                  value={composer}
+                  onChange={setComposer}
+                  placeholder="Tên người sáng tác"
+                  disabled={composerUnknown}
+                />
+              </FormField>
+              <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={composerUnknown}
+                  onChange={(e) => {
+                    setComposerUnknown(e.target.checked);
+                    if (e.target.checked) setComposer("");
+                  }}
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  style={{ backgroundColor: "#FFFCF5" }}
+                />
+                Dân gian/Không rõ tác giả
+              </label>
+              {errors.composer && (
+                <p className="text-sm text-red-400">{errors.composer}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <FormField label="Ngôn ngữ">
+                <SearchableDropdown
+                  value={language}
+                  onChange={(val) => {
+                    setLanguage(val);
+                    if (val !== "Khác") setCustomLanguage("");
+                  }}
+                  options={LANGUAGES}
+                  placeholder="Chọn ngôn ngữ"
+                  disabled={noLanguage}
+                />
+              </FormField>
+              {language === "Khác" && !noLanguage && (
+                <TextInput
+                  value={customLanguage}
+                  onChange={setCustomLanguage}
+                  placeholder="Nhập tên ngôn ngữ khác..."
+                />
+              )}
+              <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={noLanguage}
+                  onChange={(e) => {
+                    setNoLanguage(e.target.checked);
+                    if (e.target.checked) {
+                      setLanguage("");
+                      setCustomLanguage("");
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  style={{ backgroundColor: "#FFFCF5" }}
+                />
+                Không có ngôn ngữ
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <FormField label="Thể loại/Loại hình" required>
+                <SearchableDropdown
+                  value={genre}
+                  onChange={(val) => {
+                    setGenre(val);
+                    if (val !== "Khác") setCustomGenre("");
+                  }}
+                  options={GENRES}
+                  placeholder="Chọn thể loại"
+                />
+                {errors.genre && (
+                  <p className="text-sm text-red-400">{errors.genre}</p>
+                )}
+              </FormField>
+              {genre === "Khác" && (
+                <TextInput
+                  value={customGenre}
+                  onChange={setCustomGenre}
+                  placeholder="Nhập tên thể loại khác..."
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <FormField label="Ngày ghi âm">
+                <DatePicker
+                  value={recordingDate}
+                  onChange={setRecordingDate}
+                  placeholder="Chọn ngày/tháng/năm"
+                  disabled={dateEstimated}
+                />
+              </FormField>
+              <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={dateEstimated}
+                  onChange={(e) => {
+                    setDateEstimated(e.target.checked);
+                    if (e.target.checked) setRecordingDate("");
+                  }}
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  style={{ backgroundColor: "#FFFCF5" }}
+                />
+                Ngày ước tính/không chính xác
+              </label>
+              {dateEstimated && (
+                <TextInput
+                  value={dateNote}
+                  onChange={setDateNote}
+                  placeholder="Ghi chú về ngày tháng (Ví dụ: khoảng năm 1990)"
+                />
+              )}
+            </div>
+
+            <FormField
+              label="Địa điểm ghi âm"
+              hint="Ví dụ: Đình làng X, Nhà văn hóa Y"
             >
-              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-                <div className="flex flex-col items-center gap-4 mb-2">
-                  <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
-                    <Check className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
-                    Cảm ơn bạn đã đóng góp bản thu!
-                  </h3>
+              <TextInput
+                value={recordingLocation}
+                onChange={setRecordingLocation}
+                placeholder="Nhập địa điểm cụ thể"
+              />
+            </FormField>
+          </div>
+        </div>
+
+        <CollapsibleSection
+          icon={MapPin}
+          title="Thông tin bối cảnh văn hóa"
+          subtitle="Thông tin về nguồn gốc và bối cảnh biểu diễn"
+        >
+          {/* Genre-Ethnicity Warning */}
+          {genreEthnicityWarning && (
+            <div className="mb-4 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
+              <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-yellow-200 text-sm leading-relaxed">
+                {genreEthnicityWarning}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <FormField label="Thuộc tính dân tộc">
+                <SearchableDropdown
+                  value={ethnicity}
+                  onChange={(val) => {
+                    setEthnicity(val);
+                    if (val !== "Khác") setCustomEthnicity("");
+                  }}
+                  options={ETHNICITIES}
+                  placeholder="Chọn dân tộc"
+                />
+              </FormField>
+              {ethnicity === "Khác" && (
+                <TextInput
+                  value={customEthnicity}
+                  onChange={setCustomEthnicity}
+                  placeholder="Nhập tên dân tộc khác..."
+                />
+              )}
+            </div>
+
+            <FormField label="Khu vực">
+              <SearchableDropdown
+                value={region}
+                onChange={setRegion}
+                options={REGIONS}
+                placeholder="Chọn khu vực"
+                searchable={false}
+              />
+            </FormField>
+
+            <FormField label="Tỉnh/Thành phố">
+              <SearchableDropdown
+                value={province}
+                onChange={setProvince}
+                options={PROVINCES}
+                placeholder="Chọn tỉnh thành"
+              />
+            </FormField>
+
+            <div className="space-y-2">
+              <FormField label="Loại sự kiện">
+                <SearchableDropdown
+                  value={eventType}
+                  onChange={(val) => {
+                    setEventType(val);
+                    if (val !== "Khác") setCustomEventType("");
+                  }}
+                  options={EVENT_TYPES}
+                  placeholder="Chọn loại sự kiện"
+                />
+              </FormField>
+              {eventType === "Khác" && (
+                <TextInput
+                  value={customEventType}
+                  onChange={setCustomEventType}
+                  placeholder="Nhập loại sự kiện khác..."
+                />
+              )}
+            </div>
+
+            <div className="md:col-span-2">
+              <FormField label="Loại hình biểu diễn">
+                <div className="flex flex-wrap gap-2">
+                  {PERFORMANCE_TYPES.map((pt) => (
+                    <button
+                      key={pt.key}
+                      type="button"
+                      onClick={() => {
+                        setPerformanceType(pt.key);
+                        if (pt.key === "acappella") {
+                          setInstruments([]);
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${performanceType === pt.key
+                        ? "bg-primary-600 text-white"
+                        : "text-neutral-700"
+                        }`}
+                      style={
+                        performanceType !== pt.key
+                          ? { backgroundColor: "#FFFCF5" }
+                          : undefined
+                      }
+                      onMouseEnter={(e) => {
+                        if (performanceType !== pt.key) {
+                          e.currentTarget.style.backgroundColor = "#F5F0E8";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (performanceType !== pt.key) {
+                          e.currentTarget.style.backgroundColor = "#FFFCF5";
+                        }
+                      }}
+                    >
+                      {pt.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="text-center">
-                  <p className="text-neutral-600 text-sm leading-relaxed">
-                    Bạn có thể xem bản thu đã đóng góp
-                  </p>
-                  <p className="text-neutral-600 text-sm leading-relaxed">
-                    trong phần "Bản thu của bạn" trên trang chủ hoặc trong trang "Khám phá bản thu"
-                  </p>
+              </FormField>
+            </div>
+
+            {requiresInstruments && (
+              <div className="md:col-span-2">
+                <FormField
+                  label="Nhạc cụ sử dụng"
+                  required={requiresInstruments}
+                  hint="Chọn một hoặc nhiều nhạc cụ"
+                >
+                  <MultiSelectTags
+                    values={instruments}
+                    onChange={setInstruments}
+                    options={INSTRUMENTS}
+                    placeholder="Tìm và chọn nhạc cụ..."
+                  />
+                  {errors.instruments && (
+                    <p className="text-sm text-red-400">{errors.instruments}</p>
+                  )}
+                </FormField>
+
+                {/* Instrument image upload for solo (instrumental) */}
+                {performanceType === "instrumental" && (
+                  <div className="md:col-span-2 mt-4">
+                    <FormField label="Tải lên hình ảnh nhạc cụ (nếu có)" hint="Ảnh minh họa cho nhạc cụ sử dụng, chỉ dành cho bài độc tấu">
+                      <div className="flex items-center gap-3">
+                        <label
+                          className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                          style={{ backgroundColor: "#FFFCF5" }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#F5F0E8")}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#FFFCF5")}
+                        >
+                          Chọn ảnh
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleInstrumentImageChange}
+                            className="sr-only"
+                          />
+                        </label>
+                        {instrumentImage && (
+                          <span className="text-neutral-800/60 text-sm">{instrumentImage.name}</span>
+                        )}
+                        {instrumentImagePreview && (
+                          <img src={instrumentImagePreview} alt="Xem trước ảnh nhạc cụ" className="h-16 rounded-lg border border-neutral-300" />
+                        )}
+                        {instrumentImage && (
+                          <button
+                            type="button"
+                            className="ml-2 text-xs text-red-400 hover:underline"
+                            onClick={() => {
+                              setInstrumentImage(null);
+                              setInstrumentImagePreview("");
+                            }}
+                          >
+                            Xóa ảnh
+                          </button>
+                        )}
+                      </div>
+                    </FormField>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {allowsLyrics && (
+              <div className="md:col-span-2">
+                <FormField
+                  label="Tải lên lời bài hát (nếu có)"
+                  hint="File .txt hoặc .docx"
+                >
+                  <div className="flex items-center gap-3">
+                    <label
+                      className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                      style={{ backgroundColor: "#FFFCF5" }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#F5F0E8")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#FFFCF5")
+                      }
+                    >
+                      Chọn file
+                      <input
+                        type="file"
+                        accept=".txt,.doc,.docx"
+                        onChange={handleLyricsFileChange}
+                        className="sr-only"
+                      />
+                    </label>
+                    <span className="text-neutral-800/60 text-sm">
+                      {lyricsFile ? lyricsFile.name : "Chưa chọn file"}
+                    </span>
+                  </div>
+                </FormField>
+              </div>
+            )}
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          icon={Info}
+          title="Ghi chú bổ sung"
+          optional
+          defaultOpen={false}
+        >
+          <div className="space-y-4">
+            <FormField
+              label="Mô tả nội dung"
+              hint="Lời bài hát, chủ đề, ý nghĩa văn hóa"
+            >
+              <TextInput
+                value={description}
+                onChange={setDescription}
+                placeholder="Mô tả chi tiết về bản nhạc..."
+                multiline
+                rows={4}
+              />
+            </FormField>
+
+            <FormField
+              label="Ghi chú thực địa"
+              hint="Quan sát về bối cảnh, phong cách trình diễn"
+            >
+              <TextInput
+                value={fieldNotes}
+                onChange={setFieldNotes}
+                placeholder="Những quan sát đặc biệt..."
+                multiline
+                rows={3}
+              />
+            </FormField>
+
+            <FormField
+              label="Phiên âm/Bản dịch"
+              hint="Nếu sử dụng ngôn ngữ dân tộc thiểu số"
+            >
+              <TextInput
+                value={transcription}
+                onChange={setTranscription}
+                placeholder="Phiên âm hoặc bản dịch tiếng Việt..."
+                multiline
+                rows={3}
+              />
+            </FormField>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          icon={Shield}
+          title="Thông tin quản trị và bản quyền"
+          optional
+          defaultOpen={false}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField label="Người thu thập/Ghi âm">
+              <TextInput
+                value={collector}
+                onChange={setCollector}
+                placeholder="Tên người hoặc tổ chức ghi âm"
+              />
+            </FormField>
+
+            <FormField label="Bản quyền">
+              <TextInput
+                value={copyright}
+                onChange={setCopyright}
+                placeholder="Thông tin về quyền sở hữu, giấy phép"
+              />
+            </FormField>
+
+            <FormField label="Tổ chức lưu trữ">
+              <TextInput
+                value={archiveOrg}
+                onChange={setArchiveOrg}
+                placeholder="Nơi bảo quản bản gốc"
+              />
+            </FormField>
+
+            <FormField label="Mã định danh" hint="ISRC hoặc mã catalog riêng">
+              <TextInput
+                value={catalogId}
+                onChange={setCatalogId}
+                placeholder="VD: ISRC-VN-XXX-00-00000"
+              />
+            </FormField>
+          </div>
+        </CollapsibleSection>
+
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-neutral-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
+              style={{ backgroundColor: "#FFFCF5" }}
+              onMouseEnter={(e) =>
+                !isSubmitting &&
+                (e.currentTarget.style.backgroundColor = "#F5F0E8")
+              }
+              onMouseLeave={(e) =>
+                !isSubmitting &&
+                (e.currentTarget.style.backgroundColor = "#FFFCF5")
+              }
+            >
+              Đặt lại
+            </button>
+            <button
+              type="submit"
+              disabled={!file || isAnalyzing || isSubmitting}
+              className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Đóng góp
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {/* Success Pop-up */}
+      {showSuccessPopup &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div
+              className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
+              style={{ backgroundColor: '#FFF2D6' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+              </div>
+
+              {/* Content */}
+              <div
+                className="overflow-y-auto p-6"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+                }}
+              >
+                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                  <div className="flex flex-col items-center gap-4 mb-2">
+                    <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
+                      <Check className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                      Cảm ơn bạn đã đóng góp bản thu!
+                    </h3>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-neutral-600 text-sm leading-relaxed">
+                      Bạn có thể xem bản thu đã đóng góp
+                    </p>
+                    <p className="text-neutral-600 text-sm leading-relaxed">
+                      trong phần "Bản thu của bạn" trên trang chủ hoặc trong trang "Khám phá bản thu"
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
-              <button
-                onClick={() => {
-                  setShowSuccessPopup(false);
-                  resetForm();
-                  setSubmitStatus("idle");
-                  setSubmitMessage("");
-                }}
-                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
-              >
-                Đóng
-              </button>
+              {/* Footer */}
+              <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                <button
+                  onClick={() => {
+                    setShowSuccessPopup(false);
+                    resetForm();
+                    setSubmitStatus("idle");
+                    setSubmitMessage("");
+                  }}
+                  className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
     </React.Fragment>
   );
 }
