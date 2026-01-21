@@ -1,12 +1,26 @@
 import { api } from "./api";
-import { User, LoginForm, RegisterForm, ApiResponse } from "@/types";
+import { User, LoginForm, RegisterForm, ApiResponse, UserRole } from "@/types";
 
 export const authService = {
   // Login
   login: async (credentials: LoginForm) => {
+    interface LoginResponse {
+      token: string;
+      id: string;
+      username: string;
+      email: string;
+      fullName: string;
+      role: string;
+      avatarUrl?: string;
+    }
     try {
-      const response = await api.post<any>("/auth/login", credentials);
-      const authData = response.data;
+      const response = await api.post<LoginResponse | { data: LoginResponse }>(
+        "/auth/login",
+        credentials,
+      );
+      const authData = (response as LoginResponse).token
+        ? (response as LoginResponse)
+        : (response as { data: LoginResponse }).data;
       if (authData && authData.token) {
         localStorage.setItem("access_token", authData.token);
         const user = {
@@ -14,7 +28,7 @@ export const authService = {
           username: authData.username,
           email: authData.email,
           fullName: authData.fullName,
-          role: authData.role,
+          role: authData.role as UserRole,
           avatar: authData.avatarUrl,
           createdAt: "",
           updatedAt: "",
@@ -38,7 +52,10 @@ export const authService = {
 
   // Register
   register: async (data: RegisterForm) => {
-    const response = await api.post<ApiResponse<any>>("/auth/register", data);
+    const response = await api.post<ApiResponse<unknown>>(
+      "/auth/register",
+      data,
+    );
     return {
       success: true,
       data: response.data,

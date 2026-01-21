@@ -90,11 +90,10 @@ function QuickActionButton({
   return (
     <Link to={to} className="w-full sm:w-auto">
       <button
-        className={`w-full sm:w-[280px] px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
-          primary
+        className={`w-full sm:w-[280px] px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${primary
             ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
             : "text-primary-600 border-2 border-primary-600 shadow-md hover:shadow-lg"
-        }`}
+          }`}
         style={!primary ? { backgroundColor: "#FFFCF5" } : undefined}
         onMouseEnter={(e) =>
           !primary && (e.currentTarget.style.backgroundColor = "#F5F0E8")
@@ -190,6 +189,12 @@ export default function HomePage() {
               <br />
               qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
             </p>
+
+            {/* Quick actions */}
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <QuickActionButton icon={Compass} label="Khám phá" to="/explore" primary />
+              <QuickActionButton icon={Upload} label="Đóng góp" to="/upload" />
+            </div>
           </div>
         </div>
 

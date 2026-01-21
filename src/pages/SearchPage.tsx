@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
-import RecordingCard from "@/components/features/RecordingCard";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import SearchBar from "@/components/features/SearchBar";
 import Pagination from "@/components/common/Pagination";
