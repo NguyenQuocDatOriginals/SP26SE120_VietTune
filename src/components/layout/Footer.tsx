@@ -3,8 +3,12 @@ import { Mail, Facebook, Youtube } from "lucide-react";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
 import toast from "react-hot-toast";
+import { useAuthStore } from "@/stores/authStore";
+import { UserRole } from "@/types";
 
 export default function Footer() {
+  const { user } = useAuthStore();
+  const isExpert = user?.role === UserRole.EXPERT;
   const handleCopyEmail = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const email = "contact@viettune.com";
@@ -48,10 +52,10 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li>
                 <Link
-                  to="/upload"
+                  to={isExpert ? "/moderation" : "/upload"}
                   className="text-white/90 font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors"
                 >
-                  Đóng góp bản thu
+                  {isExpert ? "Kiểm duyệt bản thu" : "Đóng góp bản thu"}
                 </Link>
               </li>
               <li>

@@ -1,11 +1,37 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
-import toast from "react-hot-toast";
+
+// Hàm dịch trạng thái sang tiếng Việt
+const getStatusLabel = (status?: ModerationStatus | string): string => {
+    if (!status) return "Không xác định";
+    
+    switch (status) {
+        case ModerationStatus.PENDING_REVIEW:
+        case "PENDING_REVIEW":
+            return "Đang chờ được kiểm duyệt";
+        case ModerationStatus.IN_REVIEW:
+        case "IN_REVIEW":
+            return "Đang được kiểm duyệt";
+        case ModerationStatus.APPROVED:
+        case "APPROVED":
+            return "Đã được kiểm duyệt";
+        case ModerationStatus.REJECTED:
+        case "REJECTED":
+            return "Đã bị từ chối";
+        default:
+            return String(status);
+    }
+};
 
 interface LocalRecordingMini {
     id?: string;
-    title?: string;
+    title?: string; // Fallback for old format
+    basicInfo?: {
+        title?: string;
+        artist?: string;
+        genre?: string;
+    };
     uploadedAt?: string;
     uploader?: { id?: string; username?: string };
     moderation?: {
@@ -86,7 +112,6 @@ export default function ModerationPage() {
             if (it.id === id) {
                 // If already claimed by another, block
                 if (it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy && it.moderation.claimedBy !== user?.id) {
-                    toast.error("Đã có chuyên gia khác đang kiểm duyệt.");
                     return it;
                 }
                 return {
@@ -104,7 +129,6 @@ export default function ModerationPage() {
         });
         setItems(updated);
         saveItems(updated);
-        toast.success("Bạn đã nhận kiểm duyệt.");
     };
 
     const release = (id?: string) => {
@@ -113,7 +137,6 @@ export default function ModerationPage() {
             if (it.id === id) {
                 // Only the claimer can release
                 if (it.moderation?.claimedBy !== user?.id) {
-                    toast.error("Bạn không thể hủy nhận kiểm duyệt này.");
                     return it;
                 }
                 return {
@@ -131,7 +154,6 @@ export default function ModerationPage() {
         });
         setItems(updated);
         saveItems(updated);
-        toast.success("Bạn đã hủy kiểm duyệt, bản thu trở về chờ xét duyệt.");
     };
 
     const approve = (id?: string) => {
@@ -139,7 +161,6 @@ export default function ModerationPage() {
         const updated = items.map((it) => {
             if (it.id === id) {
                 if (it.moderation?.claimedBy !== user?.id) {
-                    toast.error("Bạn phải nhận kiểm duyệt trước khi duyệt bài.");
                     return it;
                 }
                 return {
@@ -159,7 +180,6 @@ export default function ModerationPage() {
         });
         setItems(updated);
         saveItems(updated);
-        toast.success("Bản thu đã được duyệt và xuất bản.");
     };
 
     const reject = (id?: string) => {
@@ -167,7 +187,6 @@ export default function ModerationPage() {
         const updated = items.map((it) => {
             if (it.id === id) {
                 if (it.moderation?.claimedBy !== user?.id) {
-                    toast.error("Bạn phải nhận kiểm duyệt trước khi từ chối bài.");
                     return it;
                 }
                 return {
@@ -187,7 +206,6 @@ export default function ModerationPage() {
         });
         setItems(updated);
         saveItems(updated);
-        toast.success("Bản thu đã bị từ chối.");
     };
 
     return (
@@ -198,7 +216,7 @@ export default function ModerationPage() {
                 {items.length === 0 ? (
                     <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
                         <h2 className="text-xl font-semibold mb-2 text-neutral-800">Không có bản thu</h2>
-                        <p className="text-neutral-700">Không có bản thu chờ kiểm duyệt.</p>
+                        <p className="text-neutral-700">Không có bản thu đang chờ được kiểm duyệt.</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
@@ -206,13 +224,15 @@ export default function ModerationPage() {
                             <div key={it.id} className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
                                 <div className="md:flex md:items-start md:justify-between">
                                     <div className="md:flex-1">
-                                        <div className="text-neutral-800 font-semibold text-lg mb-1">{it.title || 'Không có tiêu đề'}</div>
+                                        <div className="text-neutral-800 font-semibold text-lg mb-1">
+                                            {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
+                                        </div>
                                         <div className="text-sm text-neutral-600 mb-1">Người đóng góp: {it.uploader?.username || 'Khách'}</div>
                                         <div className="text-sm text-neutral-500">Ngày tải: {it.uploadedAt ? new Date(it.uploadedAt).toLocaleString() : '-'}</div>
                                         <div className="text-sm mt-2">
-                                            Trạng thái: <span className="font-medium">{it.moderation?.status}</span>
+                                            Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
                                             {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
-                                                <span> — Đang kiểm duyệt bởi {it.moderation.claimedByName}</span>
+                                                <span> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
                                             )}
                                         </div>
                                     </div>
@@ -224,9 +244,9 @@ export default function ModerationPage() {
 
                                         {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
                                             <>
-                                                <button onClick={() => approve(it.id)} className="px-3 py-2 rounded-full bg-green-600 text-white">Duyệt</button>
+                                                <button onClick={() => approve(it.id)} className="px-3 py-2 rounded-full bg-green-600 text-white">Kiểm duyệt</button>
                                                 <button onClick={() => reject(it.id)} className="px-3 py-2 rounded-full bg-red-600 text-white">Từ chối</button>
-                                                <button onClick={() => release(it.id)} className="px-3 py-2 rounded-full bg-secondary-100 text-secondary-700">Hủy nhận</button>
+                                                <button onClick={() => release(it.id)} className="px-3 py-2 rounded-full bg-secondary-100 text-secondary-700">Hủy nhận kiểm duyệt</button>
                                             </>
                                         )}
 

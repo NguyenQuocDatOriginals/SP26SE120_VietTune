@@ -70,12 +70,21 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-3 xl:gap-4 flex-1 mx-4">
-              <Link
-                to="/upload"
-                className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
-              >
-                Đóng góp bản thu
-              </Link>
+              {user?.role === "EXPERT" ? (
+                <Link
+                  to="/moderation"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Kiểm duyệt bản thu
+                </Link>
+              ) : (
+                <Link
+                  to="/upload"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Đóng góp bản thu
+                </Link>
+              )}
               <Link
                 to="/instruments"
                 className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"

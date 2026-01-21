@@ -207,7 +207,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       // toast.success("Đăng nhập demo Expert A thành công");
-                      navigate("/moderation");
+                      navigate("/");
                     }
                   } catch (err) {
                     toast.error("Không thể đăng nhập demo");
@@ -228,7 +228,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       // toast.success("Đăng nhập demo Expert B thành công");
-                      navigate("/moderation");
+                      navigate("/");
                     }
                   } catch (err) {
                     toast.error("Không thể đăng nhập demo");
@@ -249,7 +249,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       // toast.success("Đăng nhập demo Expert C thành công");
-                      navigate("/moderation");
+                      navigate("/");
                     }
                   } catch (err) {
                     toast.error("Không thể đăng nhập demo");

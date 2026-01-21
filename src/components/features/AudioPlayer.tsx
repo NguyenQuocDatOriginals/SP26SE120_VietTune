@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Music, Users, MapPin, Clock, Repeat, AlertTriangle } from "lucide-react";
 import { createPortal } from "react-dom";
 import { isYouTubeUrl, getYouTubeId } from "../../utils/youtube";
+import { useAuthStore } from "@/stores/authStore";
+import { UserRole } from "@/types";
 
 // Props type for AudioPlayer
 type Props = {
@@ -41,8 +43,24 @@ export default function AudioPlayer({
   const [isLooping, setIsLooping] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const { user } = useAuthStore();
+  // Check if user is Expert - handle both string and enum
+  const isExpert = user?.role === "EXPERT" || user?.role === UserRole.EXPERT;
   const isYoutube = isYouTubeUrl(src);
   const youtubeId = isYoutube ? getYouTubeId(src || "") : null;
+  
+  // Debug: log to help troubleshoot
+  useEffect(() => {
+    if (showContainer && recording) {
+      console.log("AudioPlayer Debug:", {
+        isExpert,
+        userRole: user?.role,
+        hasOnDelete: !!onDelete,
+        hasRecordingId: !!recording?.id,
+        recordingId: recording?.id
+      });
+    }
+  }, [isExpert, user?.role, onDelete, recording?.id, showContainer]);
 
   // If YouTube, render only the YouTube player (with title/artist if present)
   if (isYoutube && youtubeId) {
@@ -319,19 +337,40 @@ export default function AudioPlayer({
 
               {/* Controls */}
               <div className="relative flex items-center justify-center">
-                {/* Left: Delete Button - Positioned absolutely */}
-                {onDelete && (
+                {/* Left: Delete Button (Expert only) - Positioned absolutely */}
+                {isExpert && onDelete && recording && (
                   <div className="absolute left-0">
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center border border-neutral-300 transition-colors shadow-sm hover:shadow-md"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
-                      title="Xóa bản thu"
-                    >
-                      <Trash2 className="w-4 h-4 text-primary-600" />
-                    </button>
+                    {showDeleteConfirm ? (
+                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
+                        <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
+                        <button
+                          onClick={() => {
+                            const idToDelete = recording.id || recording.id === 0 ? recording.id : (recording as any).id || "";
+                            if (idToDelete !== "" && idToDelete !== undefined) {
+                              onDelete(String(idToDelete));
+                            }
+                            setShowDeleteConfirm(false);
+                          }}
+                          className="text-xs text-red-700 hover:text-red-900 font-semibold"
+                        >
+                          Xóa
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm(false)}
+                          className="text-xs text-neutral-600 hover:text-neutral-800"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
+                        title="Xóa bản thu (Chuyên gia)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -757,6 +796,43 @@ export default function AudioPlayer({
               <span className="absolute text-[9px] font-bold" style={{ marginTop: '2px' }}>5</span>
             </button>
           </div>
+
+          {/* Left: Delete Button (Expert only) - Positioned absolutely */}
+          {isExpert && onDelete && recording && (
+            <div className="absolute left-0">
+              {showDeleteConfirm ? (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
+                  <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
+                  <button
+                    onClick={() => {
+                      const idToDelete = recording.id || recording.id === 0 ? recording.id : (recording as any).id || "";
+                      if (idToDelete !== "" && idToDelete !== undefined) {
+                        onDelete(String(idToDelete));
+                      }
+                      setShowDeleteConfirm(false);
+                    }}
+                    className="text-xs text-red-700 hover:text-red-900 font-semibold"
+                  >
+                    Xóa
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="text-xs text-neutral-600 hover:text-neutral-800"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
+                  title="Xóa bản thu (Chuyên gia)"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Right: Repeat & Volume - Positioned absolutely */}
           <div className="absolute right-0 flex items-center gap-2">

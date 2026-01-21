@@ -16,6 +16,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ModerationPage from "./pages/ModerationPage";
+import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ScrollToTop from "./components/common/ScrollToTop";
 
@@ -155,6 +156,7 @@ function App() {
           <Route path="terms" element={<TermsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="moderation" element={<ModerationPage />} />
+          <Route path="approved-recordings" element={<ApprovedRecordingsPage />} />
           <Route path="admin/*" element={<AdminDashboard />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />

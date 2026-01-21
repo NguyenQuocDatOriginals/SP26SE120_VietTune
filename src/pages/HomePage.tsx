@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { Upload, Search, ArrowRight, Compass, TrendingUp, Clock, FileText } from "lucide-react";
+import { Upload, Search, ArrowRight, Compass, TrendingUp, Clock, FileText, ShieldCheck, FileCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Recording } from "@/types";
+import { Recording, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import logo from "@/components/image/VietTune logo.png";
+import { useAuthStore } from "@/stores/authStore";
 
 // Section Header Component
 function SectionHeader({
@@ -80,6 +81,8 @@ function FeatureCard({
 export default function HomePage() {
   const [popularRecordings, setPopularRecordings] = useState<Recording[]>([]);
   const [recentRecordings, setRecentRecordings] = useState<Recording[]>([]);
+  const { user } = useAuthStore();
+  const isExpert = user?.role === UserRole.EXPERT;
 
   useEffect(() => {
     fetchRecordings();
@@ -99,29 +102,53 @@ export default function HomePage() {
   };
 
   // Features data
-  const features = [
-    {
-      icon: Compass,
-      title: "Khám phá bản thu",
-      description:
-        "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
-      to: "/explore",
-    },
-    {
-      icon: Search,
-      title: "Tìm kiếm bản thu",
-      description:
-        "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
-      to: "/search",
-    },
-    {
-      icon: Upload,
-      title: "Đóng góp bản thu",
-      description:
-        "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
-      to: "/upload",
-    },
-  ];
+  const features = isExpert
+    ? [
+        {
+          icon: Compass,
+          title: "Khám phá bản thu",
+          description:
+            "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
+          to: "/explore",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Kiểm duyệt bản thu",
+          description:
+            "Xem xét và phê duyệt các bản thu âm nhạc truyền thống được đóng góp bởi cộng đồng",
+          to: "/moderation",
+        },
+        {
+          icon: FileCheck,
+          title: "Quản lý bản thu đã được kiểm duyệt",
+          description:
+            "Quản lý và theo dõi các bản thu đã được phê duyệt trong hệ thống",
+          to: "/approved-recordings",
+        },
+      ]
+    : [
+        {
+          icon: Compass,
+          title: "Khám phá bản thu",
+          description:
+            "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
+          to: "/explore",
+        },
+        {
+          icon: Search,
+          title: "Tìm kiếm bản thu",
+          description:
+            "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
+          to: "/search",
+        },
+        {
+          icon: Upload,
+          title: "Đóng góp bản thu",
+          description:
+            "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
+          to: "/upload",
+        },
+      ];
 
   return (
     <div className="min-h-screen">

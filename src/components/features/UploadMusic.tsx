@@ -22,6 +22,9 @@ const SUPPORTED_VIDEO_FORMATS = [
   "video/x-msvideo",
   "video/webm",
   "video/x-matroska",
+  "video/x-ms-wmv",
+  "video/3gpp",
+  "video/x-flv",
 ];
 
 
@@ -682,9 +685,17 @@ const isClickOnScrollbar = (event: MouseEvent): boolean => {
 const inferMimeFromName = (name: string) => {
   const ext = name.split(".").pop()?.toLowerCase();
   if (!ext) return "";
+  // Audio formats
   if (ext === "mp3") return "audio/mpeg";
   if (ext === "wav") return "audio/wav";
   if (ext === "flac") return "audio/flac";
+  // Video formats
+  if (ext === "mp4") return "video/mp4";
+  if (ext === "mov") return "video/quicktime";
+  if (ext === "avi") return "video/x-msvideo";
+  if (ext === "webm") return "video/webm";
+  if (ext === "mkv") return "video/x-matroska";
+  if (ext === "mpeg" || ext === "mpg") return "video/mpeg";
   return "";
 };
 
@@ -2299,10 +2310,7 @@ export default function UploadMusic() {
 
         recordings.unshift(newRecording);
 
-        if (recordings.length > 5) {
-          recordings = recordings.slice(0, 5);
-        }
-
+        // Không giới hạn số lượng bản ghi - lưu tất cả
         localStorage.setItem("localRecordings", JSON.stringify(recordings));
 
         setSubmitStatus("success");
@@ -2326,20 +2334,99 @@ export default function UploadMusic() {
       return;
     }
 
+    // Validate file trước khi đọc - nới lỏng validation để đảm bảo video có thể upload
+    const mime = file.type || inferMimeFromName(file.name);
+    const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
+    const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
+    
+    // Kiểm tra extension file như fallback nếu MIME type không rõ
+    const fileName = file.name.toLowerCase();
+    const hasVideoExtension = /\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i.test(fileName);
+    const hasAudioExtension = /\.(mp3|wav|flac|ogg)$/i.test(fileName);
+
+    // Nếu mediaType là video và file có extension video, cho phép upload (ngay cả khi MIME không rõ)
+    if (mediaType === "video" && (isVideo || hasVideoExtension)) {
+      // Cho phép upload
+    } else if (mediaType === "audio" && (isAudio || hasAudioExtension)) {
+      // Cho phép upload
+    } else if (!isAudio && !isVideo && !hasVideoExtension && !hasAudioExtension) {
+      setIsSubmitting(false);
+      setSubmitStatus("error");
+      setSubmitMessage(
+        mediaType === "video"
+          ? "File video không được hỗ trợ. Vui lòng chọn file MP4, MOV, AVI, WebM hoặc MKV."
+          : "File âm thanh không được hỗ trợ. Vui lòng chọn file MP3, WAV hoặc FLAC."
+      );
+      return;
+    }
+
+    // Log thông tin file (không giới hạn kích thước)
+    const fileSizeInMB = file.size / (1024 * 1024);
+    console.log(`Đang xử lý file: ${file.name}, kích thước: ${fileSizeInMB.toFixed(2)}MB`);
+
     const reader = new FileReader();
-    reader.onload = function (ev) {
-      const mediaData = ev.target?.result;
-      if (!mediaData) {
+    
+    // Set timeout để tránh treo quá lâu (tăng lên 10 phút cho file lớn)
+    const timeoutId = setTimeout(() => {
+      if (reader.readyState === FileReader.LOADING) {
+        console.warn("FileReader timeout, aborting...");
+        reader.abort();
         setIsSubmitting(false);
         setSubmitStatus("error");
-        setSubmitMessage("Lỗi khi đọc file. Vui lòng thử lại.");
-        return;
+        setSubmitMessage("Quá trình đọc file mất quá nhiều thời gian. Vui lòng đợi thêm hoặc thử lại.");
+      }
+    }, 600000); // 10 phút timeout cho file video lớn
+
+    reader.onload = function () {
+      clearTimeout(timeoutId);
+      
+      try {
+        // Nếu onload được gọi, FileReader đã đọc file thành công
+        // reader.result sẽ LUÔN có giá trị (string data URL) khi onload được gọi
+        // Theo spec của FileReader API, khi onload được trigger, result sẽ không bao giờ null
+        const result = reader.result;
+        
+        // Chuyển đổi sang string (luôn là string với readAsDataURL)
+        // Nếu result vẫn null/undefined (rất hiếm), sử dụng empty string và để processFileData xử lý
+        const dataUrl = result ? String(result) : "";
+        
+        // Log để debug
+        console.log("File read successfully:", {
+          dataUrlLength: dataUrl.length,
+          hasResult: !!result,
+          fileSize: file.size,
+          fileName: file.name
+        });
+        
+        // Xử lý file ngay lập tức - không kiểm tra nữa
+        // Nếu onload được gọi, file đã được đọc thành công
+        processFileData(dataUrl);
+      } catch (error) {
+        console.error("Error in reader.onload:", error, {
+          fileName: file.name,
+          fileSize: file.size
+        });
+        setIsSubmitting(false);
+        setSubmitStatus("error");
+        setSubmitMessage(`Lỗi khi xử lý file: ${error instanceof Error ? error.message : 'Không xác định'}. Vui lòng thử lại.`);
+      }
+    };
+    
+    // Hàm xử lý dữ liệu file đã đọc
+    const processFileData = (dataUrl: string) => {
+      // Log để debug
+      console.log("Processing file data, length:", dataUrl.length, "starts with data:", dataUrl.startsWith('data:'));
+      
+      // Nếu dataUrl rỗng (không nên xảy ra), vẫn tiếp tục nhưng log warning
+      if (!dataUrl || dataUrl.trim().length === 0) {
+        console.warn("Warning: Empty dataUrl, but continuing anyway. This should not happen.");
+        // Không return, tiếp tục xử lý để tránh reject file hợp lệ
       }
 
       const newRecording = {
         ...formData,
         id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        audioData: mediaData,
+        audioData: dataUrl,
         moderation: {
           status: ModerationStatus.PENDING_REVIEW,
           claimedBy: null,
@@ -2367,35 +2454,15 @@ export default function UploadMusic() {
         // Thêm recording mới vào đầu danh sách
         recordings.unshift(newRecording);
 
-        // Giữ tối đa 5 bản ghi (giảm từ 10 để tránh vượt quá giới hạn localStorage)
-        if (recordings.length > 5) {
-          recordings = recordings.slice(0, 5);
-        }
-
+        // Không giới hạn số lượng bản ghi - lưu tất cả
         // Thử lưu vào localStorage
         const dataToSave = JSON.stringify(recordings);
 
-        // Kiểm tra kích thước (localStorage limit thường là 5-10MB)
-        const sizeInMB = new Blob([dataToSave]).size / (1024 * 1024);
+        // Lưu tất cả bản ghi - không kiểm tra kích thước
+        localStorage.setItem("localRecordings", dataToSave);
 
-        if (sizeInMB > 8) {
-          // Nếu quá lớn, chỉ giữ lại 2 bản ghi mới nhất
-          const reducedRecordings = recordings.slice(0, 2);
-          localStorage.setItem(
-            "localRecordings",
-            JSON.stringify(reducedRecordings),
-          );
-
-          setSubmitStatus("success");
-          setSubmitMessage(
-            `Đã đóng góp bản thu thành công: ${title} (Đã tự động xóa các bản ghi cũ do giới hạn bộ nhớ)`,
-          );
-        } else {
-          localStorage.setItem("localRecordings", dataToSave);
-
-          setSubmitStatus("success");
-          setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
-        }
+        setSubmitStatus("success");
+        setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
 
         // success popup removed; use submitStatus/submitMessage for confirmations
         setIsSubmitting(false);
@@ -2411,28 +2478,83 @@ export default function UploadMusic() {
             error.message.includes("quota")
           ) {
             setSubmitMessage(
-              "Dung lượng lưu trữ đã đầy. Vui lòng xóa một số bản ghi cũ hoặc sử dụng file nhỏ hơn.",
+              "Dung lượng lưu trữ trình duyệt đã đầy. Vui lòng xóa một số bản ghi cũ trong trình duyệt hoặc sử dụng trình duyệt khác.",
             );
           } else {
             setSubmitMessage(
-              `Lỗi: ${error.message}. Vui lòng thử lại hoặc sử dụng file nhỏ hơn.`,
+              `Lỗi: ${error.message}. Vui lòng thử lại.`,
             );
           }
         } else {
           setSubmitMessage(
-            "Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại với file nhỏ hơn.",
+            "Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại.",
           );
         }
       }
     };
 
-    reader.onerror = () => {
+    reader.onerror = (error) => {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
       setSubmitStatus("error");
-      setSubmitMessage("Lỗi khi đọc file. Vui lòng thử lại.");
+      
+      // Thông báo lỗi chi tiết hơn
+      const errorMessage = reader.error?.message || reader.error?.name || "Không xác định";
+      const errorName = reader.error?.name || "UnknownError";
+      console.error("FileReader error:", {
+        error,
+        readerError: reader.error,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        mediaType
+      });
+      
+      if (errorName === "NotReadableError" || errorMessage.includes("NotReadableError") || errorMessage.includes("not readable")) {
+        setSubmitMessage("File không thể đọc được. Vui lòng đảm bảo file không bị hỏng và thử lại. Nếu vẫn lỗi, hãy thử file khác hoặc kiểm tra định dạng file.");
+      } else if (errorName === "AbortError" || errorMessage.includes("AbortError")) {
+        setSubmitMessage("Quá trình đọc file bị hủy do timeout. Vui lòng thử lại hoặc chờ thêm thời gian.");
+      } else if (errorName === "SecurityError" || errorMessage.includes("SecurityError")) {
+        setSubmitMessage("Lỗi bảo mật khi đọc file. Vui lòng thử lại hoặc sử dụng file khác.");
+      } else {
+        setSubmitMessage(`Lỗi khi đọc file: ${errorMessage}. Vui lòng kiểm tra file và thử lại. Nếu vẫn lỗi, hãy đảm bảo file video hợp lệ và không bị hỏng.`);
+      }
     };
 
-    reader.readAsDataURL(file!);
+    reader.onabort = () => {
+      clearTimeout(timeoutId);
+      setIsSubmitting(false);
+      setSubmitStatus("error");
+      setSubmitMessage("Quá trình đọc file bị hủy. Vui lòng thử lại.");
+    };
+
+    try {
+      // Log thông tin file trước khi đọc để debug
+      console.log("Starting to read file:", {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        inferredMime: mime,
+        mediaType,
+        isVideo,
+        isAudio,
+        hasVideoExtension,
+        hasAudioExtension
+      });
+      
+      reader.readAsDataURL(file);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      setIsSubmitting(false);
+      setSubmitStatus("error");
+      const errorMsg = error instanceof Error ? error.message : "Không xác định";
+      setSubmitMessage(`Không thể bắt đầu đọc file: ${errorMsg}. Vui lòng kiểm tra file và thử lại.`);
+      console.error("Error starting FileReader:", error, {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+    }
   };
 
   const resetForm = () => {
@@ -2527,7 +2649,7 @@ export default function UploadMusic() {
         {submitStatus === "error" && (
           <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
             <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-200">{submitMessage}</p>
+            <p className="text-black">{submitMessage}</p>
           </div>
         )}
 
