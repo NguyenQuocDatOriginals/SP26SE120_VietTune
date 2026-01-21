@@ -1,6 +1,9 @@
 /* stylelint-disable */
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind base;
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind components;
+/* stylelint-disable-next-line at-rule-no-unknown */
 @tailwind utilities;
 
 :root {
@@ -21,7 +24,7 @@
 html {
   /* Firefox scrollbar */
   scrollbar-width: thin;
-  scrollbar-color: #9b2c2c transparent;
+  scrollbar-color: #7f1d1d transparent;
 }
 
 body {
@@ -31,7 +34,7 @@ body {
   background-color: #fff2d6 !important;
   /* Firefox scrollbar */
   scrollbar-width: thin;
-  scrollbar-color: #9b2c2c transparent;
+  scrollbar-color: #7f1d1d transparent;
 }
 
 #root {
@@ -79,14 +82,14 @@ body::-webkit-scrollbar-track,
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb,
 *::-webkit-scrollbar-thumb {
-  background: #9b2c2c;
+  background: #7f1d1d;
   border-radius: 5px;
 }
 
 html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover,
 *::-webkit-scrollbar-thumb:hover {
-  background: #7f1d1d;
+  background: #6b1818;
 }
 
 /* Override bg-white to use cream background */
@@ -97,6 +100,7 @@ body::-webkit-scrollbar-thumb:hover,
 }
 
 /* stylelint-disable at-rule-no-unknown */
+/* css-validator-disable */
 @layer components {
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
