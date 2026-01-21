@@ -3,6 +3,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
 import { createPortal } from "react-dom";
+import { isYouTubeUrl, getYouTubeId } from "@/utils/youtube";
 
 // ===== CONSTANTS =====
 const SUPPORTED_AUDIO_FORMATS = [
@@ -689,6 +690,7 @@ const inferMimeFromName = (name: string) => {
   if (ext === "mp3") return "audio/mpeg";
   if (ext === "wav") return "audio/wav";
   if (ext === "flac") return "audio/flac";
+  if (ext === "ogg") return "audio/ogg";
   // Video formats
   if (ext === "mp4") return "video/mp4";
   if (ext === "mov") return "video/quicktime";
@@ -696,6 +698,9 @@ const inferMimeFromName = (name: string) => {
   if (ext === "webm") return "video/webm";
   if (ext === "mkv") return "video/x-matroska";
   if (ext === "mpeg" || ext === "mpg") return "video/mpeg";
+  if (ext === "wmv") return "video/x-ms-wmv";
+  if (ext === "3gp") return "video/3gpp";
+  if (ext === "flv") return "video/x-flv";
   return "";
 };
 
@@ -2049,24 +2054,36 @@ export default function UploadMusic() {
 
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
     const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
+    
+    // Kiểm tra extension như fallback nếu MIME type không rõ
+    const fileName = selected.name.toLowerCase();
+    const hasVideoExtension = /\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i.test(fileName);
+    const hasAudioExtension = /\.(mp3|wav|flac|ogg)$/i.test(fileName);
 
+    // Nếu không phải audio hoặc video theo MIME, kiểm tra extension
     if (!isAudio && !isVideo) {
-      setErrors((prev) => ({
-        ...prev,
-        file: mediaType === "audio"
-          ? "Chỉ hỗ trợ file MP3, WAV hoặc FLAC"
-          : "Chỉ hỗ trợ file MP4, MOV, AVI, WebM hoặc MKV",
-      }));
-      setFile(null);
-      setAudioInfo(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+      if (hasVideoExtension && mediaType === "video") {
+        // Cho phép upload video dựa trên extension
+      } else if (hasAudioExtension && mediaType === "audio") {
+        // Cho phép upload audio dựa trên extension
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          file: mediaType === "audio"
+            ? "Chỉ hỗ trợ file MP3, WAV hoặc FLAC"
+            : "Chỉ hỗ trợ file MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP hoặc FLV",
+        }));
+        setFile(null);
+        setAudioInfo(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
     }
 
     // Tự động xác định loại media dựa trên file
-    if (isVideo && mediaType === "audio") {
+    if ((isVideo || hasVideoExtension) && mediaType === "audio") {
       setMediaType("video");
-    } else if (isAudio && mediaType === "video") {
+    } else if ((isAudio || hasAudioExtension) && mediaType === "video") {
       setMediaType("audio");
     }
 
@@ -2081,6 +2098,9 @@ export default function UploadMusic() {
     const url = URL.createObjectURL(selected);
     let cleanedUp = false;
     let mediaElement: HTMLAudioElement | HTMLVideoElement | null = null;
+    let wrappedOnLoaded: (() => void) | null = null;
+    let wrappedOnError: (() => void) | null = null;
+    let metadataTimeout: NodeJS.Timeout | null = null;
 
     const onLoaded = () => {
       if (cleanedUp || !mediaElement) return;
@@ -2112,11 +2132,28 @@ export default function UploadMusic() {
 
     const onError = () => {
       if (cleanedUp) return;
+      // Một số định dạng video có thể không hỗ trợ đọc metadata trong browser
+      // Nhưng vẫn cho phép upload với thông tin cơ bản
+      if (isVideo) {
+        // Với video, vẫn cho phép upload ngay cả khi không đọc được metadata
+        setAudioInfo({
+          name: selected.name,
+          size: selected.size,
+          type: mime,
+          duration: 0, // Không xác định được duration
+        });
+        setIsAnalyzing(false);
+        cleanup();
+        
+        // Không set error, chỉ log warning
+        console.warn("Không thể đọc metadata từ file video, nhưng vẫn cho phép upload:", selected.name);
+        return;
+      }
+      
+      // Với audio, vẫn yêu cầu có metadata
       setErrors((prev) => ({
         ...prev,
-        file: isVideo
-          ? "Không thể phân tích file video"
-          : "Không thể phân tích file âm thanh",
+        file: "Không thể phân tích file âm thanh. Vui lòng chọn file khác.",
       }));
       setFile(null);
       setAudioInfo(null);
@@ -2127,16 +2164,46 @@ export default function UploadMusic() {
     const cleanup = () => {
       if (cleanedUp) return;
       cleanedUp = true;
+      
+      // Clear timeout nếu có
+      if (metadataTimeout) {
+        clearTimeout(metadataTimeout);
+        metadataTimeout = null;
+      }
+      
       if (mediaElement) {
-        mediaElement.removeEventListener("loadedmetadata", onLoaded);
-        mediaElement.removeEventListener("error", onError);
+        // Remove event listeners với wrapped handlers
+        if (wrappedOnLoaded) {
+          mediaElement.removeEventListener("loadedmetadata", wrappedOnLoaded);
+        }
+        if (wrappedOnError) {
+          mediaElement.removeEventListener("error", wrappedOnError);
+        }
         mediaElement.src = "";
-        if (mediaElement instanceof HTMLVideoElement) {
+        if (mediaElement instanceof HTMLVideoElement && mediaElement.parentNode) {
           document.body.removeChild(mediaElement);
         }
       }
       URL.revokeObjectURL(url);
     };
+
+    // Set timeout để tránh treo quá lâu khi đọc metadata (đặc biệt với video lớn)
+    metadataTimeout = setTimeout(() => {
+      if (!cleanedUp && isAnalyzing) {
+        console.warn("Timeout khi đọc metadata, nhưng vẫn cho phép upload");
+        // Với video, vẫn cho phép upload ngay cả khi timeout
+        if (isVideo) {
+          setAudioInfo({
+            name: selected.name,
+            size: selected.size,
+            type: mime,
+            duration: 0,
+          });
+          setIsAnalyzing(false);
+          cleanup();
+        }
+      }
+    }, 15000); // 15 giây timeout cho metadata
 
     if (isVideo) {
       const video = document.createElement("video");
@@ -2145,21 +2212,47 @@ export default function UploadMusic() {
       mediaElement = video;
       video.preload = "metadata";
       video.src = url;
-      video.addEventListener("loadedmetadata", onLoaded);
-      video.addEventListener("error", onError);
+      
+      wrappedOnLoaded = () => {
+        if (metadataTimeout) clearTimeout(metadataTimeout);
+        onLoaded();
+      };
+      
+      wrappedOnError = () => {
+        if (metadataTimeout) clearTimeout(metadataTimeout);
+        onError();
+      };
+      
+      video.addEventListener("loadedmetadata", wrappedOnLoaded);
+      video.addEventListener("error", wrappedOnError);
     } else {
       const audio = new Audio();
       mediaElement = audio;
       audio.preload = "metadata";
       audio.src = url;
-      audio.addEventListener("loadedmetadata", onLoaded);
-      audio.addEventListener("error", onError);
+      
+      wrappedOnLoaded = () => {
+        if (metadataTimeout) clearTimeout(metadataTimeout);
+        onLoaded();
+      };
+      
+      wrappedOnError = () => {
+        if (metadataTimeout) clearTimeout(metadataTimeout);
+        onError();
+      };
+      
+      audio.addEventListener("loadedmetadata", wrappedOnLoaded);
+      audio.addEventListener("error", wrappedOnError);
     }
   };
 
   const validateYoutubeUrl = (url: string): boolean => {
-    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
-    return youtubeRegex.test(url);
+    if (!url || !url.trim()) return false;
+    // Sử dụng helper function từ utils/youtube.ts
+    if (!isYouTubeUrl(url)) return false;
+    // Kiểm tra xem có thể extract video ID không
+    const videoId = getYouTubeId(url.trim());
+    return videoId !== null && videoId.length === 11;
   };
 
   const handleYoutubeUrlChange = (url: string) => {
@@ -2244,7 +2337,7 @@ export default function UploadMusic() {
         duration: audioInfo?.duration || 0,
         bitrate: audioInfo?.bitrate,
       },
-      youtubeUrl: mediaType === "youtube" ? youtubeUrl : null,
+      youtubeUrl: mediaType === "youtube" ? (getYouTubeId(youtubeUrl.trim()) ? `https://www.youtube.com/watch?v=${getYouTubeId(youtubeUrl.trim())}` : youtubeUrl.trim()) : null,
       basicInfo: {
         title,
         artist: artistUnknown ? "Không rõ nghệ sĩ" : artist,
@@ -2281,10 +2374,19 @@ export default function UploadMusic() {
 
     // Xử lý YouTube URL - không cần đọc file
     if (mediaType === "youtube") {
+      // Normalize YouTube URL - chuẩn hóa về định dạng watch URL
+      let normalizedYoutubeUrl = youtubeUrl.trim();
+      const videoId = getYouTubeId(normalizedYoutubeUrl);
+      if (videoId) {
+        // Chuẩn hóa về định dạng https://www.youtube.com/watch?v=VIDEO_ID
+        normalizedYoutubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      }
+
       const newRecording = {
         ...formData,
         id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         audioData: null,
+        youtubeUrl: normalizedYoutubeUrl,
         moderation: {
           status: ModerationStatus.PENDING_REVIEW,
           claimedBy: null,
@@ -2661,7 +2763,7 @@ export default function UploadMusic() {
           <SectionHeader
             icon={Upload}
             title={mediaType === "youtube" ? "Nhập link YouTube" : mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
-            subtitle={mediaType === "youtube" ? "Nhập URL video YouTube" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
+            subtitle={mediaType === "youtube" ? "Nhập URL video YouTube (youtube.com hoặc youtu.be)" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP, FLV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
           />
 
           {/* Media Type Selection */}
@@ -2791,7 +2893,7 @@ export default function UploadMusic() {
                 <TextInput
                   value={youtubeUrl}
                   onChange={handleYoutubeUrlChange}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..."
                   required
                   disabled={isFormDisabled}
                 />
@@ -2817,7 +2919,7 @@ export default function UploadMusic() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv" : ".mp3,.wav,.flac"}
+                  accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv,.mpeg,.mpg,.wmv,.3gp,.flv,video/*" : ".mp3,.wav,.flac,audio/*"}
                   onChange={handleFileChange}
                   className="sr-only"
                   disabled={isAnalyzing || isFormDisabled}
@@ -2877,7 +2979,7 @@ export default function UploadMusic() {
                       </p>
                       <p className="text-sm text-neutral-800/60 mt-1">
                         {mediaType === "video"
-                          ? "MP4, MOV, AVI, WebM, MKV - Không giới hạn dung lượng"
+                          ? "MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP, FLV - Không giới hạn dung lượng"
                           : "MP3, WAV, FLAC - Không giới hạn dung lượng"}
                       </p>
                     </div>
@@ -3414,7 +3516,7 @@ export default function UploadMusic() {
             <button
               type="submit"
               disabled={!isFormComplete || isAnalyzing || isSubmitting || isFormDisabled}
-              title={isFormDisabled ? "Bạn cần tài khoản Người đóng góp để đóng góp bản thu" : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
+              title={isFormDisabled ? "Bạn cần có tài khoản Người đóng góp để đóng góp bản thu" : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
               className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isSubmitting ? (

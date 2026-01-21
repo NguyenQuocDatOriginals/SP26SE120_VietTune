@@ -1,4 +1,3 @@
-
 import UploadMusic from "@/components/features/UploadMusic";
 import { BookOpen, LogIn } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -29,7 +28,7 @@ export default function UploadPage() {
         {/* Notice for non-Contributor users (not dimmed, always visible) */}
         {isNotContributor && (
           <div className="mb-8 border border-primary-200 rounded-2xl p-8 shadow-md text-center" style={{ backgroundColor: '#FFF1F3' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-primary-700">Bạn cần tài khoản Người đóng góp để đóng góp bản thu</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-primary-700">Bạn cần có tài khoản Người đóng góp để đóng góp bản thu</h2>
             <div className="text-primary-700 text-base mb-4">Vui lòng đăng nhập bằng tài khoản Người đóng góp để sử dụng chức năng này.</div>
             <button
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-400 mx-auto"
