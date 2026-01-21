@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle } from "lucide-react";
+import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
 import { createPortal } from "react-dom";
 
 // ===== CONSTANTS =====
-const SUPPORTED_FORMATS = [
+const SUPPORTED_AUDIO_FORMATS = [
   "audio/mpeg",
   "audio/wav",
   "audio/x-wav",
@@ -12,6 +12,17 @@ const SUPPORTED_FORMATS = [
   "audio/flac",
   "audio/x-flac",
 ];
+
+const SUPPORTED_VIDEO_FORMATS = [
+  "video/mp4",
+  "video/mpeg",
+  "video/quicktime",
+  "video/x-msvideo",
+  "video/webm",
+  "video/x-matroska",
+];
+
+const SUPPORTED_FORMATS = [...SUPPORTED_AUDIO_FORMATS, ...SUPPORTED_VIDEO_FORMATS];
 
 const GENRES = [
   "Dân ca",
@@ -1898,7 +1909,9 @@ function CollapsibleSection({
 
 // ===== MAIN COMPONENT =====
 export default function UploadMusic() {
+  const [mediaType, setMediaType] = useState<"audio" | "video" | "youtube">("audio");
   const [file, setFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [audioInfo, setAudioInfo] = useState<{
     name: string;
     size: number;
@@ -1974,29 +1987,30 @@ export default function UploadMusic() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // Kiểm tra kích thước file (giới hạn 50MB như đã ghi trong UI)
-    const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
-    if (selected.size > maxSizeInBytes) {
+    // Không giới hạn dung lượng file
+    const mime = selected.type || inferMimeFromName(selected.name);
+    
+    const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
+    const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
+    
+    if (!isAudio && !isVideo) {
       setErrors((prev) => ({
         ...prev,
-        file: "File quá lớn. Vui lòng chọn file nhỏ hơn 50MB",
+        file: mediaType === "audio" 
+          ? "Chỉ hỗ trợ file MP3, WAV hoặc FLAC"
+          : "Chỉ hỗ trợ file MP4, MOV, AVI, WebM hoặc MKV",
       }));
       setFile(null);
       setAudioInfo(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-
-    const mime = selected.type || inferMimeFromName(selected.name);
-    if (!SUPPORTED_FORMATS.includes(mime)) {
-      setErrors((prev) => ({
-        ...prev,
-        file: "Chỉ hỗ trợ file MP3, WAV hoặc FLAC",
-      }));
-      setFile(null);
-      setAudioInfo(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+    
+    // Tự động xác định loại media dựa trên file
+    if (isVideo && mediaType === "audio") {
+      setMediaType("video");
+    } else if (isAudio && mediaType === "video") {
+      setMediaType("audio");
     }
 
     setErrors((prev) => {
@@ -2008,13 +2022,13 @@ export default function UploadMusic() {
     setIsAnalyzing(true);
 
     const url = URL.createObjectURL(selected);
-    const audio = new Audio();
     let cleanedUp = false;
+    let mediaElement: HTMLAudioElement | HTMLVideoElement | null = null;
 
     const onLoaded = () => {
-      if (cleanedUp) return;
-      const durationSeconds = isFinite(audio.duration)
-        ? Math.round(audio.duration)
+      if (cleanedUp || !mediaElement) return;
+      const durationSeconds = isFinite(mediaElement.duration)
+        ? Math.round(mediaElement.duration)
         : 0;
 
       const bitrate =
@@ -2043,7 +2057,9 @@ export default function UploadMusic() {
       if (cleanedUp) return;
       setErrors((prev) => ({
         ...prev,
-        file: "Không thể phân tích file âm thanh",
+        file: isVideo 
+          ? "Không thể phân tích file video"
+          : "Không thể phân tích file âm thanh",
       }));
       setFile(null);
       setAudioInfo(null);
@@ -2052,17 +2068,54 @@ export default function UploadMusic() {
     };
 
     const cleanup = () => {
+      if (cleanedUp) return;
       cleanedUp = true;
-      audio.removeEventListener("loadedmetadata", onLoaded);
-      audio.removeEventListener("error", onError);
-      audio.src = "";
+      if (mediaElement) {
+        mediaElement.removeEventListener("loadedmetadata", onLoaded);
+        mediaElement.removeEventListener("error", onError);
+        mediaElement.src = "";
+        if (mediaElement instanceof HTMLVideoElement) {
+          document.body.removeChild(mediaElement);
+        }
+      }
       URL.revokeObjectURL(url);
     };
 
-    audio.preload = "metadata";
-    audio.src = url;
-    audio.addEventListener("loadedmetadata", onLoaded);
-    audio.addEventListener("error", onError);
+    if (isVideo) {
+      const video = document.createElement("video");
+      video.style.display = "none";
+      document.body.appendChild(video);
+      mediaElement = video;
+      video.preload = "metadata";
+      video.src = url;
+      video.addEventListener("loadedmetadata", onLoaded);
+      video.addEventListener("error", onError);
+    } else {
+      const audio = new Audio();
+      mediaElement = audio;
+      audio.preload = "metadata";
+      audio.src = url;
+      audio.addEventListener("loadedmetadata", onLoaded);
+      audio.addEventListener("error", onError);
+    }
+  };
+
+  const validateYoutubeUrl = (url: string): boolean => {
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+    return youtubeRegex.test(url);
+  };
+
+  const handleYoutubeUrlChange = (url: string) => {
+    setYoutubeUrl(url);
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      if (url && !validateYoutubeUrl(url)) {
+        newErrors.youtubeUrl = "URL YouTube không hợp lệ";
+      } else {
+        delete newErrors.youtubeUrl;
+      }
+      return newErrors;
+    });
   };
 
   const handleLyricsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2075,7 +2128,19 @@ export default function UploadMusic() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!file) newErrors.file = "Vui lòng chọn file âm thanh";
+    if (mediaType === "youtube") {
+      if (!youtubeUrl.trim()) {
+        newErrors.youtubeUrl = "Vui lòng nhập URL YouTube";
+      } else if (!validateYoutubeUrl(youtubeUrl)) {
+        newErrors.youtubeUrl = "URL YouTube không hợp lệ";
+      }
+    } else {
+      if (!file) {
+        newErrors.file = mediaType === "audio" 
+          ? "Vui lòng chọn file âm thanh"
+          : "Vui lòng chọn file video";
+      }
+    }
     if (!title.trim()) newErrors.title = "Vui lòng nhập tiêu đề";
     if (!artistUnknown && !artist.trim()) {
       newErrors.artist = "Vui lòng nhập tên nghệ sĩ hoặc chọn 'Không rõ'";
@@ -2114,13 +2179,15 @@ export default function UploadMusic() {
 
     const formData = {
       id: Date.now(),
-      file: {
-        name: audioInfo?.name,
-        type: audioInfo?.type,
-        size: audioInfo?.size,
-        duration: audioInfo?.duration,
+      mediaType,
+      file: mediaType === "youtube" ? null : {
+        name: audioInfo?.name || file?.name,
+        type: audioInfo?.type || file?.type,
+        size: audioInfo?.size || file?.size,
+        duration: audioInfo?.duration || 0,
         bitrate: audioInfo?.bitrate,
       },
+      youtubeUrl: mediaType === "youtube" ? youtubeUrl : null,
       basicInfo: {
         title,
         artist: artistUnknown ? "Không rõ nghệ sĩ" : artist,
@@ -2155,10 +2222,57 @@ export default function UploadMusic() {
       uploadedAt: new Date().toISOString(),
     };
 
+    // Xử lý YouTube URL - không cần đọc file
+    if (mediaType === "youtube") {
+      const newRecording = {
+        ...formData,
+        audioData: null,
+      };
+
+      try {
+        let recordings = [];
+        try {
+          const stored = localStorage.getItem("localRecordings");
+          recordings = stored ? JSON.parse(stored) : [];
+        } catch (parseError) {
+          console.warn("Không thể đọc dữ liệu cũ, sẽ tạo mới:", parseError);
+          recordings = [];
+        }
+
+        recordings.unshift(newRecording);
+
+        if (recordings.length > 5) {
+          recordings = recordings.slice(0, 5);
+        }
+
+        localStorage.setItem("localRecordings", JSON.stringify(recordings));
+
+        setSubmitStatus("success");
+        setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
+        setShowSuccessPopup(true);
+        setIsSubmitting(false);
+        return;
+      } catch (error) {
+        console.error("Lỗi khi lưu dữ liệu:", error);
+        setIsSubmitting(false);
+        setSubmitStatus("error");
+        setSubmitMessage("Lỗi khi lưu dữ liệu. Vui lòng thử lại.");
+        return;
+      }
+    }
+
+    // Xử lý file upload (audio hoặc video)
+    if (!file) {
+      setIsSubmitting(false);
+      setSubmitStatus("error");
+      setSubmitMessage("Vui lòng chọn file.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = function (ev) {
-      const audioData = ev.target?.result;
-      if (!audioData) {
+      const mediaData = ev.target?.result;
+      if (!mediaData) {
         setIsSubmitting(false);
         setSubmitStatus("error");
         setSubmitMessage("Lỗi khi đọc file. Vui lòng thử lại.");
@@ -2167,7 +2281,7 @@ export default function UploadMusic() {
 
       const newRecording = {
         ...formData,
-        audioData,
+        audioData: mediaData,
       };
 
       try {
@@ -2254,7 +2368,9 @@ export default function UploadMusic() {
   };
 
   const resetForm = () => {
+    setMediaType("audio");
     setFile(null);
+    setYoutubeUrl("");
     setAudioInfo(null);
     setTitle("");
     setArtist("");
@@ -2315,10 +2431,97 @@ export default function UploadMusic() {
       >
         <SectionHeader
           icon={Upload}
-          title="Tải lên file âm thanh"
-          subtitle="Hỗ trợ định dạng MP3, WAV, FLAC"
+          title={mediaType === "youtube" ? "Nhập link YouTube" : mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
+          subtitle={mediaType === "youtube" ? "Nhập URL video YouTube" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
         />
 
+        {/* Media Type Selection */}
+        <div className="mt-4 mb-6">
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setMediaType("audio");
+                setFile(null);
+                setYoutubeUrl("");
+                setAudioInfo(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
+                mediaType === "audio"
+                  ? "bg-primary-600 text-white"
+                  : "bg-white text-primary-600 border-2 border-primary-600"
+              }`}
+              style={mediaType !== "audio" ? { backgroundColor: "#FFFCF5" } : undefined}
+            >
+              <div className="flex items-center gap-2">
+                <FileAudio className="h-4 w-4" />
+                <span>File âm thanh</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMediaType("video");
+                setFile(null);
+                setYoutubeUrl("");
+                setAudioInfo(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
+                mediaType === "video"
+                  ? "bg-primary-600 text-white"
+                  : "bg-white text-primary-600 border-2 border-primary-600"
+              }`}
+              style={mediaType !== "video" ? { backgroundColor: "#FFFCF5" } : undefined}
+            >
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                <span>File video</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMediaType("youtube");
+                setFile(null);
+                setAudioInfo(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className={`px-6 py-2.5 rounded-full font-medium transition-all shadow-md ${
+                mediaType === "youtube"
+                  ? "bg-primary-600 text-white"
+                  : "bg-white text-primary-600 border-2 border-primary-600"
+              }`}
+              style={mediaType !== "youtube" ? { backgroundColor: "#FFFCF5" } : undefined}
+            >
+              <div className="flex items-center gap-2">
+                <Youtube className="h-4 w-4" />
+                <span>YouTube</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* YouTube URL Input */}
+        {mediaType === "youtube" && (
+          <div className="mt-4">
+            <FormField label="URL YouTube" required>
+              <TextInput
+                value={youtubeUrl}
+                onChange={handleYoutubeUrlChange}
+                placeholder="https://www.youtube.com/watch?v=..."
+                required
+              />
+              {errors.youtubeUrl && (
+                <p className="text-sm text-red-400 mt-1">{errors.youtubeUrl}</p>
+              )}
+            </FormField>
+          </div>
+        )}
+
+        {/* File Upload */}
+        {mediaType !== "youtube" && (
         <div className="mt-4">
           <div
             onClick={() => !isAnalyzing && fileInputRef.current?.click()}
@@ -2333,7 +2536,7 @@ export default function UploadMusic() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".mp3,.wav,.flac"
+              accept={mediaType === "video" ? ".mp4,.mov,.avi,.webm,.mkv" : ".mp3,.wav,.flac"}
               onChange={handleFileChange}
               className="sr-only"
               disabled={isAnalyzing}
@@ -2347,7 +2550,11 @@ export default function UploadMusic() {
             ) : file && audioInfo ? (
               <div className="space-y-3">
                 <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
-                  <FileAudio className="h-8 w-8 text-primary-600" />
+                  {mediaType === "video" ? (
+                    <Video className="h-8 w-8 text-primary-600" />
+                  ) : (
+                    <FileAudio className="h-8 w-8 text-primary-600" />
+                  )}
                 </div>
                 <div>
                   <p className="text-neutral-800 font-medium">
@@ -2388,7 +2595,9 @@ export default function UploadMusic() {
                     Kéo thả file hoặc click để chọn
                   </p>
                   <p className="text-sm text-neutral-800/60 mt-1">
-                    MP3, WAV, FLAC - Tối đa 50MB
+                    {mediaType === "video" 
+                      ? "MP4, MOV, AVI, WebM, MKV - Không giới hạn dung lượng"
+                      : "MP3, WAV, FLAC - Không giới hạn dung lượng"}
                   </p>
                 </div>
               </div>
@@ -2401,6 +2610,7 @@ export default function UploadMusic() {
             </p>
           )}
         </div>
+        )}
       </div>
 
       <div

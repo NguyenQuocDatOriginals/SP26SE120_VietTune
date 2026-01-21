@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Upload, Search, Disc, Globe, ArrowRight, Compass, Heart, TrendingUp, Music, Users, Clock } from "lucide-react";
+import { Upload, Search, ArrowRight, Compass, TrendingUp, Clock, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -40,30 +40,6 @@ function SectionHeader({
           <ArrowRight className="h-4 w-4" />
         </Link>
       )}
-    </div>
-  );
-}
-
-// Stat Card Component
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: React.ElementType;
-  value: string;
-  label: string;
-}) {
-  return (
-    <div
-      className="p-4 border border-neutral-200 rounded-xl text-center shadow-md hover:shadow-lg transition-shadow"
-      style={{ backgroundColor: "#FFFCF5" }}
-    >
-      <div className="p-2 bg-secondary-100 rounded-lg w-fit mx-auto mb-2">
-        <Icon className="h-5 w-5 text-secondary-600" />
-      </div>
-      <div className="text-2xl font-bold text-neutral-800">{value}</div>
-      <div className="text-sm text-neutral-500">{label}</div>
     </div>
   );
 }
@@ -155,14 +131,6 @@ export default function HomePage() {
     }
   };
 
-  // Stats data
-  const stats = [
-    { icon: Disc, value: "Đa dạng", label: "Bản thu" },
-    { icon: Users, value: "54", label: "Dân tộc" },
-    { icon: Globe, value: "7", label: "Khu vực" },
-    { icon: Music, value: "Rất nhiều", label: "Nhạc cụ" },
-  ];
-
   // Features data
   const features = [
     {
@@ -217,39 +185,12 @@ export default function HomePage() {
             </p>
 
             {/* Description */}
-            <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto mb-8">
+            <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto">
               Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
               <br />
               qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
             </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4">
-              <QuickActionButton
-                icon={Compass}
-                label="Khám phá bản thu"
-                to="/explore"
-              />
-              <QuickActionButton
-                icon={Upload}
-                label="Đóng góp bản thu"
-                to="/upload"
-                primary
-              />
-            </div>
           </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              icon={stat.icon}
-              value={stat.value}
-              label={stat.label}
-            />
-          ))}
         </div>
 
         {/* Features Section */}
@@ -257,7 +198,7 @@ export default function HomePage() {
           className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
           style={{ backgroundColor: "#FFFCF5" }}
         >
-          <h2 className="text-2xl font-semibold mb-6 text-neutral-800">
+          <h2 className="text-2xl font-semibold mb-6 text-neutral-800 text-center">
             Tính năng chính
           </h2>
 
@@ -316,39 +257,27 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Call to Action Section */}
+        {/* Terms and Conditions Section */}
         <div
-          className="rounded-2xl shadow-md border border-neutral-200 p-8"
+          className="rounded-2xl shadow-md border border-neutral-200 p-8 text-center"
           style={{ backgroundColor: "#FFFCF5" }}
         >
-          <div className="text-center max-w-2xl mx-auto">
-            <div className="p-3 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
-              <Heart className="h-8 w-8 text-primary-600" />
-            </div>
-
-            <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
-              Hãy cùng gìn giữ di sản
-            </h2>
-
-            <p className="text-neutral-600 leading-relaxed mb-6 max-w-6xl mx-auto">
-              Mỗi bản thu, mỗi giai điệu đều là một phần của di sản văn hóa dân
-              tộc.
-              <br />
-              Hãy cùng các nhà nghiên cứu, nghệ nhân và những người yêu văn hóa
-              <br />
-              chung tay bảo tồn âm nhạc truyền thống Việt Nam cho thế hệ mai
-              sau.
-            </p>
-
-            <div className="flex justify-center">
-              <QuickActionButton
-                icon={Upload}
-                label="Đóng góp bản thu"
-                to="/upload"
-                primary
-              />
-            </div>
+          <div className="bg-neutral-100 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto">
+            <FileText className="h-6 w-6 text-neutral-600" />
           </div>
+          <h3 className="text-xl font-semibold mb-3 text-neutral-800">
+            Điều khoản và Điều kiện
+          </h3>
+          <p className="text-neutral-700 mb-6">
+            Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
+          </p>
+          <Link
+            to="/terms"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-full hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+          >
+            <FileText className="h-5 w-5" />
+            Xem Điều khoản và Điều kiện
+          </Link>
         </div>
       </div>
     </div>

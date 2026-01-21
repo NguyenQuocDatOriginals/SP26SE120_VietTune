@@ -1,11 +1,94 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
-import { Recording, SearchFilters } from "@/types";
+import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
+import AudioPlayer from "@/components/features/AudioPlayer";
 import SearchBar from "@/components/features/SearchBar";
 import Pagination from "@/components/common/Pagination";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+
+// Local recording type for client-saved uploads
+interface LocalRecording {
+  id: string;
+  name: string;
+  audioData: string;
+  userType?: string;
+  detectedType?: string;
+  basicInfo?: {
+    title?: string;
+    artist?: string;
+    genre?: string;
+  };
+  culturalContext?: {
+    ethnicity?: string;
+    region?: string;
+  };
+  uploadedAt?: string;
+}
+
+// Helper function to get audio duration from data URL
+const getAudioDuration = (audioDataUrl: string): Promise<number> => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.addEventListener("loadedmetadata", () => {
+      resolve(Math.floor(audio.duration));
+    });
+    audio.addEventListener("error", () => {
+      resolve(0); // Return 0 if error loading
+    });
+    audio.src = audioDataUrl;
+  });
+};
+
+// Convert LocalRecording to Recording format for display (async to get duration)
+const convertLocalToRecording = async (
+  local: LocalRecording,
+): Promise<Recording> => {
+  // Get actual audio duration
+  const duration = await getAudioDuration(local.audioData);
+
+  return {
+    id: local.id,
+    title: local.basicInfo?.title || local.name,
+    titleVietnamese: local.basicInfo?.title || local.name,
+    description: `Bản thu được tải lên từ thiết bị của bạn`,
+    ethnicity: {
+      id: "local",
+      name: local.culturalContext?.ethnicity || "Không xác định",
+      nameVietnamese: local.culturalContext?.ethnicity || "Không xác định",
+      region: Region.RED_RIVER_DELTA,
+      recordingCount: 0,
+    },
+    region: Region.RED_RIVER_DELTA,
+    recordingType: RecordingType.OTHER,
+    duration: duration,
+    audioUrl: local.audioData,
+    instruments: [],
+    performers: [],
+    uploadedDate: local.uploadedAt || new Date().toISOString(),
+    uploader: {
+      id: "local-user",
+      username: "Bạn",
+      email: "",
+      fullName: "Người tải lên",
+      role: UserRole.USER,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    tags: [
+      local.basicInfo?.genre || local.userType || local.detectedType || "",
+    ].filter(Boolean),
+    metadata: {
+      recordingQuality: RecordingQuality.FIELD_RECORDING,
+      lyrics: "",
+    },
+    verificationStatus: VerificationStatus.PENDING,
+    viewCount: 0,
+    likeCount: 0,
+    downloadCount: 0,
+  };
+};
 
 export default function SearchPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -19,6 +102,7 @@ export default function SearchPage() {
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch API recordings
       let response;
       if (Object.keys(filters).length > 0) {
         response = await recordingService.searchRecordings(
@@ -29,15 +113,58 @@ export default function SearchPage() {
       } else {
         response = await recordingService.getRecordings(currentPage, 20);
       }
-      setRecordings(response.items);
+
+      // Load local recordings from localStorage
+      const localRecordingsRaw = localStorage.getItem("localRecordings");
+      const localRecordings: LocalRecording[] = localRecordingsRaw
+        ? JSON.parse(localRecordingsRaw)
+        : [];
+
+      // Convert local recordings to Recording format (async to get durations)
+      const convertedLocalRecordings = await Promise.all(
+        localRecordings.map(convertLocalToRecording),
+      );
+
+      // Merge: put local recordings first, then API recordings
+      const allRecordings = [...convertedLocalRecordings, ...response.items];
+
+      setRecordings(allRecordings);
       setTotalPages(response.totalPages);
-      setTotalResults(response.total);
+      setTotalResults(response.total + localRecordings.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
+
+      // Even if API fails, try to show local recordings
+      try {
+        const localRecordingsRaw = localStorage.getItem("localRecordings");
+        const localRecordings: LocalRecording[] = localRecordingsRaw
+          ? JSON.parse(localRecordingsRaw)
+          : [];
+        const convertedLocalRecordings = await Promise.all(
+          localRecordings.map(convertLocalToRecording),
+        );
+        setRecordings(convertedLocalRecordings);
+        setTotalResults(localRecordings.length);
+      } catch (localError) {
+        console.error("Error loading local recordings:", localError);
+      }
     } finally {
       setLoading(false);
     }
   }, [currentPage, filters]);
+
+  const handleDeleteRecording = (id: string) => {
+    const updated = recordings.filter((rec) => rec.id !== id);
+    setRecordings(updated);
+    const localRecordingsRaw = localStorage.getItem("localRecordings");
+    if (localRecordingsRaw) {
+      const localRecordings = JSON.parse(localRecordingsRaw);
+      const filtered = localRecordings.filter((r: LocalRecording) => r.id !== id);
+      localStorage.setItem("localRecordings", JSON.stringify(filtered));
+    }
+    // Update total results
+    setTotalResults((prev) => Math.max(0, prev - 1));
+  };
 
   useEffect(() => {
     if (hasSearched) {
@@ -102,10 +229,60 @@ export default function SearchPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                  {recordings.map((recording) => (
-                    <RecordingCard key={recording.id} recording={recording} />
-                  ))}
+                <div className="space-y-4 mb-8">
+                  {recordings.map((recording) => {
+                    // Check if this is a local recording
+                    const isLocalRecording =
+                      recording.uploader?.id === "local-user" ||
+                      recording.audioUrl.startsWith("data:audio");
+
+                    // Load original LocalRecording from localStorage if it's a local recording
+                    let localRecordingData: LocalRecording | undefined = undefined;
+                    if (isLocalRecording) {
+                      try {
+                        const localRecordingsRaw = localStorage.getItem("localRecordings");
+                        if (localRecordingsRaw) {
+                          const localRecordings: LocalRecording[] = JSON.parse(localRecordingsRaw);
+                          const originalLocalRecording = localRecordings.find(
+                            (r) => r.id === recording.id
+                          );
+                          if (originalLocalRecording) {
+                            localRecordingData = originalLocalRecording;
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Error loading local recording:", error);
+                      }
+                    }
+
+                    // Delete handler for local recordings
+                    const handleDelete = isLocalRecording ? handleDeleteRecording : undefined;
+
+                    // Use LocalRecording data directly like HomePage.tsx
+                    if (localRecordingData) {
+                      return (
+                        <AudioPlayer
+                          key={recording.id}
+                          src={localRecordingData.audioData}
+                          title={localRecordingData.basicInfo?.title || localRecordingData.name}
+                          artist={localRecordingData.basicInfo?.artist}
+                          recording={localRecordingData}
+                          onDelete={handleDelete}
+                          showContainer={true}
+                        />
+                      );
+                    }
+
+                    // For API recordings, use AudioPlayer without container
+                    return (
+                      <AudioPlayer
+                        key={recording.id}
+                        src={recording.audioUrl}
+                        title={recording.title}
+                        artist={recording.titleVietnamese}
+                      />
+                    );
+                  })}
                 </div>
 
                 {totalPages > 1 && (

@@ -62,6 +62,8 @@ export default function AudioPlayer({
     if (!audio) return;
 
     const onTime = () => setCurrentTime(audio.currentTime);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
     const onMeta = () => {
       setDuration(isNaN(audio.duration) ? 0 : audio.duration || 0);
       setIsLoading(false);
@@ -79,6 +81,8 @@ export default function AudioPlayer({
     const onWaiting = () => setIsLoading(true);
 
     audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("loadedmetadata", onMeta);
     audio.addEventListener("volumechange", onVolume);
     audio.addEventListener("ended", onEnded);
@@ -91,6 +95,8 @@ export default function AudioPlayer({
 
     return () => {
       audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("loadedmetadata", onMeta);
       audio.removeEventListener("volumechange", onVolume);
       audio.removeEventListener("ended", onEnded);
