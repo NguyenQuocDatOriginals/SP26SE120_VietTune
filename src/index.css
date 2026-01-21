@@ -1,3 +1,4 @@
+/* stylelint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +10,7 @@
 
   color-scheme: light;
   color: #171717;
-  background-color: #FFF2D6;
+  background-color: #fff2d6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,29 +18,85 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #9b2c2c transparent;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #FFF2D6 !important;
+  background-color: #fff2d6 !important;
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #9b2c2c transparent;
 }
 
 #root {
   min-height: 100vh;
-  background-color: #FFF2D6 !important;
+  background-color: #fff2d6 !important;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Prefer not to disable text selection globally (accessibility). Use utility class `.no-select` where needed */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in input and textarea elements */
+input,
+textarea {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Custom Scrollbar - Hide default browser scrollbar and apply custom styling */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 5px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: #9b2c2c;
+  border-radius: 5px;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background: #7f1d1d;
+}
+
 /* Override bg-white to use cream background */
 @layer utilities {
   .bg-white {
-    background-color: #FFF2D6 !important;
+    background-color: #fff2d6 !important;
   }
 }
 
+/* stylelint-disable at-rule-no-unknown */
 @layer components {
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
@@ -63,7 +120,7 @@ body {
 
   .card {
     @apply rounded-2xl shadow-md p-6;
-    background-color: #FFF2D6;
+    background-color: #fff2d6;
   }
 
   .badge {
@@ -93,8 +150,10 @@ body {
   /* Container - Clean solid background with subtle shadow */
   .vt-container {
     @apply relative overflow-hidden rounded-2xl;
-    background-color: #FFF2D6;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    background-color: #fff2d6;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .vt-container-bordered {
@@ -104,19 +163,25 @@ body {
   /* Header/Footer container with red background */
   .vt-header-container {
     @apply relative overflow-hidden bg-primary-700 rounded-full;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .vt-footer-container {
     @apply relative overflow-hidden bg-primary-700 rounded-2xl;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   /* Section with cream accent */
   .vt-section-accent {
     @apply relative overflow-hidden rounded-2xl border border-neutral-200 shadow-md;
-    background-color: #FFFEF9;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    background-color: #fffef9;
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
   /* Primary Button - Red */
@@ -140,7 +205,7 @@ body {
   /* Outline Button - Red border */
   .btn-vt-outline {
     @apply px-6 py-3 text-primary-600 font-semibold rounded-full shadow-md;
-    background-color: #FFF2D6;
+    background-color: #fff2d6;
     @apply border-2 border-primary-600;
     @apply transition-all duration-200;
     @apply hover:bg-primary-50 hover:shadow-lg;
@@ -187,3 +252,4 @@ body {
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 }
+/* stylelint-enable */

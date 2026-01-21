@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -916,7 +916,7 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
         style={{ backgroundColor: "#FFFCF5" }}
@@ -1950,6 +1950,7 @@ export default function UploadMusic() {
   >("idle");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const requiresInstruments =
     performanceType === "instrumental" ||
@@ -2213,10 +2214,9 @@ export default function UploadMusic() {
           setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
         }
 
-        setTimeout(() => {
-          resetForm();
-          setIsSubmitting(false);
-        }, 3000);
+        // Show success pop-up
+        setShowSuccessPopup(true);
+        setIsSubmitting(false);
       } catch (error) {
         console.error("Lỗi khi lưu dữ liệu:", error);
         setIsSubmitting(false);
@@ -2294,19 +2294,13 @@ export default function UploadMusic() {
   };
 
   return (
+    <React.Fragment>
     <form onSubmit={handleSubmit} className="w-full space-y-6">
       {/* Required Fields Note */}
       <div className="flex items-center gap-2 text-sm text-neutral-800/60">
         <span className="text-red-400">*</span>
         <span>Trường bắt buộc</span>
       </div>
-
-      {submitStatus === "success" && (
-        <div className="flex items-center gap-3 p-4 bg-green-100 border border-green-300 rounded-2xl">
-          <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-          <p className="text-green-700">{submitMessage}</p>
-        </div>
-      )}
 
       {submitStatus === "error" && (
         <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
@@ -2686,7 +2680,7 @@ export default function UploadMusic() {
                         setInstruments([]);
                       }
                     }}
-                    className={`px-4 py-2 rounded-xl text-sm transition-all border border-neutral-200 ${
+                    className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${
                       performanceType === pt.key
                         ? "bg-primary-600 text-white"
                         : "text-neutral-700"
@@ -2742,7 +2736,7 @@ export default function UploadMusic() {
               >
                 <div className="flex items-center gap-3">
                   <label
-                    className="px-4 py-2 rounded-xl cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
+                    className="px-4 py-2 rounded-full cursor-pointer text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm hover:shadow-md inline-block"
                     style={{ backgroundColor: "#FFFCF5" }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.backgroundColor = "#F5F0E8")
@@ -2864,7 +2858,7 @@ export default function UploadMusic() {
             type="button"
             onClick={resetForm}
             disabled={isSubmitting}
-            className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
+            className="px-6 py-2.5 text-neutral-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md border-2 border-primary-600"
             style={{ backgroundColor: "#FFFCF5" }}
             onMouseEnter={(e) =>
               !isSubmitting &&
@@ -2880,7 +2874,7 @@ export default function UploadMusic() {
           <button
             type="submit"
             disabled={!file || isAnalyzing || isSubmitting}
-            className="btn-liquid-glass-primary px-8 py-2.5 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -2897,5 +2891,66 @@ export default function UploadMusic() {
         </div>
       </div>
     </form>
+
+    {/* Success Pop-up */}
+    {showSuccessPopup &&
+      createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div
+            className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
+            style={{ backgroundColor: '#FFF2D6' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+              <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+            </div>
+
+            {/* Content */}
+            <div
+              className="overflow-y-auto p-6"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+              }}
+            >
+              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="flex flex-col items-center gap-4 mb-2">
+                  <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
+                    <Check className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                    Cảm ơn bạn đã đóng góp bản thu!
+                  </h3>
+                </div>
+                <div className="text-center">
+                  <p className="text-neutral-600 text-sm leading-relaxed">
+                    Bạn có thể xem bản thu đã đóng góp
+                  </p>
+                  <p className="text-neutral-600 text-sm leading-relaxed">
+                    trong phần "Bản thu của bạn" trên trang chủ hoặc trong trang "Khám phá bản thu"
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+              <button
+                onClick={() => {
+                  setShowSuccessPopup(false);
+                  resetForm();
+                  setSubmitStatus("idle");
+                  setSubmitMessage("");
+                }}
+                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </React.Fragment>
   );
 }

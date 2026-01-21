@@ -4,9 +4,9 @@ import { Compass, Filter, Search, ChevronDown, Play, AlertCircle } from "lucide-
 import { createPortal } from "react-dom";
 import { Recording, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
-import RecordingCard from "@/components/features/RecordingCard";
 import Pagination from "@/components/common/Pagination";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import AudioPlayer from "@/components/features/AudioPlayer";
 
 // Local recording type for client-saved uploads
 interface LocalRecording {
@@ -414,6 +414,17 @@ export default function ExplorePage() {
     fetchRecordings();
   }, [fetchRecordings]);
 
+  const handleDeleteRecording = (id: string) => {
+    const updated = recordings.filter((rec) => rec.id !== id);
+    setRecordings(updated);
+    const localRecordingsRaw = localStorage.getItem("localRecordings");
+    if (localRecordingsRaw) {
+      const localRecordings = JSON.parse(localRecordingsRaw);
+      const filtered = localRecordings.filter((r: LocalRecording) => r.id !== id);
+      localStorage.setItem("localRecordings", JSON.stringify(filtered));
+    }
+  };
+
   const handleClearFilters = () => {
     setSelectedGenre("Tất cả thể loại");
     setSelectedRegion("Tất cả khu vực");
@@ -613,10 +624,60 @@ export default function ExplorePage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {recordings.map((recording) => (
-                  <RecordingCard key={recording.id} recording={recording} />
-                ))}
+              <div className="space-y-4 mb-8">
+                {recordings.map((recording) => {
+                  // Check if this is a local recording
+                  const isLocalRecording =
+                    recording.uploader?.id === "local-user" ||
+                    recording.audioUrl.startsWith("data:audio");
+
+                  // Load original LocalRecording from localStorage if it's a local recording
+                  let localRecordingData: LocalRecording | undefined = undefined;
+                  if (isLocalRecording) {
+                    try {
+                      const localRecordingsRaw = localStorage.getItem("localRecordings");
+                      if (localRecordingsRaw) {
+                        const localRecordings: LocalRecording[] = JSON.parse(localRecordingsRaw);
+                        const originalLocalRecording = localRecordings.find(
+                          (r) => r.id === recording.id
+                        );
+                        if (originalLocalRecording) {
+                          localRecordingData = originalLocalRecording;
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Error loading local recording:", error);
+                    }
+                  }
+
+                  // Delete handler for local recordings
+                  const handleDelete = isLocalRecording ? handleDeleteRecording : undefined;
+
+                  // Use LocalRecording data directly like HomePage.tsx
+                  if (localRecordingData) {
+                    return (
+                      <AudioPlayer
+                        key={recording.id}
+                        src={localRecordingData.audioData}
+                        title={localRecordingData.basicInfo?.title || localRecordingData.name}
+                        artist={localRecordingData.basicInfo?.artist}
+                        recording={localRecordingData}
+                        onDelete={handleDelete}
+                        showContainer={true}
+                      />
+                    );
+                  }
+
+                  // For API recordings, use Recording format without container
+                  return (
+                    <AudioPlayer
+                      key={recording.id}
+                      src={recording.audioUrl}
+                      title={recording.title}
+                      artist={recording.titleVietnamese}
+                    />
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (

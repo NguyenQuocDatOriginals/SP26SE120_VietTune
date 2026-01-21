@@ -17,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 pt-4 px-4">
-      <nav className="bg-primary-700 rounded-full shadow-2xl shadow-black/50">
+      <nav className="bg-primary-700 rounded-full">
         <div className="px-6 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}

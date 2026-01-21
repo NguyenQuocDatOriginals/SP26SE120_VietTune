@@ -314,7 +314,7 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-2xl focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${
           disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
         }`}
         style={{ backgroundColor: '#FFFCF5' }}
@@ -731,7 +731,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleClearAll}
-          className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
+          className="px-6 py-2.5 text-neutral-800 rounded-full transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
           style={{ backgroundColor: '#FFFCF5' }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
@@ -741,7 +741,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleSearch}
-          className="btn-liquid-glass-primary px-8 py-2.5 rounded-xl font-medium flex items-center gap-2"
+          className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium flex items-center gap-2"
         >
           <Search className="h-4 w-4" />
           Áp dụng bộ lọc

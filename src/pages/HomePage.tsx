@@ -4,27 +4,7 @@ import { useEffect, useState } from "react";
 import { Recording } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
-import AudioPlayer from "@/components/features/AudioPlayer";
 import logo from "@/components/image/VietTune logo.png";
-
-// Local recording type for client-saved uploads
-interface LocalRecording {
-  id: string;
-  name: string;
-  audioData: string;
-  userType?: string;
-  detectedType?: string;
-  basicInfo?: {
-    title?: string;
-    artist?: string;
-    genre?: string;
-  };
-  culturalContext?: {
-    ethnicity?: string;
-    region?: string;
-  };
-  uploadedAt?: string;
-}
 
 // Section Header Component
 function SectionHeader({
@@ -134,7 +114,7 @@ function QuickActionButton({
   return (
     <Link to={to} className="w-full sm:w-auto">
       <button
-        className={`w-full px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
+        className={`w-full sm:w-[280px] px-8 py-3.5 rounded-full font-medium flex items-center justify-center gap-2 transition-all ${
           primary
             ? "bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg"
             : "text-primary-600 border-2 border-primary-600 shadow-md hover:shadow-lg"
@@ -157,14 +137,9 @@ function QuickActionButton({
 export default function HomePage() {
   const [popularRecordings, setPopularRecordings] = useState<Recording[]>([]);
   const [recentRecordings, setRecentRecordings] = useState<Recording[]>([]);
-  const [localRecordings, setLocalRecordings] = useState<LocalRecording[]>([]);
 
   useEffect(() => {
     fetchRecordings();
-
-    // Load local recordings
-    const local = JSON.parse(localStorage.getItem("localRecordings") || "[]");
-    setLocalRecordings(local as LocalRecording[]);
   }, []);
 
   const fetchRecordings = async () => {
@@ -178,12 +153,6 @@ export default function HomePage() {
     } catch (error) {
       console.error("Error fetching recordings:", error);
     }
-  };
-
-  const handleDeleteRecording = (id: string) => {
-    const updated = localRecordings.filter((rec) => rec.id !== id);
-    setLocalRecordings(updated);
-    localStorage.setItem("localRecordings", JSON.stringify(updated));
   };
 
   // Stats data
@@ -255,17 +224,17 @@ export default function HomePage() {
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4">
               <QuickActionButton
                 icon={Compass}
                 label="Khám phá bản thu"
                 to="/explore"
-                primary
               />
               <QuickActionButton
                 icon={Upload}
                 label="Đóng góp bản thu"
                 to="/upload"
+                primary
               />
             </div>
           </div>
@@ -304,48 +273,6 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-
-        {/* Local Recordings Section */}
-        {localRecordings.length > 0 && (
-          <div
-            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
-            style={{ backgroundColor: "#FFFCF5" }}
-          >
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-neutral-800">
-                Bản thu của bạn
-              </h2>
-              <p className="text-sm text-neutral-500 mt-1">
-                Các bản thu bạn đã tải lên gần đây
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {localRecordings.slice(0, 3).map((rec) => (
-                <AudioPlayer
-                  key={rec.id}
-                  src={rec.audioData}
-                  title={rec.basicInfo?.title || rec.name}
-                  artist={rec.basicInfo?.artist}
-                  recording={rec}
-                  onDelete={handleDeleteRecording}
-                  showContainer={true}
-                />
-              ))}
-            </div>
-
-            {localRecordings.length > 3 && (
-              <div className="mt-4 text-center">
-                <Link
-                  to="/my-recordings"
-                  className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
-                >
-                  Xem tất cả {localRecordings.length} bản thu →
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Popular Recordings Section */}
         {popularRecordings.length > 0 && (

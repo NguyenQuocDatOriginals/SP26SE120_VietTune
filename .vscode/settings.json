@@ -14,5 +14,8 @@
   "java.compile.nullAnalysis.mode": "automatic",
   "[java]": {
     "editor.defaultFormatter": "redhat.java"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Music, Users, MapPin, Clock, Repeat } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Music, Users, MapPin, Clock, Repeat, AlertTriangle } from "lucide-react";
+import { createPortal } from "react-dom";
 
 // Module-scoped active audio so only one player plays at a time
 let activeAudio: HTMLAudioElement | null = null;
@@ -54,6 +55,7 @@ export default function AudioPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLooping, setIsLooping] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -258,7 +260,7 @@ export default function AudioPlayer({
                 {onDelete && (
                   <div className="absolute left-0">
                     <button
-                      onClick={() => onDelete(recording.id)}
+                      onClick={() => setShowDeleteConfirm(true)}
                       className="w-9 h-9 rounded-full flex items-center justify-center border border-neutral-300 transition-colors shadow-sm hover:shadow-md"
                       style={{ backgroundColor: '#FFFCF5' }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
@@ -394,6 +396,65 @@ export default function AudioPlayer({
             )}
           </div>
         </div>
+
+        {/* Delete Confirmation Pop-up */}
+        {showDeleteConfirm &&
+          createPortal(
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+              <div
+                className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
+                style={{ backgroundColor: '#FFF2D6' }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                  <h2 className="text-2xl font-bold text-white">Xác nhận xóa</h2>
+                </div>
+
+                {/* Content */}
+                <div
+                  className="overflow-y-auto p-6"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
+                  }}
+                >
+                  <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                    <div className="flex flex-col items-center gap-4 mb-2">
+                      <div className="p-3 bg-red-100 rounded-full flex-shrink-0">
+                        <AlertTriangle className="h-8 w-8 text-red-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                        Bạn có chắc chắn muốn xóa bản thu này không?
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-6 py-2.5 text-neutral-800 rounded-full font-medium hover:bg-neutral-200 transition-colors shadow-sm hover:shadow-md border-2 border-neutral-300"
+                    style={{ backgroundColor: '#FFFCF5' }}
+                  >
+                    Không
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (onDelete && recording) {
+                        onDelete(recording.id);
+                      }
+                      setShowDeleteConfirm(false);
+                    }}
+                    className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+                  >
+                    Có
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
     );
   }
