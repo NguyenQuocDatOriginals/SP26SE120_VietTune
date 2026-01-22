@@ -104,7 +104,15 @@ final appRouter = GoRouter(
         GoRoute(
           path: 'discover/search',
           name: 'discover-search',
-          builder: (context, state) => const SearchPage(),
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return SearchPage(
+              initialQuery: extra?['query'] as String?,
+              initialEthnicGroupIds: extra?['ethnicGroupIds'] as List<String>?,
+              initialInstrumentIds: extra?['instrumentIds'] as List<String>?,
+              initialRegion: extra?['region'] as String?,
+            );
+          },
         ),
         GoRoute(
           path: 'discover/instrument/:id',

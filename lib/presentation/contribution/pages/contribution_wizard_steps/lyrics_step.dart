@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
+import '../../../../core/theme/app_theme.dart' show AppColors;
 
 /// Step 4: Lyrics (Optional)
 class LyricsStep extends ConsumerStatefulWidget {
@@ -17,11 +18,18 @@ class _LyricsStepState extends ConsumerState<LyricsStep> {
   @override
   void initState() {
     super.initState();
-    final song = ref.read(contributionFormProvider).songData;
-    if (song != null) {
-      _nativeScriptController.text = song.lyricsNativeScript ?? '';
-      _vietnameseTranslationController.text = song.lyricsVietnameseTranslation ?? '';
-    }
+    // Initialize from existing data after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final song = ref.read(contributionFormProvider).songData;
+        if (song != null) {
+          setState(() {
+            _nativeScriptController.text = song.lyricsNativeScript ?? '';
+            _vietnameseTranslationController.text = song.lyricsVietnameseTranslation ?? '';
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -46,13 +54,17 @@ class _LyricsStepState extends ConsumerState<LyricsStep> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Bước 4: Lời bài hát (Tùy chọn)',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 8),
           Text(

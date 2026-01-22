@@ -60,7 +60,10 @@ class EthnicGroupDetailPage extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Chi tiết dân tộc'),
+        title: Text(
+          'Chi tiết dân tộc',
+          style: AppTypography.heading4(color: AppColors.textOnGradient),
+        ),
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textOnGradient,
       ),
@@ -78,16 +81,13 @@ class EthnicGroupDetailPage extends ConsumerWidget {
                 // Group name
                 Text(
                   group.name,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textOnGradient,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.heading2(color: AppColors.textOnGradient),
                 ),
                 if (group.nameInNativeLanguage != group.name) ...[
                   const SizedBox(height: 8),
                   Text(
                     group.nameInNativeLanguage,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.heading5(color: AppColors.textSecondaryOnGradient),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -100,10 +100,13 @@ class EthnicGroupDetailPage extends ConsumerWidget {
                 if (group.description != null && group.description!.isNotEmpty) ...[
                   Text(
                     'Mô tả',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.heading5(color: AppColors.textOnGradient),
                   ),
                   const SizedBox(height: 8),
-                  Text(group.description!),
+                  Text(
+                    group.description!,
+                    style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient),
+                  ),
                   const SizedBox(height: 24),
                 ],
                 // Stats
@@ -131,7 +134,7 @@ class EthnicGroupDetailPage extends ConsumerWidget {
                 // Songs from this ethnic group
                 Text(
                   'Bài hát của dân tộc này',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: AppTypography.heading5(color: AppColors.textOnGradient),
                 ),
                 const SizedBox(height: 16),
                 songsAsync.when(
@@ -184,12 +187,12 @@ class EthnicGroupDetailPage extends ConsumerWidget {
       children: [
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall,
+          style: AppTypography.heading4(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: AppTypography.bodySmall(color: AppColors.textSecondary),
         ),
       ],
     );

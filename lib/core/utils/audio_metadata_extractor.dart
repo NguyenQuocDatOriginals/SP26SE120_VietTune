@@ -6,12 +6,20 @@ class AudioFileMetadata {
   final int bitrateKbps;
   final int sampleRateHz;
   final int durationInSeconds;
+  final String? title;
+  final String? artist;
+  final String? album;
+  final String? genre;
 
   const AudioFileMetadata({
     required this.format,
     required this.bitrateKbps,
     required this.sampleRateHz,
     required this.durationInSeconds,
+    this.title,
+    this.artist,
+    this.album,
+    this.genre,
   });
 }
 
@@ -35,11 +43,42 @@ class AudioMetadataExtractor {
       );
       final sampleRate = _guessSampleRate(format);
 
+      // Try to extract metadata from filename
+      // Note: ID3 tag parsing is disabled due to package API compatibility
+      // Can be re-enabled when a compatible ID3 package is found
+      String? title;
+      String? artist;
+      String? album;
+      String? genre;
+      
+      // Extract from filename as fallback
+      try {
+        final fileName = filePath.split('/').last.split('\\').last;
+        final nameWithoutExt = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+        if (nameWithoutExt.contains(' - ')) {
+          final parts = nameWithoutExt.split(' - ');
+          if (parts.length >= 2) {
+            artist = parts[0].trim();
+            title = parts[1].trim();
+          } else {
+            title = nameWithoutExt;
+          }
+        } else {
+          title = nameWithoutExt;
+        }
+      } catch (_) {
+        // Filename parsing failed
+      }
+
       return AudioFileMetadata(
         format: format,
         bitrateKbps: bitrate,
         sampleRateHz: sampleRate,
         durationInSeconds: durationSeconds,
+        title: title,
+        artist: artist,
+        album: album,
+        genre: genre,
       );
     } catch (_) {
       return null;

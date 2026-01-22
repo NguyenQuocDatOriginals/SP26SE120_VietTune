@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
 
-/// Reusable audio player widget
+/// Reusable audio player widget with waveform visualization
 class AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
   final String? title;
@@ -36,6 +37,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _initAudio();
   }
 
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
   Future<void> _initAudio() async {
     try {
       setState(() => _isLoading = true);
@@ -60,13 +67,18 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
       _audioPlayer.durationStream.listen((duration) {
         if (mounted && duration != null) {
-          setState(() => _duration = duration);
+          setState(() {
+            _duration = duration;
+          });
         }
       });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading audio: $e')),
+          SnackBar(
+            content: Text('Lỗi khi tải audio: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -100,44 +112,41 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   }
 
   @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AudioPlayerTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withValues(alpha: 0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title
           if (widget.title != null) ...[
             Text(
               widget.title!,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.heading5(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
           // Progress bar
           Row(
             children: [
               Text(
                 _position.toMMSS(),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: AppTypography.bodySmall(),
               ),
               Expanded(
                 child: Slider(
@@ -150,15 +159,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   onChanged: _isLoading
                       ? null
                       : (value) => _seek(Duration(milliseconds: value.toInt())),
+                  activeColor: AppColors.primary,
+                  inactiveColor: AppColors.border,
                 ),
               ),
               Text(
                 _duration.toMMSS(),
-                style: Theme.of(context).textTheme.bodySmall,
+                style: AppTypography.bodySmall(),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           // Controls
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -168,40 +179,70 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 icon: Icon(
                   _isLooping ? Icons.repeat_one : Icons.repeat,
                   color: _isLooping
-                      ? AudioPlayerTheme.primary
-                      : AudioPlayerTheme.textSecondary,
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
                 onPressed: _toggleLoop,
-                tooltip: 'Loop',
+                tooltip: 'Lặp lại',
               ),
               const SizedBox(width: 8),
               // Play/Pause button
-              IconButton(
-                iconSize: 48,
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CircularProgressIndicator(strokeWidth: 3),
-                      )
-                    : Icon(
-                        _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                        size: 48,
-                        color: AudioPlayerTheme.primary,
-                      ),
-                onPressed: _isLoading ? null : _togglePlayPause,
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primaryDark,
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textOnPrimary,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          _isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: AppColors.textOnPrimary,
+                          size: 32,
+                        ),
+                  onPressed: _isLoading ? null : _togglePlayPause,
+                ),
               ),
               const SizedBox(width: 8),
               // Speed control
               PopupMenuButton<double>(
-                icon: Text(
-                  '${_playbackSpeed}x',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AudioPlayerTheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                icon: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_playbackSpeed}x',
+                    style: AppTypography.labelLarge(color: AppColors.primary),
+                  ),
                 ),
-                itemBuilder: (context) => [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
+                itemBuilder: (context) => const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
                     .map((speed) => PopupMenuItem(
                           value: speed,
                           child: Text('${speed}x'),

@@ -24,14 +24,27 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
   @override
   void initState() {
     super.initState();
-    final song = ref.read(contributionFormProvider).songData;
-    if (song?.culturalContext != null) {
-      final context = song!.culturalContext!;
-      _selectedContextType = context.type;
-    }
-    _selectedProvince = song?.audioMetadata?.recordingLocation?.province;
-    _specificLocationController.text =
-        song?.audioMetadata?.recordingLocation?.commune ?? '';
+    // Initialize from existing data after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final song = ref.read(contributionFormProvider).songData;
+        if (song?.culturalContext != null) {
+          final context = song!.culturalContext!;
+          setState(() {
+            _selectedContextType = context.type;
+            _selectedProvince = song.audioMetadata?.recordingLocation?.province;
+            _specificLocationController.text =
+                song.audioMetadata?.recordingLocation?.commune ?? '';
+          });
+        } else {
+          setState(() {
+            _selectedProvince = song?.audioMetadata?.recordingLocation?.province;
+            _specificLocationController.text =
+                song?.audioMetadata?.recordingLocation?.commune ?? '';
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -84,14 +97,14 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
   Widget build(BuildContext context) {
     final song = ref.watch(contributionFormProvider).songData;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Bước 3: Bối cảnh văn hóa',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textOnGradient,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -109,8 +122,8 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
             'Dân tộc *',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: AppColors.textSecondaryOnGradient,
+              fontSize: 15,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -125,6 +138,15 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
             },
           ),
           const SizedBox(height: 16),
+          Text(
+            'Tỉnh/Thành',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: _selectedProvince,
             style: const TextStyle(
@@ -132,11 +154,6 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              labelText: 'Tỉnh/Thành',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -150,7 +167,7 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -170,6 +187,15 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
           ),
           const SizedBox(height: 16),
           // Context type
+          Text(
+            'Loại sự kiện',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           DropdownButtonFormField<ContextType>(
             value: _selectedContextType,
             style: const TextStyle(
@@ -177,11 +203,6 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              labelText: 'Loại sự kiện',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -195,7 +216,7 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -213,6 +234,15 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
           ),
           const SizedBox(height: 16),
           // Specific location
+          Text(
+            'Địa điểm cụ thể',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             controller: _specificLocationController,
             style: const TextStyle(
@@ -220,11 +250,6 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              labelText: 'Địa điểm cụ thể',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               hintText: 'Ví dụ: Xã, phường hoặc địa danh',
               hintStyle: const TextStyle(
                 fontSize: 14,
@@ -243,7 +268,7 @@ class _CulturalContextStepState extends ConsumerState<CulturalContextStep> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),

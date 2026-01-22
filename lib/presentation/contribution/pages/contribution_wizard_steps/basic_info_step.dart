@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../shared/widgets/ethnic_group_selector.dart';
+import '../../../shared/widgets/chip_input.dart';
+import '../../../shared/widgets/animated_error_text.dart';
+import '../../../shared/widgets/field_progress_indicator.dart';
 
 /// Step 2: Basic Information
 class BasicInfoStep extends ConsumerWidget {
@@ -16,99 +20,116 @@ class BasicInfoStep extends ConsumerWidget {
     final song = formState.songData;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Bước 2: Thông tin định danh',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textOnGradient,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
           ),
           const SizedBox(height: 24),
-          // Song title
-          TextFormField(
-            initialValue: song?.title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Tiêu đề/Tên bản nhạc *',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-              hintText: 'Nhập tên bản nhạc',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.divider),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.divider),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
-                  width: 2,
+          // Song title with progress indicator
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Tiêu đề/Tên bản nhạc *',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FieldProgressIndicator(
+                          isValid: (song?.title ?? '').isNotEmpty,
+                          isRequired: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _TitleField(
+                      initialValue: song?.title,
+                      onChanged: (value) => formNotifier.updateTitle(value),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            onChanged: (value) => formNotifier.updateTitle(value),
+            ],
           ),
           const SizedBox(height: 16),
           // Author/Musician
           Builder(
             builder: (context) {
               final isFolkChecked = song?.author?.toLowerCase() == 'dân gian';
-              return TextFormField(
-                enabled: !isFolkChecked,
-                initialValue: isFolkChecked ? '' : (song?.author ?? ''),
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Nhạc sĩ/Tác giả *',
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Nhạc sĩ/Tác giả *',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FieldProgressIndicator(
+                        isValid: song?.author != null && 
+                            song!.author!.isNotEmpty && 
+                            song.author!.toLowerCase() != 'dân gian',
+                        isRequired: true,
+                      ),
+                    ],
                   ),
-                  hintText: 'Tên người sáng tác',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.divider),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.divider),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryRed,
-                      width: 2,
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    enabled: !isFolkChecked,
+                    initialValue: isFolkChecked ? '' : (song?.author ?? ''),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textPrimary,
                     ),
+                    decoration: InputDecoration(
+                      hintText: 'Tên người sáng tác',
+                      hintStyle: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.divider),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.divider),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    onChanged: (value) => formNotifier.updateAuthor(value),
                   ),
-                ),
-                onChanged: (value) => formNotifier.updateAuthor(value),
+                ],
               );
             },
           ),
@@ -124,8 +145,8 @@ class BasicInfoStep extends ConsumerWidget {
               ),
             ),
             value: song?.author?.toLowerCase() == 'dân gian',
-            activeColor: AppColors.primaryRed,
-            checkColor: AppColors.textOnGradient,
+            activeColor: AppColors.primary,
+            checkColor: AppColors.textPrimary,
             onChanged: (checked) {
               if (checked == true) {
                 formNotifier.updateAuthor('Dân gian');
@@ -136,6 +157,15 @@ class BasicInfoStep extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           // Genre dropdown
+          Text(
+            'Thể loại/Loại hình *',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           DropdownButtonFormField<MusicGenre>(
             value: song?.genre ?? MusicGenre.folk,
             style: const TextStyle(
@@ -143,11 +173,6 @@ class BasicInfoStep extends ConsumerWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              labelText: 'Thể loại/Loại hình *',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               hintText: 'Chọn thể loại',
               hintStyle: const TextStyle(
                 fontSize: 14,
@@ -166,7 +191,7 @@ class BasicInfoStep extends ConsumerWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -185,6 +210,15 @@ class BasicInfoStep extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           // Recording location
+          Text(
+            'Địa điểm ghi âm',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             initialValue: song?.audioMetadata?.recordingLocation?.commune,
             style: const TextStyle(
@@ -192,11 +226,6 @@ class BasicInfoStep extends ConsumerWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              labelText: 'Địa điểm ghi âm',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               hintText: 'Nhập địa điểm cụ thể',
               hintStyle: const TextStyle(
                 fontSize: 14,
@@ -215,7 +244,7 @@ class BasicInfoStep extends ConsumerWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -250,54 +279,32 @@ class BasicInfoStep extends ConsumerWidget {
               final isUnknownChecked = isEmpty && !hasPlaceholder;
               
               // Filter out placeholder values for display
-              final displayValue = performerNames
+              final displayChips = performerNames
                   ?.where((name) => name.isNotEmpty)
-                  .join(', ') ?? '';
+                  .toList() ?? [];
               
-              return TextFormField(
-                enabled: !isUnknownChecked,
-                initialValue: displayValue,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Nghệ sĩ/Người biểu diễn *',
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ChipInput(
+                    chips: displayChips,
+                    onChipsChanged: (chips) {
+                      formNotifier.updateArtist(chips);
+                    },
+                    label: 'Nghệ sĩ/Người biểu diễn',
+                    hintText: 'Nhập tên và nhấn Enter',
+                    helperText: 'Có thể thêm nhiều người biểu diễn',
+                    enabled: !isUnknownChecked,
+                    required: true,
+                    validator: (chips) {
+                      if (isUnknownChecked) return null;
+                      if (chips.isEmpty) {
+                        return 'Vui lòng nhập ít nhất một người biểu diễn';
+                      }
+                      return null;
+                    },
                   ),
-                  hintText: 'Tên người hát hoặc chơi nhạc cụ',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.divider),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.divider),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryRed,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                onChanged: (value) {
-                  final performers = value
-                      .split(',')
-                      .map((e) => e.trim())
-                      .where((e) => e.isNotEmpty)
-                      .toList();
-                  formNotifier.updateArtist(performers);
-                },
+                ],
               );
             },
           ),
@@ -322,8 +329,8 @@ class BasicInfoStep extends ConsumerWidget {
                   ),
                 ),
                 value: isUnknownChecked,
-                activeColor: AppColors.primaryRed,
-                checkColor: AppColors.textOnGradient,
+                activeColor: AppColors.primary,
+                checkColor: AppColors.textPrimary,
                 onChanged: (checked) {
                   if (checked == true) {
                     formNotifier.updateArtist([]);
@@ -378,54 +385,63 @@ class BasicInfoStep extends ConsumerWidget {
             currentLanguage != null && options.contains(currentLanguage)
                 ? currentLanguage
                 : options.first;
-        return DropdownButtonFormField<String>(
-          value: selected,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            labelText: 'Ngôn ngữ',
-            labelStyle: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-            hintText: 'Chọn ngôn ngữ',
-            hintStyle: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-            filled: true,
-            fillColor: AppColors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.divider),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.divider),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primaryRed,
-                width: 2,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ngôn ngữ',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
-          ),
-          items: options
-              .map(
-                (value) => DropdownMenuItem(
-                  value: value,
-                  child: Text(value),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: selected,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Chọn ngôn ngữ',
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
                 ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              formNotifier.updateLanguage(value);
-            }
-          },
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.divider),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.divider),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+              items: options
+                  .map(
+                    (value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  formNotifier.updateLanguage(value);
+                }
+              },
+            ),
+          ],
         );
       },
       loading: () => const TextField(
@@ -465,25 +481,58 @@ class BasicInfoStep extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Text(
+              'Ngày ghi âm',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            FieldProgressIndicator(
+              isValid: currentDate != null,
+              isRequired: false,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         InkWell(
           onTap: () async {
+            HapticService.onFieldFocus();
             final pickedDate = await showDatePicker(
               context: context,
               initialDate: currentDate ?? DateTime.now(),
               firstDate: DateTime(1900),
               lastDate: DateTime.now(),
+              initialDatePickerMode: DatePickerMode.day,
+              helpText: 'Chọn ngày ghi âm',
+              cancelText: 'Hủy',
+              confirmText: 'Chọn',
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: ColorScheme.light(
+                      primary: AppColors.primary,
+                      onPrimary: AppColors.textOnPrimary,
+                      surface: AppColors.surface,
+                      onSurface: AppColors.textPrimary,
+                    ),
+                    dialogBackgroundColor: AppColors.surface,
+                  ),
+                  child: child!,
+                );
+              },
             );
             if (pickedDate != null) {
+              HapticService.onStepComplete();
               formNotifier.updateRecordingDate(pickedDate);
             }
           },
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: 'Ngày ghi âm',
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
               hintText: 'Chọn ngày/tháng/năm',
               hintStyle: const TextStyle(
                 fontSize: 14,
@@ -502,13 +551,13 @@ class BasicInfoStep extends ConsumerWidget {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: AppColors.primaryRed,
+                  color: AppColors.primary,
                   width: 2,
                 ),
               ),
               suffixIcon: const Icon(
                 Icons.calendar_today,
-                color: AppColors.primaryRed,
+                color: AppColors.primary,
               ),
             ),
             child: Text(
@@ -534,11 +583,134 @@ class BasicInfoStep extends ConsumerWidget {
             ),
           ),
           value: isEstimated,
-          activeColor: AppColors.primaryRed,
-          checkColor: AppColors.textOnGradient,
+          activeColor: AppColors.primary,
+          checkColor: AppColors.textPrimary,
           onChanged: (checked) {
             formNotifier.updateIsRecordingDateEstimated(checked ?? false);
           },
+        ),
+      ],
+    );
+  }
+}
+
+/// Title field with validation and haptic feedback
+class _TitleField extends StatefulWidget {
+  final String? initialValue;
+  final ValueChanged<String> onChanged;
+
+  const _TitleField({
+    required this.initialValue,
+    required this.onChanged,
+  });
+
+  @override
+  State<_TitleField> createState() => _TitleFieldState();
+}
+
+class _TitleFieldState extends State<_TitleField> {
+  late final TextEditingController _controller;
+  String? _errorText;
+  bool _hasInteracted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+    _controller.addListener(_validate);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_validate);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _validate() {
+    final value = _controller.text.trim();
+    String? error;
+    
+    if (value.isEmpty) {
+      error = 'Vui lòng nhập tên bản nhạc';
+    }
+    
+    if (_hasInteracted && error != null && _errorText == null) {
+      HapticService.onValidationError();
+    }
+    
+    setState(() {
+      _errorText = error;
+    });
+    
+    widget.onChanged(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _controller,
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppColors.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Nhập tên bản nhạc',
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+            filled: true,
+            fillColor: AppColors.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: _errorText != null ? AppColors.error : AppColors.divider,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: _errorText != null ? AppColors.error : AppColors.divider,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.error,
+                width: 1,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.error,
+                width: 2,
+              ),
+            ),
+          ),
+          onTap: () {
+            HapticService.onFieldFocus();
+            setState(() => _hasInteracted = true);
+          },
+          onChanged: (value) {
+            setState(() => _hasInteracted = true);
+          },
+        ),
+        const SizedBox(height: 4),
+        AnimatedErrorText(
+          errorText: _hasInteracted ? _errorText : null,
+          icon: Icons.error_outline,
         ),
       ],
     );

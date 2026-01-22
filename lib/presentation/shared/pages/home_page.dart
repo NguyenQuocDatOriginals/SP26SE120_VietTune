@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../discovery/pages/discover_home_page.dart';
-import '../../contribution/pages/new_contribution_page.dart';
+import '../../ai/pages/ai_assistant_page.dart';
+import '../../map/pages/map_explore_page.dart';
 import '../../profile/pages/profile_page.dart';
-import '../../review/pages/review_queue_page.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/guest_auth_prompt_bottom_sheet.dart';
+import '../widgets/viettune_bottom_nav.dart';
+import '../widgets/dong_son_drum_icon.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -19,6 +22,44 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentIndex = 0;
 
+  void _handleContributeTap(BuildContext context, bool isGuest, UserRole role) {
+    if (isGuest) {
+      GuestAuthPromptBottomSheet.show(
+        context,
+        title: 'Chào mừng đến VietTune Archive',
+        message: 'Đăng nhập để đóng góp và lưu trữ di sản âm nhạc',
+      );
+      return;
+    }
+
+    if (!role.canSubmitContributions) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bạn không có quyền đóng góp'),
+        ),
+      );
+      return;
+    }
+
+    // Navigate to contribution flow with error handling
+    try {
+      context.pushNamed('contribute-new');
+    } catch (e) {
+      // Handle navigation errors gracefully
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể mở trang đóng góp: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      // Log error for debugging (using debugPrint as it's available in Flutter)
+      debugPrint('Error navigating to contribution page: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
@@ -27,34 +68,9 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     final pages = <Widget>[
       const DiscoverHomePage(),
-      if (!isGuest && role.canSubmitContributions) const NewContributionPage(),
-      if (!isGuest && role.canReviewContributions) const ReviewQueuePage(),
-      // Guest sees profile tab but it triggers bottom sheet
-      if (isGuest)
-        const SizedBox.shrink() // Placeholder
-      else
-        const ProfilePage(),
-    ];
-
-    final items = <BottomNavigationBarItem>[
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.explore),
-        label: 'Khám phá',
-      ),
-      if (!isGuest && role.canSubmitContributions)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle_outline),
-          label: 'Đóng góp',
-        ),
-      if (!isGuest && role.canReviewContributions)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.rate_review_outlined),
-          label: 'Thẩm định',
-        ),
-      BottomNavigationBarItem(
-        icon: const Icon(Icons.person_outline),
-        label: isGuest ? 'Đăng nhập' : 'Cá nhân',
-      ),
+      const AIAssistantPage(),
+      const MapExplorePage(),
+      if (isGuest) const SizedBox.shrink() else const ProfilePage(),
     ];
 
     final safeIndex = _currentIndex.clamp(0, pages.length - 1);
@@ -76,11 +92,45 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: pages,
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _handleContributeTap(context, isGuest, role),
+        backgroundColor: Colors.transparent,
+        elevation: 8,
+        mini: false,
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primaryDark,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: const DongSonDrumIcon(
+            size: 56,
+            primaryColor: AppColors.primary,
+            accentColor: AppColors.gold,
+          ),
+        ),
+      ),
+      bottomNavigationBar: VietTuneBottomNav(
         currentIndex: safeIndex,
         onTap: (index) {
-          // Guest clicks on Profile tab (last tab)
-          if (isGuest && index == items.length - 1) {
+          if (isGuest && index == 3) {
             GuestAuthPromptBottomSheet.show(
               context,
               title: 'Chào mừng đến VietTune Archive',
@@ -94,7 +144,6 @@ class _HomePageState extends ConsumerState<HomePage> {
             _currentIndex = index;
           });
         },
-        items: items,
       ),
     );
   }

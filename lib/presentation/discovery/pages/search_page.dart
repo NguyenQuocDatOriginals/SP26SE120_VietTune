@@ -123,7 +123,18 @@ final searchResultsProvider = FutureProvider.family<
 });
 
 class SearchPage extends ConsumerStatefulWidget {
-  const SearchPage({super.key});
+  final String? initialQuery;
+  final List<String>? initialEthnicGroupIds;
+  final List<String>? initialInstrumentIds;
+  final String? initialRegion;
+
+  const SearchPage({
+    super.key,
+    this.initialQuery,
+    this.initialEthnicGroupIds,
+    this.initialInstrumentIds,
+    this.initialRegion,
+  });
 
   @override
   ConsumerState<SearchPage> createState() => _SearchPageState();
@@ -132,6 +143,27 @@ class SearchPage extends ConsumerStatefulWidget {
 class _SearchPageState extends ConsumerState<SearchPage> {
   final _searchController = TextEditingController();
   bool _showFilters = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialQuery != null) {
+      _searchController.text = widget.initialQuery!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(searchProvider.notifier).updateQuery(widget.initialQuery);
+      });
+    }
+    if (widget.initialEthnicGroupIds != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(searchProvider.notifier).updateEthnicGroups(widget.initialEthnicGroupIds);
+      });
+    }
+    if (widget.initialInstrumentIds != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(searchProvider.notifier).updateInstruments(widget.initialInstrumentIds);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -153,10 +185,10 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
-          style: TextStyle(color: AppColors.textOnGradient),
+          style: AppTypography.bodyLarge(color: AppColors.textOnGradient),
           decoration: InputDecoration(
             hintText: 'Tìm kiếm bài hát...',
-            hintStyle: TextStyle(color: AppColors.textSecondaryOnGradient),
+            hintStyle: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient),
             border: InputBorder.none,
           ),
           onSubmitted: (_) => _performSearch(),
@@ -200,13 +232,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                     children: [
                       Text(
                         'Bộ lọc',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: AppTypography.labelLarge(color: AppColors.textPrimary),
                       ),
                       TextButton(
                         onPressed: () {
                           ref.read(searchProvider.notifier).clearFilters();
                         },
-                        child: const Text('Xóa bộ lọc'),
+                        child: Text(
+                          'Xóa bộ lọc',
+                          style: AppTypography.labelLarge(),
+                        ),
                       ),
                     ],
                   ),
@@ -214,7 +249,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                   // Genre checkboxes
                   Text(
                     'Thể loại',
-                    style: Theme.of(context).textTheme.titleSmall,
+                    style: AppTypography.labelLarge(color: AppColors.textPrimary),
                   ),
                   Wrap(
                     spacing: 8,
@@ -251,7 +286,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                         const SizedBox(height: 16),
                         Text(
                           'Không tìm thấy kết quả',
-                          style: Theme.of(context).textTheme.titleMedium,
+                          style: AppTypography.labelLarge(color: AppColors.textSecondary),
                         ),
                       ],
                     ),

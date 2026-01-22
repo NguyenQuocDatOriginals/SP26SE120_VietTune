@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/contribution_request.dart';
 import '../../../domain/entities/song.dart';
@@ -9,13 +11,107 @@ import '../../../domain/usecases/contribution/get_user_contributions.dart';
 import '../../../domain/usecases/contribution/get_contribution_by_id.dart';
 import '../../../domain/repositories/base_repository.dart';
 import '../../../core/di/injection.dart';
+import '../../../core/services/contribution_draft_service.dart';
 
 /// Provider for contribution form state
 class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
-  ContributionFormNotifier() : super(ContributionFormState.initial());
+  final ContributionDraftService _draftService = getIt<ContributionDraftService>();
+  Timer? _autoSaveTimer;
+
+  ContributionFormNotifier() : super(ContributionFormState.initial()) {
+    _startAutoSave();
+  }
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoSave() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _saveDraft(),
+    );
+  }
+
+  Future<void> _saveDraft() async {
+    if (state.songData == null) return;
+    try {
+      await _draftService.saveDraft(
+        state.songData!,
+        state.currentStep,
+      );
+    } catch (e) {
+      debugPrint('Failed to save draft: $e');
+    }
+  }
 
   void updateStep(int step) {
+    if (step < 0 || step >= 6) return; // Validate step range (6 steps: merged Notes+Review)
     state = state.copyWith(currentStep: step);
+    // Save draft on step change
+    _saveDraft();
+  }
+
+  /// Check if can jump to a specific step
+  bool canJumpToStep(int targetStep) {
+    if (targetStep < 0 || targetStep >= 6) return false;
+    if (targetStep == state.currentStep) return true; // Already on this step
+    if (targetStep < state.currentStep) return true; // Can always go back
+    
+    // Can only jump forward if all previous steps are valid
+    for (int i = 0; i < targetStep; i++) {
+      if (!_isStepValid(i)) return false;
+    }
+    return true;
+  }
+
+  /// Check if a specific step is valid (without modifying state)
+  bool _isStepValid(int step) {
+    final song = state.songData;
+    if (song == null) return false;
+
+    switch (step) {
+      case 0: // Audio upload
+        return song.audioMetadata?.url != null &&
+            song.audioMetadata!.url.isNotEmpty;
+      case 1: // Identity (Title, Genre, Language)
+        final hasTitle = song.title.isNotEmpty;
+        final hasGenre = song.genre != null;
+        final hasLanguage = song.language != null && song.language!.isNotEmpty;
+        return hasTitle && hasGenre && hasLanguage;
+      case 2: // People (Performers, Ethnic Group)
+        final hasArtist = song.audioMetadata?.performerNames != null;
+        final hasEthnicGroup = song.ethnicGroupId.isNotEmpty;
+        return hasArtist && hasEthnicGroup;
+      case 3: // Cultural context
+        return song.ethnicGroupId.isNotEmpty; // Already validated in step 2
+      case 4: // Performance details
+        final performanceType = song.performanceType;
+        if (performanceType == null) return false;
+        final hasInstruments =
+            song.audioMetadata?.instrumentIds?.isNotEmpty == true;
+        switch (performanceType) {
+          case PerformanceType.instrumental:
+          case PerformanceType.vocalWithAccompaniment:
+            return hasInstruments;
+          case PerformanceType.aCappella:
+            return true; // No instruments needed
+          default:
+            return false;
+        }
+      case 5: // Review (merged with Notes)
+        // Review is valid if all previous steps are valid
+        return _isStepValid(0) &&
+            _isStepValid(1) &&
+            _isStepValid(2) &&
+            _isStepValid(3) &&
+            _isStepValid(4);
+      default:
+        return false;
+    }
   }
 
   void updateSongData(Song? song) {
@@ -25,9 +121,21 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
   }
 
   void updateAudioUrl(String? url, {int? durationInSeconds}) {
-    final audioMetadata = state.songData?.audioMetadata;
+    // Ensure songData exists
+    final currentSong = state.songData ?? Song(
+      id: '',
+      title: '',
+      genre: MusicGenre.folk,
+      ethnicGroupId: '',
+      verificationStatus: VerificationStatus.pending,
+      author: 'Dân gian',
+      language: 'Tiếng Việt',
+      isRecordingDateEstimated: false,
+    );
+    
+    final audioMetadata = currentSong.audioMetadata;
     state = state.copyWith(
-      songData: state.songData?.copyWith(
+      songData: currentSong.copyWith(
         audioMetadata: audioMetadata != null
             ? audioMetadata.copyWith(url: url ?? '')
             : AudioMetadata(
@@ -197,26 +305,45 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
 
   void reset() {
     state = ContributionFormState.initial();
+    // Clear draft when resetting
+    _draftService.clearDraft();
+  }
+
+  /// Load draft data
+  Future<void> loadDraft() async {
+    final draft = await _draftService.loadDraft();
+    if (draft != null) {
+      state = state.copyWith(
+        songData: draft.songData,
+        currentStep: draft.currentStep,
+      );
+    }
   }
 
   bool canProceedToNextStep() {
     switch (state.currentStep) {
       case 0: // Audio upload
-        return state.songData?.audioMetadata?.url != null &&
-            state.songData!.audioMetadata!.url.isNotEmpty;
-      case 1: // Basic info
+        final url = state.songData?.audioMetadata?.url;
+        final result = url != null && url.isNotEmpty;
+        debugPrint('canProceedToNextStep(step 0): url=$url, result=$result');
+        return result;
+      case 1: // Identity (Title, Genre, Language)
         final hasTitle =
             state.songData?.title != null && state.songData!.title.isNotEmpty;
-        final hasArtist =
-            state.songData?.audioMetadata?.performerNames?.isNotEmpty == true;
         final hasGenre = state.songData?.genre != null;
         final hasLanguage =
             state.songData?.language != null && state.songData!.language!.isNotEmpty;
-        return hasTitle && hasArtist && hasGenre && hasLanguage;
-      case 2: // Cultural context
+        return hasTitle && hasGenre && hasLanguage;
+      case 2: // People (Performers, Ethnic Group)
+        // Allow empty performerNames (when "Không rõ" is checked)
+        final hasArtist = state.songData?.audioMetadata?.performerNames != null;
+        final hasEthnicGroup = state.songData?.ethnicGroupId != null &&
+            state.songData!.ethnicGroupId.isNotEmpty;
+        return hasArtist && hasEthnicGroup;
+      case 3: // Cultural context
         final ethnicGroupId = state.songData?.ethnicGroupId;
         return ethnicGroupId != null && ethnicGroupId.isNotEmpty;
-      case 3: // Performance details
+      case 4: // Performance details
         final performanceType = state.songData?.performanceType;
         if (performanceType == null) return false;
 
@@ -230,7 +357,7 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
           case PerformanceType.aCappella:
             return !hasInstruments; // Không được có nhạc cụ
         }
-      case 4: // Notes & submit
+      case 5: // Review (merged with Notes)
         return true;
       default:
         return false;

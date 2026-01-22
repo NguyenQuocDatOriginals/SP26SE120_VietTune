@@ -5,7 +5,13 @@ import '../../../../domain/entities/enums.dart';
 import '../../../../domain/entities/contribution_request.dart';
 import '../../../../domain/usecases/contribution/submit_contribution.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/contribution_draft_service.dart';
+import '../../../../core/services/haptic_service.dart';
+import '../../../../core/services/speech_to_text_service.dart';
+import '../../../../core/di/injection.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../shared/widgets/progressive_disclosure_section.dart';
 
 /// Step 5: Review and Submit
 class ReviewSubmitStep extends ConsumerStatefulWidget {
@@ -17,6 +23,117 @@ class ReviewSubmitStep extends ConsumerStatefulWidget {
 
 class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
   bool _isSubmitting = false;
+  final _nativeScriptController = TextEditingController();
+  final _vietnameseTranslationController = TextEditingController();
+  final _copyrightController = TextEditingController();
+  final _fieldNotesController = TextEditingController();
+  bool _showNotesSection = false;
+  final _speechService = getIt<SpeechToTextService>();
+  bool _isListening = false;
+  TextEditingController? _activeController;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final song = ref.read(contributionFormProvider).songData;
+        if (song != null) {
+          setState(() {
+            _nativeScriptController.text = song.lyricsNativeScript ?? '';
+            _vietnameseTranslationController.text =
+                song.lyricsVietnameseTranslation ?? '';
+            _copyrightController.text = song.copyrightInfo ?? '';
+            _fieldNotesController.text = song.fieldNotes ?? '';
+            _showNotesSection = (song.lyricsNativeScript?.isNotEmpty ?? false) ||
+                (song.lyricsVietnameseTranslation?.isNotEmpty ?? false) ||
+                (song.copyrightInfo?.isNotEmpty ?? false) ||
+                (song.fieldNotes?.isNotEmpty ?? false);
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _nativeScriptController.dispose();
+    _vietnameseTranslationController.dispose();
+    _copyrightController.dispose();
+    _fieldNotesController.dispose();
+    _speechService.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _startListening(TextEditingController controller) async {
+    if (_isListening) {
+      await _speechService.stopListening();
+      setState(() {
+        _isListening = false;
+        _activeController = null;
+      });
+      return;
+    }
+    
+    final available = await _speechService.checkAvailability();
+    if (!available) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Speech recognition không khả dụng. Vui lòng kiểm tra quyền microphone.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
+    setState(() {
+      _isListening = true;
+      _activeController = controller;
+    });
+    
+    await _speechService.startListening(
+      onResult: (text) {
+        if (mounted && _activeController == controller) {
+          final currentText = controller.text;
+          final newText = currentText.isEmpty
+              ? text
+              : '$currentText $text';
+          controller.text = newText;
+          _updateNotes();
+        }
+      },
+    );
+  }
+  
+  Future<void> _stopListening() async {
+    await _speechService.stopListening();
+    if (mounted) {
+      setState(() {
+        _isListening = false;
+        _activeController = null;
+      });
+    }
+  }
+
+  void _updateNotes() {
+    final notifier = ref.read(contributionFormProvider.notifier);
+    notifier.updateLyrics(
+      nativeScript: _nativeScriptController.text.isEmpty
+          ? null
+          : _nativeScriptController.text,
+      vietnameseTranslation: _vietnameseTranslationController.text.isEmpty
+          ? null
+          : _vietnameseTranslationController.text,
+    );
+    notifier.updateCopyrightInfo(
+      _copyrightController.text.isEmpty ? null : _copyrightController.text,
+    );
+    notifier.updateFieldNotes(
+      _fieldNotesController.text.isEmpty ? null : _fieldNotesController.text,
+    );
+  }
 
   Future<void> _submitContribution() async {
     final formState = ref.read(contributionFormProvider);
@@ -48,15 +165,15 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
         (failure) {
           _showError('Lỗi: ${failure.message}');
         },
-        (contribution) {
+        (contribution) async {
+          // Clear draft on successful submission
+          final draftService = getIt<ContributionDraftService>();
+          await draftService.clearDraft();
+          
           formNotifier.reset();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Đóng góp đã được gửi thành công!'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            // Show success celebration
+            await _showSuccessCelebration(context);
             Navigator.of(context).pop();
           }
         },
@@ -78,6 +195,82 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
     }
   }
 
+  Future<void> _showSuccessCelebration(BuildContext context) async {
+    // Show success dialog with animation
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      useSafeArea: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Success icon with animation
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 500),
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 50,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Đóng góp thành công!',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Cảm ơn bạn đã đóng góp vào kho tàng âm nhạc dân tộc Việt Nam',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              AppTheme.createPillButton(
+                onPressed: () => Navigator.of(context).pop(),
+                isFullWidth: true,
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(contributionFormProvider);
@@ -88,37 +281,53 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Bước 5: Xem xét và gửi',
-            style: Theme.of(context).textTheme.headlineSmall,
+            'Bước 6: Xem xét, Ghi chú & Gửi',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Xem lại thông tin và thêm ghi chú trước khi gửi',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 24),
-          // Song title
+          // Review sections with inline editing
           _buildReviewSection(
             context,
             'Tên bài hát',
             song.title,
             () => _navigateToStep(1),
           ),
-          // Genre
           _buildReviewSection(
             context,
             'Thể loại',
             _getGenreText(song.genre),
             () => _navigateToStep(1),
           ),
-          // Ethnic group
           _buildReviewSection(
             context,
             'Dân tộc',
             song.ethnicGroupId,
-            () => _navigateToStep(1),
+            () => _navigateToStep(2),
           ),
-          // Audio
+          if (song.audioMetadata?.performerNames?.isNotEmpty == true)
+            _buildReviewSection(
+              context,
+              'Nghệ sĩ/Người biểu diễn',
+              song.audioMetadata!.performerNames!.join(', '),
+              () => _navigateToStep(2),
+            ),
           if (song.audioMetadata != null)
             _buildReviewSection(
               context,
@@ -126,41 +335,320 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               song.audioMetadata!.url,
               () => _navigateToStep(0),
             ),
-          // Cultural context
           if (song.culturalContext != null)
             _buildReviewSection(
               context,
               'Bối cảnh văn hóa',
               _getContextTypeText(song.culturalContext!.type),
-              () => _navigateToStep(2),
+              () => _navigateToStep(3),
             ),
-          // Lyrics
+          // Lyrics (if exists)
           if (song.lyricsNativeScript != null ||
               song.lyricsVietnameseTranslation != null)
             _buildReviewSection(
               context,
               'Lời bài hát',
               song.lyricsNativeScript ?? song.lyricsVietnameseTranslation ?? '',
-              () => _navigateToStep(3),
+              () => _navigateToStep(4),
             ),
-          const SizedBox(height: 32),
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitContribution,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+          const SizedBox(height: 24),
+          
+          // Notes & Copyright section (expandable)
+          ProgressiveDisclosureSection(
+            title: 'Ghi chú & Bản quyền (Tùy chọn)',
+            requiredFields: [],
+            optionalFields: [
+              // Lyrics - Native script
+              Text(
+                'Lời bài hát (ngôn ngữ gốc)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              child: _isSubmitting
-                  ? const SizedBox(
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _nativeScriptController,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isListening && _activeController == _nativeScriptController
+                          ? Icons.mic
+                          : Icons.mic_none,
+                      color: _isListening && _activeController == _nativeScriptController
+                          ? Colors.red
+                          : AppColors.textSecondary,
+                    ),
+                    onPressed: () => _startListening(_nativeScriptController),
+                    tooltip: 'Voice input',
+                  ),
+                ),
+                maxLines: 6,
+                onTap: () => HapticService.onFieldFocus(),
+                onChanged: (_) => _updateNotes(),
+              ),
+              if (_isListening && _activeController == _nativeScriptController)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Đang nghe...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              
+              // Lyrics - Vietnamese translation
+              Text(
+                'Bản dịch tiếng Việt',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _vietnameseTranslationController,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isListening && _activeController == _vietnameseTranslationController
+                          ? Icons.mic
+                          : Icons.mic_none,
+                      color: _isListening && _activeController == _vietnameseTranslationController
+                          ? Colors.red
+                          : AppColors.textSecondary,
+                    ),
+                    onPressed: () => _startListening(_vietnameseTranslationController),
+                    tooltip: 'Voice input',
+                  ),
+                ),
+                maxLines: 6,
+                onTap: () => HapticService.onFieldFocus(),
+                onChanged: (_) => _updateNotes(),
+              ),
+              if (_isListening && _activeController == _vietnameseTranslationController)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Đang nghe...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              
+              // Copyright
+              Text(
+                'Bản quyền/Tổ chức lưu trữ',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _copyrightController,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Thông tin bản quyền hoặc tổ chức lưu trữ',
+                  hintStyle: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                maxLines: 3,
+                onTap: () => HapticService.onFieldFocus(),
+                onChanged: (_) => _updateNotes(),
+              ),
+              const SizedBox(height: 16),
+              
+              // Field notes
+              Text(
+                'Ghi chú thực địa',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _fieldNotesController,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Ghi chú, quan sát khi thu âm',
+                  hintStyle: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                maxLines: 4,
+                onTap: () => HapticService.onFieldFocus(),
+                onChanged: (_) => _updateNotes(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // Submit button - Pill style with gradient
+          _isSubmitting
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.buttonGradientTop,
+                        AppColors.buttonGradientBottom,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Gửi đóng góp'),
-            ),
-          ),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : AppTheme.createPillButton(
+                  onPressed: _submitContribution,
+                  isFullWidth: true,
+                  child: const Text(
+                    'Gửi đóng góp',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
         ],
       ),
     );
@@ -172,14 +660,34 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
     String value,
     VoidCallback onEdit,
   ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: ListTile(
-        title: Text(label, style: Theme.of(context).textTheme.titleSmall),
-        subtitle: Text(value),
-        trailing: IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: onEdit,
+    return Semantics(
+      label: '$label: $value',
+      button: true,
+      hint: 'Chạm để chỉnh sửa $label',
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: ListTile(
+          title: Text(
+            label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
+                  MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+            ),
+          ),
+          subtitle: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+            ),
+          ),
+          trailing: Semantics(
+            label: 'Chỉnh sửa $label',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: onEdit,
+            ),
+          ),
         ),
       ),
     );

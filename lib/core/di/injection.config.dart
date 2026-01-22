@@ -12,8 +12,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:viettune_archive/core/di/injection.dart' as _i509;
+import 'package:viettune_archive/core/services/contribution_draft_service.dart'
+    as _i473;
+import 'package:viettune_archive/core/services/ethnic_group_suggestion_service.dart'
+    as _i474;
 import 'package:viettune_archive/core/services/guest_favorite_service.dart'
     as _i228;
+import 'package:viettune_archive/core/services/recording_service.dart' as _i771;
+import 'package:viettune_archive/core/services/speech_to_text_service.dart'
+    as _i420;
 import 'package:viettune_archive/data/datasources/mock/mock_auth_data_source.dart'
     as _i601;
 import 'package:viettune_archive/data/datasources/mock/mock_contribution_data_source.dart'
@@ -105,6 +112,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => dataSourceModule.secureStorage);
     gh.lazySingleton<_i228.GuestFavoriteService>(
         () => serviceModule.guestFavoriteService);
+    gh.lazySingleton<_i473.ContributionDraftService>(
+        () => serviceModule.contributionDraftService);
+    gh.lazySingleton<_i474.EthnicGroupSuggestionService>(
+        () => serviceModule.ethnicGroupSuggestionService);
+    gh.lazySingleton<_i771.RecordingService>(
+        () => serviceModule.recordingService);
+    gh.lazySingleton<_i420.SpeechToTextService>(
+        () => serviceModule.speechToTextService);
     gh.lazySingleton<_i773.SongRepository>(
         () => repositoryModule.songRepository(gh<_i327.MockSongDataSource>()));
     gh.lazySingleton<_i697.ContributionRepository>(() => repositoryModule

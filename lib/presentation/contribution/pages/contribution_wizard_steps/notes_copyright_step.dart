@@ -7,6 +7,8 @@ import '../../../../domain/entities/contribution_request.dart';
 import '../../../../domain/usecases/contribution/submit_contribution.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/constants.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart' show AppColors;
 import '../../../auth/providers/auth_provider.dart';
 
 /// Step 5: Notes & Copyright
@@ -28,14 +30,21 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
   @override
   void initState() {
     super.initState();
-    final song = ref.read(contributionFormProvider).songData;
-    if (song != null) {
-      _nativeScriptController.text = song.lyricsNativeScript ?? '';
-      _vietnameseTranslationController.text =
-          song.lyricsVietnameseTranslation ?? '';
-      _copyrightController.text = song.copyrightInfo ?? '';
-      _fieldNotesController.text = song.fieldNotes ?? '';
-    }
+    // Initialize from existing data after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final song = ref.read(contributionFormProvider).songData;
+        if (song != null) {
+          setState(() {
+            _nativeScriptController.text = song.lyricsNativeScript ?? '';
+            _vietnameseTranslationController.text =
+                song.lyricsVietnameseTranslation ?? '';
+            _copyrightController.text = song.copyrightInfo ?? '';
+            _fieldNotesController.text = song.fieldNotes ?? '';
+          });
+        }
+      }
+    });
   }
 
   @override
@@ -137,87 +146,181 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Bước 5: Ghi chú & Bản quyền',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 16),
+          Text(
+            'Lời bài hát (ngôn ngữ gốc)',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             controller: _nativeScriptController,
-            decoration: const InputDecoration(
-              labelText: 'Lời bài hát (ngôn ngữ gốc)',
-              border: OutlineInputBorder(),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
             maxLines: 6,
             onChanged: (_) => _updateNotes(),
           ),
           const SizedBox(height: 16),
+          Text(
+            'Bản dịch tiếng Việt',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             controller: _vietnameseTranslationController,
-            decoration: const InputDecoration(
-              labelText: 'Bản dịch tiếng Việt',
-              border: OutlineInputBorder(),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
             maxLines: 6,
             onChanged: (_) => _updateNotes(),
           ),
           const SizedBox(height: 16),
+          Text(
+            'Bản quyền/Tổ chức lưu trữ',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             controller: _copyrightController,
-            decoration: const InputDecoration(
-              labelText: 'Bản quyền/Tổ chức lưu trữ',
-              border: OutlineInputBorder(),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
               hintText: 'Thông tin bản quyền hoặc tổ chức lưu trữ',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
             maxLines: 3,
             onChanged: (_) => _updateNotes(),
           ),
           const SizedBox(height: 16),
+          Text(
+            'Ghi chú thực địa',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             controller: _fieldNotesController,
-            decoration: const InputDecoration(
-              labelText: 'Ghi chú thực địa',
-              border: OutlineInputBorder(),
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textPrimary,
+            ),
+            decoration: InputDecoration(
               hintText: 'Ghi chú, quan sát khi thu âm',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              filled: true,
+              fillColor: AppColors.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.divider),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
             maxLines: 4,
             onChanged: (_) => _updateNotes(),
           ),
-          const SizedBox(height: 24),
-          _buildReviewSection(
-            context,
-            'Tóm tắt',
-            'Bài hát: ${song.title}',
-            () => _navigateToStep(1),
-          ),
-          if (song.audioMetadata != null)
-            _buildReviewSection(
-              context,
-              'File âm thanh',
-              song.audioMetadata!.url,
-              () => _navigateToStep(0),
-            ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitContribution,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Gửi đóng góp'),
-            ),
-          ),
+          // Submit button removed - ReviewSubmitStep will handle submission
         ],
       ),
     );

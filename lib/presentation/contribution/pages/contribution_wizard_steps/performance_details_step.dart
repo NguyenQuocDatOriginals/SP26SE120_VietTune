@@ -17,14 +17,14 @@ class PerformanceDetailsStep extends ConsumerWidget {
     final audioMetadata = song?.audioMetadata;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Bước 4: Chi tiết biểu diễn',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textOnGradient,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -50,12 +50,12 @@ class PerformanceDetailsStep extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 16,
                     color: isSelected
-                        ? AppColors.textOnGradient
-                        : AppColors.textSecondaryOnGradient,
+                        ? AppColors.textPrimary
+                        : AppColors.textSecondary,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
-                activeColor: AppColors.primaryRed,
+                activeColor: AppColors.primary,
                 onChanged: (value) {
                   if (value != null) {
                     formNotifier.updatePerformanceType(value);
@@ -75,7 +75,7 @@ class PerformanceDetailsStep extends ConsumerWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: AppColors.textSecondaryOnGradient,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -135,96 +135,9 @@ class PerformanceDetailsStep extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          Text(
-            'Ngày ghi âm',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: AppColors.textSecondaryOnGradient,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickRecordingDate(context, ref),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: audioMetadata?.recordingDate != null
-                        ? AppColors.primaryRed
-                        : AppColors.textSecondary,
-                    side: BorderSide(
-                      color: audioMetadata?.recordingDate != null
-                          ? AppColors.primaryRed
-                          : AppColors.divider,
-                      width: audioMetadata?.recordingDate != null ? 2 : 1,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: Icon(
-                    Icons.calendar_today,
-                    color: audioMetadata?.recordingDate != null
-                        ? AppColors.primaryRed
-                        : AppColors.textSecondary,
-                  ),
-                  label: Text(
-                    audioMetadata != null
-                        ? _formatDate(audioMetadata.recordingDate)
-                        : 'Chọn ngày',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: audioMetadata?.recordingDate != null
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Checkbox(
-                value: song?.isRecordingDateEstimated ?? false,
-                activeColor: AppColors.primaryRed,
-                checkColor: AppColors.textOnGradient,
-                onChanged: (value) =>
-                    formNotifier.updateIsRecordingDateEstimated(value ?? false),
-              ),
-              Text(
-                'Ngày ước tính',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondaryOnGradient,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
-  }
-
-  Future<void> _pickRecordingDate(BuildContext context, WidgetRef ref) async {
-    final formState = ref.read(contributionFormProvider);
-    final currentDate =
-        formState.songData?.audioMetadata?.recordingDate ?? DateTime.now();
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: currentDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (selected != null) {
-      ref.read(contributionFormProvider.notifier).updateRecordingDate(selected);
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
   }
 
   String _getPerformanceTypeText(PerformanceType type) {

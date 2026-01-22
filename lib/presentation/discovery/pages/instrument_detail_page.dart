@@ -59,7 +59,10 @@ class InstrumentDetailPage extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Chi tiết nhạc cụ'),
+        title: Text(
+          'Chi tiết nhạc cụ',
+          style: AppTypography.heading4(color: AppColors.textOnGradient),
+        ),
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textOnGradient,
       ),
@@ -77,10 +80,7 @@ class InstrumentDetailPage extends ConsumerWidget {
                 // Instrument name
                 Text(
                   instrument.name,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppColors.textOnGradient,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.heading2(color: AppColors.textOnGradient),
                 ),
                 const SizedBox(height: 16),
                 // Type
@@ -92,10 +92,13 @@ class InstrumentDetailPage extends ConsumerWidget {
                 if (instrument.description.isNotEmpty) ...[
                   Text(
                     'Mô tả',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.heading5(color: AppColors.textOnGradient),
                   ),
                   const SizedBox(height: 8),
-                  Text(instrument.description),
+                  Text(
+                    instrument.description,
+                    style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient),
+                  ),
                   const SizedBox(height: 24),
                 ],
                 // Materials
@@ -103,7 +106,7 @@ class InstrumentDetailPage extends ConsumerWidget {
                     instrument.materials!.isNotEmpty) ...[
                   Text(
                     'Chất liệu',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.heading5(color: AppColors.textOnGradient),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -118,16 +121,19 @@ class InstrumentDetailPage extends ConsumerWidget {
                 if (instrument.playingTechnique != null) ...[
                   Text(
                     'Kỹ thuật chơi',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: AppTypography.heading5(color: AppColors.textOnGradient),
                   ),
                   const SizedBox(height: 8),
-                  Text(instrument.playingTechnique!),
+                  Text(
+                    instrument.playingTechnique!,
+                    style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient),
+                  ),
                   const SizedBox(height: 24),
                 ],
                 // Songs using this instrument
                 Text(
                   'Bài hát sử dụng nhạc cụ này',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: AppTypography.heading5(color: AppColors.textOnGradient),
                 ),
                 const SizedBox(height: 16),
                 songsAsync.when(

@@ -40,8 +40,11 @@ import '../../domain/usecases/auth/refresh_token.dart';
 import '../../domain/usecases/auth/update_profile.dart';
 import '../../domain/usecases/auth/change_password.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/guest_favorite_service.dart';
+import '../services/contribution_draft_service.dart';
+import '../services/ethnic_group_suggestion_service.dart';
+import '../services/recording_service.dart';
+import '../services/speech_to_text_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -195,4 +198,18 @@ abstract class UseCaseModule {
 abstract class ServiceModule {
   @lazySingleton
   GuestFavoriteService get guestFavoriteService => GuestFavoriteService();
+
+  @lazySingleton
+  ContributionDraftService get contributionDraftService =>
+      ContributionDraftService();
+
+  @lazySingleton
+  EthnicGroupSuggestionService get ethnicGroupSuggestionService =>
+      EthnicGroupSuggestionService();
+
+  @lazySingleton
+  RecordingService get recordingService => RecordingService();
+
+  @lazySingleton
+  SpeechToTextService get speechToTextService => SpeechToTextService();
 }
