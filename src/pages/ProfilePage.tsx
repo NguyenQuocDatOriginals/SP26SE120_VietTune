@@ -1,12 +1,22 @@
 import { useEffect, useState, FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Target, Users, Heart, FileText, Trash2, AlertTriangle } from "lucide-react";
+import { Target, Users, Heart, FileText, Trash2, AlertTriangle, Edit } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, User } from "@/types";
 import toast from "react-hot-toast";
 import { authService } from "@/services/authService";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+
+// Extended type for local recording storage (supports both legacy and new formats)
+type LocalRecordingStorage = LocalRecording & {
+  uploadedAt?: string; // Legacy field
+  moderation?: LocalRecording['moderation'] & {
+    rejectionNote?: string;
+  };
+};
 
 // Hàm dịch trạng thái sang tiếng Việt (giống ModerationPage)
 const getStatusLabel = (status?: ModerationStatus | string): string => {
@@ -25,6 +35,9 @@ const getStatusLabel = (status?: ModerationStatus | string): string => {
     case ModerationStatus.REJECTED:
     case "REJECTED":
       return "Đã bị từ chối";
+    case ModerationStatus.TEMPORARILY_REJECTED:
+    case "TEMPORARILY_REJECTED":
+      return "Tạm thời bị từ chối";
     default:
       return String(status);
   }
@@ -40,11 +53,16 @@ interface LocalRecordingMini {
   };
   uploadedAt?: string;
   uploader?: { id?: string; username?: string };
-  moderation?: { status?: ModerationStatus | string; claimedByName?: string };
+  moderation?: { 
+    status?: ModerationStatus | string; 
+    claimedByName?: string;
+    rejectionNote?: string;
+  };
 }
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
+  const navigate = useNavigate();
   const [contributions, setContributions] = useState<LocalRecordingMini[]>([]);
   const [showDeleteMetadataConfirm, setShowDeleteMetadataConfirm] = useState(false);
 
@@ -196,7 +214,7 @@ export default function ProfilePage() {
               id: r.id,
               title: r.title,
               basicInfo: r.basicInfo,
-              uploadedAt: r.uploadedDate,
+              uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
               uploader: r.uploader,
               moderation: r.moderation
                 ? {
@@ -205,6 +223,7 @@ export default function ProfilePage() {
                     r.moderation.claimedByName === null
                       ? undefined
                       : r.moderation.claimedByName,
+                  rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote,
                 }
                 : undefined,
             }))
@@ -250,7 +269,7 @@ export default function ProfilePage() {
           id: r.id,
           title: r.title,
           basicInfo: r.basicInfo,
-          uploadedAt: r.uploadedDate,
+          uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
           uploader: r.uploader,
           moderation: r.moderation
             ? {
@@ -259,6 +278,7 @@ export default function ProfilePage() {
                 r.moderation.claimedByName === null
                   ? undefined
                   : r.moderation.claimedByName,
+              rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote,
             }
             : undefined,
         }))
@@ -266,6 +286,7 @@ export default function ProfilePage() {
     } catch (err) {
       console.error(err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const withdraw = (id?: string) => {
@@ -284,7 +305,7 @@ export default function ProfilePage() {
             id: r.id,
             title: r.title,
             basicInfo: r.basicInfo,
-            uploadedAt: r.uploadedDate,
+            uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
             uploader: r.uploader,
             moderation: r.moderation
               ? {
@@ -293,7 +314,8 @@ export default function ProfilePage() {
                   r.moderation.claimedByName === null
                     ? undefined
                     : r.moderation.claimedByName,
-              }
+                rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote as string | undefined,
+              } as LocalRecordingMini['moderation']
               : undefined,
           }))
       );
@@ -323,7 +345,7 @@ export default function ProfilePage() {
       setContributions([]);
 
       const actualFreed = (sizeBefore / (1024 * 1024)).toFixed(2);
-      toast.success(`Đã xóa toàn bộ dữ liệu từ ${deletedCount} bản thu. Giải phóng khoảng ${actualFreed} MB dung lượng.`);
+      toast.success(`Đã xóa thành công ${deletedCount} bản thu (giải phóng ${actualFreed} MB).`);
       setShowDeleteMetadataConfirm(false);
     } catch (err) {
       console.error("Lỗi khi xóa metadata:", err);
@@ -460,7 +482,7 @@ export default function ProfilePage() {
                 <p className="text-neutral-600">Bạn chưa có đóng góp nào.</p>
               ) : (
                 <div className="space-y-4">
-                  {contributions.map((c) => (
+                  {contributions.filter(c => c.id).map((c) => (
                     <div key={c.id} className="border border-neutral-200 rounded-2xl p-4" style={{ backgroundColor: '#FFFCF5' }}>
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -476,9 +498,39 @@ export default function ProfilePage() {
                             {c.moderation?.status === ModerationStatus.IN_REVIEW && c.moderation?.claimedByName && (
                               <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {c.moderation.claimedByName}</span>
                             )}
+                            {c.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && c.moderation?.rejectionNote && (
+                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-sm text-yellow-800"><strong>Ghi chú từ Expert:</strong> {c.moderation.rejectionNote}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 ml-4">
+                          {c.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && (
+                            <button 
+                              onClick={() => {
+                                // Load the full recording data and navigate to upload page with edit mode
+                                try {
+                                  const raw = localStorage.getItem("localRecordings");
+                                  if (raw) {
+                                    const all = JSON.parse(raw);
+                                    const recording = all.find((r: LocalRecordingStorage) => r.id === c.id);
+                                    if (recording) {
+                                      // Store the recording to edit in sessionStorage
+                                      sessionStorage.setItem("editingRecording", JSON.stringify(recording));
+                                      navigate("/upload?edit=true");
+                                    }
+                                  }
+                                } catch (err) {
+                                  console.error("Error loading recording for edit:", err);
+                                }
+                              }}
+                              className="px-3 py-1 rounded-full bg-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-1"
+                            >
+                              <Edit className="h-3 w-3" />
+                              Chỉnh sửa
+                            </button>
+                          )}
                           {(c.moderation?.status === ModerationStatus.PENDING_REVIEW || c.moderation?.status === ModerationStatus.REJECTED) && (
                             <button onClick={() => withdraw(c.id)} className="px-3 py-1 rounded-full bg-red-600 text-white text-sm whitespace-nowrap">Hủy đóng góp</button>
                           )}

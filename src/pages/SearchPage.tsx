@@ -421,7 +421,6 @@ export default function SearchPage() {
                       // For API recordings, check if it's video/YouTube
                       const apiSrc = typeof recording.audioUrl === "string" ? recording.audioUrl : "";
                       const isApiVideo = apiSrc && (isYouTubeUrl(apiSrc) || apiSrc.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
-                      const isApiYoutube = apiSrc && isYouTubeUrl(apiSrc);
 
                       return isApiVideo ? (
                         <VideoPlayer
@@ -429,8 +428,8 @@ export default function SearchPage() {
                           src={apiSrc}
                           title={recording.title}
                           artist={recording.titleVietnamese}
-                          showContainer={!isApiYoutube}
-                          recording={isApiYoutube ? recording : undefined}
+                          recording={recording}
+                          showContainer={true}
                         />
                       ) : (
                         <AudioPlayer
@@ -438,6 +437,8 @@ export default function SearchPage() {
                           src={apiSrc}
                           title={recording.title}
                           artist={recording.titleVietnamese}
+                          recording={recording}
+                          showContainer={true}
                         />
                       );
                     } catch (err) {

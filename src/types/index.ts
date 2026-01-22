@@ -26,6 +26,7 @@ export enum ModerationStatus {
   IN_REVIEW = "IN_REVIEW",
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
+  TEMPORARILY_REJECTED = "TEMPORARILY_REJECTED",
 }
 
 // Recording types

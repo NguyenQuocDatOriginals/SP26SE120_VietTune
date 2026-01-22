@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Region, RecordingType, RecordingQuality, VerificationStatus } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
@@ -6,6 +6,175 @@ import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { createPortal } from "react-dom";
+import { ChevronDown, Search, AlertCircle } from "lucide-react";
+
+// ===== UTILITY FUNCTIONS =====
+// Check if click is on scrollbar
+const isClickOnScrollbar = (event: MouseEvent): boolean => {
+    const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+    if (
+        scrollbarWidth > 0 &&
+        event.clientX >= document.documentElement.clientWidth
+    ) {
+        return true;
+    }
+    return false;
+};
+
+// ===== REUSABLE COMPONENTS =====
+function SearchableDropdown({
+    value,
+    onChange,
+    options,
+    placeholder = "-- Chọn --",
+    searchable = true,
+    disabled = false,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+    options: string[];
+    placeholder?: string;
+    searchable?: boolean;
+    disabled?: boolean;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
+
+    const filteredOptions = useMemo(() => {
+        if (!search) return options;
+        return options.filter((opt) =>
+            opt.toLowerCase().includes(search.toLowerCase()),
+        );
+    }, [options, search]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isClickOnScrollbar(event)) return;
+            const target = event.target as Node;
+            const clickedOutsideDropdown =
+                dropdownRef.current && !dropdownRef.current.contains(target);
+            const clickedOutsideMenu =
+                menuRef.current && !menuRef.current.contains(target);
+            if (
+                clickedOutsideDropdown &&
+                (menuRef.current ? clickedOutsideMenu : true)
+            ) {
+                setIsOpen(false);
+                setSearch("");
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const updateRect = () => {
+            if (buttonRef.current)
+                setMenuRect(buttonRef.current.getBoundingClientRect());
+        };
+        if (isOpen) updateRect();
+        window.addEventListener("resize", updateRect);
+        window.addEventListener("scroll", updateRect, true);
+        return () => {
+            window.removeEventListener("resize", updateRect);
+            window.removeEventListener("scroll", updateRect, true);
+        };
+    }, [isOpen]);
+
+    return (
+        <div ref={dropdownRef} className="relative">
+            <button
+                ref={buttonRef}
+                type="button"
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                disabled={disabled}
+                className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                style={{ backgroundColor: "#FFFCF5" }}
+            >
+                <span className={value ? "text-neutral-900" : "text-neutral-400"}>
+                    {value || placeholder}
+                </span>
+                <ChevronDown
+                    className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                        }`}
+                />
+            </button>
+
+            {isOpen &&
+                menuRect &&
+                createPortal(
+                    <div
+                        ref={(el) => (menuRef.current = el)}
+                        className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+                        style={{
+                            backgroundColor: "#FFFCF5",
+                            position: "absolute",
+                            left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
+                            top: menuRect.bottom + (window.scrollY ?? 0) + 8,
+                            width: menuRect.width,
+                            zIndex: 40,
+                        }}
+                    >
+                        {searchable && (
+                            <div className="p-3 border-b border-neutral-200">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Tìm kiếm..."
+                                        className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                        style={{ backgroundColor: "#FFFCF5" }}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        <div
+                            className="max-h-60 overflow-y-auto"
+                            style={{
+                                scrollbarWidth: "thin",
+                                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
+                            }}
+                        >
+                            {filteredOptions.length === 0 ? (
+                                <div className="px-5 py-3 text-neutral-400 text-sm text-center">
+                                    Không tìm thấy kết quả
+                                </div>
+                            ) : (
+                                filteredOptions.map((option) => (
+                                    <button
+                                        key={option}
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(option);
+                                            setIsOpen(false);
+                                            setSearch("");
+                                        }}
+                                        className={`w-full px-5 py-3 text-left text-sm transition-colors ${value === option
+                                            ? "bg-primary-600 text-white font-medium"
+                                            : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                            }`}
+                                    >
+                                        {option}
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>,
+                    document.body,
+                )}
+        </div>
+    );
+}
 
 // Hàm dịch trạng thái sang tiếng Việt
 const getStatusLabel = (status?: ModerationStatus | string): string => {
@@ -24,6 +193,9 @@ const getStatusLabel = (status?: ModerationStatus | string): string => {
         case ModerationStatus.REJECTED:
         case "REJECTED":
             return "Đã bị từ chối";
+        case ModerationStatus.TEMPORARILY_REJECTED:
+        case "TEMPORARILY_REJECTED":
+            return "Tạm thời bị từ chối";
         default:
             return String(status);
     }
@@ -103,15 +275,25 @@ interface LocalRecordingMini {
         reviewedAt?: string | null;
         verificationStep?: number;
         verificationData?: VerificationData;
+        rejectionNote?: string;
     };
 }
 
 export default function ModerationPage() {
     const { user } = useAuthStore();
     const [items, setItems] = useState<LocalRecordingMini[]>([]);
+    const [allItems, setAllItems] = useState<LocalRecordingMini[]>([]);
     const [verificationStep, setVerificationStep] = useState<Record<string, number>>({});
     const [showVerificationDialog, setShowVerificationDialog] = useState<string | null>(null);
     const [verificationForms, setVerificationForms] = useState<Record<string, VerificationData>>({});
+    const [statusFilter, setStatusFilter] = useState<string>("ALL");
+    const [dateSort, setDateSort] = useState<"newest" | "oldest">("newest");
+    const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
+    const [rejectType, setRejectType] = useState<"direct" | "temporary">("direct");
+    const [rejectNote, setRejectNote] = useState("");
+    const [showUnclaimDialog, setShowUnclaimDialog] = useState<string | null>(null);
+    const [showApproveConfirmDialog, setShowApproveConfirmDialog] = useState<string | null>(null);
+    const [showRejectConfirmDialog, setShowRejectConfirmDialog] = useState<string | null>(null);
 
     const load = useCallback(() => {
         try {
@@ -119,18 +301,39 @@ export default function ModerationPage() {
             const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
             // Migrate video data từ audioData sang videoData
             const migrated = migrateVideoDataToVideoData(all);
-            // Show pending and in-review items
-            const pending = migrated.filter(
-                (r) =>
-                    r.moderation?.status === ModerationStatus.PENDING_REVIEW ||
-                    r.moderation?.status === ModerationStatus.IN_REVIEW,
+            // Filter by claimedBy - only show items claimed by this expert or unclaimed items
+            // When an expert claims an item, it's "put in their bag" - other experts can't see it
+            const expertItems = migrated.filter(
+                (r) => {
+                    // Show items claimed by this expert (they are "in the bag")
+                    if (r.moderation?.claimedBy === user?.id) return true;
+                    // Show unclaimed items (available for claiming)
+                    if (!r.moderation?.claimedBy && r.moderation?.status === ModerationStatus.PENDING_REVIEW) return true;
+                    // Also show items reviewed by this expert (already approved/rejected)
+                    if (r.moderation?.reviewerId === user?.id) return true;
+                    // Don't show items claimed by other experts
+                    return false;
+                }
             );
-            setItems(pending);
+            setAllItems(expertItems);
+            // Apply filters
+            let filtered = expertItems;
+            if (statusFilter !== "ALL") {
+                filtered = filtered.filter((r) => r.moderation?.status === statusFilter);
+            }
+            // Sort by date
+            filtered = [...filtered].sort((a, b) => {
+                const dateA = new Date((a as LocalRecordingMini).uploadedAt || a.moderation?.reviewedAt || 0).getTime();
+                const dateB = new Date((b as LocalRecordingMini).uploadedAt || b.moderation?.reviewedAt || 0).getTime();
+                return dateSort === "newest" ? dateB - dateA : dateA - dateB;
+            });
+            setItems(filtered);
         } catch (err) {
             console.error(err);
             setItems([]);
+            setAllItems([]);
         }
-    }, []);
+    }, [user?.id, statusFilter, dateSort]);
 
     useEffect(() => {
         load();
@@ -156,8 +359,8 @@ export default function ModerationPage() {
                 const item = migrated.find(it => it.id === showVerificationDialog);
 
                 if (item) {
-                    // Cập nhật items với dữ liệu đã migrate
-                    setItems(prev => {
+                    // Cập nhật allItems với dữ liệu đã migrate
+                    setAllItems(prev => {
                         const updated = prev.map(it =>
                             it.id === showVerificationDialog ? item : it
                         );
@@ -225,6 +428,12 @@ export default function ModerationPage() {
             // Merge by id: replace items that match updated IDs
             const updatedMap = new Map(updated.map((i) => [i.id, i]));
             const merged = all.map((r) => (updatedMap.has(r.id) ? (updatedMap.get(r.id) as LocalRecordingMini) : r));
+            // Also add any new items from updated that aren't in all
+            updated.forEach((u) => {
+                if (u.id && !all.find((a) => a.id === u.id)) {
+                    merged.push(u);
+                }
+            });
             // Migrate video data trước khi lưu
             const migrated = migrateVideoDataToVideoData(merged);
             localStorage.setItem("localRecordings", JSON.stringify(migrated));
@@ -236,7 +445,7 @@ export default function ModerationPage() {
 
     const claim = (id?: string) => {
         if (!id) return;
-        const updated = items.map((it) => {
+        const updated = allItems.map((it) => {
             if (it.id === id) {
                 // If already claimed by another, block
                 if (it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy && it.moderation.claimedBy !== user?.id) {
@@ -267,7 +476,7 @@ export default function ModerationPage() {
             }
             return it;
         });
-        setItems(updated);
+        setAllItems(updated);
         saveItems(updated);
     };
 
@@ -293,7 +502,7 @@ export default function ModerationPage() {
 
     const getCurrentVerificationStep = (id: string | null): number => {
         if (!id) return 1;
-        const item = items.find(it => it.id === id);
+        const item = allItems.find(it => it.id === id);
         return verificationStep[id] || item?.moderation?.verificationStep || 1;
     };
 
@@ -308,7 +517,7 @@ export default function ModerationPage() {
         setVerificationStep(prev => ({ ...prev, [id]: prevStep }));
 
         // Save verification data to item
-        const updated = items.map((it) => {
+        const updated = allItems.map((it) => {
             if (it.id === id && it.moderation?.claimedBy === user?.id) {
                 const currentFormData = verificationForms[id] || {};
                 return {
@@ -325,7 +534,7 @@ export default function ModerationPage() {
             }
             return it;
         });
-        setItems(updated);
+        setAllItems(updated);
         saveItems(updated);
     };
 
@@ -333,18 +542,13 @@ export default function ModerationPage() {
         if (!id) return;
         const currentStep = getCurrentVerificationStep(id);
 
-        // Validate current step before proceeding
-        if (!validateStep(id, currentStep)) {
-            alert(`Vui lòng hoàn thành tất cả các yêu cầu bắt buộc ở Bước ${currentStep} trước khi tiếp tục!`);
-            return;
-        }
-
         if (currentStep < 3) {
+            // Bước 1 và 2: Không cần validate, cho phép tiếp tục luôn
             const nextStep = currentStep + 1;
             setVerificationStep(prev => ({ ...prev, [id]: nextStep }));
 
             // Save verification data to item
-            const updated = items.map((it) => {
+            const updated = allItems.map((it) => {
                 if (it.id === id && it.moderation?.claimedBy === user?.id) {
                     const currentFormData = verificationForms[id] || {};
                     return {
@@ -361,48 +565,74 @@ export default function ModerationPage() {
                 }
                 return it;
             });
-            setItems(updated);
+            setAllItems(updated);
             saveItems(updated);
         } else {
-            // Step 3 completed - automatically approve
-            const updated = items.map((it) => {
-                if (it.id === id && it.moderation?.claimedBy === user?.id) {
-                    const currentFormData = verificationForms[id] || {};
-                    // Automatically approve when all 3 steps are completed
-                    setVerificationStep(prev => {
-                        const newState = { ...prev };
-                        delete newState[id];
-                        return newState;
-                    });
-                    setVerificationForms(prev => {
-                        const newState = { ...prev };
-                        delete newState[id];
-                        return newState;
-                    });
-                    return {
-                        ...it,
-                        moderation: {
-                            ...it.moderation,
-                            status: ModerationStatus.APPROVED,
-                            reviewerId: user?.id,
-                            reviewerName: user?.username,
-                            reviewedAt: new Date().toISOString(),
-                            claimedBy: null,
-                            claimedByName: null,
-                            verificationStep: undefined,
-                            verificationData: {
-                                ...(it.moderation?.verificationData || {}),
-                                ...currentFormData,
-                            },
+            // Step 3: Phải validate trước khi hoàn thành
+            if (!validateStep(id, currentStep)) {
+                alert(`Vui lòng hoàn thành tất cả các yêu cầu bắt buộc ở Bước ${currentStep} trước khi hoàn thành kiểm duyệt bản thu!`);
+                return;
+            }
+            // Step 3 completed - show confirmation dialog before approving
+            setShowApproveConfirmDialog(id);
+            return;
+        }
+    };
+
+    const handleConfirmApprove = () => {
+        const id = showApproveConfirmDialog;
+        if (!id) return;
+        // Automatically approve when all 3 steps are completed
+        const updated = allItems.map((it) => {
+            if (it.id === id && it.moderation?.claimedBy === user?.id) {
+                const currentFormData = verificationForms[id] || {};
+                setVerificationStep(prev => {
+                    const newState = { ...prev };
+                    delete newState[id];
+                    return newState;
+                });
+                setVerificationForms(prev => {
+                    const newState = { ...prev };
+                    delete newState[id];
+                    return newState;
+                });
+                return {
+                    ...it,
+                    moderation: {
+                        ...it.moderation,
+                        status: ModerationStatus.APPROVED,
+                        reviewerId: user?.id,
+                        reviewerName: user?.username,
+                        reviewedAt: new Date().toISOString(),
+                        claimedBy: null,
+                        claimedByName: null,
+                        verificationStep: undefined,
+                        verificationData: {
+                            ...(it.moderation?.verificationData || {}),
+                            ...currentFormData,
                         },
-                    };
-                }
-                return it;
-            });
-            setItems(updated);
-            saveItems(updated);
+                    },
+                };
+            }
+            return it;
+        });
+        setAllItems(updated);
+        saveItems(updated);
+        setShowVerificationDialog(null);
+        setShowApproveConfirmDialog(null);
+    };
+
+    const handleConfirmReject = () => {
+        const id = showRejectConfirmDialog;
+        if (!id) return;
+        reject(id, rejectType, rejectNote);
+        if (showVerificationDialog === id) {
             setShowVerificationDialog(null);
         }
+        setShowRejectDialog(null);
+        setShowRejectConfirmDialog(null);
+        setRejectNote("");
+        setRejectType("direct");
     };
 
     const updateVerificationForm = (id: string | null, step: number, field: string, value: boolean | string) => {
@@ -426,7 +656,20 @@ export default function ModerationPage() {
 
     const cancelVerification = (id?: string) => {
         if (!id) return;
-        // Cancel verification - return to PENDING_REVIEW
+        // Just close the dialog, don't unclaim
+        setShowVerificationDialog(null);
+    };
+
+    const unclaim = (id?: string) => {
+        if (!id) return;
+        // Show confirmation dialog
+        setShowUnclaimDialog(id);
+    };
+
+    const handleConfirmUnclaim = () => {
+        const id = showUnclaimDialog;
+        if (!id) return;
+        // Cancel verification - return to PENDING_REVIEW and unclaim
         setVerificationStep(prev => {
             const newState = { ...prev };
             delete newState[id];
@@ -438,7 +681,8 @@ export default function ModerationPage() {
             return newState;
         });
         setShowVerificationDialog(null);
-        const updated = items.map((it) => {
+        setShowUnclaimDialog(null);
+        const updated = allItems.map((it) => {
             if (it.id === id && it.moderation?.claimedBy === user?.id) {
                 return {
                     ...it,
@@ -455,27 +699,28 @@ export default function ModerationPage() {
             }
             return it;
         });
-        setItems(updated);
+        setAllItems(updated);
         saveItems(updated);
     };
 
     // Approve function is no longer needed - approval happens automatically after step 3
 
-    const reject = (id?: string) => {
+    const reject = (id?: string, type: "direct" | "temporary" = "direct", note?: string) => {
         if (!id) return;
-        const updated = items.map((it) => {
+        const updated = allItems.map((it) => {
             if (it.id === id) {
-                if (it.moderation?.claimedBy !== user?.id) {
+                if (it.moderation?.claimedBy !== user?.id && it.moderation?.reviewerId !== user?.id) {
                     return it;
                 }
                 return {
                     ...it,
                     moderation: {
                         ...it.moderation,
-                        status: ModerationStatus.REJECTED,
+                        status: type === "direct" ? ModerationStatus.REJECTED : ModerationStatus.TEMPORARILY_REJECTED,
                         reviewerId: user?.id,
                         reviewerName: user?.username,
                         reviewedAt: new Date().toISOString(),
+                        rejectionNote: note || "",
                         claimedBy: null,
                         claimedByName: null,
                     },
@@ -483,14 +728,70 @@ export default function ModerationPage() {
             }
             return it;
         });
-        setItems(updated);
+        setAllItems(updated);
         saveItems(updated);
+        setShowRejectDialog(null);
+        setRejectNote("");
+        setRejectType("direct");
     };
 
     return (
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h1 className="text-3xl font-bold text-neutral-800 mb-8">Kiểm duyệt bản thu</h1>
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-neutral-800">
+                        Kiểm duyệt bản thu
+                    </h1>
+                </div>
+
+                {/* Filters */}
+                <div className="rounded-2xl shadow-md border border-neutral-200 p-6 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-neutral-800">Lọc theo trạng thái</label>
+                            <SearchableDropdown
+                                value={statusFilter === "ALL" ? "" : getStatusLabel(statusFilter)}
+                                onChange={(val) => {
+                                    // Map label back to status value
+                                    if (val === "Tất cả") {
+                                        setStatusFilter("ALL");
+                                    } else {
+                                        const statusMap: Record<string, string> = {
+                                            "Đang chờ được kiểm duyệt": ModerationStatus.PENDING_REVIEW,
+                                            "Đang được kiểm duyệt": ModerationStatus.IN_REVIEW,
+                                            "Đã được kiểm duyệt": ModerationStatus.APPROVED,
+                                            "Đã bị từ chối": ModerationStatus.REJECTED,
+                                            "Tạm thời bị từ chối": ModerationStatus.TEMPORARILY_REJECTED,
+                                        };
+                                        setStatusFilter(statusMap[val] || "ALL");
+                                    }
+                                }}
+                                options={[
+                                    "Tất cả",
+                                    "Đang chờ được kiểm duyệt",
+                                    "Đang được kiểm duyệt",
+                                    "Đã được kiểm duyệt",
+                                    "Đã bị từ chối",
+                                    "Tạm thời bị từ chối",
+                                ]}
+                                placeholder="Chọn trạng thái"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-neutral-800">Sắp xếp theo ngày</label>
+                            <SearchableDropdown
+                                value={dateSort === "newest" ? "Mới nhất" : "Cũ nhất"}
+                                onChange={(val) => {
+                                    setDateSort(val === "Mới nhất" ? "newest" : "oldest");
+                                }}
+                                options={["Mới nhất", "Cũ nhất"]}
+                                placeholder="Chọn thứ tự"
+                                searchable={false}
+                            />
+                        </div>
+                    </div>
+                </div>
 
                 {items.length === 0 ? (
                     <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
@@ -499,7 +800,7 @@ export default function ModerationPage() {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {items.map((it) => (
+                        {items.filter(it => it.id).map((it) => (
                             <div key={it.id} className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
                                 <div className="md:flex md:items-start md:justify-between">
                                     <div className="md:flex-1">
@@ -521,11 +822,14 @@ export default function ModerationPage() {
 
                                     <div className="mt-4 md:mt-0 md:ml-6 flex flex-wrap gap-2 md:flex-col md:items-end">
                                         {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
-                                            <button onClick={() => claim(it.id)} className="px-3 py-2 rounded-full bg-primary-600 text-white">Nhận kiểm duyệt</button>
+                                            <button onClick={() => claim(it.id)} className="px-3 py-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors">Nhận kiểm duyệt</button>
                                         )}
 
-                                        {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy !== user?.id && (
-                                            <button disabled className="px-3 py-2 rounded-full bg-neutral-200 text-neutral-500">Đã được nhận</button>
+                                        {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
+                                            <>
+                                                <button onClick={() => claim(it.id)} className="px-3 py-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors">Tiếp tục kiểm duyệt</button>
+                                                <button onClick={() => unclaim(it.id)} className="px-3 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors">Hủy nhận kiểm duyệt</button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -537,7 +841,7 @@ export default function ModerationPage() {
                 {/* Verification Dialog */}
                 {showVerificationDialog && (() => {
                     // Đảm bảo lấy dữ liệu mới nhất từ localStorage với migration
-                    let item = items.find(it => it.id === showVerificationDialog);
+                    let item = allItems.find(it => it.id === showVerificationDialog);
                     if (!item) {
                         // Nếu không tìm thấy trong items, thử load từ localStorage
                         try {
@@ -977,15 +1281,14 @@ export default function ModerationPage() {
                                     <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => cancelVerification(showVerificationDialog)}
-                                            className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
+                                            className="px-6 py-2.5 bg-neutral-600 text-white rounded-full font-medium hover:bg-neutral-500 transition-colors shadow-sm hover:shadow-md"
                                         >
-                                            Hủy nhận kiểm duyệt
+                                            Đóng
                                         </button>
                                         <button
                                             onClick={() => {
                                                 if (showVerificationDialog) {
-                                                    reject(showVerificationDialog);
-                                                    setShowVerificationDialog(null);
+                                                    setShowRejectDialog(showVerificationDialog);
                                                 }
                                             }}
                                             className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
@@ -1005,8 +1308,7 @@ export default function ModerationPage() {
                                         {currentStep < 3 ? (
                                             <button
                                                 onClick={() => nextVerificationStep(showVerificationDialog)}
-                                                disabled={!validateStep(showVerificationDialog, currentStep)}
-                                                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
                                             >
                                                 Tiếp tục (Bước {currentStep + 1})
                                             </button>
@@ -1020,7 +1322,7 @@ export default function ModerationPage() {
                                                 disabled={!validateStep(showVerificationDialog, currentStep)}
                                                 className="px-6 py-2.5 bg-green-600 text-white rounded-full font-medium hover:bg-green-500 transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                Hoàn thành xác minh
+                                                Hoàn thành kiểm duyệt
                                             </button>
                                         )}
                                     </div>
@@ -1029,6 +1331,230 @@ export default function ModerationPage() {
                         </div>
                     );
                 })()}
+
+                {/* Rejection Dialog */}
+                {showRejectDialog && createPortal(
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); } }}>
+                        <div className="rounded-2xl shadow-xl border border-neutral-300 max-w-lg w-full p-6 bg-white">
+                            <h3 className="text-xl font-semibold mb-4 text-neutral-800">Từ chối bản thu</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">Loại từ chối</label>
+                                    <div className="space-y-2">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="rejectType"
+                                                value="direct"
+                                                checked={rejectType === "direct"}
+                                                onChange={(e) => setRejectType(e.target.value as "direct" | "temporary")}
+                                                className="h-4 w-4 text-primary-600"
+                                            />
+                                            <div>
+                                                <span className="text-neutral-800 font-medium">Từ chối vĩnh viễn</span>
+                                                <p className="text-sm text-neutral-600">Dùng khi sai thông tin trầm trọng, bị trùng file, v.v.</p>
+                                            </div>
+                                        </label>
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="rejectType"
+                                                value="temporary"
+                                                checked={rejectType === "temporary"}
+                                                onChange={(e) => setRejectType(e.target.value as "direct" | "temporary")}
+                                                className="h-4 w-4 text-primary-600"
+                                            />
+                                            <div>
+                                                <span className="text-neutral-800 font-medium">Từ chối tạm thời</span>
+                                                <p className="text-sm text-neutral-600">Người đóng góp có thể chỉnh sửa và gửi lại</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {rejectType === "temporary" && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-2">Ghi chú cho người đóng góp</label>
+                                        <textarea
+                                            value={rejectNote}
+                                            onChange={(e) => setRejectNote(e.target.value)}
+                                            rows={4}
+                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                            placeholder="Nhập ghi chú về những điểm cần chỉnh sửa..."
+                                        />
+                                    </div>
+                                )}
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        onClick={() => { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); }}
+                                        className="px-4 py-2 rounded-full bg-neutral-200 text-neutral-800 font-medium hover:bg-neutral-300 transition-colors"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (showRejectDialog) {
+                                                if (rejectType === "temporary" && !rejectNote.trim()) {
+                                                    alert("Vui lòng nhập ghi chú cho người đóng góp khi tạm thời bị từ chối.");
+                                                    return;
+                                                }
+                                                // Show confirmation dialog
+                                                setShowRejectConfirmDialog(showRejectDialog);
+                                            }
+                                        }}
+                                        className="px-4 py-2 rounded-full bg-red-600 text-white font-medium hover:bg-red-500 transition-colors"
+                                    >
+                                        {rejectType === "direct" ? "Từ chối vĩnh viễn" : "Từ chối tạm thời"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>, document.body
+                )}
+
+                {/* Unclaim Confirmation Dialog */}
+                {showUnclaimDialog && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                        <div
+                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
+                            style={{ backgroundColor: '#FFF2D6' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                                <h2 className="text-2xl font-bold text-white">Xác nhận hủy nhận kiểm duyệt</h2>
+                            </div>
+
+                            {/* Content */}
+                            <div className="overflow-y-auto p-6">
+                                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div className="flex flex-col items-center gap-4 mb-2">
+                                        <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
+                                            <AlertCircle className="h-8 w-8 text-primary-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                                            Bạn có chắc chắn muốn hủy nhận kiểm duyệt bản thu này?
+                                        </h3>
+                                        <div className="text-neutral-700 text-center space-y-1">
+                                            <p>Bản thu sẽ được trả lại danh sách để các chuyên gia khác có thể nhận kiểm duyệt.</p>
+                                            <p>Tiến trình kiểm duyệt hiện tại sẽ bị hủy.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                                <button
+                                    onClick={() => setShowUnclaimDialog(null)}
+                                    className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleConfirmUnclaim}
+                                    className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Xác nhận hủy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Approve Confirmation Dialog */}
+                {showApproveConfirmDialog && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                        <div
+                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
+                            style={{ backgroundColor: '#FFF2D6' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                                <h2 className="text-2xl font-bold text-white">Xác nhận phê duyệt</h2>
+                            </div>
+
+                            {/* Content */}
+                            <div className="overflow-y-auto p-6">
+                                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div className="flex flex-col items-center gap-4 mb-2">
+                                        <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
+                                            <AlertCircle className="h-8 w-8 text-primary-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                                            Bạn có chắc chắn muốn phê duyệt bản thu này?
+                                        </h3>
+                                        <div className="text-neutral-700 text-center space-y-1">
+                                            <p>Hành động này sẽ đưa bản thu vào danh sách đã được kiểm duyệt.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                                <button
+                                    onClick={() => setShowApproveConfirmDialog(null)}
+                                    className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleConfirmApprove}
+                                    className="px-6 py-2.5 bg-green-600 text-white rounded-full font-medium hover:bg-green-500 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Xác nhận phê duyệt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Reject Confirmation Dialog */}
+                {showRejectConfirmDialog && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+                        <div
+                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
+                            style={{ backgroundColor: '#FFF2D6' }}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                                <h2 className="text-2xl font-bold text-white">Xác nhận từ chối</h2>
+                            </div>
+
+                            {/* Content */}
+                            <div className="overflow-y-auto p-6">
+                                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div className="flex flex-col items-center gap-4 mb-2">
+                                        <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
+                                            <AlertCircle className="h-8 w-8 text-primary-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                                            Bạn có chắc chắn muốn {rejectType === "direct" ? "từ chối vĩnh viễn" : "từ chối tạm thời"} bản thu này?
+                                        </h3>
+                                        <div className="text-neutral-700 text-center space-y-1">
+                                            <p>{rejectType === "direct" ? "Bản thu sẽ bị từ chối vĩnh viễn và không thể chỉnh sửa." : "Bản thu sẽ bị từ chối tạm thời và người đóng góp có thể chỉnh sửa và gửi lại."}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                                <button
+                                    onClick={() => setShowRejectConfirmDialog(null)}
+                                    className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleConfirmReject}
+                                    className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
+                                >
+                                    Xác nhận {rejectType === "direct" ? "từ chối vĩnh viễn" : "từ chối tạm thời"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

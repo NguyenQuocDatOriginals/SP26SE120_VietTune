@@ -689,12 +689,13 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       if (mapped) filters.recordingTypes = [mapped];
     }
 
-    // Use human-friendly selections (genres, instruments, eventType, province) as tags
+    // Use human-friendly selections (genres, instruments, eventType, province, ethnicity) as tags
     const tags: string[] = [];
     if (genres.length > 0) tags.push(...genres);
     if (instruments.length > 0) tags.push(...instruments);
     if (eventType && !eventType.startsWith("Tất cả")) tags.push(eventType);
     if (province && !province.startsWith("Tất cả")) tags.push(province);
+    if (ethnicity && !ethnicity.startsWith("Tất cả")) tags.push(ethnicity);
     if (tags.length > 0) filters.tags = tags;
 
     // Map region label back to Region enum

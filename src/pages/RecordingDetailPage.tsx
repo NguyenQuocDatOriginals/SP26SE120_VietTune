@@ -1,29 +1,111 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Recording } from "@/types";
+import { Recording, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
-import { Play, Heart, Download, Share2, Eye, User, ArrowLeft } from "lucide-react";
-import { usePlayerStore } from "@/stores/playerStore";
+import { Heart, Download, Share2, Eye, User } from "lucide-react";
 import Badge from "@/components/common/Badge";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import Button from "@/components/common/Button";
 import { RECORDING_TYPE_NAMES, REGION_NAMES } from "@/config/constants";
 import { format } from "date-fns";
+import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import AudioPlayer from "@/components/features/AudioPlayer";
+import VideoPlayer from "@/components/features/VideoPlayer";
+import { isYouTubeUrl } from "@/utils/youtube";
+import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+
+// Extended type for local recording storage (supports both legacy and new formats)
+type LocalRecordingStorage = LocalRecording & {
+  uploadedAt?: string; // Legacy field
+  culturalContext?: {
+    ethnicity?: string;
+  };
+};
 
 export default function RecordingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [recording, setRecording] = useState<Recording | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setCurrentRecording, setIsPlaying } = usePlayerStore();
 
   useEffect(() => {
     if (id) {
       fetchRecording(id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchRecording = async (recordingId: string) => {
     try {
+      // First try to load from localStorage (local recordings)
+      try {
+        const raw = localStorage.getItem("localRecordings");
+        if (raw) {
+          const all = JSON.parse(raw);
+          const migrated = migrateVideoDataToVideoData(all);
+          const local = migrated.find((r) => r.id === recordingId) as LocalRecordingStorage | undefined;
+          if (local) {
+            // Convert local recording to Recording format
+            const converted: Recording = {
+              id: local.id ?? "",
+              title: local.basicInfo?.title || local.title || "Không có tiêu đề",
+              titleVietnamese: local.titleVietnamese ?? "",
+              description: local.description ?? "",
+              ethnicity: local.ethnicity ?? {
+                id: "local",
+                name: local.culturalContext?.ethnicity || "Không xác định",
+                nameVietnamese: local.culturalContext?.ethnicity || "Không xác định",
+                region: Region.RED_RIVER_DELTA,
+                recordingCount: 0,
+              },
+              region: local.region ?? Region.RED_RIVER_DELTA,
+              recordingType: local.recordingType ?? RecordingType.OTHER,
+              duration: local.duration ?? 0,
+              audioUrl: local.audioUrl ?? local.audioData ?? "",
+              waveformUrl: local.waveformUrl ?? "",
+              coverImage: local.coverImage ?? "",
+              instruments: local.instruments ?? [],
+              performers: local.performers ?? [],
+              recordedDate: local.recordedDate ?? "",
+              uploadedDate: local.uploadedDate ?? local.uploadedAt ?? new Date().toISOString(),
+              uploader: typeof local.uploader === "object" && local.uploader !== null ? {
+                id: local.uploader?.id ?? "local-user",
+                username: local.uploader?.username ?? "Bạn",
+                email: local.uploader?.email ?? "",
+                fullName: local.uploader?.fullName ?? local.uploader?.username ?? "Người tải lên",
+                role: (typeof local.uploader?.role === "string" ? local.uploader?.role : UserRole.USER) as UserRole,
+                createdAt: local.uploader?.createdAt ?? new Date().toISOString(),
+                updatedAt: local.uploader?.updatedAt ?? new Date().toISOString(),
+              } : {
+                id: "local-user",
+                username: "Bạn",
+                email: "",
+                fullName: "Người tải lên",
+                role: UserRole.USER,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              tags: local.tags ?? [local.basicInfo?.genre ?? ""].filter(Boolean),
+              metadata: {
+                ...local.metadata,
+                recordingQuality: local.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING,
+                lyrics: local.metadata?.lyrics ?? "",
+              },
+              verificationStatus: local.verificationStatus ?? VerificationStatus.PENDING,
+              verifiedBy: local.verifiedBy ?? undefined,
+              viewCount: local.viewCount ?? 0,
+              likeCount: local.likeCount ?? 0,
+              downloadCount: local.downloadCount ?? 0,
+            };
+            setRecording(converted);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (localError) {
+        console.error("Error loading local recording:", localError);
+      }
+
+      // If not found in localStorage, try API
       const response = await recordingService.getRecordingById(recordingId);
       setRecording(response.data);
     } catch (error) {
@@ -33,16 +115,10 @@ export default function RecordingDetailPage() {
     }
   };
 
-  const handlePlay = () => {
-    if (recording) {
-      setCurrentRecording(recording);
-      setIsPlaying(true);
-    }
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex justify-center items-center">
+      <div className="min-h-screen flex justify-center items-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -50,36 +126,30 @@ export default function RecordingDetailPage() {
 
   if (!recording) {
     return (
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h1 className="text-2xl font-bold text-neutral-900 mb-4">
             Không tìm thấy bản thu
           </h1>
-          <Link to="/search" className="text-primary-600 hover:text-primary-700 inline-flex items-center gap-1">
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách
-          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          to="/search"
-          className="text-primary-600 hover:text-primary-700 mb-6 inline-flex items-center gap-1"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại
-        </Link>
-
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-800">
+            Chi tiết bản thu
+          </h1>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Cover Image */}
-            <div className="bg-neutral-200 rounded-2xl overflow-hidden mb-6 border border-neutral-300">
+            <div className="rounded-2xl overflow-hidden mb-6 border border-neutral-200 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
               {recording.coverImage ? (
                 <img
                   src={recording.coverImage}
@@ -120,11 +190,7 @@ export default function RecordingDetailPage() {
                 </Badge>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={handlePlay} variant="primary">
-                  <Play className="h-5 w-5 mr-2" />
-                  Phát
-                </Button>
+              <div className="flex flex-wrap gap-3 mb-6">
                 <Button variant="outline">
                   <Heart className="h-5 w-5 mr-2" />
                   Thích ({recording.likeCount})
@@ -137,10 +203,113 @@ export default function RecordingDetailPage() {
                   <Share2 className="h-5 w-5" />
                 </Button>
               </div>
+
+              {/* Media Player */}
+              {(() => {
+                // Try to get media source from local recording
+                if (!recording.id) return null;
+                try {
+                  const raw = localStorage.getItem("localRecordings");
+                  if (raw) {
+                    const all = JSON.parse(raw);
+                    const migrated = migrateVideoDataToVideoData(all);
+                    const local = migrated.find((r) => r.id === recording.id) as LocalRecordingStorage | undefined;
+                    if (local) {
+                      let mediaSrc: string | undefined;
+                      let isVideo = false;
+
+                      // Check YouTube URL first
+                      if (local.mediaType === "youtube" && local.youtubeUrl && local.youtubeUrl.trim()) {
+                        mediaSrc = local.youtubeUrl.trim();
+                        isVideo = true;
+                      } else if (local.youtubeUrl && typeof local.youtubeUrl === 'string' && local.youtubeUrl.trim() && isYouTubeUrl(local.youtubeUrl)) {
+                        mediaSrc = local.youtubeUrl.trim();
+                        isVideo = true;
+                      }
+                      // Check video data
+                      else if (local.mediaType === "video" && local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
+                        mediaSrc = local.videoData;
+                        isVideo = true;
+                      }
+                      // Check audio data
+                      else if (local.mediaType === "audio" && local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
+                        mediaSrc = local.audioData;
+                        isVideo = false;
+                      }
+                      // Fallback: try to detect from data
+                      else if (local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
+                        mediaSrc = local.videoData;
+                        isVideo = true;
+                      } else if (local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
+                        mediaSrc = local.audioData;
+                        if (mediaSrc.startsWith('data:video/')) {
+                          isVideo = true;
+                        } else {
+                          isVideo = false;
+                        }
+                      }
+
+                      if (mediaSrc) {
+                        if (isVideo) {
+                          return (
+                            <VideoPlayer
+                              src={mediaSrc}
+                              title={recording.title}
+                              artist={recording.performers?.[0]?.name}
+                              recording={recording}
+                              showContainer={true}
+                            />
+                          );
+                        } else {
+                          return (
+                            <AudioPlayer
+                              src={mediaSrc}
+                              title={recording.title}
+                              artist={recording.performers?.[0]?.name}
+                              recording={recording}
+                              showContainer={true}
+                            />
+                          );
+                        }
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error("Error loading local recording for playback:", err);
+                }
+
+                // Fallback: use audioUrl from recording
+                if (recording.audioUrl) {
+                  const isVideo = isYouTubeUrl(recording.audioUrl) || recording.audioUrl.startsWith('data:video/');
+                  if (isVideo) {
+                    return (
+                      <VideoPlayer
+                        src={recording.audioUrl}
+                        title={recording.title}
+                        artist={recording.performers?.[0]?.name}
+                        recording={recording}
+                        showContainer={true}
+                      />
+                    );
+                  } else {
+                    return (
+                      <AudioPlayer
+                        src={recording.audioUrl}
+                        title={recording.title}
+                        artist={recording.performers?.[0]?.name}
+                        recording={recording}
+                        showContainer={true}
+                      />
+                    );
+                  }
+                }
+
+                return null;
+              })()}
             </div>
 
             {/* Stats */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
+            <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="flex items-center space-x-8 text-neutral-700">
                 <div className="flex items-center">
                   <Eye className="h-5 w-5 mr-2 text-primary-600" />
@@ -159,7 +328,7 @@ export default function RecordingDetailPage() {
 
             {/* Description */}
             {recording.description && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">Mô tả</h2>
                 <p className="text-neutral-700 whitespace-pre-wrap">
                   {recording.description}
@@ -169,7 +338,7 @@ export default function RecordingDetailPage() {
 
             {/* Metadata */}
             {recording.metadata && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 mb-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Thông tin chuyên môn
                 </h2>
@@ -220,7 +389,7 @@ export default function RecordingDetailPage() {
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Lời bài hát
                 </h2>
@@ -242,7 +411,7 @@ export default function RecordingDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Basic Info */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+            <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Thông tin
               </h3>
@@ -291,7 +460,7 @@ export default function RecordingDetailPage() {
 
             {/* Instruments */}
             {recording.instruments.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nhạc cụ
                 </h3>
@@ -307,7 +476,7 @@ export default function RecordingDetailPage() {
 
             {/* Performers */}
             {recording.performers.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nghệ nhân
                 </h3>
@@ -332,7 +501,7 @@ export default function RecordingDetailPage() {
 
             {/* Tags */}
             {recording.tags.length > 0 && (
-              <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">Thẻ</h3>
                 <div className="flex flex-wrap gap-2">
                   {recording.tags.map((tag, index) => (
@@ -345,7 +514,7 @@ export default function RecordingDetailPage() {
             )}
 
             {/* Uploader */}
-            <div className="bg-white rounded-2xl border border-neutral-300 p-6 shadow-md">
+            <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Người tải lên
               </h3>

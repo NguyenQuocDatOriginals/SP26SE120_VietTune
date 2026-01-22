@@ -3,9 +3,18 @@ import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { isYouTubeUrl, getYouTubeId } from "@/utils/youtube";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+
+// Extended type for local recording storage (supports both legacy and new formats)
+type LocalRecordingStorage = LocalRecording & {
+  uploadedAt?: string; // Legacy field
+  culturalContext?: {
+    ethnicity?: string;
+  };
+};
 
 // ===== CONSTANTS =====
 const SUPPORTED_AUDIO_FORMATS = [
@@ -1954,6 +1963,10 @@ function CollapsibleSection({
 // ===== MAIN COMPONENT =====
 export default function UploadMusic() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEditModeParam = searchParams.get("edit") === "true";
+  const [isEditMode, setIsEditMode] = useState(isEditModeParam);
+  const [editingRecordingId, setEditingRecordingId] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"audio" | "video" | "youtube">("audio");
   const [file, setFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -2312,6 +2325,49 @@ export default function UploadMusic() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Load editing recording from sessionStorage
+  useEffect(() => {
+    if (isEditModeParam) {
+      try {
+        const editingData = sessionStorage.getItem("editingRecording");
+        if (editingData) {
+          const recording = JSON.parse(editingData);
+          setEditingRecordingId(recording.id);
+          setMediaType(recording.mediaType || "audio");
+          setTitle(recording.basicInfo?.title || "");
+          setArtist(recording.basicInfo?.artist || "");
+          setComposer(recording.basicInfo?.composer || "");
+          setLanguage(recording.basicInfo?.language || "");
+          setGenre(recording.basicInfo?.genre || "");
+          setRecordingDate(recording.basicInfo?.recordingDate || "");
+          setDateEstimated(recording.basicInfo?.dateEstimated || false);
+          setDateNote(recording.basicInfo?.dateNote || "");
+          setRecordingLocation(recording.basicInfo?.recordingLocation || "");
+          setEthnicity(recording.culturalContext?.ethnicity || "");
+          setRegion(recording.culturalContext?.region || "");
+          setProvince(recording.culturalContext?.province || "");
+          setEventType(recording.culturalContext?.eventType || "");
+          setPerformanceType(recording.culturalContext?.performanceType || "");
+          setInstruments(recording.culturalContext?.instruments || []);
+          setDescription(recording.additionalNotes?.description || "");
+          setFieldNotes(recording.additionalNotes?.fieldNotes || "");
+          setTranscription(recording.additionalNotes?.transcription || "");
+          setCollector(recording.adminInfo?.collector || "");
+          setCopyright(recording.adminInfo?.copyright || "");
+          setArchiveOrg(recording.adminInfo?.archiveOrg || "");
+          setCatalogId(recording.adminInfo?.catalogId || "");
+          if (recording.youtubeUrl) {
+            setYoutubeUrl(recording.youtubeUrl);
+          }
+          setIsEditMode(true);
+        }
+      } catch (err) {
+        console.error("Error loading editing recording:", err);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditModeParam]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -2338,7 +2394,7 @@ export default function UploadMusic() {
     setSubmitMessage("");
 
     const formData = {
-      id: Date.now(),
+      id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       mediaType,
       file: mediaType === "youtube" ? null : {
         name: audioInfo?.name || file?.name,
@@ -2394,7 +2450,7 @@ export default function UploadMusic() {
 
       const newRecording = {
         ...formData,
-        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         audioData: null,
         youtubeUrl: normalizedYoutubeUrl,
         moderation: {
@@ -2403,6 +2459,7 @@ export default function UploadMusic() {
           claimedByName: null,
           reviewedAt: null,
           reviewerId: null,
+          rejectionNote: undefined, // Clear rejection note when resubmitting
         },
         uploader: {
           id: currentUser?.id || "anonymous",
@@ -2422,6 +2479,28 @@ export default function UploadMusic() {
 
         // Migrate video data từ audioData sang videoData trước khi xử lý
         recordings = migrateVideoDataToVideoData(recordings);
+
+        // If editing, update existing recording instead of adding new one
+        if (isEditMode && editingRecordingId) {
+          const existingIndex = recordings.findIndex((r) => (r as LocalRecordingStorage).id === editingRecordingId);
+          if (existingIndex >= 0) {
+            const existing = recordings[existingIndex] as LocalRecordingStorage;
+            // Preserve media data (audioData, videoData) from existing recording
+            recordings[existingIndex] = {
+              ...newRecording,
+              audioData: existing.audioData,
+              videoData: existing.videoData,
+              uploadedDate: existing.uploadedDate || existing.uploadedAt || new Date().toISOString(),
+            } as LocalRecordingStorage;
+            // Clear sessionStorage after successful edit
+            sessionStorage.removeItem("editingRecording");
+          } else {
+            // If not found, add as new
+            recordings.unshift(newRecording);
+          }
+        } else {
+          recordings.unshift(newRecording);
+        }
 
         // Clean up old media data to free up storage space
         // Remove audioData/videoData from old approved recordings older than 7 days (keep only metadata)
@@ -2449,8 +2528,6 @@ export default function UploadMusic() {
           }
           return rec;
         });
-
-        recordings.unshift(newRecording);
 
         // Không giới hạn số lượng bản ghi - lưu tất cả
         localStorage.setItem("localRecordings", JSON.stringify(recordings));
@@ -2569,13 +2646,14 @@ export default function UploadMusic() {
       const isVideoFile = mediaType === "video";
       const recordingData: Record<string, unknown> = {
         ...formData,
-        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         moderation: {
           status: ModerationStatus.PENDING_REVIEW,
           claimedBy: null,
           claimedByName: null,
           reviewedAt: null,
           reviewerId: null,
+          rejectionNote: undefined, // Clear rejection note when resubmitting
         },
         uploader: {
           id: currentUser?.id || "anonymous",
@@ -2634,8 +2712,32 @@ export default function UploadMusic() {
           return rec;
         });
 
-        // Thêm recording mới vào đầu danh sách
-        recordings.unshift(newRecording);
+        // If editing, update existing recording instead of adding new one
+        if (isEditMode && editingRecordingId) {
+          const existingIndex = recordings.findIndex((r) => (r as LocalRecordingStorage).id === editingRecordingId);
+          if (existingIndex >= 0) {
+            const existing = recordings[existingIndex] as LocalRecordingStorage;
+            // Preserve media data if not changed (user didn't upload new file)
+            // But if new file was uploaded, use the new data
+            const newRecordingStorage = newRecording as LocalRecordingStorage;
+            recordings[existingIndex] = {
+              ...newRecording,
+              audioData: isVideoFile ? (existing.audioData || null) : ((newRecordingStorage.audioData as string) || existing.audioData || null),
+              videoData: isVideoFile ? ((newRecordingStorage.videoData as string) || existing.videoData || null) : (existing.videoData || null),
+              youtubeUrl: ((mediaType as string) === "youtube" ? (newRecordingStorage.youtubeUrl as string | null) : null) || (existing.youtubeUrl || null),
+              mediaType: (mediaType as "audio" | "video" | "youtube") || existing.mediaType || "audio",
+              uploadedDate: existing.uploadedDate || existing.uploadedAt || new Date().toISOString(),
+            } as LocalRecordingStorage;
+            // Clear sessionStorage after successful edit
+            sessionStorage.removeItem("editingRecording");
+          } else {
+            // If not found, add as new
+            recordings.unshift(newRecording);
+          }
+        } else {
+          // Thêm recording mới vào đầu danh sách
+          recordings.unshift(newRecording);
+        }
 
         // Không giới hạn số lượng bản ghi - lưu tất cả
         // Thử lưu vào localStorage
@@ -3620,7 +3722,7 @@ export default function UploadMusic() {
       {showConfirmDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div
-            className="rounded-2xl shadow-xl border border-neutral-300 max-w-lg w-full overflow-hidden flex flex-col"
+            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
             style={{ backgroundColor: '#FFF2D6' }}
           >
             {/* Header */}
@@ -3665,7 +3767,7 @@ export default function UploadMusic() {
       {submitStatus === "success" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div
-            className="rounded-2xl shadow-xl border border-neutral-300 max-w-2xl w-full overflow-hidden flex flex-col"
+            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
             style={{ backgroundColor: '#FFF2D6' }}
           >
             {/* Header */}
@@ -3674,21 +3776,24 @@ export default function UploadMusic() {
             </div>
 
             {/* Content */}
-            <div
-              className="overflow-y-auto p-6"
-              style={{
-                scrollbarWidth: "thin",
-                scrollbarColor: "#9B2C2C rgba(255,255,255,0.3)",
-              }}
-            >
+            <div className="overflow-y-auto p-6">
               <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
                 <div className="flex flex-col items-center gap-4 mb-2">
                   <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
                     <Check className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
-                    {submitMessage || 'Cảm ơn bạn đã đóng góp bản thu!'}
-                  </h3>
+                  <div className="text-xl font-semibold text-neutral-800 text-center space-y-1">
+                    {submitMessage ? (
+                      submitMessage
+                        .split(/(?<=[.!])\s+/)
+                        .filter(s => s.trim())
+                        .map((sentence, index) => (
+                          <p key={index}>{sentence.trim()}</p>
+                        ))
+                    ) : (
+                      <p>Cảm ơn bạn đã đóng góp bản thu!</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -60,7 +60,7 @@ function FeatureCard({
   return (
     <Link
       to={to}
-      className="group p-6 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all"
+      className="group p-8 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all h-full flex flex-col items-center text-center"
       style={{ backgroundColor: "#FFFCF5" }}
       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7E6")}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FFFCF5")}
@@ -68,10 +68,10 @@ function FeatureCard({
       <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4 group-hover:bg-primary-200 transition-colors">
         <Icon className="h-6 w-6 text-primary-600" />
       </div>
-      <h3 className="text-xl font-semibold text-neutral-800 mb-2 group-hover:text-primary-600 transition-colors">
+      <h3 className={`text-xl font-semibold text-neutral-800 mb-3 group-hover:text-primary-600 transition-colors ${title === "Quản lý bản thu đã được kiểm duyệt" ? "whitespace-nowrap" : ""}`}>
         {title}
       </h3>
-      <p className="text-neutral-600 leading-relaxed">{description}</p>
+      <p className="text-neutral-600 leading-relaxed flex-grow line-clamp-2 text-sm">{description}</p>
     </Link>
   );
 }
@@ -104,61 +104,61 @@ export default function HomePage() {
   // Features data
   const features = isExpert
     ? [
-        {
-          icon: Compass,
-          title: "Khám phá bản thu",
-          description:
-            "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
-          to: "/explore",
-        },
-        {
-          icon: ShieldCheck,
-          title: "Kiểm duyệt bản thu",
-          description:
-            "Xem xét và phê duyệt các bản thu âm nhạc truyền thống được đóng góp bởi cộng đồng",
-          to: "/moderation",
-        },
-        {
-          icon: FileCheck,
-          title: "Quản lý bản thu đã được kiểm duyệt",
-          description:
-            "Quản lý và theo dõi các bản thu đã được phê duyệt trong hệ thống",
-          to: "/approved-recordings",
-        },
-      ]
+      {
+        icon: ShieldCheck,
+        title: "Kiểm duyệt bản thu",
+        description:
+          "Xem xét và phê duyệt các bản thu âm nhạc truyền thống được đóng góp bởi cộng đồng",
+        to: "/moderation",
+      },
+      {
+        icon: Search,
+        title: "Tìm kiếm bản thu",
+        description:
+          "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
+        to: "/search",
+      },
+      {
+        icon: FileCheck,
+        title: "Quản lý bản thu đã được kiểm duyệt",
+        description:
+          "Quản lý và theo dõi các bản thu đã được phê duyệt trong hệ thống",
+        to: "/approved-recordings",
+      },
+    ]
     : [
-        {
-          icon: Compass,
-          title: "Khám phá bản thu",
-          description:
-            "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
-          to: "/explore",
-        },
-        {
-          icon: Search,
-          title: "Tìm kiếm bản thu",
-          description:
-            "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
-          to: "/search",
-        },
-        {
-          icon: Upload,
-          title: "Đóng góp bản thu",
-          description:
-            "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
-          to: "/upload",
-        },
-      ];
+      {
+        icon: Compass,
+        title: "Khám phá bản thu",
+        description:
+          "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
+        to: "/explore",
+      },
+      {
+        icon: Search,
+        title: "Tìm kiếm bản thu",
+        description:
+          "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
+        to: "/search",
+      },
+      {
+        icon: Upload,
+        title: "Đóng góp bản thu",
+        description:
+          "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
+        to: "/upload",
+      },
+    ];
 
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
+        {/* Hero Section with Features */}
         <div
           className="rounded-2xl shadow-lg p-8 md:p-12 mb-8"
           style={{ backgroundColor: "#FFFCF5" }}
         >
-          <div className="text-center">
+          <div className="text-center mb-8">
             {/* Logo */}
             <div className="flex items-center justify-center gap-3 mb-6">
               <img
@@ -179,26 +179,15 @@ export default function HomePage() {
             </p>
 
             {/* Description */}
-            <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-neutral-800 leading-relaxed max-w-2xl mx-auto mb-8">
               Gìn giữ và lan tỏa di sản âm nhạc của 54 dân tộc Việt Nam
               <br />
               qua nền tảng chia sẻ cộng đồng với công nghệ tìm kiếm thông minh
             </p>
-
-
           </div>
-        </div>
 
-        {/* Features Section */}
-        <div
-          className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
-          style={{ backgroundColor: "#FFFCF5" }}
-        >
-          <h2 className="text-2xl font-semibold mb-6 text-neutral-800 text-center">
-            Tính năng chính
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {features.map((feature, index) => (
               <FeatureCard
                 key={index}
@@ -209,6 +198,7 @@ export default function HomePage() {
               />
             ))}
           </div>
+
         </div>
 
         {/* Popular Recordings Section */}

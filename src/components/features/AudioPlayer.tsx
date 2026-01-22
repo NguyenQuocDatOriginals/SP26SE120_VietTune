@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Users, MapPin, Clock, Repeat } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Users, MapPin, Clock, Repeat, Music } from "lucide-react";
 import { isYouTubeUrl, getYouTubeId } from "../../utils/youtube";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
@@ -438,15 +438,33 @@ export default function AudioPlayer({
               recording.ethnicity.name.trim() !== "" && (
                 <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-secondary-100 text-secondary-700 rounded-full">
                   <Users className="h-3 w-3" />
-                  {recording.ethnicity.name}
+                  {recording.ethnicity.nameVietnamese || recording.ethnicity.name}
                 </span>
               )}
-            {recording?.region && recording.region !== "RED_RIVER_DELTA" && (
+            {recording?.region && (
               <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full">
                 <MapPin className="h-3 w-3" />
-                {String(recording.region)}
+                {recording.region}
               </span>
             )}
+            {recording?.recordingType && (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-primary-100 text-primary-700 rounded-full">
+                <Music className="h-3 w-3" />
+                {recording.recordingType}
+              </span>
+            )}
+            {recording?.tags && recording.tags.length > 0 && recording.tags.map((tag, idx) => (
+              tag && tag.trim() !== "" && (
+                <span key={idx} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full">
+                  {tag}
+                </span>
+              )
+            ))}
+            {recording?.instruments && recording.instruments.length > 0 && recording.instruments.map((instrument) => (
+              <span key={instrument.id} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-600 rounded-full">
+                {instrument.nameVietnamese || instrument.name}
+              </span>
+            ))}
             {recording?.uploadedDate && (
               <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-neutral-100 text-neutral-500 rounded-full ml-auto">
                 <Clock className="h-3 w-3" />
