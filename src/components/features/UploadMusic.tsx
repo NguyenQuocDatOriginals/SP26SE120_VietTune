@@ -3,7 +3,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { isYouTubeUrl, getYouTubeId } from "@/utils/youtube";
+import { migrateVideoDataToVideoData } from "@/utils/helpers";
 
 // ===== CONSTANTS =====
 const SUPPORTED_AUDIO_FORMATS = [
@@ -1951,6 +1953,7 @@ function CollapsibleSection({
 
 // ===== MAIN COMPONENT =====
 export default function UploadMusic() {
+  const navigate = useNavigate();
   const [mediaType, setMediaType] = useState<"audio" | "video" | "youtube">("audio");
   const [file, setFile] = useState<File | null>(null);
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -1964,6 +1967,7 @@ export default function UploadMusic() {
   } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
@@ -2054,7 +2058,7 @@ export default function UploadMusic() {
 
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
     const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
-    
+
     // Kiểm tra extension như fallback nếu MIME type không rõ
     const fileName = selected.name.toLowerCase();
     const hasVideoExtension = /\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i.test(fileName);
@@ -2144,12 +2148,12 @@ export default function UploadMusic() {
         });
         setIsAnalyzing(false);
         cleanup();
-        
+
         // Không set error, chỉ log warning
         console.warn("Không thể đọc metadata từ file video, nhưng vẫn cho phép upload:", selected.name);
         return;
       }
-      
+
       // Với audio, vẫn yêu cầu có metadata
       setErrors((prev) => ({
         ...prev,
@@ -2164,13 +2168,13 @@ export default function UploadMusic() {
     const cleanup = () => {
       if (cleanedUp) return;
       cleanedUp = true;
-      
+
       // Clear timeout nếu có
       if (metadataTimeout) {
         clearTimeout(metadataTimeout);
         metadataTimeout = null;
       }
-      
+
       if (mediaElement) {
         // Remove event listeners với wrapped handlers
         if (wrappedOnLoaded) {
@@ -2212,17 +2216,17 @@ export default function UploadMusic() {
       mediaElement = video;
       video.preload = "metadata";
       video.src = url;
-      
+
       wrappedOnLoaded = () => {
         if (metadataTimeout) clearTimeout(metadataTimeout);
         onLoaded();
       };
-      
+
       wrappedOnError = () => {
         if (metadataTimeout) clearTimeout(metadataTimeout);
         onError();
       };
-      
+
       video.addEventListener("loadedmetadata", wrappedOnLoaded);
       video.addEventListener("error", wrappedOnError);
     } else {
@@ -2230,17 +2234,17 @@ export default function UploadMusic() {
       mediaElement = audio;
       audio.preload = "metadata";
       audio.src = url;
-      
+
       wrappedOnLoaded = () => {
         if (metadataTimeout) clearTimeout(metadataTimeout);
         onLoaded();
       };
-      
+
       wrappedOnError = () => {
         if (metadataTimeout) clearTimeout(metadataTimeout);
         onError();
       };
-      
+
       audio.addEventListener("loadedmetadata", wrappedOnLoaded);
       audio.addEventListener("error", wrappedOnError);
     }
@@ -2323,6 +2327,12 @@ export default function UploadMusic() {
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmDialog(false);
     setIsSubmitting(true);
     setSubmitStatus("idle");
     setSubmitMessage("");
@@ -2369,7 +2379,7 @@ export default function UploadMusic() {
         archiveOrg,
         catalogId,
       },
-      uploadedAt: new Date().toISOString(),
+      uploadedDate: new Date().toISOString(),
     };
 
     // Xử lý YouTube URL - không cần đọc file
@@ -2410,13 +2420,43 @@ export default function UploadMusic() {
           recordings = [];
         }
 
+        // Migrate video data từ audioData sang videoData trước khi xử lý
+        recordings = migrateVideoDataToVideoData(recordings);
+
+        // Clean up old media data to free up storage space
+        // Remove audioData/videoData from old approved recordings older than 7 days (keep only metadata)
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        recordings = recordings.map((rec) => {
+          if (
+            rec.moderation &&
+            typeof rec.moderation === "object" &&
+            "status" in rec.moderation &&
+            (rec.moderation as { status?: string }).status === ModerationStatus.APPROVED
+          ) {
+            const uploadedDate = rec.uploadedDate;
+            const uploadedTime =
+              typeof uploadedDate === "string" || typeof uploadedDate === "number"
+                ? new Date(uploadedDate).getTime()
+                : 0;
+            // Remove media data from approved recordings older than 7 days to save space
+            if (uploadedTime < sevenDaysAgo) {
+              // Remove audioData and videoData properties
+              const cleaned = { ...rec };
+              delete cleaned.audioData;
+              delete cleaned.videoData;
+              return cleaned;
+            }
+          }
+          return rec;
+        });
+
         recordings.unshift(newRecording);
 
         // Không giới hạn số lượng bản ghi - lưu tất cả
         localStorage.setItem("localRecordings", JSON.stringify(recordings));
 
         setSubmitStatus("success");
-        setSubmitMessage(`Đã đóng góp bản thu thành công!`);
+        setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
         setIsSubmitting(false);
         return;
       } catch (error) {
@@ -2440,7 +2480,7 @@ export default function UploadMusic() {
     const mime = file.type || inferMimeFromName(file.name);
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
     const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
-    
+
     // Kiểm tra extension file như fallback nếu MIME type không rõ
     const fileName = file.name.toLowerCase();
     const hasVideoExtension = /\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i.test(fileName);
@@ -2467,7 +2507,7 @@ export default function UploadMusic() {
     console.log(`Đang xử lý file: ${file.name}, kích thước: ${fileSizeInMB.toFixed(2)}MB`);
 
     const reader = new FileReader();
-    
+
     // Set timeout để tránh treo quá lâu (tăng lên 10 phút cho file lớn)
     const timeoutId = setTimeout(() => {
       if (reader.readyState === FileReader.LOADING) {
@@ -2481,17 +2521,17 @@ export default function UploadMusic() {
 
     reader.onload = function () {
       clearTimeout(timeoutId);
-      
+
       try {
         // Nếu onload được gọi, FileReader đã đọc file thành công
         // reader.result sẽ LUÔN có giá trị (string data URL) khi onload được gọi
         // Theo spec của FileReader API, khi onload được trigger, result sẽ không bao giờ null
         const result = reader.result;
-        
+
         // Chuyển đổi sang string (luôn là string với readAsDataURL)
         // Nếu result vẫn null/undefined (rất hiếm), sử dụng empty string và để processFileData xử lý
         const dataUrl = result ? String(result) : "";
-        
+
         // Log để debug
         console.log("File read successfully:", {
           dataUrlLength: dataUrl.length,
@@ -2499,7 +2539,7 @@ export default function UploadMusic() {
           fileSize: file.size,
           fileName: file.name
         });
-        
+
         // Xử lý file ngay lập tức - không kiểm tra nữa
         // Nếu onload được gọi, file đã được đọc thành công
         processFileData(dataUrl);
@@ -2513,22 +2553,23 @@ export default function UploadMusic() {
         setSubmitMessage(`Lỗi khi xử lý file: ${error instanceof Error ? error.message : 'Không xác định'}. Vui lòng thử lại.`);
       }
     };
-    
+
     // Hàm xử lý dữ liệu file đã đọc
     const processFileData = (dataUrl: string) => {
       // Log để debug
       console.log("Processing file data, length:", dataUrl.length, "starts with data:", dataUrl.startsWith('data:'));
-      
+
       // Nếu dataUrl rỗng (không nên xảy ra), vẫn tiếp tục nhưng log warning
       if (!dataUrl || dataUrl.trim().length === 0) {
         console.warn("Warning: Empty dataUrl, but continuing anyway. This should not happen.");
         // Không return, tiếp tục xử lý để tránh reject file hợp lệ
       }
 
-      const newRecording = {
+      // Xác định nơi lưu dữ liệu dựa trên mediaType
+      const isVideoFile = mediaType === "video";
+      const recordingData: Record<string, unknown> = {
         ...formData,
         id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        audioData: dataUrl,
         moderation: {
           status: ModerationStatus.PENDING_REVIEW,
           claimedBy: null,
@@ -2542,6 +2583,17 @@ export default function UploadMusic() {
         },
       };
 
+      // Lưu vào videoData cho video, audioData cho audio
+      if (isVideoFile) {
+        recordingData.videoData = dataUrl;
+        recordingData.audioData = null; // Không lưu video vào audioData
+      } else {
+        recordingData.audioData = dataUrl;
+        recordingData.videoData = null; // Không lưu audio vào videoData
+      }
+
+      const newRecording = recordingData;
+
       try {
         // Lấy danh sách recordings hiện tại
         let recordings = [];
@@ -2552,6 +2604,35 @@ export default function UploadMusic() {
           console.warn("Không thể đọc dữ liệu cũ, sẽ tạo mới:", parseError);
           recordings = [];
         }
+
+        // Migrate video data từ audioData sang videoData trước khi xử lý
+        recordings = migrateVideoDataToVideoData(recordings);
+
+        // Clean up old media data to free up storage space
+        // Remove audioData/videoData from old approved recordings older than 7 days (keep only metadata)
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        recordings = recordings.map((rec) => {
+          if (
+            rec.moderation &&
+            typeof rec.moderation === "object" &&
+            "status" in rec.moderation &&
+            (rec.moderation as { status?: string }).status === ModerationStatus.APPROVED
+          ) {
+            const uploadedDate = rec.uploadedDate;
+            const uploadedTime =
+              typeof uploadedDate === "string" || typeof uploadedDate === "number"
+                ? new Date(uploadedDate).getTime()
+                : 0;
+            // Remove media data from approved recordings older than 7 days to save space
+            if (uploadedTime < sevenDaysAgo) {
+              const cleaned = { ...rec };
+              delete cleaned.audioData;
+              delete cleaned.videoData;
+              return cleaned;
+            }
+          }
+          return rec;
+        });
 
         // Thêm recording mới vào đầu danh sách
         recordings.unshift(newRecording);
@@ -2564,7 +2645,7 @@ export default function UploadMusic() {
         localStorage.setItem("localRecordings", dataToSave);
 
         setSubmitStatus("success");
-        setSubmitMessage(`Đã đóng góp bản thu thành công: ${title}`);
+        setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
 
         // success popup removed; use submitStatus/submitMessage for confirmations
         setIsSubmitting(false);
@@ -2599,7 +2680,7 @@ export default function UploadMusic() {
       clearTimeout(timeoutId);
       setIsSubmitting(false);
       setSubmitStatus("error");
-      
+
       // Thông báo lỗi chi tiết hơn
       const errorMessage = reader.error?.message || reader.error?.name || "Không xác định";
       const errorName = reader.error?.name || "UnknownError";
@@ -2611,7 +2692,7 @@ export default function UploadMusic() {
         fileType: file.type,
         mediaType
       });
-      
+
       if (errorName === "NotReadableError" || errorMessage.includes("NotReadableError") || errorMessage.includes("not readable")) {
         setSubmitMessage("File không thể đọc được. Vui lòng đảm bảo file không bị hỏng và thử lại. Nếu vẫn lỗi, hãy thử file khác hoặc kiểm tra định dạng file.");
       } else if (errorName === "AbortError" || errorMessage.includes("AbortError")) {
@@ -2643,7 +2724,7 @@ export default function UploadMusic() {
         hasVideoExtension,
         hasAudioExtension
       });
-      
+
       reader.readAsDataURL(file);
     } catch (error) {
       clearTimeout(timeoutId);
@@ -3535,6 +3616,50 @@ export default function UploadMusic() {
         </div>
       </form>
 
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div
+            className="rounded-2xl shadow-xl border border-neutral-300 max-w-lg w-full overflow-hidden flex flex-col"
+            style={{ backgroundColor: '#FFF2D6' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+              <h2 className="text-2xl font-bold text-white">Xác nhận đóng góp</h2>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto p-6">
+              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="flex flex-col items-center gap-4 mb-2">
+                  <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
+                    <AlertCircle className="h-8 w-8 text-primary-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                    Hãy đảm bảo chính xác thông tin đã nhập, bạn nhé!
+                  </h3>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+              >
+                Xem lại
+              </button>
+              <button
+                onClick={handleConfirmSubmit}
+                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+              >
+                Gửi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Pop-up (inline) */}
       {submitStatus === "success" && (
@@ -3575,10 +3700,22 @@ export default function UploadMusic() {
                   resetForm();
                   setSubmitStatus("idle");
                   setSubmitMessage("");
+                  navigate("/");
                 }}
                 className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
               >
-                Đóng
+                Về trang chủ
+              </button>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setSubmitStatus("idle");
+                  setSubmitMessage("");
+                  navigate("/profile");
+                }}
+                className="px-6 py-2.5 bg-secondary-100 text-secondary-700 rounded-full font-medium hover:bg-secondary-200 transition-colors shadow-sm hover:shadow-md"
+              >
+                Đi đến trang hồ sơ
               </button>
             </div>
           </div>

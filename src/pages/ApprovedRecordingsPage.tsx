@@ -2,11 +2,18 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
+import VideoPlayer from "@/components/features/VideoPlayer";
+import { isYouTubeUrl } from "@/utils/youtube";
+import { Trash2 } from "lucide-react";
+import { migrateVideoDataToVideoData } from "@/utils/helpers";
+
+// Type for migration function
+type LocalRecordingType = LocalRecording;
 
 // Hàm dịch trạng thái sang tiếng Việt
 const getStatusLabel = (status?: ModerationStatus | string): string => {
     if (!status) return "Không xác định";
-    
+
     switch (status) {
         case ModerationStatus.PENDING_REVIEW:
         case "PENDING_REVIEW":
@@ -25,19 +32,42 @@ const getStatusLabel = (status?: ModerationStatus | string): string => {
     }
 };
 
-interface LocalRecording {
+import { Ethnicity, Region, RecordingType, Instrument, Performer, RecordingMetadata, VerificationStatus, User, RecordingQuality, UserRole } from "@/types";
+
+export interface LocalRecording {
     id?: string;
-    title?: string; // Fallback for old format
+    title?: string;
+    titleVietnamese?: string;
+    description?: string;
+    ethnicity?: Ethnicity;
+    region?: Region;
+    recordingType?: RecordingType;
+    duration?: number;
+    audioUrl?: string;
+    waveformUrl?: string;
+    coverImage?: string;
+    instruments?: Instrument[];
+    performers?: Performer[];
+    recordedDate?: string;
+    uploadedDate?: string;
+    uploader?: User | { id?: string; username?: string; email?: string; fullName?: string; role?: string; createdAt?: string; updatedAt?: string };
+    tags?: string[];
+    metadata?: Partial<RecordingMetadata>;
+    verificationStatus?: VerificationStatus;
+    verifiedBy?: User;
+    viewCount?: number;
+    likeCount?: number;
+    downloadCount?: number;
+    // legacy/local-only fields
     basicInfo?: {
         title?: string;
         artist?: string;
         genre?: string;
     };
     audioData?: string | null;
+    videoData?: string | null;
     youtubeUrl?: string | null;
     mediaType?: "audio" | "video" | "youtube";
-    uploadedAt?: string;
-    uploader?: { id?: string; username?: string };
     moderation?: {
         status?: ModerationStatus | string;
         claimedBy?: string | null;
@@ -57,9 +87,15 @@ export default function ApprovedRecordingsPage() {
         try {
             const raw = localStorage.getItem("localRecordings");
             const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
+            // Migrate video data từ audioData sang videoData
+            const migrated = migrateVideoDataToVideoData(all as LocalRecordingType[]);
             // Show only approved items
-            const approved = all.filter(
-                (r) => r.moderation?.status === ModerationStatus.APPROVED,
+            const approved = migrated.filter(
+                (r) =>
+                    r.moderation &&
+                    typeof r.moderation === "object" &&
+                    "status" in r.moderation &&
+                    (r.moderation as { status?: string }).status === ModerationStatus.APPROVED
             );
             setItems(approved);
         } catch (err) {
@@ -81,12 +117,20 @@ export default function ApprovedRecordingsPage() {
         };
     }, [load]);
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<Record<string, boolean>>({});
+
     const handleDelete = (id: string) => {
+        if (!id) return;
         try {
             const raw = localStorage.getItem("localRecordings");
             const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
             const filtered = all.filter((r) => r.id !== id);
             localStorage.setItem("localRecordings", JSON.stringify(filtered));
+            setShowDeleteConfirm(prev => {
+                const newState = { ...prev };
+                delete newState[id];
+                return newState;
+            });
             load();
         } catch (err) {
             console.error(err);
@@ -119,55 +163,232 @@ export default function ApprovedRecordingsPage() {
                 ) : (
                     <div className="space-y-6">
                         {items.map((it) => {
-                            // Xác định src cho AudioPlayer
-                            let audioSrc: string | undefined;
-                            if (it.mediaType === "youtube" && it.youtubeUrl) {
-                                audioSrc = it.youtubeUrl;
-                            } else if (it.audioData) {
-                                audioSrc = it.audioData;
+                            // VideoPlayer CHỈ nhận videoData hoặc YouTubeURL, AudioPlayer CHỈ nhận audioData
+                            let mediaSrc: string | undefined;
+                            let isVideo = false;
+
+                            // Kiểm tra YouTube URL trước (cho VideoPlayer)
+                            if (it.mediaType === "youtube" && it.youtubeUrl && it.youtubeUrl.trim()) {
+                                mediaSrc = it.youtubeUrl.trim();
+                                isVideo = true;
+                            } else if (it.youtubeUrl && typeof it.youtubeUrl === 'string' && it.youtubeUrl.trim() && isYouTubeUrl(it.youtubeUrl)) {
+                                mediaSrc = it.youtubeUrl.trim();
+                                isVideo = true;
+                            }
+                            // Nếu là video, CHỈ dùng videoData (không fallback về audioData)
+                            else if (it.mediaType === "video") {
+                                if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
+                                    mediaSrc = it.videoData;
+                                    isVideo = true;
+                                }
+                                // Không fallback về audioData - VideoPlayer chỉ phát videoData
+                            }
+                            // Nếu là audio, CHỈ dùng audioData
+                            else if (it.mediaType === "audio") {
+                                if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
+                                    mediaSrc = it.audioData;
+                                    isVideo = false;
+                                }
+                            }
+                            // Nếu mediaType chưa được set, thử phát hiện từ dữ liệu có sẵn
+                            else {
+                                // Ưu tiên videoData nếu có
+                                if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
+                                    mediaSrc = it.videoData;
+                                    isVideo = true;
+                                }
+                                // Sau đó thử audioData
+                                else if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
+                                    mediaSrc = it.audioData;
+                                    // Kiểm tra xem có phải video không bằng cách xem data URL
+                                    if (mediaSrc.startsWith('data:video/')) {
+                                        isVideo = true;
+                                    } else {
+                                        isVideo = false;
+                                    }
+                                }
                             }
 
                             return (
                                 <div key={it.id} className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-                                    <div className="mb-4">
-                                        <div className="text-neutral-800 font-semibold text-lg mb-1">
-                                            {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
-                                        </div>
-                                        <div className="text-sm text-neutral-600 mb-1">
-                                            Nghệ sĩ: {it.basicInfo?.artist || 'Không rõ'}
-                                        </div>
-                                        <div className="text-sm text-neutral-600 mb-1">
-                                            Người đóng góp: {it.uploader?.username || 'Khách'}
-                                        </div>
-                                        <div className="text-sm text-neutral-500 mb-1">
-                                            Ngày tải: {it.uploadedAt ? new Date(it.uploadedAt).toLocaleString() : '-'}
-                                        </div>
-                                        {it.moderation?.reviewedAt && (
-                                            <div className="text-sm text-neutral-500 mb-1">
-                                                Ngày kiểm duyệt: {new Date(it.moderation.reviewedAt).toLocaleString()}
+                                    <div className="mb-4 flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="text-neutral-800 font-semibold text-lg mb-1">
+                                                {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
                                             </div>
-                                        )}
-                                        {it.moderation?.reviewerName && (
-                                            <div className="text-sm text-neutral-500 mb-1">
-                                                Người kiểm duyệt: {it.moderation.reviewerName}
+                                            <div className="text-sm text-neutral-600 mb-1">
+                                                Nghệ sĩ: {it.basicInfo?.artist || 'Không rõ'}
                                             </div>
-                                        )}
-                                        <div className="text-sm mt-2">
-                                            Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+                                            <div className="text-sm text-neutral-600 mb-1">
+                                                Người đóng góp: {it.uploader?.username || 'Khách'}
+                                            </div>
+                                            <div className="text-sm text-neutral-500 mb-1">
+                                                Ngày tải: {it.uploadedDate ? new Date(it.uploadedDate).toLocaleString() : '-'}
+                                            </div>
+                                            {it.moderation?.reviewedAt && (
+                                                <div className="text-sm text-neutral-500 mb-1">
+                                                    Ngày kiểm duyệt: {new Date(it.moderation.reviewedAt).toLocaleString()}
+                                                </div>
+                                            )}
+                                            {it.moderation?.reviewerName && (
+                                                <div className="text-sm text-neutral-500 mb-1">
+                                                    Người kiểm duyệt: {it.moderation.reviewerName}
+                                                </div>
+                                            )}
+                                            <div className="text-sm mt-2">
+                                                Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Delete Button */}
+                                        <div className="ml-4">
+                                            {showDeleteConfirm[it.id || ''] ? (
+                                                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
+                                                    <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
+                                                    <button
+                                                        onClick={() => handleDelete(it.id || '')}
+                                                        className="text-xs text-red-700 hover:text-red-900 font-semibold"
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowDeleteConfirm(prev => ({ ...prev, [it.id || '']: false }))}
+                                                        className="text-xs text-neutral-600 hover:text-neutral-800"
+                                                    >
+                                                        Hủy
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setShowDeleteConfirm(prev => ({ ...prev, [it.id || '']: true }))}
+                                                    className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
+                                                    title="Xóa bản thu khỏi hệ thống"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* AudioPlayer */}
-                                    {audioSrc && (
+                                    {/* Media Player */}
+                                    {mediaSrc && (
                                         <div className="mt-4">
-                                            <AudioPlayer
-                                                src={audioSrc}
-                                                title={it.basicInfo?.title || it.title}
-                                                artist={it.basicInfo?.artist}
-                                                recording={it}
-                                                onDelete={handleDelete}
-                                                showContainer={true}
-                                            />
+                                            {isVideo ? (
+                                                <VideoPlayer
+                                                    src={mediaSrc}
+                                                    title={it.basicInfo?.title || it.title}
+                                                    artist={it.basicInfo?.artist}
+                                                    recording={{
+                                                        id: it.id ?? "",
+                                                        title: it.title ?? it.basicInfo?.title ?? "Không có tiêu đề",
+                                                        titleVietnamese: it.titleVietnamese ?? "",
+                                                        description: it.description ?? "",
+                                                        ethnicity: it.ethnicity ?? { id: "", name: "", nameVietnamese: "", region: Region.RED_RIVER_DELTA, recordingCount: 0 },
+                                                        region: it.region ?? Region.RED_RIVER_DELTA,
+                                                        recordingType: it.recordingType ?? RecordingType.OTHER,
+                                                        duration: it.duration ?? 0,
+                                                        audioUrl: it.audioUrl ?? it.audioData ?? "",
+                                                        waveformUrl: it.waveformUrl ?? "",
+                                                        coverImage: it.coverImage ?? "",
+                                                        instruments: it.instruments ?? [],
+                                                        performers: it.performers ?? [],
+                                                        recordedDate: it.recordedDate ?? "",
+                                                        uploadedDate: it.uploadedDate ?? "",
+                                                        uploader: ((): User => {
+                                                            if (typeof it.uploader === "object" && it.uploader !== null) {
+                                                                const u = it.uploader as Partial<User>;
+                                                                return {
+                                                                    id: u.id ?? "",
+                                                                    username: u.username ?? "",
+                                                                    email: u.email ?? "",
+                                                                    fullName: u.fullName ?? u.username ?? "",
+                                                                    role: u.role ?? UserRole.USER,
+                                                                    createdAt: u.createdAt ?? "",
+                                                                    updatedAt: u.updatedAt ?? "",
+                                                                };
+                                                            }
+                                                            return {
+                                                                id: "",
+                                                                username: "",
+                                                                email: "",
+                                                                fullName: "",
+                                                                role: UserRole.USER,
+                                                                createdAt: "",
+                                                                updatedAt: "",
+                                                            };
+                                                        })(),
+                                                        tags: it.tags ?? [],
+                                                        metadata: {
+                                                            ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
+                                                            recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
+                                                        },
+                                                        verificationStatus: it.verificationStatus ?? VerificationStatus.PENDING,
+                                                        verifiedBy: it.verifiedBy ?? undefined,
+                                                        viewCount: it.viewCount ?? 0,
+                                                        likeCount: it.likeCount ?? 0,
+                                                        downloadCount: it.downloadCount ?? 0,
+                                                    }}
+                                                    showContainer={true}
+                                                />
+                                            ) : (
+                                                <AudioPlayer
+                                                    src={mediaSrc}
+                                                    title={it.basicInfo?.title || it.title}
+                                                    artist={it.basicInfo?.artist}
+                                                    recording={{
+                                                        id: it.id ?? "",
+                                                        title: it.title ?? it.basicInfo?.title ?? "Không có tiêu đề",
+                                                        titleVietnamese: it.titleVietnamese ?? "",
+                                                        description: it.description ?? "",
+                                                        ethnicity: it.ethnicity ?? { id: "", name: "", nameVietnamese: "", region: Region.RED_RIVER_DELTA, recordingCount: 0 },
+                                                        region: it.region ?? Region.RED_RIVER_DELTA,
+                                                        recordingType: it.recordingType ?? RecordingType.OTHER,
+                                                        duration: it.duration ?? 0,
+                                                        audioUrl: it.audioUrl ?? it.audioData ?? "",
+                                                        waveformUrl: it.waveformUrl ?? "",
+                                                        coverImage: it.coverImage ?? "",
+                                                        instruments: it.instruments ?? [],
+                                                        performers: it.performers ?? [],
+                                                        recordedDate: it.recordedDate ?? "",
+                                                        uploadedDate: it.uploadedDate ?? "",
+                                                        uploader: ((): User => {
+                                                            if (typeof it.uploader === "object" && it.uploader !== null) {
+                                                                const u = it.uploader as Partial<User>;
+                                                                return {
+                                                                    id: u.id ?? "",
+                                                                    username: u.username ?? "",
+                                                                    email: u.email ?? "",
+                                                                    fullName: u.fullName ?? u.username ?? "",
+                                                                    role: u.role ?? UserRole.USER,
+                                                                    createdAt: u.createdAt ?? "",
+                                                                    updatedAt: u.updatedAt ?? "",
+                                                                };
+                                                            }
+                                                            return {
+                                                                id: "",
+                                                                username: "",
+                                                                email: "",
+                                                                fullName: "",
+                                                                role: UserRole.USER,
+                                                                createdAt: "",
+                                                                updatedAt: "",
+                                                            };
+                                                        })(),
+                                                        tags: it.tags ?? [],
+                                                        metadata: {
+                                                            ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
+                                                            recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
+                                                        },
+                                                        verificationStatus: it.verificationStatus ?? VerificationStatus.PENDING,
+                                                        verifiedBy: it.verifiedBy ?? undefined,
+                                                        viewCount: it.viewCount ?? 0,
+                                                        likeCount: it.likeCount ?? 0,
+                                                        downloadCount: it.downloadCount ?? 0,
+                                                    }}
+                                                    onDelete={handleDelete}
+                                                    showContainer={true}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
