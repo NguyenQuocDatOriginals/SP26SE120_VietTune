@@ -4,7 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
-import { LoginForm } from "@/types";
+import BackButton from "@/components/common/BackButton";
+import { LoginForm, User } from "@/types";
 import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const fromLogout = typeof window !== "undefined" && sessionStorage.getItem("fromLogout") === "1";
 
   // Show overridden demo usernames if present in localStorage
   const [demoNames, setDemoNames] = useState<Record<string, string>>({});
@@ -20,7 +22,7 @@ export default function LoginPage() {
   const loadDemoNames = () => {
     try {
       const oRaw = localStorage.getItem("users_overrides");
-      const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, any>) : {};
+      const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
       setDemoNames({
         contributor: overrides["contrib_demo"]?.username || "contributor_demo",
         expert_a: overrides["expert_a"]?.username || "expertA",
@@ -59,6 +61,7 @@ export default function LoginPage() {
       const response = await authService.login(data);
       if (response.success && response.data) {
         setUser(response.data.user);
+        sessionStorage.removeItem("fromLogout");
         // toast.success("Đăng nhập thành công!");
         navigate("/");
       }
@@ -76,7 +79,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="h-screen flex items-center justify-center px-4"
+      className="h-screen flex items-center justify-center px-4 relative"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${backgroundImage})`,
         backgroundSize: "cover",
@@ -84,6 +87,7 @@ export default function LoginPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
+      {!fromLogout && <div className="absolute top-4 right-4"><BackButton /></div>}
       <div className="max-w-md w-full">
         <form
           className="bg-white p-6 rounded-2xl shadow-xl space-y-3"
@@ -95,6 +99,7 @@ export default function LoginPage() {
               alt="VietTune Logo"
               className="w-12 h-12 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
+                sessionStorage.removeItem("fromLogout");
                 if (!authService.isAuthenticated()) {
                   navigate("/");
                   return;
@@ -185,7 +190,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("contributor");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      // toast.success("Đăng nhập demo Contributor thành công");
+                      sessionStorage.removeItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -206,7 +211,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_a");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      // toast.success("Đăng nhập demo Expert A thành công");
+                      sessionStorage.removeItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -227,7 +232,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_b");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      // toast.success("Đăng nhập demo Expert B thành công");
+                      sessionStorage.removeItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -248,7 +253,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_c");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      // toast.success("Đăng nhập demo Expert C thành công");
+                      sessionStorage.removeItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {

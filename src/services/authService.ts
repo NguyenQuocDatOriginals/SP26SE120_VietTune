@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { User, LoginForm, RegisterForm, ApiResponse, UserRole } from "@/types";
 import toast from "react-hot-toast";
+import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 
 export const authService = {
   // Login
@@ -68,6 +69,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
+    sessionStorage.setItem("fromLogout", "1");
     window.location.href = "/login";
   },
 
@@ -128,16 +130,16 @@ export const authService = {
             try {
               const rawLR = localStorage.getItem("localRecordings");
               if (rawLR) {
-                const allLR = JSON.parse(rawLR) as any[];
+                const allLR = JSON.parse(rawLR) as LocalRecording[];
                 const updatedLR = allLR.map((r) => {
-                  if (r.uploader?.id === serverUser.id) {
+                  if (r.uploader && typeof r.uploader === "object" && "id" in r.uploader && r.uploader.id === serverUser.id) {
                     return {
                       ...r,
                       uploader: {
                         ...r.uploader,
                         username: serverUser.username,
-                        email: serverUser.email ?? r.uploader?.email,
-                        fullName: serverUser.fullName ?? r.uploader?.fullName,
+                        email: serverUser.email ?? (r.uploader && typeof r.uploader === "object" && "email" in r.uploader ? r.uploader.email : undefined),
+                        fullName: serverUser.fullName ?? (r.uploader && typeof r.uploader === "object" && "fullName" in r.uploader ? r.uploader.fullName : undefined),
                       },
                     };
                   }

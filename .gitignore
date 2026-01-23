@@ -35,6 +35,10 @@ lerna-debug.log*
 *.njsproj
 *.sw?
 
+# Cursor IDE
+.cursor/
+.agent/
+
 # Java/Spring Boot (backend)
 backend/target/
 backend/.mvn/

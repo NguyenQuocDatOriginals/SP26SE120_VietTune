@@ -1,10 +1,15 @@
+import BackButton from "@/components/common/BackButton";
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-neutral-800 mb-8">
-          Điều khoản và Điều kiện
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-neutral-800">
+            Điều khoản và Điều kiện
+          </h1>
+          <BackButton />
+        </div>
 
         <div className="prose max-w-none space-y-6">
           {/* Preamble */}

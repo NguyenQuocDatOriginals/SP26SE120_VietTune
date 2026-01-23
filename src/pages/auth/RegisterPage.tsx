@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import Input from "@/components/common/Input";
+import BackButton from "@/components/common/BackButton";
 import { RegisterForm } from "@/types";
 import toast from "react-hot-toast";
 import backgroundImage from "@/components/image/Đàn bầu.png";
@@ -13,6 +14,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const fromLogout = typeof window !== "undefined" && sessionStorage.getItem("fromLogout") === "1";
 
   const {
     register,
@@ -27,6 +29,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await authService.register(data);
+      sessionStorage.removeItem("fromLogout");
       toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
       navigate("/login");
     } catch (error: unknown) {
@@ -43,7 +46,7 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="h-screen flex items-center justify-center px-4"
+      className="h-screen flex items-center justify-center px-4 relative"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${backgroundImage})`,
         backgroundSize: "cover",
@@ -51,6 +54,7 @@ export default function RegisterPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
+      {!fromLogout && <div className="absolute top-4 right-4"><BackButton /></div>}
       <div className="max-w-md w-full">
         <form
           className="bg-white p-5 rounded-2xl shadow-xl space-y-2.5"
@@ -62,7 +66,7 @@ export default function RegisterPage() {
               alt="VietTune Logo"
               className="w-10 h-10 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                // If not authenticated (e.g., right after logout), go to home for guests.
+                sessionStorage.removeItem("fromLogout");
                 if (!authService.isAuthenticated()) {
                   navigate("/");
                   return;

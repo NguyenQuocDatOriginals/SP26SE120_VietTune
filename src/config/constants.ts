@@ -90,7 +90,7 @@ export const RECORDING_TYPE_NAMES = {
   EPIC: "Sử thi",
   LULLABY: "Hát ru",
   WORK_SONG: "Hát lao động",
-  OTHER: "Loại khác",
+  OTHER: "Khác",
 };
 
 export const INSTRUMENT_CATEGORY_NAMES = {

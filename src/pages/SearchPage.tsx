@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
+import BackButton from "@/components/common/BackButton";
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import AudioPlayer from "@/components/features/AudioPlayer";
@@ -12,6 +13,15 @@ import { migrateVideoDataToVideoData } from "@/utils/helpers";
 
 // Use LocalRecording type from ApprovedRecordingsPage for consistency
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+
+// Extended Recording type that may include original local data
+type RecordingWithLocalData = Recording & {
+  _originalLocalData?: LocalRecording & {
+    culturalContext?: {
+      region?: string;
+    };
+  };
+};
 
 // Helper function to get audio duration from data URL
 const getAudioDuration = (audioDataUrl: string): Promise<number> => {
@@ -235,10 +245,11 @@ export default function SearchPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-neutral-800">
             Tìm kiếm bản thu
           </h1>
+          <BackButton />
         </div>
 
         {/* Main Search Form */}
@@ -394,7 +405,8 @@ export default function SearchPage() {
                           viewCount: localRecordingData.viewCount ?? 0,
                           likeCount: localRecordingData.likeCount ?? 0,
                           downloadCount: localRecordingData.downloadCount ?? 0,
-                        };
+                          _originalLocalData: localRecordingData,
+                        } as RecordingWithLocalData;
 
                         return isVideo ? (
                           <VideoPlayer

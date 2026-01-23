@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Region, RecordingType, RecordingQuality, VerificationStatus } from "@/types";
+import { Region, RecordingType, RecordingQuality, VerificationStatus, Recording } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
@@ -8,6 +8,7 @@ import { isYouTubeUrl } from "@/utils/youtube";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search, AlertCircle } from "lucide-react";
+import BackButton from "@/components/common/BackButton";
 
 // ===== UTILITY FUNCTIONS =====
 // Check if click is on scrollbar
@@ -279,6 +280,15 @@ interface LocalRecordingMini {
     };
 }
 
+// Extended Recording type that may include original local data
+type RecordingWithLocalData = Recording & {
+  _originalLocalData?: LocalRecordingMini & {
+    culturalContext?: {
+      region?: string;
+    };
+  };
+};
+
 export default function ModerationPage() {
     const { user } = useAuthStore();
     const [items, setItems] = useState<LocalRecordingMini[]>([]);
@@ -410,7 +420,8 @@ export default function ModerationPage() {
 
     if (!user || user.role !== "EXPERT") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50">
+            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50 relative">
+                <div className="absolute top-4 right-4"><BackButton /></div>
                 <div className="text-center">
                     <h1 className="text-9xl font-bold text-primary-600">403</h1>
                     <h2 className="text-3xl font-semibold text-neutral-800 mb-4">Truy cập bị từ chối</h2>
@@ -739,10 +750,11 @@ export default function ModerationPage() {
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="flex items-center justify-between mb-8">
                     <h1 className="text-3xl font-bold text-neutral-800">
                         Kiểm duyệt bản thu
                     </h1>
+                    <BackButton />
                 </div>
 
                 {/* Filters */}
@@ -994,13 +1006,14 @@ export default function ModerationPage() {
                                                         createdAt: new Date().toISOString(),
                                                         updatedAt: new Date().toISOString(),
                                                     },
-                                                    tags: [item.basicInfo?.genre || ""].filter(Boolean),
+                                                    tags: (item as LocalRecordingMini & { tags?: string[] }).tags ?? [item.basicInfo?.genre ?? ""].filter(Boolean),
                                                     metadata: { recordingQuality: RecordingQuality.FIELD_RECORDING, lyrics: "" },
                                                     verificationStatus: item.moderation?.status === "APPROVED" ? VerificationStatus.VERIFIED : VerificationStatus.PENDING,
                                                     viewCount: 0,
                                                     likeCount: 0,
                                                     downloadCount: 0,
-                                                };
+                                                    _originalLocalData: item,
+                                                } as RecordingWithLocalData;
                                                 if (isVideo) {
                                                     return (
                                                         <VideoPlayer

@@ -3,6 +3,7 @@ import { BookOpen, LogIn } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import BackButton from "@/components/common/BackButton";
 
 export default function UploadPage() {
   const { user } = useAuthStore();
@@ -19,10 +20,11 @@ export default function UploadPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-neutral-800">
             Đóng góp bản thu
           </h1>
+          <BackButton />
         </div>
 
         {/* Notice for non-Contributor users (not dimmed, always visible) */}

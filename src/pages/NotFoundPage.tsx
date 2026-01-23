@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import BackButton from "@/components/common/BackButton";
 
 export default function NotFoundPage() {
   return (
@@ -11,9 +12,12 @@ export default function NotFoundPage() {
         <p className="text-neutral-600 mb-8">
           Trang bạn tìm kiếm không tồn tại hoặc đã bị chuyển đi.
         </p>
-        <Link to="/" className="btn-liquid-glass-primary inline-block">
-          Về trang chủ
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <BackButton />
+          <Link to="/" className="btn-liquid-glass-primary inline-block">
+            Về trang chủ
+          </Link>
+        </div>
       </div>
     </div>
   );

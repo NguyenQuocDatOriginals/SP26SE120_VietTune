@@ -6,6 +6,7 @@ import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { Trash2 } from "lucide-react";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import BackButton from "@/components/common/BackButton";
 
 // Type for migration function
 type LocalRecordingType = LocalRecording;
@@ -35,7 +36,7 @@ const getStatusLabel = (status?: ModerationStatus | string): string => {
     }
 };
 
-import { Ethnicity, Region, RecordingType, Instrument, Performer, RecordingMetadata, VerificationStatus, User, RecordingQuality, UserRole } from "@/types";
+import { Ethnicity, Region, RecordingType, Instrument, Performer, RecordingMetadata, VerificationStatus, User, RecordingQuality, UserRole, Recording } from "@/types";
 
 export interface LocalRecording {
     id?: string;
@@ -81,6 +82,15 @@ export interface LocalRecording {
         reviewedAt?: string | null;
     };
 }
+
+// Extended Recording type that may include original local data
+type RecordingWithLocalData = Recording & {
+  _originalLocalData?: LocalRecording & {
+    culturalContext?: {
+      region?: string;
+    };
+  };
+};
 
 export default function ApprovedRecordingsPage() {
     const { user } = useAuthStore();
@@ -142,7 +152,8 @@ export default function ApprovedRecordingsPage() {
 
     if (!user || user.role !== "EXPERT") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50">
+            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50 relative">
+                <div className="absolute top-4 right-4"><BackButton /></div>
                 <div className="text-center">
                     <h1 className="text-9xl font-bold text-primary-600">403</h1>
                     <h2 className="text-3xl font-semibold text-neutral-800 mb-4">Truy cập bị từ chối</h2>
@@ -215,7 +226,7 @@ export default function ApprovedRecordingsPage() {
                             </div>
                             {isMyReview && (
                                 <span className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
-                                    Đã duyệt bởi tôi
+                                    Đã được tôi kiểm duyệt
                                 </span>
                             )}
                         </div>
@@ -320,7 +331,7 @@ export default function ApprovedRecordingsPage() {
                                             updatedAt: "",
                                         };
                                     })(),
-                                    tags: it.tags ?? [],
+                                    tags: it.tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
                                     metadata: {
                                         ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
                                         recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
@@ -330,7 +341,8 @@ export default function ApprovedRecordingsPage() {
                                     viewCount: it.viewCount ?? 0,
                                     likeCount: it.likeCount ?? 0,
                                     downloadCount: it.downloadCount ?? 0,
-                                }}
+                                    _originalLocalData: it,
+                                } as RecordingWithLocalData}
                                 showContainer={true}
                             />
                         ) : (
@@ -377,7 +389,7 @@ export default function ApprovedRecordingsPage() {
                                             updatedAt: "",
                                         };
                                     })(),
-                                    tags: it.tags ?? [],
+                                    tags: it.tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
                                     metadata: {
                                         ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
                                         recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
@@ -387,8 +399,8 @@ export default function ApprovedRecordingsPage() {
                                     viewCount: it.viewCount ?? 0,
                                     likeCount: it.likeCount ?? 0,
                                     downloadCount: it.downloadCount ?? 0,
-                                }}
-                                onDelete={handleDelete}
+                                    _originalLocalData: it,
+                                } as RecordingWithLocalData}
                                 showContainer={true}
                             />
                         )}
@@ -401,7 +413,10 @@ export default function ApprovedRecordingsPage() {
     return (
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <h1 className="text-3xl font-bold text-neutral-800 mb-8">Quản lý bản thu đã được kiểm duyệt</h1>
+                <div className="flex items-center justify-between mb-8">
+                    <h1 className="text-3xl font-bold text-neutral-800">Quản lý bản thu đã được kiểm duyệt</h1>
+                    <BackButton />
+                </div>
 
                 {items.length === 0 ? (
                     <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
@@ -410,12 +425,12 @@ export default function ApprovedRecordingsPage() {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        {/* Bản thu do tôi duyệt */}
+                        {/* Bản thu do tôi kiểm duyệt */}
                         {myApproved.length > 0 && (
                             <div>
                                 <h2 className="text-2xl font-semibold text-neutral-800 mb-4 flex items-center gap-2">
                                     <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
-                                        Bản thu do tôi duyệt
+                                        Bản thu do tôi kiểm duyệt
                                     </span>
                                     <span className="text-sm font-normal text-neutral-500">({myApproved.length})</span>
                                 </h2>
@@ -425,12 +440,12 @@ export default function ApprovedRecordingsPage() {
                             </div>
                         )}
 
-                        {/* Bản thu do expert khác duyệt */}
+                        {/* Bản thu do chuyên gia khác kiểm duyệt */}
                         {othersApproved.length > 0 && (
                             <div>
                                 <h2 className="text-2xl font-semibold text-neutral-800 mb-4 flex items-center gap-2">
                                     <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-full text-sm font-medium">
-                                        Bản thu do expert khác duyệt
+                                        Bản thu do chuyên gia khác kiểm duyệt
                                     </span>
                                     <span className="text-sm font-normal text-neutral-500">({othersApproved.length})</span>
                                 </h2>
