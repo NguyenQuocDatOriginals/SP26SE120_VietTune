@@ -13,14 +13,14 @@ export default function Card({
   variant = "default",
 }: CardProps) {
   const variants = {
-    default: "shadow-md",
-    bordered: "border border-neutral-200 shadow-md",
-    elevated: "shadow-lg",
+    default: "shadow-lg backdrop-blur-sm",
+    bordered: "border border-neutral-200/80 shadow-lg backdrop-blur-sm",
+    elevated: "shadow-xl backdrop-blur-sm",
   };
 
   return (
     <div
-      className={clsx("rounded-2xl p-6", variants[variant], className)}
+      className={clsx("rounded-2xl p-6 transition-all duration-300 hover:shadow-xl", variants[variant], className)}
       style={{ backgroundColor: '#FFFCF5' }}
     >
       {children}

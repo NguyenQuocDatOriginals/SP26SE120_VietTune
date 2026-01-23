@@ -281,16 +281,17 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         style={{ backgroundColor: '#FFFCF5' }}
       >
-        <span className={value ? "text-neutral-900" : "text-neutral-500"}>
+        <span className={value ? "text-neutral-900 font-medium" : "text-neutral-500"}>
           {value || placeholder}
         </span>
         <ChevronDown
           className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
             }`}
+          strokeWidth={2.5}
         />
       </button>
 
@@ -299,7 +300,7 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: '#FFFCF5',
               position: "absolute",
@@ -318,7 +319,7 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent text-sm shadow-sm hover:shadow-md transition-all duration-200"
                     style={{ backgroundColor: '#FFFCF5' }}
                     autoFocus
                   />
@@ -346,9 +347,9 @@ function SearchableDropdown({
                       setIsOpen(false);
                       setSearch("");
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${value === option
-                      ? "bg-primary-600 text-white font-medium"
-                      : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                    className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === option
+                      ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
+                      : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
                       }`}
                   >
                     {option}
@@ -454,7 +455,7 @@ function MultiSelectTags({
           {values.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-primary-600 to-primary-700 text-white text-xs rounded-full font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
             >
               {tag}
               {!disabled && (
@@ -501,7 +502,7 @@ function MultiSelectTags({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: '#FFFCF5',
               position: "absolute",
@@ -528,9 +529,9 @@ function MultiSelectTags({
                     key={option}
                     type="button"
                     onClick={() => addTag(option)}
-                    className="w-full px-5 py-3 text-left text-sm text-neutral-900 hover:bg-primary-100 hover:text-primary-700 transition-colors flex items-center gap-2"
+                    className="w-full px-5 py-3 text-left text-sm text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 flex items-center gap-2 cursor-pointer"
                   >
-                    <Plus className="h-4 w-4 text-primary-600" />
+                    <Plus className="h-4 w-4 text-primary-600" strokeWidth={2.5} />
                     {option}
                   </button>
                 ))
@@ -574,12 +575,12 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3 mb-6">
-      <div className="p-2 bg-primary-600/20 rounded-lg">
-        <Icon className="h-5 w-5 text-primary-600" />
+      <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+        <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
       </div>
       <div>
-        <h3 className="text-xl font-semibold text-neutral-800">{title}</h3>
-        {subtitle && <p className="text-sm text-neutral-800/70 mt-1">{subtitle}</p>}
+        <h3 className="text-xl font-semibold text-neutral-900">{title}</h3>
+        {subtitle && <p className="text-sm text-neutral-600 font-medium mt-1">{subtitle}</p>}
       </div>
     </div>
   );
@@ -601,27 +602,28 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+    <div className="border border-neutral-200/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between transition-colors"
+        className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer"
         style={{ backgroundColor: '#FFFCF5' }}
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-600/20 rounded-lg">
-            <Icon className="h-5 w-5 text-primary-600" />
+          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+            <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-neutral-800">{title}</h3>
-            {subtitle && <p className="text-sm text-neutral-800/70">{subtitle}</p>}
+            <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
+            {subtitle && <p className="text-sm text-neutral-600 font-medium">{subtitle}</p>}
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
             }`}
+          strokeWidth={2.5}
         />
       </button>
       {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
@@ -776,7 +778,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input */}
-      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Search}
           title="Tìm kiếm bản thu"
@@ -785,23 +787,23 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
         <div className="flex gap-3">
           <div className="flex-1 relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" strokeWidth={2.5} />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Tìm kiếm bản thu, nhạc cụ, nghệ nhân,..."
-              className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+              className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md font-medium"
               style={{ backgroundColor: '#FFFCF5' }}
             />
           </div>
           <button
             type="button"
             onClick={handleSearch}
-            className="btn-liquid-glass-primary px-6 py-3 rounded-full font-medium flex items-center gap-2"
+            className="px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
           >
-            <Search className="h-5 w-5" />
+            <Search className="h-5 w-5" strokeWidth={2.5} />
             Tìm kiếm
           </button>
         </div>
@@ -816,7 +818,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       </div>
 
       {/* Basic Filters */}
-      <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Music}
           title="Bộ lọc cơ bản"
@@ -825,9 +827,9 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
         {/* Genre-Ethnicity Warning */}
         {genreEthnicityWarning && (
-          <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-300 rounded-2xl">
-            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <p className="text-yellow-700 text-sm leading-relaxed">{genreEthnicityWarning}</p>
+          <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50/90 border border-yellow-300/80 rounded-2xl shadow-sm backdrop-blur-sm">
+            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+            <p className="text-yellow-700 font-medium text-sm leading-relaxed">{genreEthnicityWarning}</p>
           </div>
         )}
 
@@ -956,9 +958,9 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleSearch}
-          className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium flex items-center gap-2"
+          className="px-8 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-4 w-4" strokeWidth={2.5} />
           Áp dụng bộ lọc
         </button>
       </div>

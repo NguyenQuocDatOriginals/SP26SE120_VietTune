@@ -5,18 +5,18 @@ export default function InstrumentsPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Nhạc cụ truyền thống
           </h1>
           <BackButton />
         </div>
 
         {/* Introduction */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Kể chuyện qua nhạc cụ
           </h2>
-          <p className="text-neutral-600 leading-relaxed mb-4">
+          <p className="text-neutral-600 font-medium leading-relaxed mb-4">
             54 dân tộc Việt Nam có kho nhạc cụ đa dạng đặc sắc. Từ dàn chiêng
             đồng hùng vĩ đến sáo trúc thanh tao, từ kèn sừng trâu mạnh mẽ đến
             đàn dây du dương - mỗi nhạc cụ kể một câu chuyện văn hóa riêng.
@@ -33,8 +33,8 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Classification */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Hệ thống phân loại
           </h2>
           <div className="text-neutral-700">
@@ -44,7 +44,7 @@ export default function InstrumentsPage() {
             </p>
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                   Thể rắn (Cơ thể nhạc cụ tự rung)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -74,7 +74,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                   Màng rắn (Trống với màng căng)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -99,7 +99,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                   Hòa rắn (Nhạc cụ dây)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -129,7 +129,7 @@ export default function InstrumentsPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                   Khí rắn (Nhạc cụ hơi)
                 </h3>
                 <p className="leading-relaxed mb-2">
@@ -162,8 +162,8 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Bamboo Instruments */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Nhạc cụ tre trúc: Sáng tạo và thích nghi
           </h2>
           <div className="space-y-4 text-neutral-700">
@@ -226,8 +226,8 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Gong Culture */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Văn hóa cồng chiêng: Nhạc cụ thiêng liêng của cao nguyên Trung Bộ
           </h2>
           <div className="space-y-4 text-neutral-700">
@@ -291,8 +291,8 @@ export default function InstrumentsPage() {
         </div>
 
         {/* String Instruments */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Nhạc cụ dây: Thẩm mỹ tinh tế và kỹ thuật điêu luyện
           </h2>
           <div className="space-y-4 text-neutral-700">
@@ -352,8 +352,8 @@ export default function InstrumentsPage() {
         </div>
 
         {/* Construction and Materials */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Tri thức truyền thống: Chế tác và vật liệu
           </h2>
           <div className="space-y-4 text-neutral-700">

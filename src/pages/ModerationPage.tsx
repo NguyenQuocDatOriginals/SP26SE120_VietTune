@@ -7,7 +7,7 @@ import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import { createPortal } from "react-dom";
-import { ChevronDown, Search, AlertCircle } from "lucide-react";
+import { ChevronDown, Search, AlertCircle, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 
 // ===== UTILITY FUNCTIONS =====
@@ -113,7 +113,7 @@ function SearchableDropdown({
                 createPortal(
                     <div
                         ref={(el) => (menuRef.current = el)}
-                        className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+                        className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
                         style={{
                             backgroundColor: "#FFFCF5",
                             position: "absolute",
@@ -304,6 +304,7 @@ export default function ModerationPage() {
     const [showUnclaimDialog, setShowUnclaimDialog] = useState<string | null>(null);
     const [showApproveConfirmDialog, setShowApproveConfirmDialog] = useState<string | null>(null);
     const [showRejectConfirmDialog, setShowRejectConfirmDialog] = useState<string | null>(null);
+    const [showRejectNoteWarningDialog, setShowRejectNoteWarningDialog] = useState<boolean>(false);
 
     const load = useCallback(() => {
         try {
@@ -417,6 +418,86 @@ export default function ModerationPage() {
             }
         }
     }, [showVerificationDialog]);
+
+    // Disable body scroll when any dialog is open
+    useEffect(() => {
+        const hasOpenDialog = !!(
+            showVerificationDialog ||
+            showRejectDialog ||
+            showUnclaimDialog ||
+            showApproveConfirmDialog ||
+            showRejectConfirmDialog ||
+            showRejectNoteWarningDialog
+        );
+        
+        if (hasOpenDialog) {
+            // Save current scroll position
+            const scrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+        } else {
+            // Restore scroll position
+            const scrollY = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }
+        return () => {
+            // Cleanup
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+        };
+    }, [showVerificationDialog, showRejectDialog, showUnclaimDialog, showApproveConfirmDialog, showRejectConfirmDialog, showRejectNoteWarningDialog]);
+
+    // Handle ESC key to close dialogs
+    useEffect(() => {
+        const hasOpenDialog = !!(
+            showVerificationDialog ||
+            showRejectDialog ||
+            showUnclaimDialog ||
+            showApproveConfirmDialog ||
+            showRejectConfirmDialog ||
+            showRejectNoteWarningDialog
+        );
+        
+        if (!hasOpenDialog) return;
+        
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (showVerificationDialog) {
+                    cancelVerification(showVerificationDialog);
+                }
+                if (showRejectDialog) {
+                    setShowRejectDialog(null);
+                    setRejectNote("");
+                    setRejectType("direct");
+                }
+                if (showUnclaimDialog) {
+                    setShowUnclaimDialog(null);
+                }
+                if (showApproveConfirmDialog) {
+                    setShowApproveConfirmDialog(null);
+                }
+                if (showRejectConfirmDialog) {
+                    setShowRejectConfirmDialog(null);
+                }
+                if (showRejectNoteWarningDialog) {
+                    setShowRejectNoteWarningDialog(false);
+                }
+            }
+        };
+        
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [showVerificationDialog, showRejectDialog, showUnclaimDialog, showApproveConfirmDialog, showRejectConfirmDialog, showRejectNoteWarningDialog]);
 
     if (!user || user.role !== "EXPERT") {
         return (
@@ -751,14 +832,14 @@ export default function ModerationPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-800">
+                    <h1 className="text-3xl font-bold text-neutral-900">
                         Kiểm duyệt bản thu
                     </h1>
                     <BackButton />
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl shadow-md border border-neutral-200 p-6 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-neutral-800">Lọc theo trạng thái</label>
@@ -806,14 +887,14 @@ export default function ModerationPage() {
                 </div>
 
                 {items.length === 0 ? (
-                    <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-                        <h2 className="text-xl font-semibold mb-2 text-neutral-800">Không có bản thu</h2>
-                        <p className="text-neutral-700">Không có bản thu đang chờ được kiểm duyệt.</p>
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                        <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
+                        <p className="text-neutral-700 font-medium">Không có bản thu đang chờ được kiểm duyệt.</p>
                     </div>
                 ) : (
                     <div className="space-y-6">
                         {items.filter(it => it.id).map((it) => (
-                            <div key={it.id} className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                            <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                                 <div className="md:flex md:items-start md:justify-between">
                                     <div className="md:flex-1">
                                         <div className="text-neutral-800 font-semibold text-lg mb-1">
@@ -834,13 +915,13 @@ export default function ModerationPage() {
 
                                     <div className="mt-4 md:mt-0 md:ml-6 flex flex-wrap gap-2 md:flex-col md:items-end">
                                         {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
-                                            <button onClick={() => claim(it.id)} className="px-3 py-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors">Nhận kiểm duyệt</button>
+                                            <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer">Nhận kiểm duyệt</button>
                                         )}
 
                                         {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
                                             <>
-                                                <button onClick={() => claim(it.id)} className="px-3 py-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors">Tiếp tục kiểm duyệt</button>
-                                                <button onClick={() => unclaim(it.id)} className="px-3 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors">Hủy nhận kiểm duyệt</button>
+                                                <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer">Tiếp tục kiểm duyệt</button>
+                                                <button onClick={() => unclaim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer">Hủy nhận kiểm duyệt</button>
                                             </>
                                         )}
                                     </div>
@@ -888,20 +969,48 @@ export default function ModerationPage() {
                         "Đánh giá bởi chuyên gia về tính chính xác và giá trị văn hóa",
                         "Đối chiếu với các nguồn tài liệu và quyết định phê duyệt"
                     ];
-                    return (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                            <div className="rounded-2xl shadow-xl border border-neutral-300 max-w-5xl w-full overflow-hidden flex flex-col" style={{ backgroundColor: '#FFF2D6' }}>
+                    return createPortal(
+                        <div 
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                            onClick={() => cancelVerification(showVerificationDialog)}
+                            style={{ 
+                                animation: 'fadeIn 0.3s ease-out',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                width: '100vw',
+                                height: '100vh',
+                                position: 'fixed',
+                            }}
+                        >
+                            <div 
+                                className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-16"
+                                style={{ 
+                                    backgroundColor: '#FFF2D6',
+                                    animation: 'slideUp 0.3s ease-out',
+                                    maxHeight: 'calc(100vh - 8rem)'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 {/* Header */}
-                                <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                                <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
                                     <h2 className="text-2xl font-bold text-white">{stepNames[currentStep - 1]}</h2>
+                                    <button
+                                        onClick={() => cancelVerification(showVerificationDialog)}
+                                        className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                                        aria-label="Đóng"
+                                    >
+                                        <X className="h-5 w-5" strokeWidth={2.5} />
+                                    </button>
                                 </div>
 
                                 {/* Content */}
                                 <div className="overflow-y-auto p-6 max-h-[70vh]">
                                     <div className="space-y-6">
                                         {/* Media Player Section */}
-                                        <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-                                            <h3 className="text-lg font-semibold text-neutral-800 mb-4">Bản thu</h3>
+                                        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Bản thu</h3>
                                             {(() => {
                                                 // Tìm nguồn media - VideoPlayer CHỈ nhận videoData hoặc YouTubeURL, AudioPlayer CHỈ nhận audioData
                                                 let mediaSrc: string | undefined;
@@ -1040,8 +1149,8 @@ export default function ModerationPage() {
                                         </div>
 
                                         {/* Basic Information */}
-                                        <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-                                            <h3 className="text-lg font-semibold text-neutral-800 mb-4">Thông tin cơ bản</h3>
+                                        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                            <h3 className="text-lg font-semibold text-neutral-900 mb-4">Thông tin cơ bản</h3>
                                             <div className="space-y-2 text-sm">
                                                 <div><strong>Tiêu đề:</strong> {item.basicInfo?.title || item.title || 'Không có'}</div>
                                                 {item.basicInfo?.artist && <div><strong>Nghệ sĩ:</strong> {item.basicInfo.artist}</div>}
@@ -1061,8 +1170,8 @@ export default function ModerationPage() {
 
                                         {/* Cultural Context */}
                                         {item.culturalContext && (
-                                            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-                                                <h3 className="text-lg font-semibold text-neutral-800 mb-4">Bối cảnh văn hóa</h3>
+                                            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Bối cảnh văn hóa</h3>
                                                 <div className="space-y-2 text-sm">
                                                     {item.culturalContext.ethnicity && <div><strong>Dân tộc:</strong> {item.culturalContext.ethnicity}</div>}
                                                     {item.culturalContext.region && <div><strong>Vùng:</strong> {item.culturalContext.region}</div>}
@@ -1078,8 +1187,8 @@ export default function ModerationPage() {
 
                                         {/* Additional Notes */}
                                         {item.additionalNotes && (
-                                            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-                                                <h3 className="text-lg font-semibold text-neutral-800 mb-4">Ghi chú bổ sung</h3>
+                                            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Ghi chú bổ sung</h3>
                                                 <div className="space-y-2 text-sm">
                                                     {item.additionalNotes.description && (
                                                         <div>
@@ -1106,8 +1215,8 @@ export default function ModerationPage() {
 
                                         {/* Admin Info */}
                                         {item.adminInfo && (
-                                            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-                                                <h3 className="text-lg font-semibold text-neutral-800 mb-4">Thông tin quản trị</h3>
+                                            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Thông tin quản trị</h3>
                                                 <div className="space-y-2 text-sm">
                                                     {item.adminInfo.collector && <div><strong>Người thu thập:</strong> {item.adminInfo.collector}</div>}
                                                     {item.adminInfo.copyright && <div><strong>Bản quyền:</strong> {item.adminInfo.copyright}</div>}
@@ -1118,7 +1227,7 @@ export default function ModerationPage() {
                                         )}
 
                                         {/* Verification Form Section */}
-                                        <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
+                                        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                                             <div className="mb-4">
                                                 <p className="text-neutral-700 mb-4">{stepDescriptions[currentStep - 1]}</p>
 
@@ -1152,7 +1261,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoComplete || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoComplete', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ</span>
                                                         </label>
@@ -1161,7 +1270,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoAccurate || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoAccurate', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn</span>
                                                         </label>
@@ -1170,7 +1279,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.formatCorrect || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'formatCorrect', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu</span>
                                                         </label>
@@ -1200,7 +1309,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.culturalValue || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'culturalValue', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể</span>
                                                         </label>
@@ -1209,7 +1318,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.authenticity || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'authenticity', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép</span>
                                                         </label>
@@ -1218,7 +1327,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.accuracy || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'accuracy', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu</span>
                                                         </label>
@@ -1248,7 +1357,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.crossChecked || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'crossChecked', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan</span>
                                                         </label>
@@ -1257,7 +1366,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.sourcesVerified || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'sourcesVerified', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh</span>
                                                         </label>
@@ -1266,7 +1375,7 @@ export default function ModerationPage() {
                                                                 type="checkbox"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.finalApproval || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'finalApproval', e.target.checked)}
-                                                                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
                                                             />
                                                             <span className="text-neutral-700">Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này</span>
                                                         </label>
@@ -1304,7 +1413,7 @@ export default function ModerationPage() {
                                                     setShowRejectDialog(showVerificationDialog);
                                                 }
                                             }}
-                                            className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
+                                            className="px-6 py-2.5 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                         >
                                             Từ chối
                                         </button>
@@ -1313,7 +1422,7 @@ export default function ModerationPage() {
                                         {currentStep > 1 && (
                                             <button
                                                 onClick={() => prevVerificationStep(showVerificationDialog)}
-                                                className="px-6 py-2.5 bg-neutral-500 text-white rounded-full font-medium hover:bg-neutral-400 transition-colors shadow-sm hover:shadow-md"
+                                                className="px-6 py-2.5 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                                             >
                                                 Quay lại (Bước {currentStep - 1})
                                             </button>
@@ -1321,7 +1430,7 @@ export default function ModerationPage() {
                                         {currentStep < 3 ? (
                                             <button
                                                 onClick={() => nextVerificationStep(showVerificationDialog)}
-                                                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+                                                className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                             >
                                                 Tiếp tục (Bước {currentStep + 1})
                                             </button>
@@ -1333,7 +1442,7 @@ export default function ModerationPage() {
                                                     }
                                                 }}
                                                 disabled={!validateStep(showVerificationDialog, currentStep)}
-                                                className="px-6 py-2.5 bg-green-600 text-white rounded-full font-medium hover:bg-green-500 transition-colors shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="px-6 py-2.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-green-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                             >
                                                 Hoàn thành kiểm duyệt
                                             </button>
@@ -1342,13 +1451,34 @@ export default function ModerationPage() {
                                 </div>
                             </div>
                         </div>
+                        , document.body
                     );
                 })()}
 
                 {/* Rejection Dialog */}
                 {showRejectDialog && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); } }}>
-                        <div className="rounded-2xl shadow-xl border border-neutral-300 max-w-lg w-full p-6 bg-white">
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        onClick={(e) => { if (e.target === e.currentTarget) { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); } }}
+                        style={{ 
+                            animation: 'fadeIn 0.3s ease-out',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            position: 'fixed',
+                        }}
+                    >
+                        <div 
+                            className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
+                            style={{ 
+                                backgroundColor: '#FFF2D6',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <h3 className="text-xl font-semibold mb-4 text-neutral-800">Từ chối bản thu</h3>
                             <div className="space-y-4">
                                 <div>
@@ -1399,7 +1529,7 @@ export default function ModerationPage() {
                                 <div className="flex justify-end gap-3">
                                     <button
                                         onClick={() => { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); }}
-                                        className="px-4 py-2 rounded-full bg-neutral-200 text-neutral-800 font-medium hover:bg-neutral-300 transition-colors"
+                                        className="px-4 py-2 rounded-full bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                                     >
                                         Hủy
                                     </button>
@@ -1407,14 +1537,14 @@ export default function ModerationPage() {
                                         onClick={() => {
                                             if (showRejectDialog) {
                                                 if (rejectType === "temporary" && !rejectNote.trim()) {
-                                                    alert("Vui lòng nhập ghi chú cho người đóng góp khi tạm thời bị từ chối.");
+                                                    setShowRejectNoteWarningDialog(true);
                                                     return;
                                                 }
                                                 // Show confirmation dialog
                                                 setShowRejectConfirmDialog(showRejectDialog);
                                             }
                                         }}
-                                        className="px-4 py-2 rounded-full bg-red-600 text-white font-medium hover:bg-red-500 transition-colors"
+                                        className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                     >
                                         {rejectType === "direct" ? "Từ chối vĩnh viễn" : "Từ chối tạm thời"}
                                     </button>
@@ -1425,15 +1555,39 @@ export default function ModerationPage() {
                 )}
 
                 {/* Unclaim Confirmation Dialog */}
-                {showUnclaimDialog && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                {showUnclaimDialog && createPortal(
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        onClick={() => setShowUnclaimDialog(null)}
+                        style={{ 
+                            animation: 'fadeIn 0.3s ease-out',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            position: 'fixed',
+                        }}
+                    >
                         <div
-                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
-                            style={{ backgroundColor: '#FFF2D6' }}
+                            className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
+                            style={{ 
+                                backgroundColor: '#FFF2D6',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
                                 <h2 className="text-2xl font-bold text-white">Xác nhận hủy nhận kiểm duyệt</h2>
+                                <button
+                                    onClick={() => setShowUnclaimDialog(null)}
+                                    className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                                    aria-label="Đóng"
+                                >
+                                    <X className="h-5 w-5" strokeWidth={2.5} />
+                                </button>
                             </div>
 
                             {/* Content */}
@@ -1455,34 +1609,59 @@ export default function ModerationPage() {
                             </div>
 
                             {/* Footer */}
-                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200/80 bg-neutral-50/50">
                                 <button
                                     onClick={() => setShowUnclaimDialog(null)}
-                                    className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                                    className="px-6 py-2.5 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     onClick={handleConfirmUnclaim}
-                                    className="px-6 py-2.5 bg-red-600 text-white rounded-full font-medium hover:bg-red-500 transition-colors shadow-sm hover:shadow-md"
+                                    className="px-6 py-2.5 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                 >
                                     Xác nhận hủy
                                 </button>
                             </div>
                         </div>
                     </div>
+                    , document.body
                 )}
 
                 {/* Approve Confirmation Dialog */}
-                {showApproveConfirmDialog && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                {showApproveConfirmDialog && createPortal(
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        onClick={() => setShowApproveConfirmDialog(null)}
+                        style={{ 
+                            animation: 'fadeIn 0.3s ease-out',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            position: 'fixed',
+                        }}
+                    >
                         <div
-                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
-                            style={{ backgroundColor: '#FFF2D6' }}
+                            className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
+                            style={{ 
+                                backgroundColor: '#FFF2D6',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
                                 <h2 className="text-2xl font-bold text-white">Xác nhận phê duyệt</h2>
+                                <button
+                                    onClick={() => setShowApproveConfirmDialog(null)}
+                                    className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                                    aria-label="Đóng"
+                                >
+                                    <X className="h-5 w-5" strokeWidth={2.5} />
+                                </button>
                             </div>
 
                             {/* Content */}
@@ -1519,18 +1698,43 @@ export default function ModerationPage() {
                             </div>
                         </div>
                     </div>
+                    , document.body
                 )}
 
                 {/* Reject Confirmation Dialog */}
-                {showRejectConfirmDialog && (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+                {showRejectConfirmDialog && createPortal(
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        onClick={() => setShowRejectConfirmDialog(null)}
+                        style={{ 
+                            animation: 'fadeIn 0.3s ease-out',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            position: 'fixed',
+                        }}
+                    >
                         <div
-                            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
-                            style={{ backgroundColor: '#FFF2D6' }}
+                            className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
+                            style={{ 
+                                backgroundColor: '#FFF2D6',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+                            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
                                 <h2 className="text-2xl font-bold text-white">Xác nhận từ chối</h2>
+                                <button
+                                    onClick={() => setShowRejectConfirmDialog(null)}
+                                    className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                                    aria-label="Đóng"
+                                >
+                                    <X className="h-5 w-5" strokeWidth={2.5} />
+                                </button>
                             </div>
 
                             {/* Content */}
@@ -1567,6 +1771,74 @@ export default function ModerationPage() {
                             </div>
                         </div>
                     </div>
+                    , document.body
+                )}
+
+                {/* Reject Note Warning Dialog */}
+                {showRejectNoteWarningDialog && createPortal(
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        onClick={() => setShowRejectNoteWarningDialog(false)}
+                        style={{ 
+                            animation: 'fadeIn 0.3s ease-out',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            width: '100vw',
+                            height: '100vh',
+                            position: 'fixed',
+                        }}
+                    >
+                        <div
+                            className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
+                            style={{ 
+                                backgroundColor: '#FFF2D6',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
+                                <h2 className="text-2xl font-bold text-white">Cảnh báo</h2>
+                                <button
+                                    onClick={() => setShowRejectNoteWarningDialog(false)}
+                                    className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                                    aria-label="Đóng"
+                                >
+                                    <X className="h-5 w-5" strokeWidth={2.5} />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="overflow-y-auto p-6">
+                                <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div className="flex flex-col items-center gap-4 mb-2">
+                                        <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
+                                            <AlertCircle className="h-8 w-8 text-primary-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                                            Vui lòng nhập ghi chú cho người đóng góp khi tạm thời bị từ chối.
+                                        </h3>
+                                        <div className="text-neutral-700 text-center space-y-1">
+                                            <p>Khi từ chối tạm thời, bạn cần cung cấp ghi chú để người đóng góp biết những điểm cần chỉnh sửa.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+                                <button
+                                    onClick={() => setShowRejectNoteWarningDialog(false)}
+                                    className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
+                                >
+                                    Đã hiểu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    , document.body
                 )}
             </div>
         </div>

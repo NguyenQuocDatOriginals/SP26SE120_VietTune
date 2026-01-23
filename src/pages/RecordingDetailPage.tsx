@@ -180,7 +180,7 @@ export default function RecordingDetailPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Chi tiết bản thu
           </h1>
           <BackButton />
@@ -313,18 +313,18 @@ export default function RecordingDetailPage() {
             </div>
 
             {/* Stats */}
-            <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
-              <div className="flex items-center space-x-8 text-neutral-700">
+            <div className="rounded-2xl border border-neutral-200/80 p-6 mb-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="flex items-center space-x-8 text-neutral-700 font-medium">
                 <div className="flex items-center">
-                  <Eye className="h-5 w-5 mr-2 text-primary-600" />
+                  <Eye className="h-5 w-5 mr-2 text-primary-600" strokeWidth={2.5} />
                   <span>{recording.viewCount} lượt xem</span>
                 </div>
                 <div className="flex items-center">
-                  <Heart className="h-5 w-5 mr-2 text-primary-600" />
+                  <Heart className="h-5 w-5 mr-2 text-primary-600" strokeWidth={2.5} />
                   <span>{recording.likeCount} lượt thích</span>
                 </div>
                 <div className="flex items-center">
-                  <Download className="h-5 w-5 mr-2 text-primary-600" />
+                  <Download className="h-5 w-5 mr-2 text-primary-600" strokeWidth={2.5} />
                   <span>{recording.downloadCount} lượt tải</span>
                 </div>
               </div>
@@ -332,9 +332,9 @@ export default function RecordingDetailPage() {
 
             {/* Description */}
             {recording.description && (
-              <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 p-6 mb-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">Mô tả</h2>
-                <p className="text-neutral-700 whitespace-pre-wrap">
+                <p className="text-neutral-700 font-medium whitespace-pre-wrap">
                   {recording.description}
                 </p>
               </div>
@@ -347,7 +347,7 @@ export default function RecordingDetailPage() {
               recording.metadata.ritualContext || 
               recording.metadata.culturalSignificance
             ) && (
-              <div className="rounded-2xl border border-neutral-200 p-6 mb-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 p-6 mb-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Thông tin chuyên môn
                 </h2>
@@ -357,7 +357,7 @@ export default function RecordingDetailPage() {
                       <dt className="font-medium text-neutral-900">
                         Hệ thống điệu thức
                       </dt>
-                      <dd className="text-neutral-700">
+                      <dd className="text-neutral-700 font-medium">
                         {recording.metadata.tuningSystem}
                       </dd>
                     </div>
@@ -367,7 +367,7 @@ export default function RecordingDetailPage() {
                       <dt className="font-medium text-neutral-900">
                         Cấu trúc giai điệu
                       </dt>
-                      <dd className="text-neutral-700">
+                      <dd className="text-neutral-700 font-medium">
                         {recording.metadata.modalStructure}
                       </dd>
                     </div>
@@ -377,7 +377,7 @@ export default function RecordingDetailPage() {
                       <dt className="font-medium text-neutral-900">
                         Ngữ cảnh nghi lễ
                       </dt>
-                      <dd className="text-neutral-700">
+                      <dd className="text-neutral-700 font-medium">
                         {recording.metadata.ritualContext}
                       </dd>
                     </div>
@@ -387,7 +387,7 @@ export default function RecordingDetailPage() {
                       <dt className="font-medium text-neutral-900">
                         Ý nghĩa văn hóa
                       </dt>
-                      <dd className="text-neutral-700">
+                      <dd className="text-neutral-700 font-medium">
                         {recording.metadata.culturalSignificance}
                       </dd>
                     </div>
@@ -398,17 +398,17 @@ export default function RecordingDetailPage() {
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
-              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <h2 className="text-xl font-semibold mb-4 text-neutral-900">
                   Lời bài hát
                 </h2>
-                <p className="text-neutral-700 whitespace-pre-wrap mb-4">
+                <p className="text-neutral-700 font-medium whitespace-pre-wrap mb-4">
                   {recording.metadata.lyrics}
                 </p>
                 {recording.metadata.lyricsTranslation && (
                   <>
                     <h3 className="font-medium text-neutral-900 mb-2">Dịch nghĩa</h3>
-                    <p className="text-neutral-700 whitespace-pre-wrap">
+                    <p className="text-neutral-700 font-medium whitespace-pre-wrap">
                       {recording.metadata.lyricsTranslation}
                     </p>
                   </>
@@ -420,7 +420,7 @@ export default function RecordingDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Basic Info */}
-            <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+            <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Thông tin
               </h3>
@@ -481,7 +481,7 @@ export default function RecordingDetailPage() {
 
             {/* Instruments */}
             {recording.instruments.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nhạc cụ
                 </h3>
@@ -497,7 +497,7 @@ export default function RecordingDetailPage() {
 
             {/* Performers */}
             {recording.performers.length > 0 && (
-              <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                   Nghệ nhân
                 </h3>
@@ -507,7 +507,7 @@ export default function RecordingDetailPage() {
                       key={performer.id}
                       className="flex items-center text-neutral-700"
                     >
-                      <User className="h-4 w-4 mr-2 text-primary-600" />
+                      <User className="h-4 w-4 mr-2 text-primary-600" strokeWidth={2.5} />
                       <span>{performer.name}</span>
                       {performer.title && (
                         <Badge variant="secondary" size="sm" className="ml-2">
@@ -603,7 +603,7 @@ export default function RecordingDetailPage() {
               }
               
               return allTags.length > 0 ? (
-                <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                   <h3 className="font-semibold text-lg mb-4 text-neutral-900">Thẻ</h3>
                   <div className="flex flex-wrap gap-2">
                     {allTags}
@@ -613,7 +613,7 @@ export default function RecordingDetailPage() {
             })()}
 
             {/* Uploader */}
-            <div className="rounded-2xl border border-neutral-200 p-6 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
+            <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
                 Người tải lên
               </h3>

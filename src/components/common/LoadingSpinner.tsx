@@ -27,7 +27,7 @@ export default function LoadingSpinner({
           cy="12"
           r="10"
           stroke="currentColor"
-          strokeWidth="4"
+          strokeWidth="3"
         />
         <path
           className="opacity-75"

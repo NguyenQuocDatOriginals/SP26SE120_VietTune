@@ -256,4 +256,41 @@ body::-webkit-scrollbar-thumb:hover,
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 }
+
+/* Dialog animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Water ripple animation for waveform reflection */
+@keyframes waterRipple {
+  0%, 100% {
+    transform: translateX(0) scaleY(1);
+  }
+  25% {
+    transform: translateX(1px) scaleY(1.01);
+  }
+  50% {
+    transform: translateX(0) scaleY(1);
+  }
+  75% {
+    transform: translateX(-1px) scaleY(0.99);
+  }
+}
 /* stylelint-enable */

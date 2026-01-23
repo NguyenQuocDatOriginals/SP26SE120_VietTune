@@ -24,12 +24,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={clsx(
-            "w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors text-sm",
-            "text-neutral-900 placeholder:text-neutral-500",
+            "w-full px-5 py-3 border rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 transition-all duration-200 text-sm",
+            "text-neutral-900 placeholder:text-neutral-500 font-medium",
             error
               ? "border-primary-400 focus:border-primary-500"
-              : "border-neutral-400 focus:border-transparent",
+              : "border-neutral-400/80 focus:border-transparent",
             "disabled:opacity-60 disabled:cursor-not-allowed",
+            "shadow-sm hover:shadow-md focus:shadow-lg",
             className
           )}
           style={{ backgroundColor: '#FFFCF5' }}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
-import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube } from "lucide-react";
+import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { isYouTubeUrl, getYouTubeId } from "@/utils/youtube";
@@ -799,16 +799,17 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
-        <span className={value ? "text-neutral-900" : "text-neutral-400"}>
+        <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>
           {value || placeholder}
         </span>
         <ChevronDown
           className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
             }`}
+          strokeWidth={2.5}
         />
       </button>
 
@@ -817,7 +818,7 @@ function SearchableDropdown({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: "#FFFCF5",
               position: "absolute",
@@ -836,7 +837,7 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent text-sm shadow-sm hover:shadow-md transition-all duration-200"
                     style={{ backgroundColor: "#FFFCF5" }}
                     autoFocus
                   />
@@ -864,9 +865,9 @@ function SearchableDropdown({
                       setIsOpen(false);
                       setSearch("");
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm transition-colors ${value === option
-                      ? "bg-primary-600 text-white font-medium"
-                      : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                    className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === option
+                      ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
+                      : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
                       }`}
                   >
                     {option}
@@ -968,7 +969,7 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-full focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-full focus-within:ring-4 focus-within:ring-primary-500/50 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
           }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
@@ -976,7 +977,7 @@ function MultiSelectTags({
           {values.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-3 py-1 bg-primary-600 text-white text-xs rounded-full font-medium"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-br from-primary-600 to-primary-700 text-white text-xs rounded-full font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
             >
               {tag}
               {!disabled && (
@@ -1024,7 +1025,7 @@ function MultiSelectTags({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: "#FFFCF5",
               position: "absolute",
@@ -1337,7 +1338,7 @@ function DatePicker({
         createPortal(
           <div
             ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl shadow-xl border border-neutral-300 overflow-hidden"
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: "#FFFCF5",
               position: "absolute",
@@ -1412,8 +1413,8 @@ function DatePicker({
                               className={`w-full px-4 py-2 text-left text-sm transition-colors ${isFutureMonth
                                 ? "text-neutral-400 cursor-not-allowed"
                                 : viewDate.getMonth() === index
-                                  ? "bg-primary-600 text-white font-medium"
-                                  : "text-neutral-900 hover:bg-primary-100 hover:text-primary-700"
+                                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
+                                  : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
                                 }`}
                             >
                               {month}
@@ -1854,7 +1855,7 @@ function FormField({
         {required && <span className="text-red-400 ml-1">*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-neutral-800/60">{hint}</p>}
+      {hint && <p className="text-xs text-neutral-600 font-medium">{hint}</p>}
     </div>
   );
 }
@@ -1876,19 +1877,18 @@ function SectionHeader({
         <Icon className="h-5 w-5 text-primary-600" />
       </div>
       <div>
-        <h3 className="text-xl font-semibold text-neutral-800 flex items-center gap-2">
+        <h3 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
           {title}
           {optional && (
             <span
-              className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: "#F5F0E8" }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full border border-neutral-300/80 shadow-sm"
             >
               Tùy chọn
             </span>
           )}
         </h3>
         {subtitle && (
-          <p className="text-sm text-neutral-800/70 mt-1">{subtitle}</p>
+          <p className="text-sm text-neutral-600 font-medium mt-1">{subtitle}</p>
         )}
       </div>
     </div>
@@ -1914,13 +1914,13 @@ function CollapsibleSection({
 
   return (
     <div
-      className="border border-neutral-200 rounded-2xl overflow-hidden shadow-md"
+      className="border border-neutral-200/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
       style={{ backgroundColor: "#FFFCF5" }}
     >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between transition-colors"
+        className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer"
         style={{ backgroundColor: "#FFFCF5" }}
         onMouseEnter={(e) =>
           (e.currentTarget.style.backgroundColor = "#F5F0E8")
@@ -1930,29 +1930,29 @@ function CollapsibleSection({
         }
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-600/20 rounded-lg">
-            <Icon className="h-5 w-5 text-primary-600" />
+          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+            <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-semibold text-neutral-800 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
               {title}
               {optional && (
                 <span
-                  className="text-xs font-normal text-neutral-800/50 px-2 py-0.5 rounded-full border border-neutral-300"
-                  style={{ backgroundColor: "#F5F0E8" }}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full border border-neutral-300/80 shadow-sm"
                 >
                   Tùy chọn
                 </span>
               )}
             </h3>
             {subtitle && (
-              <p className="text-sm text-neutral-800/70">{subtitle}</p>
+              <p className="text-sm text-neutral-600 font-medium">{subtitle}</p>
             )}
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-800/70 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
             }`}
+          strokeWidth={2.5}
         />
       </button>
       {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
@@ -2367,6 +2367,54 @@ export default function UploadMusic() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditModeParam]);
+
+  // Disable body scroll when dialogs are open
+  useEffect(() => {
+    if (showConfirmDialog || submitStatus === "success") {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    return () => {
+      // Cleanup
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [showConfirmDialog, submitStatus]);
+
+  // Handle ESC key to close dialogs
+  useEffect(() => {
+    if (!showConfirmDialog && submitStatus !== "success") return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showConfirmDialog) {
+          setShowConfirmDialog(false);
+        }
+        if (submitStatus === "success") {
+          setSubmitStatus("idle");
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showConfirmDialog, submitStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2924,23 +2972,23 @@ export default function UploadMusic() {
     <React.Fragment>
       <form onSubmit={handleSubmit} className="w-full space-y-6">
         {/* Required Fields Note */}
-        <div className="flex items-center gap-2 text-sm text-neutral-800/60">
-          <span className="text-red-400">*</span>
+        <div className="flex items-center gap-2 text-sm text-neutral-600 font-medium">
+          <span className="text-red-500">*</span>
           <span>Trường bắt buộc</span>
         </div>
 
         {/* Removed duplicate yellow notice for non-Contributor users */}
 
         {submitStatus === "error" && (
-          <div className="flex items-center gap-3 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl">
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-            <p className="text-black">{submitMessage}</p>
+          <div className="flex items-center gap-3 p-4 bg-red-50/90 border border-red-300/80 rounded-2xl shadow-sm backdrop-blur-sm">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" strokeWidth={2.5} />
+            <p className="text-red-800 font-medium">{submitMessage}</p>
           </div>
         )}
 
         <div
-          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
-          style={{ backgroundColor: "#FFFCF5" }}
+        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+        style={{ backgroundColor: "#FFFCF5" }}
           aria-disabled={isFormDisabled}
         >
           <SectionHeader
@@ -2964,10 +3012,10 @@ export default function UploadMusic() {
                   setAudioInfo(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "audio"
-                  ? "bg-primary-600 text-white"
-                  : "text-neutral-700"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "audio"
+                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
+                  : "text-neutral-800 bg-neutral-100/90"
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 style={
                   mediaType !== "audio"
                     ? { backgroundColor: "#FFFCF5" }
@@ -2987,7 +3035,7 @@ export default function UploadMusic() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <FileAudio className="h-4 w-4" />
+                  <FileAudio className="h-4 w-4" strokeWidth={2.5} />
                   <span>File âm thanh</span>
                 </div>
               </button>
@@ -3003,10 +3051,10 @@ export default function UploadMusic() {
                   setAudioInfo(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "video"
-                  ? "bg-primary-600 text-white"
-                  : "text-neutral-700"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "video"
+                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
+                  : "text-neutral-800 bg-neutral-100/90"
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 style={
                   mediaType !== "video"
                     ? { backgroundColor: "#FFFCF5" }
@@ -3026,7 +3074,7 @@ export default function UploadMusic() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
+                  <Video className="h-4 w-4" strokeWidth={2.5} />
                   <span>File video</span>
                 </div>
               </button>
@@ -3041,10 +3089,10 @@ export default function UploadMusic() {
                   setAudioInfo(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                className={`px-4 py-2 rounded-full text-sm transition-all border border-neutral-200 ${mediaType === "youtube"
-                  ? "bg-primary-600 text-white"
-                  : "text-neutral-700"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "youtube"
+                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
+                  : "text-neutral-800 bg-neutral-100/90"
+                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 style={
                   mediaType !== "youtube"
                     ? { backgroundColor: "#FFFCF5" }
@@ -3062,7 +3110,7 @@ export default function UploadMusic() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <Youtube className="h-4 w-4" />
+                  <Youtube className="h-4 w-4" strokeWidth={2.5} />
                   <span>YouTube</span>
                 </div>
               </button>
@@ -3180,8 +3228,8 @@ export default function UploadMusic() {
         </div>
 
         <div
-          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
-          style={{ backgroundColor: "#FFFCF5" }}
+        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+        style={{ backgroundColor: "#FFFCF5" }}
         >
           <SectionHeader
             icon={Music}
@@ -3700,7 +3748,7 @@ export default function UploadMusic() {
               type="submit"
               disabled={!isFormComplete || isAnalyzing || isSubmitting || isFormDisabled}
               title={isFormDisabled ? "Bạn cần có tài khoản Người đóng góp để đóng góp bản thu" : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
-              className="btn-liquid-glass-primary px-8 py-2.5 rounded-full font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-8 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -3709,7 +3757,7 @@ export default function UploadMusic() {
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4" />
+                  <Upload className="h-4 w-4" strokeWidth={2.5} />
                   Đóng góp
                 </>
               )}
@@ -3719,25 +3767,49 @@ export default function UploadMusic() {
       </form>
 
       {/* Confirmation Dialog */}
-      {showConfirmDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      {showConfirmDialog && createPortal(
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+          onClick={() => setShowConfirmDialog(false)}
+          style={{ 
+            animation: 'fadeIn 0.3s ease-out',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            position: 'fixed',
+          }}
+        >
           <div
-            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
-            style={{ backgroundColor: '#FFF2D6' }}
+            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
+            style={{ 
+              backgroundColor: '#FFF2D6',
+              animation: 'slideUp 0.3s ease-out'
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
               <h2 className="text-2xl font-bold text-white">Xác nhận đóng góp</h2>
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                aria-label="Đóng"
+              >
+                <X className="h-5 w-5" strokeWidth={2.5} />
+              </button>
             </div>
 
             {/* Content */}
             <div className="overflow-y-auto p-6">
-              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <div className="flex flex-col items-center gap-4 mb-2">
-                  <div className="p-3 bg-primary-100 rounded-full flex-shrink-0">
-                    <AlertCircle className="h-8 w-8 text-primary-600" />
+                  <div className="p-3 bg-primary-100/90 rounded-full flex-shrink-0 shadow-sm">
+                    <AlertCircle className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
                   </div>
-                  <h3 className="text-xl font-semibold text-neutral-800 text-center">
+                  <h3 className="text-xl font-semibold text-neutral-900 text-center">
                     Hãy đảm bảo chính xác thông tin đã nhập, bạn nhé!
                   </h3>
                 </div>
@@ -3745,44 +3817,69 @@ export default function UploadMusic() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200/80 bg-neutral-50/50">
               <button
                 onClick={() => setShowConfirmDialog(false)}
-                className="px-6 py-2.5 bg-neutral-200 text-neutral-800 rounded-full font-medium hover:bg-neutral-300 transition-colors shadow-sm hover:shadow-md"
+                className="px-6 py-2.5 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Xem lại
               </button>
               <button
                 onClick={handleConfirmSubmit}
-                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+                className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
               >
                 Gửi
               </button>
             </div>
           </div>
         </div>
+        , document.body
       )}
 
       {/* Success Pop-up (inline) */}
-      {submitStatus === "success" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      {submitStatus === "success" && createPortal(
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+          onClick={() => setSubmitStatus("idle")}
+          style={{ 
+            animation: 'fadeIn 0.3s ease-out',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            position: 'fixed',
+          }}
+        >
           <div
-            className="rounded-2xl shadow-xl border border-neutral-300 max-w-3xl w-full overflow-hidden flex flex-col"
-            style={{ backgroundColor: '#FFF2D6' }}
+            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
+            style={{ 
+              backgroundColor: '#FFF2D6',
+              animation: 'slideUp 0.3s ease-out'
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-center p-6 border-b border-neutral-200 bg-primary-600">
+            <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
               <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+              <button
+                onClick={() => setSubmitStatus("idle")}
+                className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
+                aria-label="Đóng"
+              >
+                <X className="h-5 w-5" strokeWidth={2.5} />
+              </button>
             </div>
 
             {/* Content */}
             <div className="overflow-y-auto p-6">
-              <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <div className="flex flex-col items-center gap-4 mb-2">
-                  <div className="p-3 bg-green-100 rounded-full flex-shrink-0">
-                    <Check className="h-8 w-8 text-green-600" />
+                  <div className="p-3 bg-green-100/90 rounded-full flex-shrink-0 shadow-sm">
+                    <Check className="h-8 w-8 text-green-600" strokeWidth={2.5} />
                   </div>
-                  <div className="text-xl font-semibold text-neutral-800 text-center space-y-1">
+                  <div className="text-xl font-semibold text-neutral-900 text-center space-y-1">
                     {submitMessage ? (
                       submitMessage
                         .split(/(?<=[.!])\s+/)
@@ -3799,7 +3896,7 @@ export default function UploadMusic() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
+            <div className="flex items-center justify-center gap-4 p-6 border-t border-neutral-200/80 bg-neutral-50/50">
               <button
                 onClick={() => {
                   resetForm();
@@ -3807,7 +3904,7 @@ export default function UploadMusic() {
                   setSubmitMessage("");
                   navigate("/");
                 }}
-                className="px-6 py-2.5 bg-primary-600 text-white rounded-full font-medium hover:bg-primary-500 transition-colors shadow-sm hover:shadow-md"
+                className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
               >
                 Về trang chủ
               </button>
@@ -3818,13 +3915,14 @@ export default function UploadMusic() {
                   setSubmitMessage("");
                   navigate("/profile");
                 }}
-                className="px-6 py-2.5 bg-secondary-100 text-secondary-700 rounded-full font-medium hover:bg-secondary-200 transition-colors shadow-sm hover:shadow-md"
+                className="px-6 py-2.5 bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Đi đến trang hồ sơ
               </button>
             </div>
           </div>
         </div>
+        , document.body
       )}
     </React.Fragment>
   );

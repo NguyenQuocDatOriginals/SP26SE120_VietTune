@@ -51,7 +51,7 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm hover:shadow-md"
+        className="px-4 py-2.5 text-sm font-medium rounded-full border border-neutral-300/80 text-neutral-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:scale-105 active:scale-95 cursor-pointer disabled:hover:scale-100"
         style={{ backgroundColor: "#FFFCF5" }}
         onMouseEnter={(e) =>
           currentPage !== 1 &&
@@ -62,7 +62,7 @@ export default function Pagination({
           (e.currentTarget.style.backgroundColor = "#FFFCF5")
         }
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
         Trước
       </button>
 
@@ -79,12 +79,12 @@ export default function Pagination({
             disabled={isEllipsis}
             aria-current={isActive ? "page" : undefined}
             className={clsx(
-              "min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg transition-colors border",
+              "min-w-[40px] px-4 py-2.5 text-sm font-medium rounded-full transition-all duration-200 border",
               isEllipsis && "cursor-default bg-transparent text-neutral-400",
-              isActive && "bg-primary-600 text-white shadow-md",
+              isActive && "bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1),0_4px_6px_-2px_rgba(0,0,0,0.05)]",
               !isActive &&
                 !isEllipsis &&
-                "text-neutral-700 border-neutral-300 shadow-sm hover:shadow-md",
+                "text-neutral-800 border-neutral-300/80 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:scale-105 active:scale-95 cursor-pointer",
             )}
             style={
               !isActive && !isEllipsis
@@ -110,7 +110,7 @@ export default function Pagination({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm hover:shadow-md"
+        className="px-4 py-2.5 text-sm font-medium rounded-full border border-neutral-300/80 text-neutral-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] hover:scale-105 active:scale-95 cursor-pointer disabled:hover:scale-100"
         style={{ backgroundColor: "#FFFCF5" }}
         onMouseEnter={(e) =>
           currentPage !== totalPages &&
@@ -122,7 +122,7 @@ export default function Pagination({
         }
       >
         Sau
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
       </button>
     </div>
   );

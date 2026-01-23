@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Target, Users, Heart, FileText, Trash2, AlertTriangle, Edit } from "lucide-react";
+import { Target, Users, Heart, FileText, Trash2, AlertTriangle, Edit, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, User } from "@/types";
@@ -64,7 +64,6 @@ interface LocalRecordingMini {
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const navigate = useNavigate();
-  const [contributions, setContributions] = useState<LocalRecordingMini[]>([]);
   const [showDeleteMetadataConfirm, setShowDeleteMetadataConfirm] = useState(false);
 
   // Edit profile modal state
@@ -208,27 +207,6 @@ export default function ProfilePage() {
           return r;
         });
         localStorage.setItem("localRecordings", JSON.stringify(updatedAll));
-        setContributions(
-          updatedAll
-            .filter((r) => r.uploader?.id === updated.id)
-            .map((r) => ({
-              id: r.id,
-              title: r.title,
-              basicInfo: r.basicInfo,
-              uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
-              uploader: r.uploader,
-              moderation: r.moderation
-                ? {
-                  status: r.moderation.status,
-                  claimedByName:
-                    r.moderation.claimedByName === null
-                      ? undefined
-                      : r.moderation.claimedByName,
-                  rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote,
-                }
-                : undefined,
-            }))
-        );
       }
     } catch (err) {
       console.error("Failed to propagate user updates to localRecordings", err);
@@ -247,83 +225,54 @@ export default function ProfilePage() {
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
-  // Close modal on Escape
+  // Disable body scroll when dialogs are open
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIsEditOpen(false); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-      // Migrate video data từ audioData sang videoData
-      const migrated = migrateVideoDataToVideoData(all);
-      if (!user) {
-        setContributions([]);
-        return;
+    if (isEditOpen || showDeleteMetadataConfirm) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
       }
-      const my = migrated.filter((r) => r.uploader?.id === user.id);
-      setContributions(
-        my.map((r) => ({
-          id: r.id,
-          title: r.title,
-          basicInfo: r.basicInfo,
-          uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
-          uploader: r.uploader,
-          moderation: r.moderation
-            ? {
-              status: r.moderation.status,
-              claimedByName:
-                r.moderation.claimedByName === null
-                  ? undefined
-                  : r.moderation.claimedByName,
-              rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote,
-            }
-            : undefined,
-        }))
-      );
-    } catch (err) {
-      console.error(err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    return () => {
+      // Cleanup
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [isEditOpen, showDeleteMetadataConfirm]);
 
-  const withdraw = (id?: string) => {
-    if (!id) return;
-    try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-      // Migrate video data trước khi xóa
-      const migrated = migrateVideoDataToVideoData(all);
-      const filtered = migrated.filter((r) => r.id !== id);
-      localStorage.setItem("localRecordings", JSON.stringify(filtered));
-      setContributions(
-        filtered
-          .filter((r) => r.uploader?.id === user?.id)
-          .map((r) => ({
-            id: r.id,
-            title: r.title,
-            basicInfo: r.basicInfo,
-            uploadedAt: (r as LocalRecordingStorage).uploadedDate || (r as LocalRecordingStorage).uploadedAt,
-            uploader: r.uploader,
-            moderation: r.moderation
-              ? {
-                status: r.moderation.status,
-                claimedByName:
-                  r.moderation.claimedByName === null
-                    ? undefined
-                    : r.moderation.claimedByName,
-                rejectionNote: (r.moderation as LocalRecordingStorage['moderation'])?.rejectionNote as string | undefined,
-              } as LocalRecordingMini['moderation']
-              : undefined,
-          }))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // Handle ESC key to close dialogs
+  useEffect(() => {
+    if (!isEditOpen && !showDeleteMetadataConfirm) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isEditOpen) {
+          setIsEditOpen(false);
+        }
+        if (showDeleteMetadataConfirm) {
+          setShowDeleteMetadataConfirm(false);
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isEditOpen, showDeleteMetadataConfirm]);
+
 
   const handleDeleteAllMetadata = () => {
     try {
@@ -342,9 +291,6 @@ export default function ProfilePage() {
       // Xóa toàn bộ dữ liệu - xóa hết tất cả các bản thu
       localStorage.removeItem("localRecordings");
 
-      // Cập nhật state để UI phản ánh thay đổi
-      setContributions([]);
-
       const actualFreed = (sizeBefore / (1024 * 1024)).toFixed(2);
       toast.success(`Đã xóa thành công ${deletedCount} bản thu (giải phóng ${actualFreed} MB).`);
       setShowDeleteMetadataConfirm(false);
@@ -358,32 +304,61 @@ export default function ProfilePage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">Hồ sơ</h1>
+          <h1 className="text-3xl font-bold text-neutral-900">Hồ sơ</h1>
           <BackButton />
         </div>
 
         <div className="prose max-w-none">
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="flex items-start justify-between">
-              <h2 className="text-2xl font-semibold mb-4 text-neutral-800">Thông tin tài khoản</h2>
-              <button type="button" onClick={openEdit} className="px-3 py-1 rounded-full bg-secondary-100 text-secondary-700">Chỉnh sửa hồ sơ</button>
+              <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Thông tin tài khoản</h2>
+              <button type="button" onClick={openEdit} className="px-4 py-2 rounded-full bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer">Chỉnh sửa hồ sơ</button>
             </div>
 
-            <p className="text-neutral-700 leading-relaxed mb-4">
+            <p className="text-neutral-700 font-medium leading-relaxed mb-4">
               <strong>Tên:</strong> {user?.fullName || user?.username} <br />
               <strong>Vai trò:</strong> {formatRole(user?.role)} <br />
               <strong>Email:</strong> {user?.email || '—'}
             </p>
-            <p className="text-neutral-700 leading-relaxed">
+            <p className="text-neutral-700 font-medium leading-relaxed">
               Tại đây bạn có thể quản lý thông tin cá nhân và theo dõi trạng thái các đóng góp mà bạn đã gửi tới VietTune.
             </p>
           </div>
 
           {/* Edit Profile Modal */}
           {isEditOpen && createPortal(
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setIsEditOpen(false); }}>
-              <div className="rounded-2xl shadow-xl border border-neutral-200 max-w-lg w-full p-6 bg-white">
-                <h3 className="text-lg font-semibold mb-4">Chỉnh sửa hồ sơ</h3>
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+              onClick={(e) => { if (e.target === e.currentTarget) setIsEditOpen(false); }}
+              style={{ 
+                animation: 'fadeIn 0.3s ease-out',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: '100vw',
+                height: '100vh',
+                position: 'fixed',
+              }}
+            >
+              <div 
+                className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
+                style={{ 
+                  backgroundColor: '#FFF2D6',
+                  animation: 'slideUp 0.3s ease-out'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-neutral-900">Chỉnh sửa hồ sơ</h3>
+                  <button
+                    onClick={() => setIsEditOpen(false)}
+                    className="p-1.5 rounded-full hover:bg-neutral-200/50 transition-colors duration-200 text-neutral-600 hover:text-neutral-800 cursor-pointer"
+                    aria-label="Đóng"
+                  >
+                    <X className="h-5 w-5" strokeWidth={2.5} />
+                  </button>
+                </div>
                 <form onSubmit={handleSaveProfile} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-800 mb-2">Họ và tên</label>
@@ -423,46 +398,46 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex justify-end gap-3">
-                    <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 rounded-full bg-neutral-200">Hủy</button>
-                    <button disabled={!isValidSnapshot()} type="submit" className="px-4 py-2 rounded-full bg-primary-600 text-white disabled:opacity-50 disabled:cursor-not-allowed">Lưu</button>
+                    <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 rounded-full bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer">Hủy</button>
+                    <button disabled={!isValidSnapshot()} type="submit" className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">Lưu</button>
                   </div>
                 </form>
               </div>
             </div>, document.body)}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-              <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Target className="h-6 w-6 text-primary-600" />
+            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+                <Target className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-neutral-800">Giới thiệu bản thân</h3>
-              <p className="text-neutral-700">Một nơi để giới thiệu bản thân, chia sẻ động lực đóng góp và tôn vinh truyền thống âm nhạc của cộng đồng.</p>
+              <h3 className="text-xl font-semibold mb-3 text-neutral-900">Giới thiệu bản thân</h3>
+              <p className="text-neutral-700 font-medium">Một nơi để giới thiệu bản thân, chia sẻ động lực đóng góp và tôn vinh truyền thống âm nhạc của cộng đồng.</p>
             </div>
 
-            <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-              <div className="bg-secondary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-secondary-600" />
+            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="bg-secondary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+                <Users className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-neutral-800">Sức mạnh cộng đồng</h3>
-              <p className="text-neutral-700">Kết nối với chuyên gia và người yêu nhạc để xác minh, duy trì và lan tỏa giá trị văn hóa.</p>
+              <h3 className="text-xl font-semibold mb-3 text-neutral-900">Sức mạnh cộng đồng</h3>
+              <p className="text-neutral-700 font-medium">Kết nối với chuyên gia và người yêu nhạc để xác minh, duy trì và lan tỏa giá trị văn hóa.</p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-neutral-200 p-6 mb-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
-            <div className="bg-primary-100 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-              <Heart className="h-6 w-6 text-primary-600" />
+          <div className="rounded-2xl border border-neutral-200/80 p-6 mb-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
+              <Heart className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-neutral-800">Mục tiêu</h3>
-            <p className="text-neutral-700">Hỗ trợ việc thu thập, lưu trữ và phổ biến các bản thu truyền thống theo chuẩn khoa học và tôn trọng bản quyền.</p>
+            <h3 className="text-xl font-semibold mb-3 text-neutral-900">Mục tiêu</h3>
+            <p className="text-neutral-700 font-medium">Hỗ trợ việc thu thập, lưu trữ và phổ biến các bản thu truyền thống theo chuẩn khoa học và tôn trọng bản quyền.</p>
           </div>
 
           {/* Expert Tools - Xóa metadata */}
           {user?.role === "EXPERT" && (
-            <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-2 text-neutral-800">Công cụ quản trị</h2>
-                  <p className="text-neutral-700 text-sm">
+                  <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Công cụ quản trị</h2>
+                  <p className="text-neutral-700 font-medium text-sm">
                     Xóa toàn bộ dữ liệu từ các bản thu để giải phóng dung lượng localStorage.
                     Tất cả thông tin sẽ bị xóa hoàn toàn, bao gồm metadata, media, và cả thông tin hệ thống (ID, ngày tải, trạng thái kiểm duyệt, người đóng góp).
                   </p>
@@ -470,98 +445,26 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => setShowDeleteMetadataConfirm(true)}
-                className="px-4 py-2 rounded-full bg-red-600 text-white font-medium hover:bg-red-700 transition-colors shadow-sm hover:shadow-md flex items-center gap-2"
+                className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer flex items-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" strokeWidth={2.5} />
                 Xóa toàn bộ metadata
               </button>
             </div>
           )}
 
-          {/* Chỉ hiển thị "Đóng góp của bạn" nếu user không phải là Expert */}
-          {user?.role !== "EXPERT" && (
-            <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-              <h2 className="text-2xl font-semibold mb-4 text-neutral-800">Đóng góp của bạn</h2>
-              {contributions.length === 0 ? (
-                <p className="text-neutral-600">Bạn chưa có đóng góp nào.</p>
-              ) : (
-                <div className="space-y-4">
-                  {contributions.filter(c => c.id).map((c) => (
-                    <div key={c.id} className="border border-neutral-200 rounded-2xl p-4" style={{ backgroundColor: '#FFFCF5' }}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-neutral-800 mb-2">
-                            {c.basicInfo?.title || c.title || 'Không có tiêu đề'}
-                          </h3>
-                          {c.basicInfo?.artist && (
-                            <div className="text-sm text-neutral-600 mb-1">Nghệ sĩ: {c.basicInfo.artist}</div>
-                          )}
-                          <div className="text-sm text-neutral-600 mb-1">Ngày tải: {c.uploadedAt ? new Date(c.uploadedAt).toLocaleString() : '-'}</div>
-                          <div className="text-sm mt-1">
-                            Trạng thái: <span className="font-medium">{getStatusLabel(c.moderation?.status)}</span>
-                            {c.moderation?.status === ModerationStatus.IN_REVIEW && c.moderation?.claimedByName && (
-                              <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {c.moderation.claimedByName}</span>
-                            )}
-                            {c.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && c.moderation?.rejectionNote && (
-                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="text-sm text-yellow-800"><strong>Ghi chú từ Expert:</strong> {c.moderation.rejectionNote}</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 ml-4">
-                          {c.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && (
-                            <button 
-                              onClick={() => {
-                                // Load the full recording data and navigate to upload page with edit mode
-                                try {
-                                  const raw = localStorage.getItem("localRecordings");
-                                  if (raw) {
-                                    const all = JSON.parse(raw);
-                                    const recording = all.find((r: LocalRecordingStorage) => r.id === c.id);
-                                    if (recording) {
-                                      // Store the recording to edit in sessionStorage
-                                      sessionStorage.setItem("editingRecording", JSON.stringify(recording));
-                                      navigate("/upload?edit=true");
-                                    }
-                                  }
-                                } catch (err) {
-                                  console.error("Error loading recording for edit:", err);
-                                }
-                              }}
-                              className="px-3 py-1 rounded-full bg-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-1"
-                            >
-                              <Edit className="h-3 w-3" />
-                              Chỉnh sửa
-                            </button>
-                          )}
-                          {(c.moderation?.status === ModerationStatus.PENDING_REVIEW || c.moderation?.status === ModerationStatus.REJECTED) && (
-                            <button onClick={() => withdraw(c.id)} className="px-3 py-1 rounded-full bg-red-600 text-white text-sm whitespace-nowrap">Hủy đóng góp</button>
-                          )}
-                          {c.moderation?.status === ModerationStatus.APPROVED && (
-                            <div className="text-sm text-green-600 font-medium whitespace-nowrap">Đã xuất bản</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Terms and Conditions Link */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 text-center" style={{ backgroundColor: '#FFFCF5' }}>
-            <div className="bg-neutral-100 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto">
-              <FileText className="h-6 w-6 text-neutral-600" />
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <div className="bg-neutral-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
+              <FileText className="h-6 w-6 text-neutral-600" strokeWidth={2.5} />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-neutral-800">Điều khoản và Điều kiện</h3>
-            <p className="text-neutral-700 mb-6">Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.</p>
+            <h3 className="text-xl font-semibold mb-3 text-neutral-900">Điều khoản và Điều kiện</h3>
+            <p className="text-neutral-700 font-medium mb-6">Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.</p>
             <Link
               to="/terms"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-full hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
             >
-              <FileText className="h-5 w-5" />
+              <FileText className="h-5 w-5" strokeWidth={2.5} />
               Xem Điều khoản và Điều kiện
             </Link>
           </div>
@@ -570,15 +473,44 @@ export default function ProfilePage() {
 
       {/* Delete Metadata Confirmation Dialog */}
       {showDeleteMetadataConfirm && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteMetadataConfirm(false); }}>
-          <div className="rounded-2xl shadow-xl border border-neutral-300 max-w-lg w-full p-6 bg-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 rounded-full">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteMetadataConfirm(false); }}
+          style={{ 
+            animation: 'fadeIn 0.3s ease-out',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            position: 'fixed',
+          }}
+        >
+          <div 
+            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
+            style={{ 
+              backgroundColor: '#FFF2D6',
+              animation: 'slideUp 0.3s ease-out'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100/90 rounded-full shadow-sm">
+                  <AlertTriangle className="h-6 w-6 text-red-600" strokeWidth={2.5} />
+                </div>
+                <h3 className="text-lg font-semibold text-neutral-900">Xác nhận xóa toàn bộ dữ liệu</h3>
               </div>
-              <h3 className="text-lg font-semibold text-neutral-800">Xác nhận xóa toàn bộ dữ liệu</h3>
+              <button
+                onClick={() => setShowDeleteMetadataConfirm(false)}
+                className="p-1.5 rounded-full hover:bg-neutral-200/50 transition-colors duration-200 text-neutral-600 hover:text-neutral-800 cursor-pointer"
+                aria-label="Đóng"
+              >
+                <X className="h-5 w-5" strokeWidth={2.5} />
+              </button>
             </div>
-            <p className="text-neutral-700 mb-6">
+            <p className="text-neutral-700 font-medium mb-6">
               Bạn có chắc chắn muốn xóa toàn bộ dữ liệu từ tất cả các bản thu không?
               Hành động này sẽ giải phóng dung lượng localStorage và xóa hoàn toàn tất cả các bản thu.
               <br /><br />
@@ -597,15 +529,15 @@ export default function ProfilePage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteMetadataConfirm(false)}
-                className="px-4 py-2 rounded-full bg-neutral-200 text-neutral-800 font-medium hover:bg-neutral-300 transition-colors"
+                className="px-4 py-2 rounded-full bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={handleDeleteAllMetadata}
-                className="px-4 py-2 rounded-full bg-red-600 text-white font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+                className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer flex items-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" strokeWidth={2.5} />
                 Xóa toàn bộ dữ liệu
               </button>
             </div>

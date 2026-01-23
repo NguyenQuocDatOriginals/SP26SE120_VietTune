@@ -6,6 +6,7 @@ import type { Recording } from "@/types";
 import { Region } from "@/types";
 import { REGION_NAMES, RECORDING_TYPE_NAMES } from "@/config/constants";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import WaveformProgressBar from "./WaveformProgressBar";
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {
@@ -124,7 +125,7 @@ export default function VideoPlayer({
 
     setVolume(media.volume);
     setDuration(isNaN(media.duration) ? 0 : media.duration || 0);
-    
+
     // Start animation frame loop
     if (!isDragging) {
       animationFrameRef.current = requestAnimationFrame(updateTime);
@@ -149,6 +150,7 @@ export default function VideoPlayer({
       }
     };
   }, [src, isYoutube, isDragging]);
+
 
   const formatTime = (t: number) => {
     if (!t || isNaN(t)) return "0:00";
@@ -293,16 +295,16 @@ export default function VideoPlayer({
                 )}
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
                 <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {(() => {
-                if (!recording?.region || !REGION_NAMES[recording.region]) return "Không xác định";
-                const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                if (originalData) {
-                  const hasRealRegion = originalData.region || originalData.culturalContext?.region;
-                  if (!hasRealRegion) return "Không xác định";
-                }
-                if (recording.region === Region.RED_RIVER_DELTA && !originalData) return "Không xác định";
-                return REGION_NAMES[recording.region];
-              })()}
+                {(() => {
+                  if (!recording?.region || !REGION_NAMES[recording.region]) return "Không xác định";
+                  const originalData = (recording as RecordingWithLocalData)._originalLocalData;
+                  if (originalData) {
+                    const hasRealRegion = originalData.region || originalData.culturalContext?.region;
+                    if (!hasRealRegion) return "Không xác định";
+                  }
+                  if (recording.region === Region.RED_RIVER_DELTA && !originalData) return "Không xác định";
+                  return REGION_NAMES[recording.region];
+                })()}
               </span>
               {recording?.recordingType && RECORDING_TYPE_NAMES[recording.recordingType] && RECORDING_TYPE_NAMES[recording.recordingType] !== "Khác" && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -362,74 +364,55 @@ export default function VideoPlayer({
 
               {/* Progress Bar */}
               <div className="mb-5 progress-bar-container" onClick={stopPropagation}>
-                <>
-                  <div
-                    className="relative h-2.5 bg-neutral-200/80 rounded-full cursor-pointer group transition-all duration-200 hover:h-3 will-change-[height]"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setIsDragging(true);
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      
-                      const updateProgress = (clientX: number) => {
-                        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                        const newTime = percent * duration;
-                        setDragTime(newTime);
-                        
-                        // Use requestAnimationFrame for smooth visual updates
-                        if (animationFrameRef.current === null) {
-                          animationFrameRef.current = requestAnimationFrame(() => {
-                            animationFrameRef.current = null;
-                          });
-                        }
-                      };
-                      
-                      updateProgress(e.clientX);
+                <WaveformProgressBar
+                  progress={progressPercent}
+                  duration={duration}
+                  currentTime={displayTime}
+                  onSeek={seekTo}
+                  formatTime={formatTime}
+                  isDragging={isDragging}
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setIsDragging(true);
+                    const rect = e.currentTarget.getBoundingClientRect();
 
-                      const onMouseMove = (moveEvent: MouseEvent) => {
-                        moveEvent.preventDefault();
-                        updateProgress(moveEvent.clientX);
-                      };
-                      
-                      const onMouseUp = () => {
-                        if (dragTime !== null) {
-                          seekTo(dragTime);
-                        }
-                        setIsDragging(false);
-                        setDragTime(null);
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                        document.removeEventListener('mouseleave', onMouseUp);
-                      };
-                      
-                      document.addEventListener('mousemove', onMouseMove, { passive: false });
-                      document.addEventListener('mouseup', onMouseUp);
-                      document.addEventListener('mouseleave', onMouseUp);
+                    const updateProgress = (clientX: number) => {
+                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                      const newTime = percent * duration;
+                      setDragTime(newTime);
+
+                      if (animationFrameRef.current === null) {
+                        animationFrameRef.current = requestAnimationFrame(() => {
+                          animationFrameRef.current = null;
+                        });
+                      }
+                    };
+
+                    updateProgress(e.clientX);
+
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      moveEvent.preventDefault();
+                      updateProgress(moveEvent.clientX);
+                    };
+
+                    const onMouseUp = () => {
+                      if (dragTime !== null) {
+                        seekTo(dragTime);
+                      }
+                      setIsDragging(false);
+                      setDragTime(null);
+                      document.removeEventListener('mousemove', onMouseMove);
+                      document.removeEventListener('mouseup', onMouseUp);
+                      document.removeEventListener('mouseleave', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove, { passive: false });
+                    document.addEventListener('mouseup', onMouseUp);
+                    document.addEventListener('mouseleave', onMouseUp);
                     }}
-                  >
-                    <div
-                      className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                      style={{ 
-                        width: `${progressPercent}%`,
-                        transition: isDragging ? 'none' : 'width 0.1s linear'
-                      }}
-                    />
-                    {/* Thumb */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-lg border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-xl transition-transform duration-200 will-change-transform"
-                      style={{ 
-                        left: `calc(${progressPercent}% - 8px)`,
-                        opacity: isDragging ? 1 : 0,
-                        transition: isDragging ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'
-                      }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2.5">
-                    <span className="text-xs text-neutral-600 font-medium tabular-nums">{formatTime(displayTime)}</span>
-                    <span className="text-xs text-neutral-600 font-medium tabular-nums">{formatTime(duration)}</span>
-                  </div>
-                </>
-              </div>
+                  />
+                </div>
 
               {/* Controls */}
               <div className="relative flex items-center justify-between">
@@ -501,12 +484,12 @@ export default function VideoPlayer({
                       e.preventDefault();
                       setIsDraggingVolume(true);
                       const rect = e.currentTarget.getBoundingClientRect();
-                      
+
                       const updateVolume = (clientX: number) => {
                         const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                         const newVolume = percent;
                         setDragVolume(newVolume);
-                        
+
                         // Use requestAnimationFrame for smooth visual updates
                         if (volumeAnimationFrameRef.current === null) {
                           volumeAnimationFrameRef.current = requestAnimationFrame(() => {
@@ -514,14 +497,14 @@ export default function VideoPlayer({
                           });
                         }
                       };
-                      
+
                       updateVolume(e.clientX);
 
                       const onMouseMove = (moveEvent: MouseEvent) => {
                         moveEvent.preventDefault();
                         updateVolume(moveEvent.clientX);
                       };
-                      
+
                       const onMouseUp = () => {
                         if (dragVolume !== null) {
                           handleVolume(dragVolume);
@@ -532,7 +515,7 @@ export default function VideoPlayer({
                         document.removeEventListener('mouseup', onMouseUp);
                         document.removeEventListener('mouseleave', onMouseUp);
                       };
-                      
+
                       document.addEventListener('mousemove', onMouseMove, { passive: false });
                       document.addEventListener('mouseup', onMouseUp);
                       document.addEventListener('mouseleave', onMouseUp);
@@ -541,7 +524,7 @@ export default function VideoPlayer({
                     <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/volume transition-all duration-200 hover:h-2.5 will-change-[height]">
                       <div
                         className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                        style={{ 
+                        style={{
                           width: `${(isMuted ? 0 : displayVolume) * 100}%`,
                           transition: isDraggingVolume ? 'none' : 'width 0.1s linear'
                         }}
@@ -549,7 +532,7 @@ export default function VideoPlayer({
                       {/* Thumb */}
                       <div
                         className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-lg transition-transform duration-200 will-change-transform"
-                        style={{ 
+                        style={{
                           left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
                           opacity: isDraggingVolume ? 1 : 0,
                           transition: isDraggingVolume ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'
@@ -675,65 +658,16 @@ export default function VideoPlayer({
             {isYoutube ? (
               <div className="h-1.5 bg-neutral-200 rounded-full opacity-50" />
             ) : (
-              <>
-                <div
-                  className="relative h-1.5 bg-neutral-200 rounded-full cursor-pointer will-change-[height]"
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setIsDragging(true);
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    
-                    const updateProgress = (clientX: number) => {
-                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                      const newTime = percent * duration;
-                      setDragTime(newTime);
-                    };
-                    
-                    updateProgress(e.clientX);
-
-                    const onMouseMove = (moveEvent: MouseEvent) => {
-                      moveEvent.preventDefault();
-                      updateProgress(moveEvent.clientX);
-                    };
-                    
-                    const onMouseUp = () => {
-                      if (dragTime !== null) {
-                        seekTo(dragTime);
-                      }
-                      setIsDragging(false);
-                      setDragTime(null);
-                      document.removeEventListener('mousemove', onMouseMove);
-                      document.removeEventListener('mouseup', onMouseUp);
-                      document.removeEventListener('mouseleave', onMouseUp);
-                    };
-                    
-                    document.addEventListener('mousemove', onMouseMove, { passive: false });
-                    document.addEventListener('mouseup', onMouseUp);
-                    document.addEventListener('mouseleave', onMouseUp);
-                  }}
-                >
-                  <div
-                    className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full will-change-[width]"
-                    style={{ 
-                      width: `${progressPercent}%`,
-                      transition: isDragging ? 'none' : 'width 0.1s linear'
-                    }}
-                  />
-                  {/* Thumb */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary-600 rounded-full shadow-sm border-2 border-white cursor-grab active:cursor-grabbing will-change-transform"
-                    style={{ 
-                      left: `calc(${progressPercent}% - 6px)`,
-                      transition: isDragging ? 'none' : 'transform 0.1s linear'
-                    }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-neutral-500">{formatTime(displayTime)}</span>
-                  <span className="text-xs text-neutral-500">{formatTime(duration)}</span>
-                </div>
-              </>
+              <WaveformProgressBar
+                progress={progressPercent}
+                duration={duration}
+                currentTime={displayTime}
+                onSeek={seekTo}
+                formatTime={formatTime}
+                isDragging={isDragging}
+                barCount={60}
+                className="h-12"
+              />
             )}
           </div>
         </div>
@@ -799,73 +733,54 @@ export default function VideoPlayer({
           {isYoutube ? (
             <div className="h-2.5 bg-neutral-200/60 rounded-full opacity-50" />
           ) : (
-            <>
-              <div
-                className="relative h-2.5 bg-neutral-200/80 rounded-full cursor-pointer group transition-all duration-200 hover:h-3 will-change-[height]"
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsDragging(true);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  
-                  const updateProgress = (clientX: number) => {
-                    const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    const newTime = percent * duration;
-                    setDragTime(newTime);
-                    
-                    // Use requestAnimationFrame for smooth visual updates
-                    if (animationFrameRef.current === null) {
-                      animationFrameRef.current = requestAnimationFrame(() => {
-                        animationFrameRef.current = null;
-                      });
-                    }
-                  };
-                  
-                  updateProgress(e.clientX);
+            <WaveformProgressBar
+              progress={progressPercent}
+              duration={duration}
+              currentTime={displayTime}
+              onSeek={seekTo}
+              formatTime={formatTime}
+              isDragging={isDragging}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsDragging(true);
+                const rect = e.currentTarget.getBoundingClientRect();
 
-                  const onMouseMove = (moveEvent: MouseEvent) => {
-                    moveEvent.preventDefault();
-                    updateProgress(moveEvent.clientX);
-                  };
-                  
-                  const onMouseUp = () => {
-                    if (dragTime !== null) {
-                      seekTo(dragTime);
-                    }
-                    setIsDragging(false);
-                    setDragTime(null);
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                    document.removeEventListener('mouseleave', onMouseUp);
-                  };
-                  
-                  document.addEventListener('mousemove', onMouseMove, { passive: false });
-                  document.addEventListener('mouseup', onMouseUp);
-                  document.addEventListener('mouseleave', onMouseUp);
-                }}
-              >
-                <div
-                  className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                  style={{ 
-                    width: `${progressPercent}%`,
-                    transition: isDragging ? 'none' : 'width 0.1s linear'
-                  }}
-                />
-                {/* Thumb */}
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-primary-600 rounded-full shadow-lg border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-xl transition-transform duration-200 will-change-transform"
-                  style={{ 
-                    left: `calc(${progressPercent}% - 8px)`,
-                    opacity: isDragging ? 1 : 0,
-                    transition: isDragging ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'
-                  }}
-                />
-              </div>
-              <div className="flex justify-between mt-2.5">
-                <span className="text-xs text-neutral-600 font-medium tabular-nums">{formatTime(displayTime)}</span>
-                <span className="text-xs text-neutral-600 font-medium tabular-nums">{formatTime(duration)}</span>
-              </div>
-            </>
+                const updateProgress = (clientX: number) => {
+                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                  const newTime = percent * duration;
+                  setDragTime(newTime);
+
+                  if (animationFrameRef.current === null) {
+                    animationFrameRef.current = requestAnimationFrame(() => {
+                      animationFrameRef.current = null;
+                    });
+                  }
+                };
+
+                updateProgress(e.clientX);
+
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  moveEvent.preventDefault();
+                  updateProgress(moveEvent.clientX);
+                };
+
+                const onMouseUp = () => {
+                  if (dragTime !== null) {
+                    seekTo(dragTime);
+                  }
+                  setIsDragging(false);
+                  setDragTime(null);
+                  document.removeEventListener('mousemove', onMouseMove);
+                  document.removeEventListener('mouseup', onMouseUp);
+                  document.removeEventListener('mouseleave', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove, { passive: false });
+                document.addEventListener('mouseup', onMouseUp);
+                document.addEventListener('mouseleave', onMouseUp);
+              }}
+            />
           )}
         </div>
 
@@ -939,12 +854,12 @@ export default function VideoPlayer({
                 e.preventDefault();
                 setIsDraggingVolume(true);
                 const rect = e.currentTarget.getBoundingClientRect();
-                
+
                 const updateVolume = (clientX: number) => {
                   const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
                   const newVolume = percent;
                   setDragVolume(newVolume);
-                  
+
                   // Use requestAnimationFrame for smooth visual updates
                   if (volumeAnimationFrameRef.current === null) {
                     volumeAnimationFrameRef.current = requestAnimationFrame(() => {
@@ -952,14 +867,14 @@ export default function VideoPlayer({
                     });
                   }
                 };
-                
+
                 updateVolume(e.clientX);
 
                 const onMouseMove = (moveEvent: MouseEvent) => {
                   moveEvent.preventDefault();
                   updateVolume(moveEvent.clientX);
                 };
-                
+
                 const onMouseUp = () => {
                   if (dragVolume !== null) {
                     handleVolume(dragVolume);
@@ -970,7 +885,7 @@ export default function VideoPlayer({
                   document.removeEventListener('mouseup', onMouseUp);
                   document.removeEventListener('mouseleave', onMouseUp);
                 };
-                
+
                 document.addEventListener('mousemove', onMouseMove, { passive: false });
                 document.addEventListener('mouseup', onMouseUp);
                 document.addEventListener('mouseleave', onMouseUp);
@@ -979,7 +894,7 @@ export default function VideoPlayer({
               <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/volume transition-all duration-200 hover:h-2.5 will-change-[height]">
                 <div
                   className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                  style={{ 
+                  style={{
                     width: `${(isMuted ? 0 : displayVolume) * 100}%`,
                     transition: isDraggingVolume ? 'none' : 'width 0.1s linear'
                   }}
@@ -987,7 +902,7 @@ export default function VideoPlayer({
                 {/* Thumb */}
                 <div
                   className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-lg transition-transform duration-200 will-change-transform"
-                  style={{ 
+                  style={{
                     left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
                     opacity: isDraggingVolume ? 1 : 0,
                     transition: isDraggingVolume ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'

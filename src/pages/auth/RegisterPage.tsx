@@ -57,7 +57,7 @@ export default function RegisterPage() {
       {!fromLogout && <div className="absolute top-4 right-4"><BackButton /></div>}
       <div className="max-w-md w-full">
         <form
-          className="bg-white p-5 rounded-2xl shadow-xl space-y-2.5"
+          className="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-neutral-200/80 shadow-2xl transition-all duration-300 hover:shadow-2xl space-y-2.5"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col items-center">

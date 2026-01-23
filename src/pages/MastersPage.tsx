@@ -5,18 +5,18 @@ export default function MastersPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Nghệ nhân âm nhạc
           </h1>
           <BackButton />
         </div>
 
         {/* Introduction */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Những người giữ lửa truyền thống
           </h2>
-          <p className="text-neutral-600 leading-relaxed mb-4">
+          <p className="text-neutral-600 font-medium leading-relaxed mb-4">
             Các nghệ nhân là kho kiến thức sống về âm nhạc truyền thống. Họ nắm
             giữ cách làm nhạc cụ, kỹ thuật biểu diễn và ý nghĩa của từng giai
             điệu - đều được học qua nhiều đời.
@@ -29,13 +29,13 @@ export default function MastersPage() {
         </div>
 
         {/* Roles and Significance */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Vai trò của nghệ nhân âm nhạc
           </h2>
           <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Chuyên gia nghi lễ và thầy cúng
               </h3>
               <p className="leading-relaxed">
@@ -49,7 +49,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Thợ làm nhạc cụ và người đổi mới
               </h3>
               <p className="leading-relaxed">
@@ -63,7 +63,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Ca sử thi và sử gia truyền miệng
               </h3>
               <p className="leading-relaxed">
@@ -76,7 +76,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Chỉ huy dàn cồng chiêng
               </h3>
               <p className="leading-relaxed">
@@ -90,7 +90,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Giáo viên và người truyền văn hóa
               </h3>
               <p className="leading-relaxed">
@@ -105,13 +105,13 @@ export default function MastersPage() {
         </div>
 
         {/* Notable Traditions */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Các truyền thống âm nhạc tiêu biểu và nghệ nhân
           </h2>
           <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Hát thần (Tày, Nùng, Thái)
               </h3>
               <p className="leading-relaxed">
@@ -124,7 +124,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Thổi khèn (H'Mông)</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">Thổi khèn (H'Mông)</h3>
               <p className="leading-relaxed">
                 Nghệ nhân <em>khèn</em> có thể thực hiện giai điệu đa thanh phức
                 tạp đồng thời với âm trầm kéo dài, tạo không gian âm thanh tinh
@@ -136,7 +136,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Hòa tấu cồng chiêng (Cao nguyên Trung Bộ)
               </h3>
               <p className="leading-relaxed">
@@ -150,7 +150,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Ca trù (Nhạc cổ điển miền Bắc)
               </h3>
               <p className="leading-relaxed">
@@ -164,7 +164,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Đờn ca tài tử (Nhạc tài tử miền Nam)
               </h3>
               <p className="leading-relaxed">
@@ -180,13 +180,13 @@ export default function MastersPage() {
         </div>
 
         {/* Challenges and Preservation */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Thách thức của việc truyền thống
           </h2>
           <div className="space-y-4 text-neutral-700">
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">Nghệ nhân già cỗ</h3>
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">Nghệ nhân già cỗ</h3>
               <p className="leading-relaxed">
                 Nhiều nghệ nhân đã ngoài 70, 80 tuổi hoặc hơn. Khi họ qua đời,
                 kiến thức quý giá biến mất. Tính chất truyền miệng có nghĩa buổi
@@ -196,7 +196,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Giới trẻ không quan tâm và di cư
               </h3>
               <p className="leading-relaxed">
@@ -209,7 +209,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Mất bối cảnh biểu diễn
               </h3>
               <p className="leading-relaxed">
@@ -222,7 +222,7 @@ export default function MastersPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold mb-2 text-neutral-800">
+              <h3 className="text-xl font-semibold mb-2 text-neutral-900">
                 Thiếu tài liệu và công nhận
               </h3>
               <p className="leading-relaxed">
@@ -238,8 +238,8 @@ export default function MastersPage() {
         </div>
 
         {/* How to Contribute */}
-        <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
+        <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Đóng góp tài liệu hóa nghệ nhân
           </h2>
           <div className="text-neutral-700">

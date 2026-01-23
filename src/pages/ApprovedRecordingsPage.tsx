@@ -217,7 +217,7 @@ export default function ApprovedRecordingsPage() {
         const isMyReview = it.moderation?.reviewerId === user?.id;
 
         return (
-            <div key={it.id} className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
+            <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                 <div className="mb-4 flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -225,7 +225,7 @@ export default function ApprovedRecordingsPage() {
                                 {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
                             </div>
                             {isMyReview && (
-                                <span className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
                                     Đã được tôi kiểm duyệt
                                 </span>
                             )}
@@ -275,10 +275,10 @@ export default function ApprovedRecordingsPage() {
                         ) : (
                             <button
                                 onClick={() => setShowDeleteConfirm(prev => ({ ...prev, [it.id || '']: true }))}
-                                className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 active:scale-95 cursor-pointer"
                                 title="Xóa bản thu khỏi hệ thống"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" strokeWidth={2.5} />
                             </button>
                         )}
                     </div>
@@ -419,20 +419,20 @@ export default function ApprovedRecordingsPage() {
                 </div>
 
                 {items.length === 0 ? (
-                    <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
-                        <h2 className="text-xl font-semibold mb-2 text-neutral-800">Không có bản thu</h2>
-                        <p className="text-neutral-700">Không có bản thu nào đã được kiểm duyệt.</p>
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                        <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
+                        <p className="text-neutral-700 font-medium">Không có bản thu nào đã được kiểm duyệt.</p>
                     </div>
                 ) : (
                     <div className="space-y-8">
                         {/* Bản thu do tôi kiểm duyệt */}
                         {myApproved.length > 0 && (
                             <div>
-                                <h2 className="text-2xl font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-                                    <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
+                                <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
                                         Bản thu do tôi kiểm duyệt
                                     </span>
-                                    <span className="text-sm font-normal text-neutral-500">({myApproved.length})</span>
+                                    <span className="text-sm font-normal text-neutral-600">({myApproved.length})</span>
                                 </h2>
                                 <div className="space-y-6">
                                     {myApproved.map((it) => renderRecordingItem(it))}
@@ -443,11 +443,11 @@ export default function ApprovedRecordingsPage() {
                         {/* Bản thu do chuyên gia khác kiểm duyệt */}
                         {othersApproved.length > 0 && (
                             <div>
-                                <h2 className="text-2xl font-semibold text-neutral-800 mb-4 flex items-center gap-2">
-                                    <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-full text-sm font-medium">
+                                <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
                                         Bản thu do chuyên gia khác kiểm duyệt
                                     </span>
-                                    <span className="text-sm font-normal text-neutral-500">({othersApproved.length})</span>
+                                    <span className="text-sm font-normal text-neutral-600">({othersApproved.length})</span>
                                 </h2>
                                 <div className="space-y-6">
                                     {othersApproved.map((it) => renderRecordingItem(it))}

@@ -15,8 +15,8 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
   }
 
   return (
-    <Link to={`/recordings/${recording.id}`} className="block">
-      <div className="rounded-2xl shadow-md border border-neutral-200 overflow-hidden hover:shadow-lg transition-shadow" style={{ backgroundColor: '#FFFCF5' }}>
+    <Link to={`/recordings/${recording.id}`} className="block cursor-pointer">
+      <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
         {/* Cover Image */}
         <div className="relative h-48 bg-neutral-100">
           {recording.coverImage ? (
@@ -40,10 +40,10 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
 
           {/* Play button overlay */}
           <div
-            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all flex items-center justify-center group"
+            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
           >
-            <div className="bg-white rounded-full p-4 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-              <Play className="h-8 w-8 text-primary-600" />
+            <div className="bg-white rounded-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110">
+              <Play className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
             </div>
           </div>
 
@@ -58,42 +58,42 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-neutral-800 mb-1 line-clamp-1">
+      <div className="p-5">
+        <h3 className="font-semibold text-neutral-900 text-lg mb-1 line-clamp-1">
           {recording.title}
         </h3>
         {recording.titleVietnamese && (
-          <p className="text-sm text-neutral-500 mb-2 line-clamp-1">
+          <p className="text-sm text-neutral-600 font-medium mb-3 line-clamp-1">
             {recording.titleVietnamese}
           </p>
         )}
 
-        <div className="flex items-center space-x-2 mb-3">
-          <Badge variant="primary" size="sm">
+        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
             {recording.ethnicity.nameVietnamese}
-          </Badge>
-          <Badge variant="secondary" size="sm">
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
             {RECORDING_TYPE_NAMES[recording.recordingType]}
-          </Badge>
+          </span>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-neutral-500">
-          <div className="flex items-center space-x-3">
-            <span className="flex items-center">
-              <Eye className="h-3 w-3 mr-1" />
+        <div className="flex items-center justify-between text-xs text-neutral-600 font-medium">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
               {recording.viewCount}
             </span>
-            <span className="flex items-center">
-              <Heart className="h-3 w-3 mr-1" />
+            <span className="flex items-center gap-1">
+              <Heart className="h-3.5 w-3.5" strokeWidth={2.5} />
               {recording.likeCount}
             </span>
-            <span className="flex items-center">
-              <Download className="h-3 w-3 mr-1" />
+            <span className="flex items-center gap-1">
+              <Download className="h-3.5 w-3.5" strokeWidth={2.5} />
               {recording.downloadCount}
             </span>
           </div>
-          <span>
+          <span className="tabular-nums">
             {Math.floor(recording.duration / 60)}:
             {(recording.duration % 60).toString().padStart(2, "0")}
           </span>

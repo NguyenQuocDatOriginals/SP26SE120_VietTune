@@ -60,18 +60,18 @@ function FeatureCard({
   return (
     <Link
       to={to}
-      className="group p-8 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all h-full flex flex-col items-center text-center"
+      className="group p-8 rounded-xl border border-neutral-200/80 hover:border-primary-300/80 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col items-center text-center cursor-pointer"
       style={{ backgroundColor: "#FFFCF5" }}
       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#FFF7E6")}
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#FFFCF5")}
     >
-      <div className="p-3 bg-primary-100 rounded-xl w-fit mb-4 group-hover:bg-primary-200 transition-colors">
-        <Icon className="h-6 w-6 text-primary-600" />
+      <div className="p-3 bg-primary-100/90 rounded-xl w-fit mb-4 group-hover:bg-primary-200/90 transition-all duration-300 shadow-sm group-hover:shadow-md">
+        <Icon className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
       </div>
-      <h3 className={`text-xl font-semibold text-neutral-800 mb-3 group-hover:text-primary-600 transition-colors ${title === "Quản lý bản thu đã được kiểm duyệt" ? "whitespace-nowrap" : ""}`}>
+      <h3 className={`text-xl font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300 ${title === "Quản lý bản thu đã được kiểm duyệt" ? "whitespace-nowrap" : ""}`}>
         {title}
       </h3>
-      <p className="text-neutral-600 leading-relaxed flex-grow line-clamp-2 text-sm">{description}</p>
+      <p className="text-neutral-600 font-medium leading-relaxed flex-grow line-clamp-2 text-sm">{description}</p>
     </Link>
   );
 }
@@ -155,7 +155,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section with Features */}
         <div
-          className="rounded-2xl shadow-lg p-8 md:p-12 mb-8"
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 md:p-12 mb-8 transition-all duration-300 hover:shadow-xl"
           style={{ backgroundColor: "#FFFCF5" }}
         >
           <div className="text-center mb-8">
@@ -204,7 +204,7 @@ export default function HomePage() {
         {/* Popular Recordings Section */}
         {popularRecordings.length > 0 && (
           <div
-            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
             style={{ backgroundColor: "#FFFCF5" }}
           >
             <SectionHeader
@@ -225,7 +225,7 @@ export default function HomePage() {
         {/* Recent Recordings Section */}
         {recentRecordings.length > 0 && (
           <div
-            className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8"
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
             style={{ backgroundColor: "#FFFCF5" }}
           >
             <SectionHeader
@@ -245,23 +245,23 @@ export default function HomePage() {
 
         {/* Terms and Conditions Section */}
         <div
-          className="rounded-2xl shadow-md border border-neutral-200 p-8 text-center"
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl"
           style={{ backgroundColor: "#FFFCF5" }}
         >
-          <div className="bg-neutral-100 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto">
-            <FileText className="h-6 w-6 text-neutral-600" />
+          <div className="bg-neutral-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
+            <FileText className="h-6 w-6 text-neutral-600" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-semibold mb-3 text-neutral-800">
+          <h3 className="text-xl font-semibold mb-3 text-neutral-900">
             Điều khoản và Điều kiện
           </h3>
-          <p className="text-neutral-700 mb-6">
+          <p className="text-neutral-700 mb-6 font-medium">
             Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
           </p>
           <Link
             to="/terms"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white font-semibold rounded-full hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
           >
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5" strokeWidth={2.5} />
             Xem Điều khoản và Điều kiện
           </Link>
         </div>

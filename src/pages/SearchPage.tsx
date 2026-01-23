@@ -253,13 +253,13 @@ export default function SearchPage() {
         </div>
 
         {/* Main Search Form */}
-        <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
           <SearchBar onSearch={handleSearch} initialFilters={filters} />
         </div>
 
         {/* Search Results */}
         {hasSearched && (
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8 mb-8" style={{ backgroundColor: '#FFFCF5' }}>
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
             {/* Results Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -280,14 +280,14 @@ export default function SearchPage() {
                 <LoadingSpinner size="lg" />
               </div>
             ) : recordings.length === 0 ? (
-              <div className="border border-neutral-200 rounded-xl p-12 text-center" style={{ backgroundColor: '#FFFCF5' }}>
-                <div className="p-4 bg-primary-100 rounded-2xl w-fit mx-auto mb-4">
-                  <Search className="h-8 w-8 text-primary-600" />
+              <div className="border border-neutral-200/80 rounded-xl p-12 text-center shadow-sm backdrop-blur-sm" style={{ backgroundColor: '#FFFCF5' }}>
+                <div className="p-4 bg-primary-100/90 rounded-2xl w-fit mx-auto mb-4 shadow-sm">
+                  <Search className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-xl font-semibold text-neutral-800 mb-2">
+                <h3 className="text-xl font-semibold text-neutral-900 mb-2">
                   Không tìm thấy bản thu
                 </h3>
-                <p className="text-neutral-600 max-w-md mx-auto leading-relaxed">
+                <p className="text-neutral-600 font-medium max-w-md mx-auto leading-relaxed">
                   Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn
                 </p>
               </div>
@@ -478,10 +478,10 @@ export default function SearchPage() {
 
         {/* Initial State - Search Tips */}
         {!hasSearched && (
-          <div className="border border-neutral-200 rounded-2xl p-8 shadow-md" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800 flex items-center gap-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <Search className="h-5 w-5 text-primary-600" />
+          <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
+              <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+                <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
               </div>
               Mẹo tìm kiếm
             </h2>

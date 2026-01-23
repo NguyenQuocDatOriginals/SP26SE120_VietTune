@@ -11,8 +11,8 @@ export default function AdminDashboard() {
           <BackButton />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md border border-neutral-300 p-8">
-          <p className="text-neutral-700">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl border border-neutral-200/80 shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+          <p className="text-neutral-700 font-medium">
             Bảng điều khiển quản trị với các tính năng quản lý người dùng, kiểm
             duyệt nội dung và phân tích dữ liệu sẽ được triển khai tại đây.
           </p>

@@ -14,6 +14,7 @@ import TermsPage from "./pages/TermsPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
+import ContributionsPage from "./pages/ContributionsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ModerationPage from "./pages/ModerationPage";
 import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
@@ -155,6 +156,7 @@ function App() {
           <Route path="about" element={<AboutPage />} />
           <Route path="terms" element={<TermsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="contributions" element={<ContributionsPage />} />
           <Route path="moderation" element={<ModerationPage />} />
           <Route path="approved-recordings" element={<ApprovedRecordingsPage />} />
           <Route path="admin/*" element={<AdminDashboard />} />

@@ -5,7 +5,7 @@ export default function TermsPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Điều khoản và Điều kiện
           </h1>
           <BackButton />
@@ -13,22 +13,22 @@ export default function TermsPage() {
 
         <div className="prose max-w-none space-y-6">
           {/* Preamble */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-6" style={{ backgroundColor: '#FFFCF5' }}>
-            <p className="text-neutral-700 leading-relaxed">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <p className="text-neutral-700 font-medium leading-relaxed">
               <strong className="text-neutral-900">Lưu ý quan trọng:</strong> Vui lòng đọc kỹ các Điều khoản và Điều kiện này trước khi sử dụng Nền tảng VietTune. Bằng việc truy cập, đăng ký tài khoản hoặc sử dụng bất kỳ tính năng nào của Nền tảng, Người dùng được xem là đã đọc, hiểu rõ và đồng ý ràng buộc bởi toàn bộ nội dung của văn bản này.
             </p>
           </div>
 
           {/* 1. Definitions */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 1. Định nghĩa và giải thích thuật ngữ
             </h2>
-            <p className="text-neutral-700 leading-relaxed mb-4">
+            <p className="text-neutral-700 font-medium leading-relaxed mb-4">
               Trong văn bản Điều khoản và Điều kiện này, các thuật ngữ dưới đây được hiểu như sau:
             </p>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>1.1. "Nền tảng" hoặc "VietTune"</strong>: Hệ thống lưu trữ âm nhạc truyền thống Việt Nam trực tuyến, bao gồm website, ứng dụng di động và các dịch vụ liên quan do VietTune vận hành.
               </p>
               <p className="leading-relaxed">
@@ -50,12 +50,12 @@ export default function TermsPage() {
           </div>
 
           {/* 2. General Provisions */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 2. Quy định chung
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>2.1. Phạm vi điều chỉnh:</strong> Điều khoản và Điều kiện này điều chỉnh mọi hoạt động truy cập, sử dụng Nền tảng VietTune và mối quan hệ pháp lý giữa VietTune với Người dùng.
               </p>
               <p className="leading-relaxed">
@@ -71,12 +71,12 @@ export default function TermsPage() {
           </div>
 
           {/* 3. Mission and Purpose */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 3. Sứ mệnh và mục đích hoạt động
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>3.1.</strong> VietTune là nền tảng số hóa và lưu trữ chuyên biệt, được xây dựng với sứ mệnh gìn giữ, bảo tồn và phát huy giá trị âm nhạc truyền thống của 54 dân tộc Việt Nam cho các thế hệ mai sau.
               </p>
               <p className="leading-relaxed">
@@ -96,12 +96,12 @@ export default function TermsPage() {
           </div>
 
           {/* 4. User Account */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 4. Đăng ký và quản lý Tài khoản
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>4.1. Điều kiện đăng ký:</strong> Người dùng phải đủ 16 tuổi trở lên hoặc có sự đồng ý của người giám hộ hợp pháp để đăng ký Tài khoản. Đối với tổ chức, người đăng ký phải có thẩm quyền đại diện hợp pháp.
               </p>
               <p className="leading-relaxed">
@@ -129,12 +129,12 @@ export default function TermsPage() {
           </div>
 
           {/* 5. Content Contribution */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 5. Đóng góp và sử dụng Nội dung
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>5.1. Tiêu chuẩn Nội dung:</strong> Nội dung đóng góp phải đáp ứng các tiêu chuẩn sau:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
@@ -167,12 +167,12 @@ export default function TermsPage() {
           </div>
 
           {/* 6. Intellectual Property */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 6. Quyền sở hữu trí tuệ
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>6.1. Quyền của Người đóng góp:</strong> Người đóng góp giữ nguyên quyền sở hữu trí tuệ đối với Nội dung do mình tạo ra. Việc đóng góp không cấu thành việc chuyển nhượng quyền sở hữu.
               </p>
               <p className="leading-relaxed">
@@ -199,12 +199,12 @@ export default function TermsPage() {
           </div>
 
           {/* 7. Verification Process */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 7. Quy trình xác minh và kiểm duyệt
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>7.1. Nguyên tắc xác minh:</strong> Mọi Nội dung đóng góp đều trải qua quy trình xác minh nhằm đảm bảo tính xác thực, chính xác và phù hợp với tiêu chuẩn của Nền tảng.
               </p>
               <p className="leading-relaxed">
@@ -230,12 +230,12 @@ export default function TermsPage() {
           </div>
 
           {/* 8. Privacy and Data Protection */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 8. Quyền riêng tư và bảo vệ dữ liệu cá nhân
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>8.1. Cam kết bảo vệ:</strong> VietTune cam kết bảo vệ quyền riêng tư và dữ liệu cá nhân của Người dùng theo quy định pháp luật Việt Nam về bảo vệ dữ liệu cá nhân và thông lệ quốc tế.
               </p>
               <p className="leading-relaxed">
@@ -263,12 +263,12 @@ export default function TermsPage() {
           </div>
 
           {/* 9. Community Standards */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 9. Quy tắc ứng xử cộng đồng
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>9.1. Nguyên tắc chung:</strong> Người dùng cam kết duy trì môi trường cộng đồng lành mạnh, tôn trọng và xây dựng trên Nền tảng.
               </p>
               <p className="leading-relaxed">
@@ -295,12 +295,12 @@ export default function TermsPage() {
           </div>
 
           {/* 10. Prohibited Activities */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 10. Các hành vi bị nghiêm cấm
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>10.1.</strong> Người dùng không được thực hiện các hành vi sau:
               </p>
               <ul className="list-disc list-inside space-y-1 ml-4">
@@ -324,8 +324,8 @@ export default function TermsPage() {
           </div>
 
           {/* 11-20 Combined */}
-          <div className="rounded-2xl shadow-md border border-neutral-200 p-8" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-neutral-800">
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 11. Ghi nhận nguồn và trích dẫn
             </h2>
             <div className="space-y-3 text-neutral-700 mb-6">
@@ -387,7 +387,7 @@ export default function TermsPage() {
               Điều 17-20. Điều khoản chung
             </h2>
             <div className="space-y-3 text-neutral-700">
-              <p className="leading-relaxed">
+              <p className="font-medium leading-relaxed">
                 <strong>17. Luật áp dụng:</strong> Điều khoản này được điều chỉnh theo pháp luật Việt Nam. Tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền tại Việt Nam.
               </p>
               <p className="leading-relaxed">

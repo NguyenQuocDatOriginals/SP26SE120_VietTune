@@ -50,8 +50,8 @@ export default function Header() {
     }
   }, [isMenuOpen]);
   return (
-    <header className="sticky top-0 z-50 pt-4 px-4">
-      <nav className="bg-primary-700 rounded-full">
+    <header className="sticky top-0 z-[60] pt-4 px-4">
+      <nav className="bg-gradient-to-br from-primary-700 to-primary-800 rounded-full shadow-lg backdrop-blur-sm">
         <div className="px-6 py-2.5">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -85,12 +85,21 @@ export default function Header() {
                   Đóng góp bản thu
                 </Link>
               )}
-              <Link
-                to="/instruments"
-                className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
-              >
-                Nhạc cụ truyền thống
-              </Link>
+              {user?.role !== "EXPERT" ? (
+                <Link
+                  to="/contributions"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Đóng góp của bạn
+                </Link>
+              ) : (
+                <Link
+                  to="/instruments"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Nhạc cụ truyền thống
+                </Link>
+              )}
               <Link
                 to="/ethnicities"
                 className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
@@ -115,9 +124,9 @@ export default function Header() {
             <div className="hidden lg:flex lg:items-center lg:space-x-3 flex-shrink-0">
               <Link
                 to="/search"
-                className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-colors"
+                className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-5 w-5" strokeWidth={2.5} />
               </Link>
 
               {isAuthenticated ? (
@@ -131,9 +140,9 @@ export default function Header() {
                       onClick={() => setIsMenuOpen((s) => !s)}
                       aria-expanded={isMenuOpen}
                       aria-haspopup="menu"
-                      className="flex items-center gap-1.5 text-sm px-4 py-2 bg-white/10 text-white font-medium rounded-full hover:bg-white/20 transition-colors shadow-md hover:shadow-lg min-w-[140px] justify-center"
+                      className="flex items-center gap-1.5 text-sm px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer min-w-[140px] justify-center"
                     >
-                      <User className="h-4 w-4" />
+                      <User className="h-4 w-4" strokeWidth={2.5} />
                       <span className="text-xs font-medium">{user?.username}</span>
                     </button>
 
@@ -141,7 +150,7 @@ export default function Header() {
                     {isMenuOpen && (
                       <div
                         ref={(el) => (menuRef.current = el)}
-                        className="absolute right-0 mt-2 rounded-2xl shadow-xl border border-neutral-300 overflow-hidden bg-[#FFFCF5] z-50 w-56"
+                        className="absolute right-0 mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-[#FFFCF5] z-[70] w-56 transition-all duration-300"
                         style={{
                           top: '100%',
                         }}
@@ -151,24 +160,24 @@ export default function Header() {
                             to="/profile"
                             ref={firstMenuItemRef}
                             onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center px-5 py-3 text-sm text-neutral-900 hover:bg-primary-100 hover:text-primary-700 transition-colors"
+                            className="flex items-center px-5 py-3 text-sm text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 cursor-pointer"
                           >
-                            <User className="h-4 w-4 mr-2 text-current" />
+                            <User className="h-4 w-4 mr-2 text-current" strokeWidth={2.5} />
                             Hồ sơ
                           </Link>
                           {user?.role === "ADMIN" && (
                             <Link
                               to="/admin"
-                              className="block px-5 py-3 text-sm text-neutral-900 hover:bg-primary-100 hover:text-primary-700 transition-colors"
+                              className="block px-5 py-3 text-sm text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 cursor-pointer"
                             >
                               Quản trị hệ thống
                             </Link>
                           )}
                           <button
                             onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                            className="w-full text-left px-5 py-3 text-sm text-primary-600 hover:bg-primary-100 hover:text-primary-700 transition-colors flex items-center"
+                            className="w-full text-left px-5 py-3 text-sm text-primary-600 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 flex items-center cursor-pointer"
                           >
-                            <LogOut className="h-4 w-4 mr-2" />
+                            <LogOut className="h-4 w-4 mr-2" strokeWidth={2.5} />
                             Đăng xuất
                           </button>
                         </div>
@@ -186,7 +195,7 @@ export default function Header() {
                   </Link>
                   <Link
                     to="/register"
-                    className="text-sm px-4 py-2 bg-secondary-500 text-white font-semibold rounded-full hover:bg-secondary-600 transition-colors"
+                    className="text-sm px-4 py-2 bg-gradient-to-br from-secondary-500 to-secondary-600 hover:from-secondary-400 hover:to-secondary-500 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-secondary-500/40 hover:scale-110 active:scale-95 cursor-pointer"
                   >
                     Đăng ký
                   </Link>
@@ -198,12 +207,12 @@ export default function Header() {
             <div className="lg:hidden flex items-center justify-end">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1.5 text-white hover:text-secondary-300 active:text-secondary-400 transition-colors"
+                className="p-1.5 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
+                  <X className="h-6 w-6" strokeWidth={2.5} />
                 ) : (
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-6 w-6" strokeWidth={2.5} />
                 )}
               </button>
             </div>
@@ -229,13 +238,23 @@ export default function Header() {
                   Đóng góp
                 </Link>
               )}
-              <Link
-                to="/instruments"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Nhạc cụ truyền thống
-              </Link>
+              {user?.role !== "EXPERT" ? (
+                <Link
+                  to="/contributions"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Đóng góp của bạn
+                </Link>
+              ) : (
+                <Link
+                  to="/instruments"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Nhạc cụ truyền thống
+                </Link>
+              )}
               <Link
                 to="/ethnicities"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"

@@ -23,7 +23,7 @@ export default function Footer() {
   };
   return (
     <footer className="pb-4 px-4">
-      <div className="bg-primary-700 rounded-2xl px-8 py-12">
+      <div className="bg-gradient-to-br from-primary-700 to-primary-800 rounded-2xl px-8 py-12 shadow-lg backdrop-blur-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-48">
           {/* About */}
           <div className="min-w-[350px]">
@@ -120,28 +120,28 @@ export default function Footer() {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                className="p-2.5 bg-white/10 hover:bg-secondary-500 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 title="Facebook"
               >
-                <Facebook className="h-5 w-5" />
+                <Facebook className="h-5 w-5" strokeWidth={2.5} />
               </a>
               <a
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                className="p-2.5 bg-white/10 hover:bg-secondary-500 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 title="YouTube"
               >
-                <Youtube className="h-5 w-5" />
+                <Youtube className="h-5 w-5" strokeWidth={2.5} />
               </a>
               <a
                 href="https://mail.google.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 bg-white/10 text-white rounded-full hover:bg-secondary-500 hover:text-white transition-colors"
+                className="p-2.5 bg-white/10 hover:bg-secondary-500 text-white rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 title="Email"
               >
-                <Mail className="h-5 w-5" />
+                <Mail className="h-5 w-5" strokeWidth={2.5} />
               </a>
             </div>
             <div className="space-y-2">
