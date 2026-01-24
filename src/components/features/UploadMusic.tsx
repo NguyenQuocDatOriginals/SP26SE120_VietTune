@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
-import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, Youtube, X } from "lucide-react";
+import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { isYouTubeUrl, getYouTubeId } from "@/utils/youtube";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 
@@ -39,7 +38,7 @@ const SUPPORTED_VIDEO_FORMATS = [
   "video/x-flv",
 ];
 
-
+/** Video & audio upload: no file size limit. Do not add size checks. */
 
 const GENRES = [
   "Dân ca",
@@ -1967,9 +1966,8 @@ export default function UploadMusic() {
   const isEditModeParam = searchParams.get("edit") === "true";
   const [isEditMode, setIsEditMode] = useState(isEditModeParam);
   const [editingRecordingId, setEditingRecordingId] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"audio" | "video" | "youtube">("audio");
+  const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
   const [file, setFile] = useState<File | null>(null);
-  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [audioInfo, setAudioInfo] = useState<{
     name: string;
     size: number;
@@ -2066,7 +2064,7 @@ export default function UploadMusic() {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    // Không giới hạn dung lượng file
+    // Video & audio: no file size limit (unlimited).
     const mime = selected.type || inferMimeFromName(selected.name);
 
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
@@ -2263,27 +2261,6 @@ export default function UploadMusic() {
     }
   };
 
-  const validateYoutubeUrl = (url: string): boolean => {
-    if (!url || !url.trim()) return false;
-    // Sử dụng helper function từ utils/youtube.ts
-    if (!isYouTubeUrl(url)) return false;
-    // Kiểm tra xem có thể extract video ID không
-    const videoId = getYouTubeId(url.trim());
-    return videoId !== null && videoId.length === 11;
-  };
-
-  const handleYoutubeUrlChange = (url: string) => {
-    setYoutubeUrl(url);
-    setErrors((prev) => {
-      const newErrors = { ...prev };
-      if (url && !validateYoutubeUrl(url)) {
-        newErrors.youtubeUrl = "URL YouTube không hợp lệ";
-      } else {
-        delete newErrors.youtubeUrl;
-      }
-      return newErrors;
-    });
-  };
 
   const handleLyricsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -2295,18 +2272,10 @@ export default function UploadMusic() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (mediaType === "youtube") {
-      if (!youtubeUrl.trim()) {
-        newErrors.youtubeUrl = "Vui lòng nhập URL YouTube";
-      } else if (!validateYoutubeUrl(youtubeUrl)) {
-        newErrors.youtubeUrl = "URL YouTube không hợp lệ";
-      }
-    } else {
-      if (!file) {
-        newErrors.file = mediaType === "audio"
-          ? "Vui lòng chọn file âm thanh"
-          : "Vui lòng chọn file video";
-      }
+    if (!file) {
+      newErrors.file = mediaType === "audio"
+        ? "Vui lòng chọn file âm thanh"
+        : "Vui lòng chọn file video";
     }
     if (!title.trim()) newErrors.title = "Vui lòng nhập tiêu đề";
     if (!artistUnknown && !artist.trim()) {
@@ -2356,9 +2325,6 @@ export default function UploadMusic() {
           setCopyright(recording.adminInfo?.copyright || "");
           setArchiveOrg(recording.adminInfo?.archiveOrg || "");
           setCatalogId(recording.adminInfo?.catalogId || "");
-          if (recording.youtubeUrl) {
-            setYoutubeUrl(recording.youtubeUrl);
-          }
           setIsEditMode(true);
         }
       } catch (err) {
@@ -2444,14 +2410,14 @@ export default function UploadMusic() {
     const formData = {
       id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       mediaType,
-      file: mediaType === "youtube" ? null : {
+      file: {
         name: audioInfo?.name || file?.name,
         type: audioInfo?.type || file?.type,
         size: audioInfo?.size || file?.size,
         duration: audioInfo?.duration || 0,
         bitrate: audioInfo?.bitrate,
       },
-      youtubeUrl: mediaType === "youtube" ? (getYouTubeId(youtubeUrl.trim()) ? `https://www.youtube.com/watch?v=${getYouTubeId(youtubeUrl.trim())}` : youtubeUrl.trim()) : null,
+      youtubeUrl: null,
       basicInfo: {
         title,
         artist: artistUnknown ? "Không rõ nghệ sĩ" : artist,
@@ -2486,113 +2452,6 @@ export default function UploadMusic() {
       uploadedDate: new Date().toISOString(),
     };
 
-    // Xử lý YouTube URL - không cần đọc file
-    if (mediaType === "youtube") {
-      // Normalize YouTube URL - chuẩn hóa về định dạng watch URL
-      let normalizedYoutubeUrl = youtubeUrl.trim();
-      const videoId = getYouTubeId(normalizedYoutubeUrl);
-      if (videoId) {
-        // Chuẩn hóa về định dạng https://www.youtube.com/watch?v=VIDEO_ID
-        normalizedYoutubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      }
-
-      const newRecording = {
-        ...formData,
-        id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        audioData: null,
-        youtubeUrl: normalizedYoutubeUrl,
-        moderation: {
-          status: ModerationStatus.PENDING_REVIEW,
-          claimedBy: null,
-          claimedByName: null,
-          reviewedAt: null,
-          reviewerId: null,
-          rejectionNote: undefined, // Clear rejection note when resubmitting
-        },
-        uploader: {
-          id: currentUser?.id || "anonymous",
-          username: currentUser?.username || "Khách",
-        },
-      };
-
-      try {
-        let recordings = [];
-        try {
-          const stored = localStorage.getItem("localRecordings");
-          recordings = stored ? JSON.parse(stored) : [];
-        } catch (parseError) {
-          console.warn("Không thể đọc dữ liệu cũ, sẽ tạo mới:", parseError);
-          recordings = [];
-        }
-
-        // Migrate video data từ audioData sang videoData trước khi xử lý
-        recordings = migrateVideoDataToVideoData(recordings);
-
-        // If editing, update existing recording instead of adding new one
-        if (isEditMode && editingRecordingId) {
-          const existingIndex = recordings.findIndex((r) => (r as LocalRecordingStorage).id === editingRecordingId);
-          if (existingIndex >= 0) {
-            const existing = recordings[existingIndex] as LocalRecordingStorage;
-            // Preserve media data (audioData, videoData) from existing recording
-            recordings[existingIndex] = {
-              ...newRecording,
-              audioData: existing.audioData,
-              videoData: existing.videoData,
-              uploadedDate: existing.uploadedDate || existing.uploadedAt || new Date().toISOString(),
-            } as LocalRecordingStorage;
-            // Clear sessionStorage after successful edit
-            sessionStorage.removeItem("editingRecording");
-          } else {
-            // If not found, add as new
-            recordings.unshift(newRecording);
-          }
-        } else {
-          recordings.unshift(newRecording);
-        }
-
-        // Clean up old media data to free up storage space
-        // Remove audioData/videoData from old approved recordings older than 7 days (keep only metadata)
-        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-        recordings = recordings.map((rec) => {
-          if (
-            rec.moderation &&
-            typeof rec.moderation === "object" &&
-            "status" in rec.moderation &&
-            (rec.moderation as { status?: string }).status === ModerationStatus.APPROVED
-          ) {
-            const uploadedDate = rec.uploadedDate;
-            const uploadedTime =
-              typeof uploadedDate === "string" || typeof uploadedDate === "number"
-                ? new Date(uploadedDate).getTime()
-                : 0;
-            // Remove media data from approved recordings older than 7 days to save space
-            if (uploadedTime < sevenDaysAgo) {
-              // Remove audioData and videoData properties
-              const cleaned = { ...rec };
-              delete cleaned.audioData;
-              delete cleaned.videoData;
-              return cleaned;
-            }
-          }
-          return rec;
-        });
-
-        // Không giới hạn số lượng bản ghi - lưu tất cả
-        localStorage.setItem("localRecordings", JSON.stringify(recordings));
-
-        setSubmitStatus("success");
-        setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
-        setIsSubmitting(false);
-        return;
-      } catch (error) {
-        console.error("Lỗi khi lưu dữ liệu:", error);
-        setIsSubmitting(false);
-        setSubmitStatus("error");
-        setSubmitMessage("Lỗi khi lưu dữ liệu. Vui lòng thử lại.");
-        return;
-      }
-    }
-
     // Xử lý file upload (audio hoặc video)
     if (!file) {
       setIsSubmitting(false);
@@ -2601,7 +2460,7 @@ export default function UploadMusic() {
       return;
     }
 
-    // Validate file trước khi đọc - nới lỏng validation để đảm bảo video có thể upload
+    // Validate type/extension only. No file size limit (unlimited video/audio).
     const mime = file.type || inferMimeFromName(file.name);
     const isAudio = SUPPORTED_AUDIO_FORMATS.includes(mime);
     const isVideo = SUPPORTED_VIDEO_FORMATS.includes(mime);
@@ -2772,8 +2631,8 @@ export default function UploadMusic() {
               ...newRecording,
               audioData: isVideoFile ? (existing.audioData || null) : ((newRecordingStorage.audioData as string) || existing.audioData || null),
               videoData: isVideoFile ? ((newRecordingStorage.videoData as string) || existing.videoData || null) : (existing.videoData || null),
-              youtubeUrl: ((mediaType as string) === "youtube" ? (newRecordingStorage.youtubeUrl as string | null) : null) || (existing.youtubeUrl || null),
-              mediaType: (mediaType as "audio" | "video" | "youtube") || existing.mediaType || "audio",
+              youtubeUrl: existing.youtubeUrl || null,
+              mediaType: (mediaType as "audio" | "video") || existing.mediaType || "audio",
               uploadedDate: existing.uploadedDate || existing.uploadedAt || new Date().toISOString(),
             } as LocalRecordingStorage;
             // Clear sessionStorage after successful edit
@@ -2893,7 +2752,6 @@ export default function UploadMusic() {
   const resetForm = () => {
     setMediaType("audio");
     setFile(null);
-    setYoutubeUrl("");
     setAudioInfo(null);
     setTitle("");
     setArtist("");
@@ -2937,11 +2795,7 @@ export default function UploadMusic() {
     if (isFormDisabled) return false;
 
     // Media presence
-    if (mediaType === "youtube") {
-      if (!youtubeUrl.trim() || !validateYoutubeUrl(youtubeUrl)) return false;
-    } else {
-      if (!file) return false;
-    }
+    if (!file) return false;
 
     // Basic required fields
     if (!title.trim()) return false;
@@ -2954,8 +2808,6 @@ export default function UploadMusic() {
 
     return true;
   }, [
-    mediaType,
-    youtubeUrl,
     file,
     title,
     artist,
@@ -2993,8 +2845,8 @@ export default function UploadMusic() {
         >
           <SectionHeader
             icon={Upload}
-            title={mediaType === "youtube" ? "Nhập link YouTube" : mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
-            subtitle={mediaType === "youtube" ? "Nhập URL video YouTube (youtube.com hoặc youtu.be)" : mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP, FLV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
+            title={mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
+            subtitle={mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP, FLV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
           />
 
           {/* Media Type Selection */}
@@ -3008,7 +2860,6 @@ export default function UploadMusic() {
                   if (isFormDisabled) return;
                   setMediaType("audio");
                   setFile(null);
-                  setYoutubeUrl("");
                   setAudioInfo(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
@@ -3047,7 +2898,6 @@ export default function UploadMusic() {
                   if (isFormDisabled) return;
                   setMediaType("video");
                   setFile(null);
-                  setYoutubeUrl("");
                   setAudioInfo(null);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
@@ -3078,65 +2928,11 @@ export default function UploadMusic() {
                   <span>File video</span>
                 </div>
               </button>
-              {/* YouTube */}
-              <button
-                type="button"
-                disabled={isFormDisabled}
-                onClick={() => {
-                  if (isFormDisabled) return;
-                  setMediaType("youtube");
-                  setFile(null);
-                  setAudioInfo(null);
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                }}
-                className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "youtube"
-                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
-                  : "text-neutral-800 bg-neutral-100/90"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                style={
-                  mediaType !== "youtube"
-                    ? { backgroundColor: "#FFFCF5" }
-                    : undefined
-                }
-                onMouseEnter={e => {
-                  if (mediaType !== "youtube") {
-                    e.currentTarget.style.backgroundColor = "#F5F0E8";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (mediaType !== "youtube") {
-                    e.currentTarget.style.backgroundColor = "#FFFCF5";
-                  }
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <Youtube className="h-4 w-4" strokeWidth={2.5} />
-                  <span>YouTube</span>
-                </div>
-              </button>
             </div>
           </div>
 
-          {/* YouTube URL Input */}
-          {mediaType === "youtube" && (
-            <div className="mt-4">
-              <FormField label="URL YouTube" required>
-                <TextInput
-                  value={youtubeUrl}
-                  onChange={handleYoutubeUrlChange}
-                  placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..."
-                  required
-                  disabled={isFormDisabled}
-                />
-                {errors.youtubeUrl && (
-                  <p className="text-sm text-red-400 mt-1">{errors.youtubeUrl}</p>
-                )}
-              </FormField>
-            </div>
-          )}
-
           {/* File Upload */}
-          {mediaType !== "youtube" && (
+          {
             <div className="mt-4">
               <div
                 onClick={() => { if (isFormDisabled || isAnalyzing) return; fileInputRef.current?.click(); }}
@@ -3224,7 +3020,7 @@ export default function UploadMusic() {
                 </p>
               )}
             </div>
-          )}
+          }
         </div>
 
         <div

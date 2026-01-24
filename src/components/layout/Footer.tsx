@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Mail, Facebook, Youtube } from "lucide-react";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
-import toast from "react-hot-toast";
+import { notify } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
 
@@ -14,11 +14,9 @@ export default function Footer() {
     const email = "contact@viettune.com";
 
     navigator.clipboard.writeText(email).then(() => {
-      toast.success("Đã sao chép địa chỉ email thành công!", {
-        duration: 2000,
-      });
+      notify.success("Thành công", "Đã sao chép địa chỉ email thành công!", true, 2000);
     }).catch(() => {
-      toast.error("Không thể copy email. Vui lòng thử lại!");
+      notify.error("Lỗi", "Không thể copy email. Vui lòng thử lại!");
     });
   };
   return (

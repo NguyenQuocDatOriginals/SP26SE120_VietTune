@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
 import BackButton from "@/components/common/BackButton";
 import { LoginForm, User } from "@/types";
-import toast from "react-hot-toast";
+import { notify } from "@/stores/notificationStore";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
           ? (error as { response?: { data?: { message?: string } } }).response
             ?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
           : "Đăng nhập thất bại. Vui lòng thử lại.";
-      toast.error(errorMessage);
+      notify.error("Lỗi đăng nhập", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +194,7 @@ export default function LoginPage() {
                       navigate("/");
                     }
                   } catch (err) {
-                    toast.error("Không thể đăng nhập demo");
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
                   } finally {
                     setIsLoading(false);
                   }
@@ -215,7 +215,7 @@ export default function LoginPage() {
                       navigate("/");
                     }
                   } catch (err) {
-                    toast.error("Không thể đăng nhập demo");
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
                   } finally {
                     setIsLoading(false);
                   }
@@ -236,7 +236,7 @@ export default function LoginPage() {
                       navigate("/");
                     }
                   } catch (err) {
-                    toast.error("Không thể đăng nhập demo");
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
                   } finally {
                     setIsLoading(false);
                   }
@@ -257,7 +257,7 @@ export default function LoginPage() {
                       navigate("/");
                     }
                   } catch (err) {
-                    toast.error("Không thể đăng nhập demo");
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
                   } finally {
                     setIsLoading(false);
                   }

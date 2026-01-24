@@ -5,7 +5,7 @@ import { Target, Users, Heart, FileText, Trash2, AlertTriangle, Edit, X } from "
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, User } from "@/types";
-import toast from "react-hot-toast";
+import { notify } from "@/stores/notificationStore";
 import { authService } from "@/services/authService";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
@@ -126,7 +126,7 @@ export default function ProfilePage() {
     setTouchedUsername(true);
     setTouchedEmail(true);
     if (!validate()) {
-      toast.error("Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.");
+      notify.error("Lỗi", "Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.");
       return;
     }
 
@@ -213,7 +213,7 @@ export default function ProfilePage() {
     }
 
     setIsEditOpen(false);
-    toast.success("Lưu hồ sơ thành công");
+    notify.success("Thành công", "Lưu hồ sơ thành công");
   };
 
   // Helper: normalize role to friendly Vietnamese label
@@ -278,25 +278,21 @@ export default function ProfilePage() {
     try {
       const raw = localStorage.getItem("localRecordings");
       if (!raw) {
-        toast.success("Không có dữ liệu để xóa");
+        notify.success("Thông báo", "Không có dữ liệu để xóa");
         return;
       }
 
       const all = JSON.parse(raw) as LocalRecordingMini[];
       const deletedCount = all.length;
 
-      // Tính kích thước trước khi xóa
-      const sizeBefore = raw.length;
-
       // Xóa toàn bộ dữ liệu - xóa hết tất cả các bản thu
       localStorage.removeItem("localRecordings");
 
-      const actualFreed = (sizeBefore / (1024 * 1024)).toFixed(2);
-      toast.success(`Đã xóa thành công ${deletedCount} bản thu (giải phóng ${actualFreed} MB).`);
+      notify.success("Thành công", `Đã xóa thành công ${deletedCount} bản thu.`);
       setShowDeleteMetadataConfirm(false);
     } catch (err) {
       console.error("Lỗi khi xóa metadata:", err);
-      toast.error("Có lỗi xảy ra khi xóa metadata. Vui lòng thử lại.");
+      notify.error("Lỗi", "Có lỗi xảy ra khi xóa metadata. Vui lòng thử lại.");
     }
   };
 

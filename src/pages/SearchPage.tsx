@@ -247,7 +247,7 @@ export default function SearchPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-neutral-800">
-            Tìm kiếm bản thu
+            Tìm kiếm bài hát
           </h1>
           <BackButton />
         </div>

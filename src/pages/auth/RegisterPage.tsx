@@ -5,7 +5,7 @@ import { authService } from "@/services/authService";
 import Input from "@/components/common/Input";
 import BackButton from "@/components/common/BackButton";
 import { RegisterForm } from "@/types";
-import toast from "react-hot-toast";
+import { notify } from "@/stores/notificationStore";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
 import TermsAndConditions from "@/components/features/TermsAndConditions";
@@ -30,7 +30,7 @@ export default function RegisterPage() {
     try {
       await authService.register(data);
       sessionStorage.removeItem("fromLogout");
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      notify.success("Thành công", "Đăng ký thành công! Vui lòng đăng nhập.");
       navigate("/login");
     } catch (error: unknown) {
       const errorMessage =
@@ -38,7 +38,7 @@ export default function RegisterPage() {
           ? (error as { response?: { data?: { message?: string } } }).response
             ?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
           : "Đăng ký thất bại. Vui lòng thử lại.";
-      toast.error(errorMessage);
+      notify.error("Lỗi", errorMessage);
     } finally {
       setIsLoading(false);
     }

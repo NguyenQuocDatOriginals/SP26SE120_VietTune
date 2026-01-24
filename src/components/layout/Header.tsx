@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, User, LogOut, Menu, X } from "lucide-react";
+import { Search, Bell, User, LogOut, Menu, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
+import { UserRole } from "@/types";
 import { APP_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
 
@@ -128,6 +129,15 @@ export default function Header() {
               >
                 <Search className="h-5 w-5" strokeWidth={2.5} />
               </Link>
+              {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
+                <Link
+                  to="/notifications"
+                  className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+                  aria-label="Thông báo"
+                >
+                  <Bell className="h-5 w-5" strokeWidth={2.5} />
+                </Link>
+              )}
 
               {isAuthenticated ? (
                 <>
@@ -292,6 +302,15 @@ export default function Header() {
                   >
                     Hồ sơ
                   </Link>
+                  {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
+                    <Link
+                      to="/notifications"
+                      className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Thông báo
+                    </Link>
+                  )}
                   {user?.role === "ADMIN" && (
                     <Link
                       to="/admin"

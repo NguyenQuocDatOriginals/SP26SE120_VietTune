@@ -18,8 +18,10 @@ import ContributionsPage from "./pages/ContributionsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ModerationPage from "./pages/ModerationPage";
 import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
+import NotificationPage from "./pages/NotificationPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ScrollToTop from "./components/common/ScrollToTop";
+import NotificationProvider from "./components/common/NotificationProvider";
 
 function App() {
   useEffect(() => {
@@ -140,7 +142,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <NotificationProvider>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<MainLayout />}>
@@ -159,13 +161,14 @@ function App() {
           <Route path="contributions" element={<ContributionsPage />} />
           <Route path="moderation" element={<ModerationPage />} />
           <Route path="approved-recordings" element={<ApprovedRecordingsPage />} />
+          <Route path="notifications" element={<NotificationPage />} />
           <Route path="admin/*" element={<AdminDashboard />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </>
+    </NotificationProvider>
   );
 }
 

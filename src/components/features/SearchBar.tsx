@@ -781,7 +781,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
         <SectionHeader
           icon={Search}
-          title="Tìm kiếm bản thu"
+          title="Tìm kiếm bài hát"
           subtitle="Nhập từ khóa để tìm kiếm nhanh"
         />
 
@@ -793,7 +793,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Tìm kiếm bản thu, nhạc cụ, nghệ nhân,..."
+              placeholder="Tìm kiếm bài hát, nhạc cụ, nghệ nhân,..."
               className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md font-medium"
               style={{ backgroundColor: '#FFFCF5' }}
             />

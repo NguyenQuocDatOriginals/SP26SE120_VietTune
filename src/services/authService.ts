@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { User, LoginForm, RegisterForm, ApiResponse, UserRole } from "@/types";
-import toast from "react-hot-toast";
+import { notify } from "@/stores/notificationStore";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 
 export const authService = {
@@ -162,7 +162,7 @@ export const authService = {
 
             // Notify user that profile has been synced
             try {
-              toast.success("Cập nhật hồ sơ đã được đồng bộ với server.");
+              notify.success("Thành công", "Cập nhật hồ sơ đã được đồng bộ với server.");
             } catch (err) {
               /* noop */
             }

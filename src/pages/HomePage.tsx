@@ -113,7 +113,7 @@ export default function HomePage() {
       },
       {
         icon: Search,
-        title: "Tìm kiếm bản thu",
+        title: "Tìm kiếm bài hát",
         description:
           "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
         to: "/search",
@@ -129,14 +129,14 @@ export default function HomePage() {
     : [
       {
         icon: Compass,
-        title: "Khám phá bản thu",
+        title: "Khám phá âm nhạc dân tộc",
         description:
           "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
         to: "/explore",
       },
       {
         icon: Search,
-        title: "Tìm kiếm bản thu",
+        title: "Tìm kiếm bài hát",
         description:
           "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
         to: "/search",
