@@ -54,15 +54,44 @@ export const authService = {
 
   // Register
   register: async (data: RegisterForm) => {
-    const response = await api.post<ApiResponse<unknown>>(
-      "/auth/register",
-      data,
-    );
-    return {
-      success: true,
-      data: response.data,
-      message: "Registration successful",
-    };
+    try {
+      const response = await api.post<ApiResponse<unknown>>(
+        "/auth/register",
+        data,
+      );
+      
+      // For demo/local system: create user with CONTRIBUTOR role by default
+      // Generate a unique ID for the new user
+      const newUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const newUser: User = {
+        id: newUserId,
+        username: data.username,
+        email: data.email,
+        fullName: data.fullName,
+        role: UserRole.CONTRIBUTOR, // Default role is CONTRIBUTOR
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // Save to users_overrides so it persists
+      try {
+        const oRaw = localStorage.getItem("users_overrides");
+        const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
+        overrides[newUserId] = newUser;
+        localStorage.setItem("users_overrides", JSON.stringify(overrides));
+      } catch (err) {
+        console.warn("Failed to save new user to overrides", err);
+      }
+      
+      return {
+        success: true,
+        data: response.data,
+        message: "Registration successful",
+      };
+    } catch (error) {
+      console.error("Register error:", error);
+      throw error;
+    }
   },
 
   // Logout
@@ -237,6 +266,15 @@ export const authService = {
         email: "expertC@example.com",
         fullName: "Expert C (Demo)",
         role: UserRole.EXPERT,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      admin: {
+        id: "admin_demo",
+        username: "admin_demo",
+        email: "admin@example.com",
+        fullName: "Administrator (Demo)",
+        role: UserRole.ADMIN,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },

@@ -28,6 +28,7 @@ export default function LoginPage() {
         expert_a: overrides["expert_a"]?.username || "expertA",
         expert_b: overrides["expert_b"]?.username || "expertB",
         expert_c: overrides["expert_c"]?.username || "expertC",
+        admin: overrides["admin_demo"]?.username || "admin_demo",
       });
     } catch (err) {
       setDemoNames({
@@ -35,6 +36,7 @@ export default function LoginPage() {
         expert_a: "expertA",
         expert_b: "expertB",
         expert_c: "expertC",
+        admin: "admin_demo",
       });
     }
   };
@@ -88,9 +90,9 @@ export default function LoginPage() {
       }}
     >
       {!fromLogout && <div className="absolute top-4 right-4"><BackButton /></div>}
-      <div className="max-w-md w-full">
+      <div className="max-w-xl w-full">
         <form
-          className="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-neutral-200/80 shadow-2xl transition-all duration-300 hover:shadow-2xl space-y-3"
+          className="bg-white/95 backdrop-blur-sm p-8 rounded-2xl border border-neutral-200/80 shadow-2xl transition-all duration-300 hover:shadow-2xl space-y-4"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col items-center">
@@ -180,10 +182,10 @@ export default function LoginPage() {
           {/* Demo accounts for quick testing */}
           <div className="mt-4 text-center text-sm text-neutral-600">
             <p className="mb-2">Hoặc dùng tài khoản demo:</p>
-            <div className="flex gap-2 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center">
               <button
                 type="button"
-                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 onClick={async () => {
                   setIsLoading(true);
                   try {
@@ -204,7 +206,7 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 onClick={async () => {
                   setIsLoading(true);
                   try {
@@ -225,7 +227,7 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 onClick={async () => {
                   setIsLoading(true);
                   try {
@@ -246,7 +248,7 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                className="px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                 onClick={async () => {
                   setIsLoading(true);
                   try {
@@ -264,6 +266,27 @@ export default function LoginPage() {
                 }}
               >
                 {`Expert C (${demoNames.expert_c || 'expertC'})`}
+              </button>
+              <button
+                type="button"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("admin");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      sessionStorage.removeItem("fromLogout");
+                      navigate("/");
+                    }
+                  } catch (err) {
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Admin (${demoNames.admin ?? "admin_demo"})`}
               </button>
             </div>
           </div>

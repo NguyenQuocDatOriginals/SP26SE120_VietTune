@@ -78,6 +78,13 @@ export default function Header() {
                 >
                   Kiểm duyệt bản thu
                 </Link>
+              ) : user?.role === "ADMIN" ? (
+                <Link
+                  to="/admin"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Quản trị hệ thống
+                </Link>
               ) : (
                 <Link
                   to="/upload"
@@ -86,19 +93,19 @@ export default function Header() {
                   Đóng góp bản thu
                 </Link>
               )}
-              {user?.role !== "EXPERT" ? (
-                <Link
-                  to="/contributions"
-                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
-                >
-                  Đóng góp của bạn
-                </Link>
-              ) : (
+              {user?.role === "EXPERT" || !user || user?.role === "ADMIN" ? (
                 <Link
                   to="/instruments"
                   className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
                 >
                   Nhạc cụ truyền thống
+                </Link>
+              ) : (
+                <Link
+                  to="/contributions"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Đóng góp của bạn
                 </Link>
               )}
               <Link
@@ -129,7 +136,7 @@ export default function Header() {
               >
                 <Search className="h-5 w-5" strokeWidth={2.5} />
               </Link>
-              {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
+              {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT || user?.role === UserRole.ADMIN) && (
                 <Link
                   to="/notifications"
                   className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
@@ -175,14 +182,6 @@ export default function Header() {
                             <User className="h-4 w-4 mr-2 text-current" strokeWidth={2.5} />
                             Hồ sơ
                           </Link>
-                          {user?.role === "ADMIN" && (
-                            <Link
-                              to="/admin"
-                              className="block px-5 py-3 text-sm text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 cursor-pointer"
-                            >
-                              Quản trị hệ thống
-                            </Link>
-                          )}
                           <button
                             onClick={() => { setIsMenuOpen(false); handleLogout(); }}
                             className="w-full text-left px-5 py-3 text-sm text-primary-600 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 flex items-center cursor-pointer"
@@ -239,6 +238,14 @@ export default function Header() {
                 >
                   Kiểm duyệt bản thu
                 </Link>
+              ) : user?.role === "ADMIN" ? (
+                <Link
+                  to="/admin"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Quản trị hệ thống
+                </Link>
               ) : (
                 <Link
                   to="/upload"
@@ -248,21 +255,21 @@ export default function Header() {
                   Đóng góp
                 </Link>
               )}
-              {user?.role !== "EXPERT" ? (
-                <Link
-                  to="/contributions"
-                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Đóng góp của bạn
-                </Link>
-              ) : (
+              {user?.role === "EXPERT" || !user || user?.role === "ADMIN" ? (
                 <Link
                   to="/instruments"
                   className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Nhạc cụ truyền thống
+                </Link>
+              ) : (
+                <Link
+                  to="/contributions"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Đóng góp của bạn
                 </Link>
               )}
               <Link
@@ -302,7 +309,7 @@ export default function Header() {
                   >
                     Hồ sơ
                   </Link>
-                  {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
+                  {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT || user?.role === UserRole.ADMIN) && (
                     <Link
                       to="/notifications"
                       className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"

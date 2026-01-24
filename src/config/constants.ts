@@ -106,5 +106,6 @@ export const USER_ROLE_NAMES = {
   MODERATOR: "Moderator",
   RESEARCHER: "Researcher",
   CONTRIBUTOR: "Contributor",
+  EXPERT: "Expert",
   USER: "User",
 };

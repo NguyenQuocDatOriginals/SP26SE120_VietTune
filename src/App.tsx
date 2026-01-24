@@ -16,6 +16,8 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import ContributionsPage from "./pages/ContributionsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import CreateExpertPage from "./pages/admin/CreateExpertPage";
+import AdminGuard from "./components/admin/AdminGuard";
 import ModerationPage from "./pages/ModerationPage";
 import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
 import NotificationPage from "./pages/NotificationPage";
@@ -162,7 +164,10 @@ function App() {
           <Route path="moderation" element={<ModerationPage />} />
           <Route path="approved-recordings" element={<ApprovedRecordingsPage />} />
           <Route path="notifications" element={<NotificationPage />} />
-          <Route path="admin/*" element={<AdminDashboard />} />
+          <Route path="admin" element={<AdminGuard />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="create-expert" element={<CreateExpertPage />} />
+          </Route>
         </Route>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

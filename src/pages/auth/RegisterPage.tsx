@@ -55,16 +55,16 @@ export default function RegisterPage() {
       }}
     >
       {!fromLogout && <div className="absolute top-4 right-4"><BackButton /></div>}
-      <div className="max-w-md w-full">
+      <div className="max-w-xl w-full">
         <form
-          className="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-neutral-200/80 shadow-2xl transition-all duration-300 hover:shadow-2xl space-y-2.5"
+          className="bg-white/95 backdrop-blur-sm p-8 rounded-2xl border border-neutral-200/80 shadow-2xl transition-all duration-300 hover:shadow-2xl space-y-4"
           onSubmit={handleSubmit(onSubmit)}
         >
           <div className="flex flex-col items-center">
             <img
               src={logo}
               alt="VietTune Logo"
-              className="w-10 h-10 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-12 h-12 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
                 sessionStorage.removeItem("fromLogout");
                 if (!authService.isAuthenticated()) {
@@ -75,7 +75,7 @@ export default function RegisterPage() {
                 navigate(lastPage || "/");
               }}
             />
-            <h2 className="text-center text-lg font-bold text-neutral-800">
+            <h2 className="text-center text-xl font-bold text-neutral-800">
               Tạo tài khoản của bạn
             </h2>
             <p className="text-center text-sm text-neutral-600">

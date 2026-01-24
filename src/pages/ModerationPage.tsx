@@ -913,7 +913,7 @@ export default function ModerationPage() {
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 md:mt-0 md:ml-6 flex flex-wrap gap-2 md:flex-col md:items-end">
+                                    <div className="mt-4 md:mt-0 md:ml-6 flex flex-wrap gap-4 md:flex-col md:items-end">
                                         {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
                                             <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer">Nhận kiểm duyệt</button>
                                         )}

@@ -1,48 +1,13 @@
 import { useEffect, useState, FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Target, Users, Heart, FileText, Trash2, AlertTriangle, Edit, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Target, Users, Heart, FileText, Trash2, AlertTriangle, X } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, User } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import { authService } from "@/services/authService";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 import BackButton from "@/components/common/BackButton";
-
-// Extended type for local recording storage (supports both legacy and new formats)
-type LocalRecordingStorage = LocalRecording & {
-  uploadedAt?: string; // Legacy field
-  moderation?: LocalRecording['moderation'] & {
-    rejectionNote?: string;
-  };
-};
-
-// Hàm dịch trạng thái sang tiếng Việt (giống ModerationPage)
-const getStatusLabel = (status?: ModerationStatus | string): string => {
-  if (!status) return "Không xác định";
-
-  switch (status) {
-    case ModerationStatus.PENDING_REVIEW:
-    case "PENDING_REVIEW":
-      return "Đang chờ được kiểm duyệt";
-    case ModerationStatus.IN_REVIEW:
-    case "IN_REVIEW":
-      return "Đang được kiểm duyệt";
-    case ModerationStatus.APPROVED:
-    case "APPROVED":
-      return "Đã được kiểm duyệt";
-    case ModerationStatus.REJECTED:
-    case "REJECTED":
-      return "Đã bị từ chối";
-    case ModerationStatus.TEMPORARILY_REJECTED:
-    case "TEMPORARILY_REJECTED":
-      return "Tạm thời bị từ chối";
-    default:
-      return String(status);
-  }
-};
 
 interface LocalRecordingMini {
   id?: string;
@@ -63,7 +28,6 @@ interface LocalRecordingMini {
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
-  const navigate = useNavigate();
   const [showDeleteMetadataConfirm, setShowDeleteMetadataConfirm] = useState(false);
 
   // Edit profile modal state
@@ -165,9 +129,9 @@ export default function ProfilePage() {
         localStorage.setItem("user", JSON.stringify(updated));
         setUser(updated);
         // Inform user that changes were saved locally and queued for sync
-        toast(
+        notify.info(
+          "Thông báo",
           "Không thể lưu hồ sơ lên server ngay bây giờ. Thay đổi đã được lưu cục bộ và sẽ tự động đồng bộ khi có kết nối.",
-          { icon: 'ℹ️' },
         );
       }
     } else {
