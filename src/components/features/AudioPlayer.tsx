@@ -193,10 +193,10 @@ export default function AudioPlayer({
   }
 
   const formatTime = (t: number) => {
-    if (!t || isNaN(t)) return "0:00";
+    if (!t || isNaN(t)) return "00:00";
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60);
-    return `${m}:${s.toString().padStart(2, "0")}`;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   const play = async () => {

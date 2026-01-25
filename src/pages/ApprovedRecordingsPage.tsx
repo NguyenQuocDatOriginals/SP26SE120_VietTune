@@ -5,7 +5,7 @@ import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { Trash2 } from "lucide-react";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import BackButton from "@/components/common/BackButton";
 
 // Type for migration function
@@ -237,11 +237,11 @@ export default function ApprovedRecordingsPage() {
                             Người đóng góp: {it.uploader?.username || 'Khách'}
                         </div>
                         <div className="text-sm text-neutral-500 mb-1">
-                            Ngày tải: {it.uploadedDate ? new Date(it.uploadedDate).toLocaleString() : '-'}
+                            Thời điểm tải lên: {formatDateTime(it.uploadedDate)}
                         </div>
                         {it.moderation?.reviewedAt && (
                             <div className="text-sm text-neutral-500 mb-1">
-                                Ngày kiểm duyệt: {new Date(it.moderation.reviewedAt).toLocaleString()}
+                                Ngày kiểm duyệt: {formatDateTime(it.moderation.reviewedAt)}
                             </div>
                         )}
                         {it.moderation?.reviewerName && (

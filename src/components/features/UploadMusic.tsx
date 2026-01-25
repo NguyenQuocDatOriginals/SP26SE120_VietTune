@@ -717,7 +717,7 @@ const inferMimeFromName = (name: string) => {
 const formatDuration = (seconds: number) => {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
 const formatFileSize = (bytes: number) => {
@@ -2551,6 +2551,7 @@ export default function UploadMusic() {
 
       // Xác định nơi lưu dữ liệu dựa trên mediaType
       const isVideoFile = mediaType === "video";
+      const uploadTimestamp = new Date().toISOString();
       const recordingData: Record<string, unknown> = {
         ...formData,
         id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -2566,6 +2567,8 @@ export default function UploadMusic() {
           id: currentUser?.id || "anonymous",
           username: currentUser?.username || "Khách",
         },
+        uploadedDate: isEditMode && editingRecordingId ? (formData.uploadedDate || uploadTimestamp) : uploadTimestamp,
+        uploadedAt: isEditMode && editingRecordingId ? (formData.uploadedDate || uploadTimestamp) : uploadTimestamp,
       };
 
       // Lưu vào videoData cho video, audioData cho audio
@@ -2627,13 +2630,15 @@ export default function UploadMusic() {
             // Preserve media data if not changed (user didn't upload new file)
             // But if new file was uploaded, use the new data
             const newRecordingStorage = newRecording as LocalRecordingStorage;
+            const preservedUploadDate = existing.uploadedDate || existing.uploadedAt || new Date().toISOString();
             recordings[existingIndex] = {
               ...newRecording,
               audioData: isVideoFile ? (existing.audioData || null) : ((newRecordingStorage.audioData as string) || existing.audioData || null),
               videoData: isVideoFile ? ((newRecordingStorage.videoData as string) || existing.videoData || null) : (existing.videoData || null),
               youtubeUrl: existing.youtubeUrl || null,
               mediaType: (mediaType as "audio" | "video") || existing.mediaType || "audio",
-              uploadedDate: existing.uploadedDate || existing.uploadedAt || new Date().toISOString(),
+              uploadedDate: preservedUploadDate,
+              uploadedAt: preservedUploadDate,
             } as LocalRecordingStorage;
             // Clear sessionStorage after successful edit
             sessionStorage.removeItem("editingRecording");
@@ -3709,11 +3714,11 @@ export default function UploadMusic() {
                   resetForm();
                   setSubmitStatus("idle");
                   setSubmitMessage("");
-                  navigate("/profile");
+                  navigate("/contributions");
                 }}
                 className="px-6 py-2.5 bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
-                Đi đến trang hồ sơ
+                Đóng góp của bạn
               </button>
             </div>
           </div>

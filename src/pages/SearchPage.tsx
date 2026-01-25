@@ -167,9 +167,112 @@ export default function SearchPage() {
       const migrated = migrateVideoDataToVideoData(localRecordings);
 
       // Only include approved local recordings in public results
-      const approvedLocalRecordings = migrated.filter(
+      let approvedLocalRecordings = migrated.filter(
         (r) => r.moderation?.status === "APPROVED",
       );
+
+      // Apply filters to local recordings
+      if (Object.keys(filters).length > 0) {
+        approvedLocalRecordings = approvedLocalRecordings.filter((r) => {
+          // Filter by query (search in title, artist, genre)
+          if (filters.query) {
+            const queryLower = filters.query.toLowerCase();
+            const titleMatch = (r.basicInfo?.title || r.title || "").toLowerCase().includes(queryLower);
+            const artistMatch = (r.basicInfo?.artist || "").toLowerCase().includes(queryLower);
+            const genreMatch = (r.basicInfo?.genre || "").toLowerCase().includes(queryLower);
+            const tagsMatch = (r.tags || []).some(tag => tag.toLowerCase().includes(queryLower));
+            if (!titleMatch && !artistMatch && !genreMatch && !tagsMatch) {
+              return false;
+            }
+          }
+
+          // Filter by tags (genres, instruments, eventType, province, ethnicity)
+          if (filters.tags && filters.tags.length > 0) {
+            const recordingTags = [
+              ...(r.basicInfo?.genre ? [r.basicInfo.genre] : []),
+              ...(r.tags || []),
+              ...(r.culturalContext?.instruments || []),
+              ...(r.culturalContext?.eventType ? [r.culturalContext.eventType] : []),
+              ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
+              ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
+            ];
+            const hasMatchingTag = filters.tags.some(filterTag => 
+              recordingTags.some(recordingTag => 
+                recordingTag.toLowerCase().includes(filterTag.toLowerCase()) ||
+                filterTag.toLowerCase().includes(recordingTag.toLowerCase())
+              )
+            );
+            if (!hasMatchingTag) {
+              return false;
+            }
+          }
+
+          // Filter by region
+          if (filters.regions && filters.regions.length > 0) {
+            if (!r.region || !filters.regions.includes(r.region)) {
+              // Also check culturalContext.region (Vietnamese name)
+              if (r.culturalContext?.region) {
+                const regionMap: Record<string, Region> = {
+                  "Trung du và miền núi Bắc Bộ": Region.NORTHERN_MOUNTAINS,
+                  "Đồng bằng Bắc Bộ": Region.RED_RIVER_DELTA,
+                  "Bắc Trung Bộ": Region.NORTH_CENTRAL,
+                  "Nam Trung Bộ": Region.SOUTH_CENTRAL_COAST,
+                  "Cao nguyên Trung Bộ": Region.CENTRAL_HIGHLANDS,
+                  "Đông Nam Bộ": Region.SOUTHEAST,
+                  "Tây Nam Bộ": Region.MEKONG_DELTA,
+                };
+                const mappedRegion = regionMap[r.culturalContext.region];
+                if (!mappedRegion || !filters.regions.includes(mappedRegion)) {
+                  return false;
+                }
+              } else {
+                return false;
+              }
+            }
+          }
+
+          // Filter by recording type
+          if (filters.recordingTypes && filters.recordingTypes.length > 0) {
+            if (!r.recordingType || !filters.recordingTypes.includes(r.recordingType)) {
+              return false;
+            }
+          }
+
+          // Filter by verification status
+          if (filters.verificationStatus && filters.verificationStatus.length > 0) {
+            const isVerified = r.moderation?.status === "APPROVED";
+            const hasMatchingStatus = filters.verificationStatus.some(status => {
+              if (status === VerificationStatus.VERIFIED && isVerified) return true;
+              if (status === VerificationStatus.PENDING && !isVerified) return true;
+              return false;
+            });
+            if (!hasMatchingStatus) {
+              return false;
+            }
+          }
+
+          // Filter by date range
+          if (filters.dateFrom || filters.dateTo) {
+            const recordingDate = r.basicInfo?.recordingDate || r.recordedDate;
+            if (recordingDate) {
+              const date = new Date(recordingDate);
+              if (filters.dateFrom && date < new Date(filters.dateFrom)) {
+                return false;
+              }
+              if (filters.dateTo && date > new Date(filters.dateTo)) {
+                return false;
+              }
+            } else {
+              // If no date and filters require date, exclude
+              if (filters.dateFrom || filters.dateTo) {
+                return false;
+              }
+            }
+          }
+
+          return true;
+        });
+      }
 
       // Convert local recordings to Recording format (async to get durations)
       const convertedLocalRecordings = await Promise.all(
@@ -200,9 +303,105 @@ export default function SearchPage() {
           : [];
         // Migrate video data từ audioData sang videoData
         const migrated = migrateVideoDataToVideoData(localRecordings);
-        const approvedLocalRecordings = migrated.filter(
+        let approvedLocalRecordings = migrated.filter(
           (r) => r.moderation?.status === "APPROVED",
         );
+
+        // Apply filters to local recordings (same logic as above)
+        if (Object.keys(filters).length > 0) {
+          approvedLocalRecordings = approvedLocalRecordings.filter((r) => {
+            if (filters.query) {
+              const queryLower = filters.query.toLowerCase();
+              const titleMatch = (r.basicInfo?.title || r.title || "").toLowerCase().includes(queryLower);
+              const artistMatch = (r.basicInfo?.artist || "").toLowerCase().includes(queryLower);
+              const genreMatch = (r.basicInfo?.genre || "").toLowerCase().includes(queryLower);
+              const tagsMatch = (r.tags || []).some(tag => tag.toLowerCase().includes(queryLower));
+              if (!titleMatch && !artistMatch && !genreMatch && !tagsMatch) {
+                return false;
+              }
+            }
+
+            if (filters.tags && filters.tags.length > 0) {
+              const recordingTags = [
+                ...(r.basicInfo?.genre ? [r.basicInfo.genre] : []),
+                ...(r.tags || []),
+                ...(r.culturalContext?.instruments || []),
+                ...(r.culturalContext?.eventType ? [r.culturalContext.eventType] : []),
+                ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
+                ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
+              ];
+              const hasMatchingTag = filters.tags.some(filterTag => 
+                recordingTags.some(recordingTag => 
+                  recordingTag.toLowerCase().includes(filterTag.toLowerCase()) ||
+                  filterTag.toLowerCase().includes(recordingTag.toLowerCase())
+                )
+              );
+              if (!hasMatchingTag) {
+                return false;
+              }
+            }
+
+            if (filters.regions && filters.regions.length > 0) {
+              if (!r.region || !filters.regions.includes(r.region)) {
+                if (r.culturalContext?.region) {
+                  const regionMap: Record<string, Region> = {
+                    "Trung du và miền núi Bắc Bộ": Region.NORTHERN_MOUNTAINS,
+                    "Đồng bằng Bắc Bộ": Region.RED_RIVER_DELTA,
+                    "Bắc Trung Bộ": Region.NORTH_CENTRAL,
+                    "Nam Trung Bộ": Region.SOUTH_CENTRAL_COAST,
+                    "Cao nguyên Trung Bộ": Region.CENTRAL_HIGHLANDS,
+                    "Đông Nam Bộ": Region.SOUTHEAST,
+                    "Tây Nam Bộ": Region.MEKONG_DELTA,
+                  };
+                  const mappedRegion = regionMap[r.culturalContext.region];
+                  if (!mappedRegion || !filters.regions.includes(mappedRegion)) {
+                    return false;
+                  }
+                } else {
+                  return false;
+                }
+              }
+            }
+
+            if (filters.recordingTypes && filters.recordingTypes.length > 0) {
+              if (!r.recordingType || !filters.recordingTypes.includes(r.recordingType)) {
+                return false;
+              }
+            }
+
+            if (filters.verificationStatus && filters.verificationStatus.length > 0) {
+              const isVerified = r.moderation?.status === "APPROVED";
+              const hasMatchingStatus = filters.verificationStatus.some(status => {
+                if (status === VerificationStatus.VERIFIED && isVerified) return true;
+                if (status === VerificationStatus.PENDING && !isVerified) return true;
+                return false;
+              });
+              if (!hasMatchingStatus) {
+                return false;
+              }
+            }
+
+            if (filters.dateFrom || filters.dateTo) {
+              const recordingDate = r.basicInfo?.recordingDate || r.recordedDate;
+              if (recordingDate) {
+                const date = new Date(recordingDate);
+                if (filters.dateFrom && date < new Date(filters.dateFrom)) {
+                  return false;
+                }
+                if (filters.dateTo && date > new Date(filters.dateTo)) {
+                  return false;
+                }
+              } else {
+                if (filters.dateFrom || filters.dateTo) {
+                  return false;
+                }
+              }
+            }
+
+            return true;
+          });
+        }
+
         const convertedLocalRecordings = await Promise.all(
           approvedLocalRecordings.map(convertLocalToRecording),
         );

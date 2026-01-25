@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function formatFileSize(bytes: number): string {
@@ -83,4 +83,56 @@ export function migrateVideoDataToVideoData(
   }
 
   return migrated;
+}
+
+/**
+ * Format date and time to Vietnamese locale with full date and time
+ * Format: "dd/MM/yyyy, HH:mm:ss"
+ * 
+ * @param dateString - ISO date string or Date object
+ * @returns Formatted date string in Vietnamese locale, or '-' if invalid
+ */
+export function formatDateTime(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '-';
+  
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return '-';
+    
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  } catch {
+    return '-';
+  }
+}
+
+/**
+ * Format date only (without time) to Vietnamese locale
+ * Format: "dd/MM/yyyy"
+ * 
+ * @param dateString - ISO date string or Date object
+ * @returns Formatted date string in Vietnamese locale, or '-' if invalid
+ */
+export function formatDate(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '-';
+  
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return '-';
+    
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch {
+    return '-';
+  }
 }

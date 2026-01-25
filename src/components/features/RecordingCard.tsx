@@ -94,7 +94,7 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
             </span>
           </div>
           <span className="tabular-nums">
-            {Math.floor(recording.duration / 60)}:
+            {Math.floor(recording.duration / 60).toString().padStart(2, "0")}:
             {(recording.duration % 60).toString().padStart(2, "0")}
           </span>
         </div>

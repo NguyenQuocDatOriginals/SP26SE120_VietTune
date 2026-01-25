@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Region, RecordingType, RecordingQuality, VerificationStatus, Recording } from "@/types";
+import { Region, RecordingType, RecordingQuality, VerificationStatus, Recording, User, UserRole, RecordingMetadata } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search, AlertCircle, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
@@ -334,8 +334,10 @@ export default function ModerationPage() {
             }
             // Sort by date
             filtered = [...filtered].sort((a, b) => {
-                const dateA = new Date((a as LocalRecordingMini).uploadedAt || a.moderation?.reviewedAt || 0).getTime();
-                const dateB = new Date((b as LocalRecordingMini).uploadedAt || b.moderation?.reviewedAt || 0).getTime();
+                const aDate = (a as LocalRecordingMini & { uploadedDate?: string }).uploadedDate || (a as LocalRecordingMini).uploadedAt || a.moderation?.reviewedAt || '';
+                const bDate = (b as LocalRecordingMini & { uploadedDate?: string }).uploadedDate || (b as LocalRecordingMini).uploadedAt || b.moderation?.reviewedAt || '';
+                const dateA = new Date(aDate || 0).getTime();
+                const dateB = new Date(bDate || 0).getTime();
                 return dateSort === "newest" ? dateB - dateA : dateA - dateB;
             });
             setItems(filtered);
@@ -892,42 +894,181 @@ export default function ModerationPage() {
                         <p className="text-neutral-700 font-medium">Không có bản thu đang chờ được kiểm duyệt.</p>
                     </div>
                 ) : (
-                    <div className="space-y-6">
-                        {items.filter(it => it.id).map((it) => (
-                            <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-                                <div className="md:flex md:items-start md:justify-between">
-                                    <div className="md:flex-1">
-                                        <div className="text-neutral-800 font-semibold text-lg mb-1">
-                                            {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
+                    <div className="space-y-8">
+                        {items.filter(it => it.id).map((it) => {
+                            // VideoPlayer CHỈ nhận videoData hoặc YouTubeURL, AudioPlayer CHỈ nhận audioData
+                            let mediaSrc: string | undefined;
+                            let isVideo = false;
+
+                            // Kiểm tra YouTube URL trước (cho VideoPlayer)
+                            if (it.mediaType === "youtube" && it.youtubeUrl && it.youtubeUrl.trim()) {
+                                mediaSrc = it.youtubeUrl.trim();
+                                isVideo = true;
+                            } else if (it.youtubeUrl && typeof it.youtubeUrl === 'string' && it.youtubeUrl.trim() && isYouTubeUrl(it.youtubeUrl)) {
+                                mediaSrc = it.youtubeUrl.trim();
+                                isVideo = true;
+                            }
+                            // Nếu là video, CHỈ dùng videoData (không fallback về audioData)
+                            else if (it.mediaType === "video") {
+                                if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
+                                    mediaSrc = it.videoData;
+                                    isVideo = true;
+                                }
+                            }
+                            // Nếu là audio, CHỈ dùng audioData
+                            else if (it.mediaType === "audio") {
+                                if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
+                                    mediaSrc = it.audioData;
+                                    isVideo = false;
+                                }
+                            }
+                            // Nếu mediaType chưa được set, thử phát hiện từ dữ liệu có sẵn
+                            else {
+                                // Ưu tiên videoData nếu có
+                                if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
+                                    mediaSrc = it.videoData;
+                                    isVideo = true;
+                                }
+                                // Sau đó thử audioData
+                                else if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
+                                    mediaSrc = it.audioData;
+                                    // Kiểm tra xem có phải video không bằng cách xem data URL
+                                    if (mediaSrc.startsWith('data:video/')) {
+                                        isVideo = true;
+                                    } else {
+                                        isVideo = false;
+                                    }
+                                }
+                            }
+
+                            // Convert LocalRecordingMini to Recording for type safety
+                            const convertedRecording: RecordingWithLocalData = {
+                                id: it.id ?? "",
+                                title: it.basicInfo?.title || it.title || "Không có tiêu đề",
+                                titleVietnamese: it.basicInfo?.title || it.title || "Không có tiêu đề",
+                                description: "",
+                                ethnicity: {
+                                    id: "local",
+                                    name: it.culturalContext?.ethnicity || "Không xác định",
+                                    nameVietnamese: it.culturalContext?.ethnicity || "Không xác định",
+                                    region: (() => {
+                                        const regionKey = it.culturalContext?.region as keyof typeof Region;
+                                        return Region[regionKey] ?? Region.RED_RIVER_DELTA;
+                                    })(),
+                                    recordingCount: 0,
+                                },
+                                region: (() => {
+                                    const regionKey = it.culturalContext?.region as keyof typeof Region;
+                                    return Region[regionKey] ?? Region.RED_RIVER_DELTA;
+                                })(),
+                                recordingType: RecordingType.OTHER,
+                                duration: 0,
+                                audioUrl: it.audioData ?? "",
+                                waveformUrl: "",
+                                coverImage: "",
+                                instruments: (it.culturalContext?.instruments || []).map((name, idx) => ({
+                                    id: `local-instrument-${idx}`,
+                                    name: name,
+                                    nameVietnamese: name,
+                                })),
+                                performers: [],
+                                recordedDate: it.basicInfo?.recordingDate || "",
+                                uploadedDate: it.uploadedAt || new Date().toISOString(),
+                                uploader: ((): User => {
+                                    if (typeof it.uploader === "object" && it.uploader !== null) {
+                                        const u = it.uploader as Partial<User>;
+                                        return {
+                                            id: u.id ?? "",
+                                            username: u.username ?? "",
+                                            email: u.email ?? "",
+                                            fullName: u.fullName ?? u.username ?? "",
+                                            role: u.role ?? UserRole.USER,
+                                            createdAt: u.createdAt ?? "",
+                                            updatedAt: u.updatedAt ?? "",
+                                        };
+                                    }
+                                    return {
+                                        id: "",
+                                        username: "",
+                                        email: "",
+                                        fullName: "",
+                                        role: UserRole.USER,
+                                        createdAt: "",
+                                        updatedAt: "",
+                                    };
+                                })(),
+                                tags: (it as LocalRecordingMini & { tags?: string[] }).tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
+                                metadata: {
+                                    recordingQuality: RecordingQuality.FIELD_RECORDING,
+                                    lyrics: "",
+                                } as Partial<RecordingMetadata>,
+                                verificationStatus: it.moderation?.status === "APPROVED" ? VerificationStatus.VERIFIED : VerificationStatus.PENDING,
+                                verifiedBy: undefined,
+                                viewCount: 0,
+                                likeCount: 0,
+                                downloadCount: 0,
+                                _originalLocalData: it,
+                            };
+
+                            return (
+                                <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div className="mb-4 flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="text-neutral-800 font-semibold text-lg mb-2">
+                                                {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
+                                            </div>
+                                            {it.basicInfo?.artist && (
+                                                <div className="text-sm text-neutral-600 mb-1">Nghệ sĩ: {it.basicInfo.artist}</div>
+                                            )}
+                                            <div className="text-sm text-neutral-600 mb-1">Người đóng góp: {it.uploader?.username || 'Khách'}</div>
+                                            <div className="text-sm text-neutral-500 mb-1">Thời điểm tải lên: {formatDateTime((it as LocalRecordingMini & { uploadedDate?: string }).uploadedDate || it.uploadedAt)}</div>
+                                            <div className="text-sm mt-2">
+                                                Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+                                                {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
+                                                    <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
+                                                )}
+                                            </div>
                                         </div>
-                                        {it.basicInfo?.artist && (
-                                            <div className="text-sm text-neutral-600 mb-1">Nghệ sĩ: {it.basicInfo.artist}</div>
-                                        )}
-                                        <div className="text-sm text-neutral-600 mb-1">Người đóng góp: {it.uploader?.username || 'Khách'}</div>
-                                        <div className="text-sm text-neutral-500 mb-1">Ngày tải: {it.uploadedAt ? new Date(it.uploadedAt).toLocaleString() : '-'}</div>
-                                        <div className="text-sm mt-2">
-                                            Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
-                                            {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
-                                                <span> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
+
+                                        <div className="ml-4 flex flex-col gap-2 flex-shrink-0">
+                                            {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
+                                                <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Nhận kiểm duyệt</button>
+                                            )}
+
+                                            {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
+                                                <>
+                                                    <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Tiếp tục kiểm duyệt</button>
+                                                    <button onClick={() => unclaim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Hủy nhận kiểm duyệt</button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 md:mt-0 md:ml-6 flex flex-wrap gap-4 md:flex-col md:items-end">
-                                        {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
-                                            <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer">Nhận kiểm duyệt</button>
-                                        )}
-
-                                        {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
-                                            <>
-                                                <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer">Tiếp tục kiểm duyệt</button>
-                                                <button onClick={() => unclaim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer">Hủy nhận kiểm duyệt</button>
-                                            </>
-                                        )}
-                                    </div>
+                                    {/* Media Player */}
+                                    {mediaSrc && (
+                                        <div className="mt-4">
+                                            {isVideo ? (
+                                                <VideoPlayer
+                                                    src={mediaSrc}
+                                                    title={it.basicInfo?.title || it.title}
+                                                    artist={it.basicInfo?.artist}
+                                                    recording={convertedRecording}
+                                                    showContainer={true}
+                                                />
+                                            ) : (
+                                                <AudioPlayer
+                                                    src={mediaSrc}
+                                                    title={it.basicInfo?.title || it.title}
+                                                    artist={it.basicInfo?.artist}
+                                                    recording={convertedRecording}
+                                                    showContainer={true}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -1402,10 +1543,10 @@ export default function ModerationPage() {
                                 <div className="flex items-center justify-between gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
                                     <div className="flex items-center gap-3">
                                         <button
-                                            onClick={() => cancelVerification(showVerificationDialog)}
-                                            className="px-6 py-2.5 bg-neutral-600 text-white rounded-full font-medium hover:bg-neutral-500 transition-colors shadow-sm hover:shadow-md"
+                                            onClick={() => unclaim(showVerificationDialog)}
+                                            className="px-6 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                         >
-                                            Đóng
+                                            Hủy nhận kiểm duyệt
                                         </button>
                                         <button
                                             onClick={() => {
@@ -1413,7 +1554,7 @@ export default function ModerationPage() {
                                                     setShowRejectDialog(showVerificationDialog);
                                                 }
                                             }}
-                                            className="px-6 py-2.5 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer"
+                                            className="px-6 py-2.5 bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-orange-600/40 hover:scale-110 active:scale-95 cursor-pointer"
                                         >
                                             Từ chối
                                         </button>

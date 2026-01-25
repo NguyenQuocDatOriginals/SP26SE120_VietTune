@@ -15,8 +15,7 @@ const getRegionFromVietnameseName = (vietnameseName: string | undefined): Region
   const entry = Object.entries(REGION_NAMES).find(([, name]) => name === vietnameseName) as [string, string] | undefined;
   return entry ? (entry[0] as Region) : undefined;
 };
-import { format } from "date-fns";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime, formatDate } from "@/utils/helpers";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
@@ -324,8 +323,8 @@ export default function RecordingDetailPage() {
                   <span>{recording.likeCount} lượt thích</span>
                 </div>
                 <div className="flex items-center">
-                  <Download className="h-5 w-5 mr-2 text-primary-600" strokeWidth={2.5} />
-                  <span>{recording.downloadCount} lượt tải</span>
+                  <Share2 className="h-5 w-5 mr-2 text-primary-600" strokeWidth={2.5} />
+                  <span>{recording.downloadCount} lượt chia sẻ</span>
                 </div>
               </div>
             </div>
@@ -458,7 +457,7 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Thời lượng</dt>
                   <dd className="font-medium text-neutral-900">
-                    {Math.floor(recording.duration / 60)}:
+                    {Math.floor(recording.duration / 60).toString().padStart(2, "0")}:
                     {(recording.duration % 60).toString().padStart(2, "0")}
                   </dd>
                 </div>
@@ -466,14 +465,14 @@ export default function RecordingDetailPage() {
                   <div>
                     <dt className="text-sm text-neutral-500">Ngày thu âm</dt>
                     <dd className="font-medium text-neutral-900">
-                      {format(new Date(recording.recordedDate), "PP")}
+                      {formatDate(recording.recordedDate)}
                     </dd>
                   </div>
                 )}
                 <div>
-                  <dt className="text-sm text-neutral-500">Ngày tải lên</dt>
+                  <dt className="text-sm text-neutral-500">Thời điểm tải lên</dt>
                   <dd className="font-medium text-neutral-900">
-                    {format(new Date(recording.uploadedDate), "d/M/yyyy")}
+                    {formatDateTime(recording.uploadedDate)}
                   </dd>
                 </div>
               </dl>

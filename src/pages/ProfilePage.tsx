@@ -399,7 +399,7 @@ export default function ProfilePage() {
                   <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Công cụ quản trị</h2>
                   <p className="text-neutral-700 font-medium text-sm">
                     Xóa toàn bộ dữ liệu từ các bản thu để giải phóng dung lượng localStorage.
-                    Tất cả thông tin sẽ bị xóa hoàn toàn, bao gồm metadata, media, và cả thông tin hệ thống (ID, ngày tải, trạng thái kiểm duyệt, người đóng góp).
+                    Tất cả thông tin sẽ bị xóa hoàn toàn, bao gồm metadata, media, và cả thông tin hệ thống (ID, thời điểm tải lên, trạng thái kiểm duyệt, người đóng góp).
                   </p>
                 </div>
               </div>
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                 <li>Ghi chú bổ sung: mô tả, ghi chú thực địa, bản chép nhạc</li>
                 <li>Thông tin quản trị: người thu thập, bản quyền, mã catalog</li>
                 <li>File media: audioData, videoData, youtubeUrl, mediaType, file</li>
-                <li>Thông tin hệ thống: ID, ngày tải, trạng thái kiểm duyệt, người đóng góp</li>
+                <li>Thông tin hệ thống: ID, thời điểm tải lên, trạng thái kiểm duyệt, người đóng góp</li>
               </ul>
               <br />
               <strong className="text-red-600">Hành động này không thể hoàn tác!</strong>
