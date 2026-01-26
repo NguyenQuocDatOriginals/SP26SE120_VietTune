@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/di/injection.dart';
 import 'core/router/app_router.dart';
@@ -11,10 +13,42 @@ void main() {
   // Initialize dependency injection
   configureDependencies();
   
-  runApp(
-    const ProviderScope(
-      child: VietTuneApp(),
-    ),
+  // Global error handling for better stability
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    if (kDebugMode) {
+      debugPrint('Flutter Error: ${details.exception}');
+      debugPrint('Stack trace: ${details.stack}');
+    }
+    // In production, you might want to log to crash reporting service
+    // Example: FirebaseCrashlytics.instance.recordFlutterError(details);
+  };
+  
+  // Handle errors outside Flutter framework
+  PlatformDispatcher.instance.onError = (error, stack) {
+    if (kDebugMode) {
+      debugPrint('Platform Error: $error');
+      debugPrint('Stack trace: $stack');
+    }
+    return true; // Handled
+  };
+  
+  // Run app with error zone
+  runZonedGuarded(
+    () {
+      runApp(
+        const ProviderScope(
+          child: VietTuneApp(),
+        ),
+      );
+    },
+    (error, stack) {
+      if (kDebugMode) {
+        debugPrint('Zone Error: $error');
+        debugPrint('Stack trace: $stack');
+      }
+      // In production: FirebaseCrashlytics.instance.recordError(error, stack);
+    },
   );
 }
 

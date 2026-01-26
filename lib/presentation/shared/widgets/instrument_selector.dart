@@ -162,12 +162,22 @@ class _InstrumentSelectorState extends ConsumerState<InstrumentSelector> {
                     deleteIcon: Icon(
                       Icons.close,
                       size: 16,
-                      color: AppColors.textOnGradient,
+                      color: AppColors.textOnPrimary,
                     ),
                     label: Text(_formatInstrumentName(instrument)),
-                    backgroundColor: AppColors.success,
-                    labelStyle: TextStyle(color: AppColors.textOnGradient),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    backgroundColor: AppColors.primaryLight.withValues(alpha: 0.15),
+                    labelStyle: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    side: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   );
                 }).toList(),
               ),

@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/song.dart';
 import '../../data/models/song_model.dart';
+import '../../core/di/injection.dart';
+import 'image_storage_service.dart';
+import 'video_storage_service.dart';
 
 /// Draft data structure
 class DraftData {
@@ -48,6 +51,8 @@ class DraftData {
 class ContributionDraftService {
   static const String _draftKey = 'contribution_draft';
   static const String _draftVersion = '1.0';
+  final ImageStorageService _imageStorageService = getIt<ImageStorageService>();
+  final VideoStorageService _videoStorageService = getIt<VideoStorageService>();
 
   /// Save draft to local storage
   Future<void> saveDraft(Song song, int currentStep) async {
@@ -111,8 +116,50 @@ class ContributionDraftService {
   }
 
   /// Clear draft from local storage
+  /// Also cleans up associated image files
   Future<void> clearDraft() async {
     try {
+      // Get draft before clearing to collect image paths
+      final draft = await loadDraft();
+      
+      // Collect all image relative paths from draft
+      final imagePaths = <String>[];
+      if (draft?.songData.audioMetadata?.instrumentImages != null) {
+        imagePaths.addAll(
+          draft!.songData.audioMetadata!.instrumentImages!
+              .map((img) => img.relativePath),
+        );
+      }
+      if (draft?.songData.audioMetadata?.performerImages != null) {
+        imagePaths.addAll(
+          draft!.songData.audioMetadata!.performerImages!
+              .map((img) => img.relativePath),
+        );
+      }
+      
+      // Delete image files
+      for (final path in imagePaths) {
+        try {
+          await _imageStorageService.deleteImage(path);
+        } catch (e) {
+          debugPrint('Error deleting image $path: $e');
+        }
+      }
+      
+      // Collect video paths from draft
+      final video = draft?.songData.audioMetadata?.video;
+      if (video != null) {
+        try {
+          await _videoStorageService.deleteVideoAndThumbnail(
+            videoRelativePath: video.relativePath,
+            thumbnailRelativePath: video.thumbnailRelativePath,
+          );
+        } catch (e) {
+          debugPrint('Error deleting video ${video.relativePath}: $e');
+        }
+      }
+      
+      // Clear draft from storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_draftKey);
       debugPrint('Draft cleared successfully');

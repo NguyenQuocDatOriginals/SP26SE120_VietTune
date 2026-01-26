@@ -4,6 +4,7 @@ import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/instrument_selector.dart';
+import '../../../shared/widgets/image_picker_widget.dart';
 
 /// Step 4: Performance Details & Instruments
 class PerformanceDetailsStep extends ConsumerWidget {
@@ -109,6 +110,20 @@ class PerformanceDetailsStep extends ConsumerWidget {
                   ),
                 ),
               ),
+            // Image upload for instruments
+            if ((audioMetadata?.instrumentIds?.isNotEmpty ?? false)) ...[
+              const SizedBox(height: 24),
+              ImagePickerWidget(
+                images: audioMetadata?.instrumentImages ?? [],
+                onImagesChanged: (images) {
+                  formNotifier.updateInstrumentImages(images);
+                },
+                maxImages: 5,
+                label: 'Ảnh nhạc cụ',
+                required: false,
+                allowMainImageSelection: true,
+              ),
+            ],
           ] else if (song?.performanceType == PerformanceType.aCappella) ...[
             const SizedBox(height: 16),
             Container(

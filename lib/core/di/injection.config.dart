@@ -18,9 +18,19 @@ import 'package:viettune_archive/core/services/ethnic_group_suggestion_service.d
     as _i474;
 import 'package:viettune_archive/core/services/guest_favorite_service.dart'
     as _i228;
+import 'package:viettune_archive/core/services/image_cleanup_service.dart'
+    as _i1062;
+import 'package:viettune_archive/core/services/image_storage_service.dart'
+    as _i407;
+import 'package:viettune_archive/core/services/image_upload_service.dart'
+    as _i44;
 import 'package:viettune_archive/core/services/recording_service.dart' as _i771;
 import 'package:viettune_archive/core/services/speech_to_text_service.dart'
     as _i420;
+import 'package:viettune_archive/core/services/video_storage_service.dart'
+    as _i693;
+import 'package:viettune_archive/core/services/video_upload_service.dart'
+    as _i913;
 import 'package:viettune_archive/data/datasources/mock/mock_auth_data_source.dart'
     as _i601;
 import 'package:viettune_archive/data/datasources/mock/mock_contribution_data_source.dart'
@@ -31,6 +41,10 @@ import 'package:viettune_archive/data/datasources/mock/mock_instrument_data_sour
     as _i1052;
 import 'package:viettune_archive/data/datasources/mock/mock_song_data_source.dart'
     as _i327;
+import 'package:viettune_archive/data/repositories/image_repository.dart'
+    as _i656;
+import 'package:viettune_archive/data/repositories/video_repository.dart'
+    as _i45;
 import 'package:viettune_archive/domain/repositories/auth_repository.dart'
     as _i807;
 import 'package:viettune_archive/domain/repositories/contribution_repository.dart'
@@ -120,8 +134,18 @@ extension GetItInjectableX on _i174.GetIt {
         () => serviceModule.recordingService);
     gh.lazySingleton<_i420.SpeechToTextService>(
         () => serviceModule.speechToTextService);
+    gh.lazySingleton<_i407.ImageStorageService>(
+        () => serviceModule.imageStorageService);
+    gh.lazySingleton<_i693.VideoStorageService>(
+        () => serviceModule.videoStorageService);
+    gh.lazySingleton<_i913.VideoUploadService>(() =>
+        serviceModule.videoUploadService(gh<_i693.VideoStorageService>()));
     gh.lazySingleton<_i773.SongRepository>(
         () => repositoryModule.songRepository(gh<_i327.MockSongDataSource>()));
+    gh.lazySingleton<_i44.ImageUploadService>(() =>
+        serviceModule.imageUploadService(gh<_i407.ImageStorageService>()));
+    gh.lazySingleton<_i1062.ImageCleanupService>(() =>
+        serviceModule.imageCleanupService(gh<_i407.ImageStorageService>()));
     gh.lazySingleton<_i697.ContributionRepository>(() => repositoryModule
         .contributionRepository(gh<_i606.MockContributionDataSource>()));
     gh.lazySingleton<_i628.SearchSongs>(
@@ -148,6 +172,16 @@ extension GetItInjectableX on _i174.GetIt {
         () => useCaseModule.getEthnicGroups(gh<_i579.EthnicGroupRepository>()));
     gh.lazySingleton<_i825.GetRegions>(
         () => useCaseModule.getRegions(gh<_i579.EthnicGroupRepository>()));
+    gh.lazySingleton<_i656.ImageRepository>(
+        () => repositoryModule.imageRepository(
+              gh<_i44.ImageUploadService>(),
+              gh<_i407.ImageStorageService>(),
+            ));
+    gh.lazySingleton<_i45.VideoRepository>(
+        () => repositoryModule.videoRepository(
+              gh<_i913.VideoUploadService>(),
+              gh<_i693.VideoStorageService>(),
+            ));
     gh.lazySingleton<_i579.GetInstruments>(
         () => useCaseModule.getInstruments(gh<_i935.InstrumentRepository>()));
     gh.lazySingleton<_i887.SubmitContribution>(() =>

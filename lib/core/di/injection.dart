@@ -45,6 +45,15 @@ import '../services/contribution_draft_service.dart';
 import '../services/ethnic_group_suggestion_service.dart';
 import '../services/recording_service.dart';
 import '../services/speech_to_text_service.dart';
+import '../services/image_storage_service.dart';
+import '../services/image_upload_service.dart';
+import '../services/image_cleanup_service.dart';
+import '../services/video_storage_service.dart';
+import '../services/video_upload_service.dart';
+import '../../data/repositories/image_repository_impl.dart';
+import '../../data/repositories/image_repository.dart';
+import '../../data/repositories/video_repository_impl.dart';
+import '../../data/repositories/video_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -106,6 +115,26 @@ abstract class RepositoryModule {
   @LazySingleton(as: UserRepository)
   UserRepositoryImpl userRepository(MockAuthDataSource dataSource) =>
       UserRepositoryImpl(dataSource);
+
+  @LazySingleton(as: ImageRepository)
+  ImageRepositoryImpl imageRepository(
+    ImageUploadService uploadService,
+    ImageStorageService storageService,
+  ) =>
+      ImageRepositoryImpl(
+        uploadService: uploadService,
+        storageService: storageService,
+      );
+
+  @LazySingleton(as: VideoRepository)
+  VideoRepositoryImpl videoRepository(
+    VideoUploadService uploadService,
+    VideoStorageService storageService,
+  ) =>
+      VideoRepositoryImpl(
+        uploadService: uploadService,
+        storageService: storageService,
+      );
 }
 
 @module
@@ -212,4 +241,22 @@ abstract class ServiceModule {
 
   @lazySingleton
   SpeechToTextService get speechToTextService => SpeechToTextService();
+
+  @lazySingleton
+  ImageStorageService get imageStorageService => ImageStorageService();
+
+  @lazySingleton
+  ImageUploadService imageUploadService(ImageStorageService storageService) =>
+      ImageUploadService(storageService);
+
+  @lazySingleton
+  ImageCleanupService imageCleanupService(ImageStorageService storageService) =>
+      ImageCleanupService(storageService);
+
+  @lazySingleton
+  VideoStorageService get videoStorageService => VideoStorageService();
+
+  @lazySingleton
+  VideoUploadService videoUploadService(VideoStorageService storageService) =>
+      VideoUploadService(storageService);
 }

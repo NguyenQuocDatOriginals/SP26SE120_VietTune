@@ -33,6 +33,20 @@ mixin _$AudioMetadata {
   String? get format => throw _privateConstructorUsedError;
   int? get sampleRate => throw _privateConstructorUsedError;
 
+  /// Images of instruments used in performance
+  /// Uses ImageMetadata with relative paths only
+  List<ImageMetadata>? get instrumentImages =>
+      throw _privateConstructorUsedError;
+
+  /// Images of performers/artists
+  /// Uses ImageMetadata with relative paths only
+  List<ImageMetadata>? get performerImages =>
+      throw _privateConstructorUsedError;
+
+  /// Optional video recording
+  /// Uses VideoMetadata with relative paths only
+  VideoMetadata? get video => throw _privateConstructorUsedError;
+
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
   $AudioMetadataCopyWith<AudioMetadata> get copyWith =>
@@ -57,9 +71,13 @@ abstract class $AudioMetadataCopyWith<$Res> {
       String? recordedBy,
       int? bitrate,
       String? format,
-      int? sampleRate});
+      int? sampleRate,
+      List<ImageMetadata>? instrumentImages,
+      List<ImageMetadata>? performerImages,
+      VideoMetadata? video});
 
   $LocationCopyWith<$Res>? get recordingLocation;
+  $VideoMetadataCopyWith<$Res>? get video;
 }
 
 /// @nodoc
@@ -87,6 +105,9 @@ class _$AudioMetadataCopyWithImpl<$Res, $Val extends AudioMetadata>
     Object? bitrate = freezed,
     Object? format = freezed,
     Object? sampleRate = freezed,
+    Object? instrumentImages = freezed,
+    Object? performerImages = freezed,
+    Object? video = freezed,
   }) {
     return _then(_value.copyWith(
       url: null == url
@@ -137,6 +158,18 @@ class _$AudioMetadataCopyWithImpl<$Res, $Val extends AudioMetadata>
           ? _value.sampleRate
           : sampleRate // ignore: cast_nullable_to_non_nullable
               as int?,
+      instrumentImages: freezed == instrumentImages
+          ? _value.instrumentImages
+          : instrumentImages // ignore: cast_nullable_to_non_nullable
+              as List<ImageMetadata>?,
+      performerImages: freezed == performerImages
+          ? _value.performerImages
+          : performerImages // ignore: cast_nullable_to_non_nullable
+              as List<ImageMetadata>?,
+      video: freezed == video
+          ? _value.video
+          : video // ignore: cast_nullable_to_non_nullable
+              as VideoMetadata?,
     ) as $Val);
   }
 
@@ -149,6 +182,18 @@ class _$AudioMetadataCopyWithImpl<$Res, $Val extends AudioMetadata>
 
     return $LocationCopyWith<$Res>(_value.recordingLocation!, (value) {
       return _then(_value.copyWith(recordingLocation: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $VideoMetadataCopyWith<$Res>? get video {
+    if (_value.video == null) {
+      return null;
+    }
+
+    return $VideoMetadataCopyWith<$Res>(_value.video!, (value) {
+      return _then(_value.copyWith(video: value) as $Val);
     });
   }
 }
@@ -173,10 +218,15 @@ abstract class _$$AudioMetadataImplCopyWith<$Res>
       String? recordedBy,
       int? bitrate,
       String? format,
-      int? sampleRate});
+      int? sampleRate,
+      List<ImageMetadata>? instrumentImages,
+      List<ImageMetadata>? performerImages,
+      VideoMetadata? video});
 
   @override
   $LocationCopyWith<$Res>? get recordingLocation;
+  @override
+  $VideoMetadataCopyWith<$Res>? get video;
 }
 
 /// @nodoc
@@ -202,6 +252,9 @@ class __$$AudioMetadataImplCopyWithImpl<$Res>
     Object? bitrate = freezed,
     Object? format = freezed,
     Object? sampleRate = freezed,
+    Object? instrumentImages = freezed,
+    Object? performerImages = freezed,
+    Object? video = freezed,
   }) {
     return _then(_$AudioMetadataImpl(
       url: null == url
@@ -252,6 +305,18 @@ class __$$AudioMetadataImplCopyWithImpl<$Res>
           ? _value.sampleRate
           : sampleRate // ignore: cast_nullable_to_non_nullable
               as int?,
+      instrumentImages: freezed == instrumentImages
+          ? _value._instrumentImages
+          : instrumentImages // ignore: cast_nullable_to_non_nullable
+              as List<ImageMetadata>?,
+      performerImages: freezed == performerImages
+          ? _value._performerImages
+          : performerImages // ignore: cast_nullable_to_non_nullable
+              as List<ImageMetadata>?,
+      video: freezed == video
+          ? _value.video
+          : video // ignore: cast_nullable_to_non_nullable
+              as VideoMetadata?,
     ));
   }
 }
@@ -271,9 +336,14 @@ class _$AudioMetadataImpl implements _AudioMetadata {
       this.recordedBy,
       this.bitrate,
       this.format,
-      this.sampleRate})
+      this.sampleRate,
+      final List<ImageMetadata>? instrumentImages,
+      final List<ImageMetadata>? performerImages,
+      this.video})
       : _instrumentIds = instrumentIds,
-        _performerNames = performerNames;
+        _performerNames = performerNames,
+        _instrumentImages = instrumentImages,
+        _performerImages = performerImages;
 
   factory _$AudioMetadataImpl.fromJson(Map<String, dynamic> json) =>
       _$$AudioMetadataImplFromJson(json);
@@ -319,9 +389,45 @@ class _$AudioMetadataImpl implements _AudioMetadata {
   @override
   final int? sampleRate;
 
+  /// Images of instruments used in performance
+  /// Uses ImageMetadata with relative paths only
+  final List<ImageMetadata>? _instrumentImages;
+
+  /// Images of instruments used in performance
+  /// Uses ImageMetadata with relative paths only
+  @override
+  List<ImageMetadata>? get instrumentImages {
+    final value = _instrumentImages;
+    if (value == null) return null;
+    if (_instrumentImages is EqualUnmodifiableListView)
+      return _instrumentImages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  /// Images of performers/artists
+  /// Uses ImageMetadata with relative paths only
+  final List<ImageMetadata>? _performerImages;
+
+  /// Images of performers/artists
+  /// Uses ImageMetadata with relative paths only
+  @override
+  List<ImageMetadata>? get performerImages {
+    final value = _performerImages;
+    if (value == null) return null;
+    if (_performerImages is EqualUnmodifiableListView) return _performerImages;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  /// Optional video recording
+  /// Uses VideoMetadata with relative paths only
+  @override
+  final VideoMetadata? video;
+
   @override
   String toString() {
-    return 'AudioMetadata(url: $url, durationInSeconds: $durationInSeconds, quality: $quality, recordingDate: $recordingDate, instrumentIds: $instrumentIds, recordingLocation: $recordingLocation, performerNames: $performerNames, recordingEquipment: $recordingEquipment, recordedBy: $recordedBy, bitrate: $bitrate, format: $format, sampleRate: $sampleRate)';
+    return 'AudioMetadata(url: $url, durationInSeconds: $durationInSeconds, quality: $quality, recordingDate: $recordingDate, instrumentIds: $instrumentIds, recordingLocation: $recordingLocation, performerNames: $performerNames, recordingEquipment: $recordingEquipment, recordedBy: $recordedBy, bitrate: $bitrate, format: $format, sampleRate: $sampleRate, instrumentImages: $instrumentImages, performerImages: $performerImages, video: $video)';
   }
 
   @override
@@ -348,7 +454,12 @@ class _$AudioMetadataImpl implements _AudioMetadata {
             (identical(other.bitrate, bitrate) || other.bitrate == bitrate) &&
             (identical(other.format, format) || other.format == format) &&
             (identical(other.sampleRate, sampleRate) ||
-                other.sampleRate == sampleRate));
+                other.sampleRate == sampleRate) &&
+            const DeepCollectionEquality()
+                .equals(other._instrumentImages, _instrumentImages) &&
+            const DeepCollectionEquality()
+                .equals(other._performerImages, _performerImages) &&
+            (identical(other.video, video) || other.video == video));
   }
 
   @JsonKey(ignore: true)
@@ -366,7 +477,10 @@ class _$AudioMetadataImpl implements _AudioMetadata {
       recordedBy,
       bitrate,
       format,
-      sampleRate);
+      sampleRate,
+      const DeepCollectionEquality().hash(_instrumentImages),
+      const DeepCollectionEquality().hash(_performerImages),
+      video);
 
   @JsonKey(ignore: true)
   @override
@@ -395,7 +509,10 @@ abstract class _AudioMetadata implements AudioMetadata {
       final String? recordedBy,
       final int? bitrate,
       final String? format,
-      final int? sampleRate}) = _$AudioMetadataImpl;
+      final int? sampleRate,
+      final List<ImageMetadata>? instrumentImages,
+      final List<ImageMetadata>? performerImages,
+      final VideoMetadata? video}) = _$AudioMetadataImpl;
 
   factory _AudioMetadata.fromJson(Map<String, dynamic> json) =
       _$AudioMetadataImpl.fromJson;
@@ -424,6 +541,21 @@ abstract class _AudioMetadata implements AudioMetadata {
   String? get format;
   @override
   int? get sampleRate;
+  @override
+
+  /// Images of instruments used in performance
+  /// Uses ImageMetadata with relative paths only
+  List<ImageMetadata>? get instrumentImages;
+  @override
+
+  /// Images of performers/artists
+  /// Uses ImageMetadata with relative paths only
+  List<ImageMetadata>? get performerImages;
+  @override
+
+  /// Optional video recording
+  /// Uses VideoMetadata with relative paths only
+  VideoMetadata? get video;
   @override
   @JsonKey(ignore: true)
   _$$AudioMetadataImplCopyWith<_$AudioMetadataImpl> get copyWith =>

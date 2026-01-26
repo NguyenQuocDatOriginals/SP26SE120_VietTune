@@ -27,6 +27,15 @@ _$AudioMetadataImpl _$$AudioMetadataImplFromJson(Map<String, dynamic> json) =>
       bitrate: (json['bitrate'] as num?)?.toInt(),
       format: json['format'] as String?,
       sampleRate: (json['sampleRate'] as num?)?.toInt(),
+      instrumentImages: (json['instrumentImages'] as List<dynamic>?)
+          ?.map((e) => ImageMetadata.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      performerImages: (json['performerImages'] as List<dynamic>?)
+          ?.map((e) => ImageMetadata.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      video: json['video'] == null
+          ? null
+          : VideoMetadata.fromJson(json['video'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$AudioMetadataImplToJson(_$AudioMetadataImpl instance) =>
@@ -43,6 +52,9 @@ Map<String, dynamic> _$$AudioMetadataImplToJson(_$AudioMetadataImpl instance) =>
       'bitrate': instance.bitrate,
       'format': instance.format,
       'sampleRate': instance.sampleRate,
+      'instrumentImages': instance.instrumentImages,
+      'performerImages': instance.performerImages,
+      'video': instance.video,
     };
 
 const _$AudioQualityEnumMap = {

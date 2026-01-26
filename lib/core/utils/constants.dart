@@ -13,6 +13,7 @@ class AppConstants {
   // File upload
   static const int maxAudioFileSize = 50 * 1024 * 1024; // 50MB
   static const int maxImageFileSize = 5 * 1024 * 1024; // 5MB
+  static const int maxVideoFileSize = 100 * 1024 * 1024; // 100MB (chặn trước khi compress)
   static const List<String> supportedAudioFormats = [
     'mp3',
     'wav',
@@ -25,6 +26,13 @@ class AppConstants {
     'jpeg',
     'png',
     'webp',
+  ];
+  static const List<String> supportedVideoFormats = [
+    'mp4',
+    'mov',
+    'avi',
+    'mkv',
+    'webm',
   ];
   
   // Search

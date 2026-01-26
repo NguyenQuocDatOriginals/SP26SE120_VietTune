@@ -6,6 +6,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../shared/widgets/ethnic_group_selector.dart';
 import '../../../shared/widgets/field_progress_indicator.dart';
 import '../../../shared/widgets/progressive_disclosure_section.dart';
+import '../../../shared/widgets/image_picker_widget.dart';
 
 /// Step 3: People - Who made it?
 /// Required: Performers, Ethnic Group
@@ -308,6 +309,30 @@ class PeopleStep extends ConsumerWidget {
                         },
                       ),
                     ],
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              // Image upload for performers
+              Builder(
+                builder: (context) {
+                  final performerNames = song?.audioMetadata?.performerNames;
+                  final hasPerformer = performerNames?.isNotEmpty == true && 
+                      performerNames!.first.isNotEmpty;
+                  
+                  if (!hasPerformer) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  return ImagePickerWidget(
+                    images: song?.audioMetadata?.performerImages ?? [],
+                    onImagesChanged: (images) {
+                      formNotifier.updatePerformerImages(images);
+                    },
+                    maxImages: 5,
+                    label: 'Ảnh nghệ sĩ',
+                    required: false,
+                    allowMainImageSelection: true,
                   );
                 },
               ),

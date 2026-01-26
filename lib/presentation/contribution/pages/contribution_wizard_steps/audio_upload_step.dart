@@ -15,6 +15,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../domain/entities/audio_metadata.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
+import '../../../shared/widgets/video_picker_widget.dart';
 import 'recording_dialog.dart';
 
 /// Step 1: Audio Upload
@@ -44,7 +45,7 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Bước 1: Tải lên file âm thanh',
+            'Bước 1: Tải lên Media',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -53,7 +54,7 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Chọn file âm thanh từ thiết bị hoặc ghi âm trực tiếp',
+            'Chọn file âm thanh hoặc video từ thiết bị, hoặc ghi âm trực tiếp',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
@@ -148,6 +149,30 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
                   audioMetadata.bitrate != null ||
                   audioMetadata.sampleRate != null))
             _buildMetadataCard(context, audioMetadata),
+          const SizedBox(height: 24),
+          // Video upload section
+          Divider(height: 32, thickness: 1),
+          Text(
+            'Video (Tùy chọn)',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bạn có thể tải lên video minh họa cho bản ghi âm',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          VideoPickerWidget(
+            video: audioMetadata?.video,
+            onVideoChanged: (video) {
+              formNotifier.updateVideo(video);
+            },
+            label: 'Video minh họa',
+            required: false,
+            allowRecording: true,
+          ),
           const SizedBox(height: 16),
           // Supported formats info
           Container(
@@ -163,7 +188,8 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
                 Expanded(
                   child: Text(
                     'Định dạng hỗ trợ: ${AudioUtils.getSupportedFormatsString()}\n'
-                    'Kích thước tối đa: ${(AppConstants.maxAudioFileSize / (1024 * 1024)).toInt()}MB',
+                    'Kích thước tối đa: ${(AppConstants.maxAudioFileSize / (1024 * 1024)).toInt()}MB\n'
+                    'Video: MP4, MOV (tối đa 100MB)',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),

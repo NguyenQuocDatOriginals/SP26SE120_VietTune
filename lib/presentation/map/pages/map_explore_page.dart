@@ -198,6 +198,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'map-add-recording-fab',
         onPressed: () {
           // Navigate to contribute
           // TODO: Navigate to contribute page

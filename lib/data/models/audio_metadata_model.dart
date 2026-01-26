@@ -2,6 +2,8 @@ import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/audio_metadata.dart';
 import '../../domain/entities/enums.dart';
 import 'location_model.dart';
+import 'image_metadata_model.dart';
+import 'video_metadata_model.dart';
 
 part 'audio_metadata_model.g.dart';
 
@@ -28,6 +30,12 @@ class AudioMetadataModel {
   final String? format;
   @JsonKey(name: 'sample_rate')
   final int? sampleRate;
+  @JsonKey(name: 'instrument_images')
+  final List<ImageMetadataModel>? instrumentImages;
+  @JsonKey(name: 'performer_images')
+  final List<ImageMetadataModel>? performerImages;
+  
+  final VideoMetadataModel? video;
 
   const AudioMetadataModel({
     required this.url,
@@ -42,6 +50,9 @@ class AudioMetadataModel {
     this.bitrate,
     this.format,
     this.sampleRate,
+    this.instrumentImages,
+    this.performerImages,
+    this.video,
   });
 
   factory AudioMetadataModel.fromJson(Map<String, dynamic> json) =>
@@ -67,6 +78,9 @@ class AudioMetadataModel {
       bitrate: bitrate,
       format: format,
       sampleRate: sampleRate,
+      instrumentImages: instrumentImages?.map((img) => img.toEntity()).toList(),
+      performerImages: performerImages?.map((img) => img.toEntity()).toList(),
+      video: video?.toEntity(),
     );
   }
 
@@ -87,6 +101,15 @@ class AudioMetadataModel {
       bitrate: entity.bitrate,
       format: entity.format,
       sampleRate: entity.sampleRate,
+      instrumentImages: entity.instrumentImages
+          ?.map((img) => ImageMetadataModel.fromEntity(img))
+          .toList(),
+      performerImages: entity.performerImages
+          ?.map((img) => ImageMetadataModel.fromEntity(img))
+          .toList(),
+      video: entity.video != null
+          ? VideoMetadataModel.fromEntity(entity.video!)
+          : null,
     );
   }
 }

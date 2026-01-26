@@ -9,9 +9,15 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/contribution_draft_service.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/speech_to_text_service.dart';
-import '../../../../core/di/injection.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/progressive_disclosure_section.dart';
+import '../../../shared/widgets/image_preview_widget.dart';
+import '../../../shared/widgets/image_gallery_dialog.dart';
+import '../../../shared/widgets/video_preview_widget.dart';
+import '../../../shared/widgets/video_player_dialog.dart';
+import '../../../../domain/entities/image_metadata.dart';
+import '../../../../domain/entities/video_metadata.dart';
+import '../../../../core/utils/video_utils.dart';
 
 /// Step 5: Review and Submit
 class ReviewSubmitStep extends ConsumerStatefulWidget {
@@ -333,6 +339,30 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               context,
               'File âm thanh',
               song.audioMetadata!.url,
+              () => _navigateToStep(0),
+            ),
+          // Instrument images
+          if (song.audioMetadata?.instrumentImages?.isNotEmpty == true)
+            _buildImageReviewSection(
+              context,
+              'Ảnh nhạc cụ',
+              song.audioMetadata!.instrumentImages!,
+              () => _navigateToStep(4),
+            ),
+          // Performer images
+          if (song.audioMetadata?.performerImages?.isNotEmpty == true)
+            _buildImageReviewSection(
+              context,
+              'Ảnh nghệ sĩ',
+              song.audioMetadata!.performerImages!,
+              () => _navigateToStep(2),
+            ),
+          // Video
+          if (song.audioMetadata?.video != null)
+            _buildVideoReviewSection(
+              context,
+              'Video minh họa',
+              song.audioMetadata!.video!,
               () => _navigateToStep(0),
             ),
           if (song.culturalContext != null)
@@ -729,5 +759,249 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
       case ContextType.lullaby:
         return 'Ru con';
     }
+  }
+
+  Widget _buildImageReviewSection(
+    BuildContext context,
+    String label,
+    List<ImageMetadata> images,
+    VoidCallback onEdit,
+  ) {
+    final imageCount = images.length;
+    final mainImage = images.firstWhere(
+      (img) => img.isMainImage == true,
+      orElse: () => images.first,
+    );
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            title: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
+                    MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+              ),
+            ),
+            subtitle: Text(
+              '$imageCount ảnh',
+              style: TextStyle(
+                fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+              ),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: onEdit,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // Main image (larger)
+                GestureDetector(
+                  onTap: () {
+                    ImageGalleryDialog.show(
+                      context,
+                      images: images,
+                      initialIndex: images.indexOf(mainImage),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: ImagePreviewWidget(
+                        image: mainImage,
+                        showRemoveButton: false,
+                        width: 120,
+                        height: 120,
+                      ),
+                    ),
+                  ),
+                ),
+                // Other images (smaller thumbnails)
+                ...images.where((img) => img != mainImage).take(3).map((img) {
+                  return GestureDetector(
+                    onTap: () {
+                      ImageGalleryDialog.show(
+                        context,
+                        images: images,
+                        initialIndex: images.indexOf(img),
+                      );
+                    },
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.divider,
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: ImagePreviewWidget(
+                          image: img,
+                          showRemoveButton: false,
+                          width: 80,
+                          height: 80,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+                // Show "+X more" if there are more images
+                if (images.length > 4)
+                  GestureDetector(
+                    onTap: () {
+                      ImageGalleryDialog.show(
+                        context,
+                        images: images,
+                        initialIndex: 0,
+                      );
+                    },
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.divider,
+                          width: 1,
+                        ),
+                        color: AppColors.backgroundDark,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '+${images.length - 4}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            Text(
+                              'thêm',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoReviewSection(
+    BuildContext context,
+    String label,
+    VideoMetadata video,
+    VoidCallback onEdit,
+  ) {
+    final durationText = video.durationInSeconds != null
+        ? _formatDuration(Duration(seconds: video.durationInSeconds!))
+        : 'Không xác định';
+    final sizeText = video.fileSizeBytes != null
+        ? VideoUtils.formatFileSize(video.fileSizeBytes!)
+        : 'Không xác định';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            title: Text(
+              label,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
+                    MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Thời lượng: $durationText',
+                  style: TextStyle(
+                    fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+                  ),
+                ),
+                Text(
+                  'Kích thước: $sizeText',
+                  style: TextStyle(
+                    fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+                  ),
+                ),
+              ],
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: onEdit,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: GestureDetector(
+              onTap: () {
+                VideoPlayerDialog.show(context, video: video);
+              },
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: VideoPreviewWidget(
+                    video: video,
+                    showRemoveButton: false,
+                    width: double.infinity,
+                    height: 200,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(1, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }

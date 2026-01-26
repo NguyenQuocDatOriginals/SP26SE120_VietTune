@@ -1,1 +1,9 @@
-.agent
+# Agent and IDE folders
+.agent/
+.cursor/
+
+# Documentation (plan files, etc.)
+docs/
+
+# Dart build artifacts
+.dart_tool/

@@ -27,6 +27,15 @@ AudioMetadataModel _$AudioMetadataModelFromJson(Map<String, dynamic> json) =>
       bitrate: (json['bitrate'] as num?)?.toInt(),
       format: json['format'] as String?,
       sampleRate: (json['sample_rate'] as num?)?.toInt(),
+      instrumentImages: (json['instrument_images'] as List<dynamic>?)
+          ?.map((e) => ImageMetadataModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      performerImages: (json['performer_images'] as List<dynamic>?)
+          ?.map((e) => ImageMetadataModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      video: json['video'] == null
+          ? null
+          : VideoMetadataModel.fromJson(json['video'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$AudioMetadataModelToJson(AudioMetadataModel instance) =>
@@ -43,4 +52,7 @@ Map<String, dynamic> _$AudioMetadataModelToJson(AudioMetadataModel instance) =>
       'bitrate': instance.bitrate,
       'format': instance.format,
       'sample_rate': instance.sampleRate,
+      'instrument_images': instance.instrumentImages,
+      'performer_images': instance.performerImages,
+      'video': instance.video,
     };

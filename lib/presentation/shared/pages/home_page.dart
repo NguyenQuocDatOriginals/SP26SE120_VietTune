@@ -93,40 +93,44 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _handleContributeTap(context, isGuest, role),
-        backgroundColor: Colors.transparent,
-        elevation: 8,
-        mini: false,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.primaryDark,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-                spreadRadius: 2,
+      // Hide FAB when on map tab (index 2) since MapExplorePage has its own FAB
+      floatingActionButton: safeIndex == 2
+          ? null
+          : FloatingActionButton(
+              heroTag: 'home-contribute-fab',
+              onPressed: () => _handleContributeTap(context, isGuest, role),
+              backgroundColor: Colors.transparent,
+              elevation: 8,
+              mini: false,
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primaryDark,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const DongSonDrumIcon(
+                  size: 56,
+                  primaryColor: AppColors.primary,
+                  accentColor: AppColors.gold,
+                ),
               ),
-            ],
-          ),
-          child: const DongSonDrumIcon(
-            size: 56,
-            primaryColor: AppColors.primary,
-            accentColor: AppColors.gold,
-          ),
-        ),
-      ),
+            ),
       bottomNavigationBar: VietTuneBottomNav(
         currentIndex: safeIndex,
         onTap: (index) {

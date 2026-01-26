@@ -107,6 +107,7 @@ class ContributeNotchedFAB extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
+      heroTag: 'contribute-notched-fab',
       onPressed: onTap,
       backgroundColor: Colors.transparent,
       elevation: 8,

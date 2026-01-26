@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/contribution_request.dart';
 import '../../../domain/entities/song.dart';
 import '../../../domain/entities/audio_metadata.dart';
+import '../../../domain/entities/image_metadata.dart';
+import '../../../domain/entities/video_metadata.dart';
 import '../../../domain/entities/location.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/utils/audio_metadata_extractor.dart';
@@ -79,8 +81,8 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
             song.audioMetadata!.url.isNotEmpty;
       case 1: // Identity (Title, Genre, Language)
         final hasTitle = song.title.isNotEmpty;
-        final hasGenre = song.genre != null;
-        final hasLanguage = song.language != null && song.language!.isNotEmpty;
+        final hasGenre = song.genre != null; // genre is required, but check anyway
+        final hasLanguage = song.language?.isNotEmpty ?? false;
         return hasTitle && hasGenre && hasLanguage;
       case 2: // People (Performers, Ethnic Group)
         final hasArtist = song.audioMetadata?.performerNames != null;
@@ -99,8 +101,6 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
             return hasInstruments;
           case PerformanceType.aCappella:
             return true; // No instruments needed
-          default:
-            return false;
         }
       case 5: // Review (merged with Notes)
         // Review is valid if all previous steps are valid
@@ -242,6 +242,99 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
     }
   }
 
+  /// Update instrument images
+  void updateInstrumentImages(List<ImageMetadata> images) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata != null) {
+      state = state.copyWith(
+        songData: state.songData?.copyWith(
+          audioMetadata: audioMetadata.copyWith(instrumentImages: images),
+        ),
+      );
+    }
+  }
+
+  /// Update performer images
+  void updatePerformerImages(List<ImageMetadata> images) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata != null) {
+      state = state.copyWith(
+        songData: state.songData?.copyWith(
+          audioMetadata: audioMetadata.copyWith(performerImages: images),
+        ),
+      );
+    }
+  }
+
+  /// Set main instrument image
+  void setMainInstrumentImage(int index) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata?.instrumentImages == null) return;
+    
+    final currentImages = audioMetadata!.instrumentImages!;
+    if (index < 0 || index >= currentImages.length) return;
+    
+    // Set all to false, then set selected to true
+    final updatedImages = currentImages.asMap().entries.map((entry) {
+      if (entry.key == index) {
+        return entry.value.copyWith(isMainImage: true);
+      } else {
+        return entry.value.copyWith(isMainImage: false);
+      }
+    }).toList();
+    
+    state = state.copyWith(
+      songData: state.songData?.copyWith(
+        audioMetadata: audioMetadata.copyWith(instrumentImages: updatedImages),
+      ),
+    );
+  }
+
+  /// Set main performer image
+  void setMainPerformerImage(int index) {
+    final audioMetadata = state.songData?.audioMetadata;
+    if (audioMetadata?.performerImages == null) return;
+    
+    final currentImages = audioMetadata!.performerImages!;
+    if (index < 0 || index >= currentImages.length) return;
+    
+    // Set all to false, then set selected to true
+    final updatedImages = currentImages.asMap().entries.map((entry) {
+      if (entry.key == index) {
+        return entry.value.copyWith(isMainImage: true);
+      } else {
+        return entry.value.copyWith(isMainImage: false);
+      }
+    }).toList();
+    
+    state = state.copyWith(
+      songData: state.songData?.copyWith(
+        audioMetadata: audioMetadata.copyWith(performerImages: updatedImages),
+      ),
+    );
+  }
+
+  /// Update video metadata
+  void updateVideo(VideoMetadata? video) {
+    final song = state.songData;
+    if (song == null) return;
+    final audioMetadata = song.audioMetadata;
+    if (audioMetadata == null) return;
+    
+    state = state.copyWith(
+      songData: song.copyWith(
+        audioMetadata: audioMetadata.copyWith(video: video),
+      ),
+    );
+    // Trigger draft save
+    _saveDraft();
+  }
+
+  /// Clear video
+  void clearVideo() {
+    updateVideo(null);
+  }
+
   void updateRecordingDate(DateTime date) {
     final audioMetadata = state.songData?.audioMetadata;
     if (audioMetadata != null) {
@@ -332,7 +425,7 @@ class ContributionFormNotifier extends StateNotifier<ContributionFormState> {
             state.songData?.title != null && state.songData!.title.isNotEmpty;
         final hasGenre = state.songData?.genre != null;
         final hasLanguage =
-            state.songData?.language != null && state.songData!.language!.isNotEmpty;
+            state.songData?.language?.isNotEmpty ?? false;
         return hasTitle && hasGenre && hasLanguage;
       case 2: // People (Performers, Ethnic Group)
         // Allow empty performerNames (when "Không rõ" is checked)

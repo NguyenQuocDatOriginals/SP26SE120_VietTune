@@ -28,13 +28,25 @@ dependencies:
   # Audio
   just_audio: ^0.9.36
   audio_service: ^0.18.12
-  record: ^5.0.4
+  record: ^5.2.1
   id3: ^1.0.2
   
   # File/Media
   image_picker: ^1.0.7
   file_picker: ^8.0.0
   path_provider: ^2.1.2
+  path: ^1.8.3
+  flutter_image_compress: ^2.1.0
+  uuid: ^4.3.3
+  
+  # Video
+  video_player: ^2.8.0
+  video_thumbnail: ^0.5.3
+  v_video_compressor: ^1.2.1  # flutter_video_compress is archived, using v_video_compressor instead
+  
+  # Permissions
+  permission_handler: ^11.0.0
+  device_info_plus: ^9.0.0
   
   # Location
   geolocator: ^11.0.0
@@ -69,6 +81,11 @@ dev_dependencies:
   freezed: ^2.4.7
   json_serializable: ^6.7.1
   injectable_generator: ^2.4.1
+
+dependency_overrides:
+  # Fix for record_linux missing startStream implementation
+  # Use latest version that has the fix
+  record_linux: ^1.2.1
 
 flutter:
   uses-material-design: true
