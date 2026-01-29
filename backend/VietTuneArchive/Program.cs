@@ -4,7 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service.EmailConfirmation;
+using Supabase;
+using Supabase.Interfaces;
 using VietTuneArchive.Application.Common.Email;
+using VietTuneArchive.Application.IServices;
+using VietTuneArchive.Application.Services;
 using VietTuneArchive.Domain.Context;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
 builder.Services.AddDbContext<DBContext>(options => options.UseSqlServer(connectionString));
 
+var supabaseUrl = builder.Configuration["Supabase:Url"];
+var supabaseKey = builder.Configuration["Supabase:Key"];
+var supabaseClient = new Client(supabaseUrl, supabaseKey);
+
+
+builder.Services.AddSingleton(supabaseClient);
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -26,6 +36,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services
+    .AddScoped<IEnumsProvider, EnumsProvider>()
+    .AddScoped<IAudioUploadService, AudioUploadService>()
+    .AddScoped<IAudioProcessingService, AudioProcessingService>();
 // ✅ CRITICAL: Authorization Policies
 builder.Services.AddAuthorization(options =>
 {

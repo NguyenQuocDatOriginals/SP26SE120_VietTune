@@ -20,19 +20,19 @@ namespace VietTuneArchive.API.Controllers
         public async Task<ActionResult<AIAnalysisJobDto>> AnalyzeMedia(string mediaFileId,
             [FromBody] AnalyzeRequest request)
         {
-            // TODO: Queue job async (Hangfire/BgTask) gọi AI service:
-            // - Speech-to-text, BPM detection, key/chord recognition, genre classification
-            var job = new AIAnalysisJobDto
-            {
-                Id = "ai-job-001",
-                MediaFileId = mediaFileId,
-                Status = "Processing",
-                RequestedAt = DateTime.UtcNow,
-                Progress = 0
-            };
-            // Start background job...
+            //// TODO: Queue job async (Hangfire/BgTask) gọi AI service:
+            //// - Speech-to-text, BPM detection, key/chord recognition, genre classification
+            //var job = new AIAnalysisJobDto
+            //{
+            //    Id = "ai-job-001",
+            //    MediaFileId = mediaFileId,
+            //    Status = "Processing",
+            //    RequestedAt = DateTime.UtcNow,
+            //    Progress = 0
+            //};
+            //// Start background job...
 
-            return Accepted(job);  // 202 Accepted cho async job
+            return Accepted(1);  // 202 Accepted cho async job
         }
 
         // GET: /api/v1/ai-analysis/media/{mediaFileId}/result
@@ -40,20 +40,20 @@ namespace VietTuneArchive.API.Controllers
         [Authorize(Policy = "Owner")]
         public ActionResult<AIAnalysisResultDto> GetAnalysisResult(string mediaFileId)
         {
-            // TODO: Lấy kết quả từ DB/cache khi Status=Completed
-            var result = new AIAnalysisResultDto
-            {
-                MediaFileId = mediaFileId,
-                Bpm = 120,
-                Key = "C Major",
-                Genre = "Dân gian",
-                Tempo = "Medium",
-                InstrumentsDetected = new[] { "Đàn bầu", "Sáo" },
-                Transcription = "Phiên âm lời bài hát tự động...",
-                Confidence = 0.92f,
-                AnalyzedAt = DateTime.UtcNow
-            };
-            return Ok(result);
+            //// TODO: Lấy kết quả từ DB/cache khi Status=Completed
+            //var result = new AIAnalysisResultDto
+            //{
+            //    MediaFileId = mediaFileId,
+            //    Bpm = 120,
+            //    Key = "C Major",
+            //    Genre = "Dân gian",
+            //    Tempo = "Medium",
+            //    InstrumentsDetected = new[] { "Đàn bầu", "Sáo" },
+            //    Transcription = "Phiên âm lời bài hát tự động...",
+            //    Confidence = 0.92f,
+            //    AnalyzedAt = DateTime.UtcNow
+            //};
+            return Ok(1);
         }
 
         // GET: /api/v1/ai-analysis/media/{mediaFileId}/status
@@ -61,15 +61,15 @@ namespace VietTuneArchive.API.Controllers
         [Authorize(Policy = "Owner")]
         public ActionResult<AIAnalysisJobDto> GetAnalysisStatus(string mediaFileId)
         {
-            // TODO: Poll status từ job queue/DB
-            var status = new AIAnalysisJobDto
-            {
-                MediaFileId = mediaFileId,
-                Status = "Completed",  // Pending, Processing, Completed, Failed
-                Progress = 100,
-                Error = null
-            };
-            return Ok(status);
+            //// TODO: Poll status từ job queue/DB
+            //var status = new AIAnalysisJobDto
+            //{
+            //    MediaFileId = mediaFileId,
+            //    Status = "Completed",  // Pending, Processing, Completed, Failed
+            //    Progress = 100,
+            //    Error = null
+            //};
+            return Ok(1);
         }
 
         // POST: /api/v1/ai-analysis/media/{mediaFileId}/transcribe
@@ -91,19 +91,19 @@ namespace VietTuneArchive.API.Controllers
         // POST: /api/v1/ai-analysis/suggest-metadata
         [HttpPost("suggest-metadata")]
         [Authorize(Policy = "Owner")]
-        public ActionResult<MetadataSuggestionDto> SuggestMetadata([FromBody] SuggestMetadataRequest request)
+        public ActionResult<String> SuggestMetadata([FromBody] SuggestMetadataRequest request)
         {
-            // TODO: AI gợi ý metadata dựa audio features + context
-            var suggestion = new MetadataSuggestionDto
-            {
-                EthnicGroupId = "2",  // Tày
-                RegionId = "1",       // Bắc Bộ
-                MusicGenreId = "1",   // Dân gian
-                Instruments = new[] { "Đàn tính", "Sli" },
-                EventTypeId = "1",    // Lễ hội
-                Confidence = 0.87f
-            };
-            return Ok(suggestion);
+            //// TODO: AI gợi ý metadata dựa audio features + context
+            //var suggestion = new MetadataSuggestionDto
+            //{
+            //    EthnicGroupId = "2",  // Tày
+            //    RegionId = "1",       // Bắc Bộ
+            //    MusicGenreId = "1",   // Dân gian
+            //    Instruments = new[] { "Đàn tính", "Sli" },
+            //    EventTypeId = "1",    // Lễ hội
+            //    Confidence = 0.87f
+            //};
+            return Ok(1);
         }
     }
 
