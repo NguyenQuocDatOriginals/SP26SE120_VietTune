@@ -15,11 +15,12 @@ const getRegionFromVietnameseName = (vietnameseName: string | undefined): Region
   const entry = Object.entries(REGION_NAMES).find(([, name]) => name === vietnameseName) as [string, string] | undefined;
   return entry ? (entry[0] as Region) : undefined;
 };
-import { migrateVideoDataToVideoData, formatDateTime, formatDate } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime, formatDate, formatDuration } from "@/utils/helpers";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import { getLocalRecordingFull } from "@/services/recordingStorage";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -46,24 +47,23 @@ type RecordingWithLocalData = Recording & {
 export default function RecordingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [recording, setRecording] = useState<Recording | null>(null);
+  const [localRecordingData, setLocalRecordingData] = useState<LocalRecordingStorage | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) {
       fetchRecording(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchRecording = async (recordingId: string) => {
     try {
-      // First try to load from localStorage (local recordings)
+      // First try to load from per-recording storage (single read → no OOM)
       try {
-        const raw = localStorage.getItem("localRecordings");
-        if (raw) {
-          const all = JSON.parse(raw);
-          const migrated = migrateVideoDataToVideoData(all);
-          const local = migrated.find((r) => r.id === recordingId) as LocalRecordingStorage | undefined;
+        const full = await getLocalRecordingFull(recordingId);
+        if (full) {
+          const migrated = migrateVideoDataToVideoData([full])[0];
+          const local = migrated as LocalRecordingStorage;
           if (local) {
             // Convert local recording to Recording format
             const converted = {
@@ -91,8 +91,6 @@ export default function RecordingDetailPage() {
                 // We'll check in display logic to show "Không xác định" instead
                 return Region.RED_RIVER_DELTA;
               })(),
-              // Store original data to check if region was actually set
-              _originalLocalData: local,
               recordingType: local.recordingType ?? RecordingType.OTHER,
               duration: local.file?.duration ?? local.duration ?? 0,
               audioUrl: local.audioUrl ?? local.audioData ?? "",
@@ -106,7 +104,7 @@ export default function RecordingDetailPage() {
                 id: local.uploader?.id ?? "local-user",
                 username: local.uploader?.username ?? "Bạn",
                 email: local.uploader?.email ?? "",
-                fullName: local.uploader?.fullName ?? local.uploader?.username ?? "Người tải lên",
+                fullName: local.uploader?.fullName ?? local.uploader?.username ?? "Người đóng góp",
                 role: (typeof local.uploader?.role === "string" ? local.uploader?.role : UserRole.USER) as UserRole,
                 createdAt: local.uploader?.createdAt ?? new Date().toISOString(),
                 updatedAt: local.uploader?.updatedAt ?? new Date().toISOString(),
@@ -114,7 +112,7 @@ export default function RecordingDetailPage() {
                 id: "local-user",
                 username: "Bạn",
                 email: "",
-                fullName: "Người tải lên",
+                fullName: "Người đóng góp",
                 role: UserRole.USER,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -131,6 +129,7 @@ export default function RecordingDetailPage() {
               likeCount: local.likeCount ?? 0,
               downloadCount: local.downloadCount ?? 0,
             } as Recording;
+            setLocalRecordingData(local);
             setRecording(converted);
             setLoading(false);
             return;
@@ -140,7 +139,8 @@ export default function RecordingDetailPage() {
         console.error("Error loading local recording:", localError);
       }
 
-      // If not found in localStorage, try API
+      // If not found in IndexedDB, try API
+      setLocalRecordingData(null);
       const response = await recordingService.getRecordingById(recordingId);
       setRecording(response.data);
     } catch (error) {
@@ -191,77 +191,67 @@ export default function RecordingDetailPage() {
             <div className="mb-6">
               <div>
                 {(() => {
-                  // Try to get media source from local recording
-                  if (!recording.id) return null;
-                  try {
-                    const raw = localStorage.getItem("localRecordings");
-                    if (raw) {
-                      const all = JSON.parse(raw);
-                      const migrated = migrateVideoDataToVideoData(all);
-                      const local = migrated.find((r) => r.id === recording.id) as LocalRecordingStorage | undefined;
-                      if (local) {
-                        let mediaSrc: string | undefined;
-                        let isVideo = false;
+                  // Use already-loaded local data to avoid OOM (no sync getItem of full list)
+                  const local = localRecordingData;
+                  if (local) {
+                    let mediaSrc: string | undefined;
+                    let isVideo = false;
 
-                        // Check YouTube URL first
-                        if (local.mediaType === "youtube" && local.youtubeUrl && local.youtubeUrl.trim()) {
-                          mediaSrc = local.youtubeUrl.trim();
-                          isVideo = true;
-                        } else if (local.youtubeUrl && typeof local.youtubeUrl === 'string' && local.youtubeUrl.trim() && isYouTubeUrl(local.youtubeUrl)) {
-                          mediaSrc = local.youtubeUrl.trim();
-                          isVideo = true;
-                        }
-                        // Check video data
-                        else if (local.mediaType === "video" && local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
-                          mediaSrc = local.videoData;
-                          isVideo = true;
-                        }
-                        // Check audio data
-                        else if (local.mediaType === "audio" && local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
-                          mediaSrc = local.audioData;
-                          isVideo = false;
-                        }
-                        // Fallback: try to detect from data
-                        else if (local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
-                          mediaSrc = local.videoData;
-                          isVideo = true;
-                        } else if (local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
-                          mediaSrc = local.audioData;
-                          if (mediaSrc.startsWith('data:video/')) {
-                            isVideo = true;
-                          } else {
-                            isVideo = false;
-                          }
-                        }
-
-                        if (mediaSrc) {
-                          const artistName = local.basicInfo?.artist || recording.performers?.[0]?.name;
-                          if (isVideo) {
-                            return (
-                              <VideoPlayer
-                                src={mediaSrc}
-                                title={recording.title}
-                                artist={artistName}
-                                recording={recording}
-                                showContainer={true}
-                              />
-                            );
-                          } else {
-                            return (
-                              <AudioPlayer
-                                src={mediaSrc}
-                                title={recording.title}
-                                artist={artistName}
-                                recording={recording}
-                                showContainer={true}
-                              />
-                            );
-                          }
-                        }
+                    // Check YouTube URL first
+                    if (local.mediaType === "youtube" && local.youtubeUrl && local.youtubeUrl.trim()) {
+                      mediaSrc = local.youtubeUrl.trim();
+                      isVideo = true;
+                    } else if (local.youtubeUrl && typeof local.youtubeUrl === 'string' && local.youtubeUrl.trim() && isYouTubeUrl(local.youtubeUrl)) {
+                      mediaSrc = local.youtubeUrl.trim();
+                      isVideo = true;
+                    }
+                    // Check video data
+                    else if (local.mediaType === "video" && local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
+                      mediaSrc = local.videoData;
+                      isVideo = true;
+                    }
+                    // Check audio data
+                    else if (local.mediaType === "audio" && local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
+                      mediaSrc = local.audioData;
+                      isVideo = false;
+                    }
+                    // Fallback: try to detect from data
+                    else if (local.videoData && typeof local.videoData === 'string' && local.videoData.trim().length > 0) {
+                      mediaSrc = local.videoData;
+                      isVideo = true;
+                    } else if (local.audioData && typeof local.audioData === 'string' && local.audioData.trim().length > 0) {
+                      mediaSrc = local.audioData;
+                      if (mediaSrc.startsWith('data:video/')) {
+                        isVideo = true;
+                      } else {
+                        isVideo = false;
                       }
                     }
-                  } catch (err) {
-                    console.error("Error loading local recording for playback:", err);
+
+                    if (mediaSrc) {
+                      const artistName = local.basicInfo?.artist || recording.performers?.[0]?.name;
+                      if (isVideo) {
+                        return (
+                          <VideoPlayer
+                            src={mediaSrc}
+                            title={recording.title}
+                            artist={artistName}
+                            recording={recording}
+                            showContainer={true}
+                          />
+                        );
+                      } else {
+                        return (
+                          <AudioPlayer
+                            src={mediaSrc}
+                            title={recording.title}
+                            artist={artistName}
+                            recording={recording}
+                            showContainer={true}
+                          />
+                        );
+                      }
+                    }
                   }
 
                   // Fallback: use audioUrl from recording
@@ -341,59 +331,59 @@ export default function RecordingDetailPage() {
 
             {/* Metadata */}
             {recording.metadata && (
-              recording.metadata.tuningSystem || 
-              recording.metadata.modalStructure || 
-              recording.metadata.ritualContext || 
+              recording.metadata.tuningSystem ||
+              recording.metadata.modalStructure ||
+              recording.metadata.ritualContext ||
               recording.metadata.culturalSignificance
             ) && (
-              <div className="rounded-2xl border border-neutral-200/80 p-6 mb-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-                <h2 className="text-xl font-semibold mb-4 text-neutral-900">
-                  Thông tin chuyên môn
-                </h2>
-                <dl className="space-y-3">
-                  {recording.metadata.tuningSystem && (
-                    <div>
-                      <dt className="font-medium text-neutral-900">
-                        Hệ thống điệu thức
-                      </dt>
-                      <dd className="text-neutral-700 font-medium">
-                        {recording.metadata.tuningSystem}
-                      </dd>
-                    </div>
-                  )}
-                  {recording.metadata.modalStructure && (
-                    <div>
-                      <dt className="font-medium text-neutral-900">
-                        Cấu trúc giai điệu
-                      </dt>
-                      <dd className="text-neutral-700 font-medium">
-                        {recording.metadata.modalStructure}
-                      </dd>
-                    </div>
-                  )}
-                  {recording.metadata.ritualContext && (
-                    <div>
-                      <dt className="font-medium text-neutral-900">
-                        Ngữ cảnh nghi lễ
-                      </dt>
-                      <dd className="text-neutral-700 font-medium">
-                        {recording.metadata.ritualContext}
-                      </dd>
-                    </div>
-                  )}
-                  {recording.metadata.culturalSignificance && (
-                    <div>
-                      <dt className="font-medium text-neutral-900">
-                        Ý nghĩa văn hóa
-                      </dt>
-                      <dd className="text-neutral-700 font-medium">
-                        {recording.metadata.culturalSignificance}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
+                <div className="rounded-2xl border border-neutral-200/80 p-6 mb-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                  <h2 className="text-xl font-semibold mb-4 text-neutral-900">
+                    Thông tin chuyên môn
+                  </h2>
+                  <dl className="space-y-3">
+                    {recording.metadata.tuningSystem && (
+                      <div>
+                        <dt className="font-medium text-neutral-900">
+                          Hệ thống điệu thức
+                        </dt>
+                        <dd className="text-neutral-700 font-medium">
+                          {recording.metadata.tuningSystem}
+                        </dd>
+                      </div>
+                    )}
+                    {recording.metadata.modalStructure && (
+                      <div>
+                        <dt className="font-medium text-neutral-900">
+                          Cấu trúc giai điệu
+                        </dt>
+                        <dd className="text-neutral-700 font-medium">
+                          {recording.metadata.modalStructure}
+                        </dd>
+                      </div>
+                    )}
+                    {recording.metadata.ritualContext && (
+                      <div>
+                        <dt className="font-medium text-neutral-900">
+                          Ngữ cảnh nghi lễ
+                        </dt>
+                        <dd className="text-neutral-700 font-medium">
+                          {recording.metadata.ritualContext}
+                        </dd>
+                      </div>
+                    )}
+                    {recording.metadata.culturalSignificance && (
+                      <div>
+                        <dt className="font-medium text-neutral-900">
+                          Ý nghĩa văn hóa
+                        </dt>
+                        <dd className="text-neutral-700 font-medium">
+                          {recording.metadata.culturalSignificance}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+              )}
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
@@ -437,10 +427,10 @@ export default function RecordingDetailPage() {
                       // Check if region was actually set by user (not a default placeholder)
                       // For local recordings, check if there was a region in the original data
                       const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                      const hasRealRegion = originalData 
+                      const hasRealRegion = originalData
                         ? (originalData.region || originalData.culturalContext?.region)
                         : true; // For API recordings, assume region is real
-                      
+
                       if (!hasRealRegion || !recording.region || !REGION_NAMES[recording.region]) {
                         return "Không xác định";
                       }
@@ -457,8 +447,7 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Thời lượng</dt>
                   <dd className="font-medium text-neutral-900">
-                    {Math.floor(recording.duration / 60).toString().padStart(2, "0")}:
-                    {(recording.duration % 60).toString().padStart(2, "0")}
+                    {formatDuration(Math.max(0, Math.floor(Number(recording.duration) || 0)))}
                   </dd>
                 </div>
                 {recording.recordedDate && (
@@ -523,14 +512,14 @@ export default function RecordingDetailPage() {
             {(() => {
               // Collect all tags from AudioPlayer and VideoPlayer
               const allTags: JSX.Element[] = [];
-              
+
               // Ethnicity tag (from AudioPlayer and VideoPlayer)
               if (recording.ethnicity &&
-                  typeof recording.ethnicity === "object" &&
-                  recording.ethnicity.name &&
-                  recording.ethnicity.name !== "Không xác định" &&
-                  recording.ethnicity.name.toLowerCase() !== "unknown" &&
-                  recording.ethnicity.name.trim() !== "") {
+                typeof recording.ethnicity === "object" &&
+                recording.ethnicity.name &&
+                recording.ethnicity.name !== "Không xác định" &&
+                recording.ethnicity.name.toLowerCase() !== "unknown" &&
+                recording.ethnicity.name.trim() !== "") {
                 allTags.push(
                   <Badge key="ethnicity" variant="secondary" className="inline-flex items-center gap-1">
                     <Users className="h-3 w-3" />
@@ -538,7 +527,7 @@ export default function RecordingDetailPage() {
                   </Badge>
                 );
               }
-              
+
               // Region tag (from AudioPlayer and VideoPlayer)
               // AudioPlayer always shows region (even if "Không xác định"), VideoPlayer only shows if not RED_RIVER_DELTA
               // We'll show region like AudioPlayer does - always display
@@ -558,14 +547,14 @@ export default function RecordingDetailPage() {
                 }
                 return REGION_NAMES[recording.region];
               })();
-              
+
               allTags.push(
                 <Badge key="region" variant="secondary" className="inline-flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {regionName}
                 </Badge>
               );
-              
+
               // Recording Type tag (from AudioPlayer) — bỏ "Khác"
               if (recording.recordingType && RECORDING_TYPE_NAMES[recording.recordingType] && RECORDING_TYPE_NAMES[recording.recordingType] !== "Khác") {
                 allTags.push(
@@ -575,7 +564,7 @@ export default function RecordingDetailPage() {
                   </Badge>
                 );
               }
-              
+
               // Tags from recording.tags (from AudioPlayer) — icon cho "Dân ca"
               if (recording.tags && recording.tags.length > 0) {
                 recording.tags.forEach((tag, idx) => {
@@ -589,7 +578,7 @@ export default function RecordingDetailPage() {
                   }
                 });
               }
-              
+
               // Instruments tags (from AudioPlayer)
               if (recording.instruments && recording.instruments.length > 0) {
                 recording.instruments.forEach((instrument) => {
@@ -600,7 +589,7 @@ export default function RecordingDetailPage() {
                   );
                 });
               }
-              
+
               return allTags.length > 0 ? (
                 <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                   <h3 className="font-semibold text-lg mb-4 text-neutral-900">Thẻ</h3>
@@ -614,7 +603,7 @@ export default function RecordingDetailPage() {
             {/* Uploader */}
             <div className="rounded-2xl border border-neutral-200/80 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
               <h3 className="font-semibold text-lg mb-4 text-neutral-900">
-                Người tải lên
+                Người đóng góp
               </h3>
               <div className="flex items-center">
                 <div className="bg-primary-100 rounded-full w-10 h-10 flex items-center justify-center mr-3">

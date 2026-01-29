@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Region, RecordingType, RecordingQuality, VerificationStatus, Recording, User, UserRole, RecordingMetadata } from "@/types";
+import { Region, RecordingType, RecordingQuality, VerificationStatus, Recording, User, UserRole, RecordingMetadata, Instrument } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
@@ -9,6 +9,8 @@ import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search, AlertCircle, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
+import ForbiddenPage from "@/pages/ForbiddenPage";
+import { getLocalRecordingMetaList, getLocalRecordingFull, setLocalRecording, toMeta } from "@/services/recordingStorage";
 
 // ===== UTILITY FUNCTIONS =====
 // Check if click is on scrollbar
@@ -282,11 +284,11 @@ interface LocalRecordingMini {
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {
-  _originalLocalData?: LocalRecordingMini & {
-    culturalContext?: {
-      region?: string;
+    _originalLocalData?: LocalRecordingMini & {
+        culturalContext?: {
+            region?: string;
+        };
     };
-  };
 };
 
 export default function ModerationPage() {
@@ -295,6 +297,8 @@ export default function ModerationPage() {
     const [allItems, setAllItems] = useState<LocalRecordingMini[]>([]);
     const [verificationStep, setVerificationStep] = useState<Record<string, number>>({});
     const [showVerificationDialog, setShowVerificationDialog] = useState<string | null>(null);
+    /** Full recording (with media blobs) for the active dialog only — cleared on close to avoid OOM. */
+    const [dialogCurrentRecording, setDialogCurrentRecording] = useState<LocalRecordingMini | null>(null);
     const [verificationForms, setVerificationForms] = useState<Record<string, VerificationData>>({});
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [dateSort, setDateSort] = useState<"newest" | "oldest">("newest");
@@ -306,11 +310,9 @@ export default function ModerationPage() {
     const [showRejectConfirmDialog, setShowRejectConfirmDialog] = useState<string | null>(null);
     const [showRejectNoteWarningDialog, setShowRejectNoteWarningDialog] = useState<boolean>(false);
 
-    const load = useCallback(() => {
+    const load = useCallback(async () => {
         try {
-            const raw = localStorage.getItem("localRecordings");
-            const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-            // Migrate video data từ audioData sang videoData
+            const all = await getLocalRecordingMetaList() as LocalRecordingMini[];
             const migrated = migrateVideoDataToVideoData(all);
             // Filter by claimedBy - only show items claimed by this expert or unclaimed items
             // When an expert claims an item, it's "put in their bag" - other experts can't see it
@@ -350,34 +352,34 @@ export default function ModerationPage() {
 
     useEffect(() => {
         load();
-        const onStorage = (e: StorageEvent) => {
-            if (e.key === "localRecordings") load();
-        };
-        window.addEventListener("storage", onStorage);
         const interval = setInterval(load, 3000); // refresh to pick up changes in same tab
-        return () => {
-            window.removeEventListener("storage", onStorage);
-            clearInterval(interval);
-        };
+        return () => clearInterval(interval);
     }, [load]);
 
-    // Load verification data when dialog opens - đảm bảo dữ liệu được migrate
+    // Clear dialog full recording when dialog closes to release media blobs and avoid OOM
     useEffect(() => {
-        if (showVerificationDialog) {
-            // Reload và migrate dữ liệu khi mở dialog để đảm bảo có dữ liệu mới nhất
-            try {
-                const raw = localStorage.getItem("localRecordings");
-                const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-                const migrated = migrateVideoDataToVideoData(all);
-                const item = migrated.find(it => it.id === showVerificationDialog);
+        if (!showVerificationDialog) setDialogCurrentRecording(null);
+    }, [showVerificationDialog]);
 
-                if (item) {
-                    // Cập nhật allItems với dữ liệu đã migrate
+    // Load full recording when dialog opens (single-record read → no OOM)
+    useEffect(() => {
+        if (!showVerificationDialog) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const item = await getLocalRecordingFull(showVerificationDialog) as LocalRecordingMini | null;
+                if (cancelled || !item) return;
+                const migrated = migrateVideoDataToVideoData([item])[0];
+
+                if (migrated) {
+                    // Keep full recording (with blobs) only in dialog state for playback; never put blobs in allItems
+                    setDialogCurrentRecording(migrated);
+                    // Update allItems with metadata only (no audioData/videoData) so list stays light
+                    const metaOnly = toMeta(migrated) as LocalRecordingMini;
                     setAllItems(prev => {
-                        const updated = prev.map(it =>
-                            it.id === showVerificationDialog ? item : it
-                        );
-                        return updated;
+                        const idx = prev.findIndex(it => it.id === showVerificationDialog);
+                        if (idx >= 0) return prev.map(it => it.id === showVerificationDialog ? metaOnly : it);
+                        return [...prev, metaOnly];
                     });
 
                     // Only load verification data from item if not already in state (to avoid overwriting user input)
@@ -389,21 +391,21 @@ export default function ModerationPage() {
                         }
                         // Otherwise, load from item if available
                         if (
-                            item.moderation &&
-                            "verificationData" in item.moderation &&
-                            item.moderation.verificationData !== undefined
+                            migrated.moderation &&
+                            "verificationData" in migrated.moderation &&
+                            migrated.moderation.verificationData !== undefined
                         ) {
                             return {
                                 ...prev,
-                                [showVerificationDialog]: item.moderation.verificationData as VerificationData,
+                                [showVerificationDialog]: migrated.moderation.verificationData as VerificationData,
                             };
                         }
                         return prev;
                     });
                     // Always sync verification step state when dialog opens
                     const savedStep =
-                        item.moderation && "verificationStep" in item.moderation && item.moderation.verificationStep !== undefined
-                            ? item.moderation.verificationStep
+                        migrated.moderation && "verificationStep" in migrated.moderation && migrated.moderation.verificationStep !== undefined
+                            ? migrated.moderation.verificationStep
                             : 1;
                     setVerificationStep(prev => {
                         if (prev[showVerificationDialog] !== savedStep) {
@@ -418,7 +420,8 @@ export default function ModerationPage() {
             } catch (err) {
                 console.error("Error loading item for verification dialog:", err);
             }
-        }
+        })();
+        return () => { cancelled = true; };
     }, [showVerificationDialog]);
 
     // Disable body scroll when any dialog is open
@@ -431,7 +434,7 @@ export default function ModerationPage() {
             showRejectConfirmDialog ||
             showRejectNoteWarningDialog
         );
-        
+
         if (hasOpenDialog) {
             // Save current scroll position
             const scrollY = window.scrollY;
@@ -469,9 +472,9 @@ export default function ModerationPage() {
             showRejectConfirmDialog ||
             showRejectNoteWarningDialog
         );
-        
+
         if (!hasOpenDialog) return;
-        
+
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 if (showVerificationDialog) {
@@ -496,42 +499,29 @@ export default function ModerationPage() {
                 }
             }
         };
-        
+
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
     }, [showVerificationDialog, showRejectDialog, showUnclaimDialog, showApproveConfirmDialog, showRejectConfirmDialog, showRejectNoteWarningDialog]);
 
     if (!user || user.role !== "EXPERT") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50 relative">
-                <div className="absolute top-4 right-4"><BackButton /></div>
-                <div className="text-center">
-                    <h1 className="text-9xl font-bold text-primary-600">403</h1>
-                    <h2 className="text-3xl font-semibold text-neutral-800 mb-4">Truy cập bị từ chối</h2>
-                    <p className="text-neutral-600 mb-8">Bạn cần tài khoản <strong>Chuyên gia</strong> để truy cập trang kiểm duyệt bản thu.</p>
-                    <a href="/" className="btn-liquid-glass-primary inline-block">Về trang chủ</a>
-                </div>
-            </div>
+            <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang kiểm duyệt bản thu." />
         );
     }
 
-    const saveItems = (updated: LocalRecordingMini[]) => {
+    const saveItems = async (updated: LocalRecordingMini[]) => {
         try {
-            const raw = localStorage.getItem("localRecordings");
-            const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-            // Merge by id: replace items that match updated IDs
-            const updatedMap = new Map(updated.map((i) => [i.id, i]));
-            const merged = all.map((r) => (updatedMap.has(r.id) ? (updatedMap.get(r.id) as LocalRecordingMini) : r));
-            // Also add any new items from updated that aren't in all
-            updated.forEach((u) => {
-                if (u.id && !all.find((a) => a.id === u.id)) {
-                    merged.push(u);
-                }
-            });
-            // Migrate video data trước khi lưu
-            const migrated = migrateVideoDataToVideoData(merged);
-            localStorage.setItem("localRecordings", JSON.stringify(migrated));
-            load();
+            for (const item of updated) {
+                const id = item.id;
+                if (!id) continue;
+                const full = await getLocalRecordingFull(id) as LocalRecordingMini | null;
+                const merged = full
+                    ? { ...full, ...item, audioData: full.audioData, videoData: full.videoData, youtubeUrl: full.youtubeUrl }
+                    : item;
+                await setLocalRecording(merged as import("@/pages/ApprovedRecordingsPage").LocalRecording);
+            }
+            void load();
         } catch (err) {
             console.error(err);
         }
@@ -970,7 +960,10 @@ export default function ModerationPage() {
                                     id: `local-instrument-${idx}`,
                                     name: name,
                                     nameVietnamese: name,
-                                })),
+                                    category: "STRING" as import("@/types").InstrumentCategory,
+                                    images: [],
+                                    recordingCount: 0,
+                                })) as Instrument[],
                                 performers: [],
                                 recordedDate: it.basicInfo?.recordingDate || "",
                                 uploadedDate: it.uploadedAt || new Date().toISOString(),
@@ -1001,7 +994,7 @@ export default function ModerationPage() {
                                 metadata: {
                                     recordingQuality: RecordingQuality.FIELD_RECORDING,
                                     lyrics: "",
-                                } as Partial<RecordingMetadata>,
+                                } as RecordingMetadata,
                                 verificationStatus: it.moderation?.status === "APPROVED" ? VerificationStatus.VERIFIED : VerificationStatus.PENDING,
                                 verifiedBy: undefined,
                                 viewCount: 0,
@@ -1074,31 +1067,12 @@ export default function ModerationPage() {
 
                 {/* Verification Dialog */}
                 {showVerificationDialog && (() => {
-                    // Đảm bảo lấy dữ liệu mới nhất từ localStorage với migration
-                    let item = allItems.find(it => it.id === showVerificationDialog);
-                    if (!item) {
-                        // Nếu không tìm thấy trong items, thử load từ localStorage
-                        try {
-                            const raw = localStorage.getItem("localRecordings");
-                            const all = raw ? (JSON.parse(raw) as LocalRecordingMini[]) : [];
-                            const migrated = migrateVideoDataToVideoData(all);
-                            item = migrated.find(it => it.id === showVerificationDialog);
-                        } catch (err) {
-                            console.error("Error loading item:", err);
-                        }
-                    }
+                    // Use full recording (with media) from dialog state when available; otherwise meta from list (media may still be loading)
+                    const item = (dialogCurrentRecording?.id === showVerificationDialog)
+                        ? dialogCurrentRecording
+                        : allItems.find(it => it.id === showVerificationDialog);
                     if (!item) return null;
 
-                    // Debug log để kiểm tra dữ liệu
-                    console.log('ModerationPage - Item data for dialog:', {
-                        id: item.id,
-                        mediaType: item.mediaType,
-                        hasVideoData: !!item.videoData,
-                        videoDataLength: item.videoData ? item.videoData.length : 0,
-                        hasAudioData: !!item.audioData,
-                        audioDataLength: item.audioData ? item.audioData.length : 0,
-                        hasYoutubeUrl: !!item.youtubeUrl,
-                    });
                     const currentStep = getCurrentVerificationStep(showVerificationDialog);
                     const stepNames = [
                         "Bước 1: Kiểm tra sơ bộ",
@@ -1111,10 +1085,10 @@ export default function ModerationPage() {
                         "Đối chiếu với các nguồn tài liệu và quyết định phê duyệt"
                     ];
                     return createPortal(
-                        <div 
+                        <div
                             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                             onClick={() => cancelVerification(showVerificationDialog)}
-                            style={{ 
+                            style={{
                                 animation: 'fadeIn 0.3s ease-out',
                                 top: 0,
                                 left: 0,
@@ -1125,9 +1099,9 @@ export default function ModerationPage() {
                                 position: 'fixed',
                             }}
                         >
-                            <div 
+                            <div
                                 className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-16"
-                                style={{ 
+                                style={{
                                     backgroundColor: '#FFF2D6',
                                     animation: 'slideUp 0.3s ease-out',
                                     maxHeight: 'calc(100vh - 8rem)'
@@ -1598,10 +1572,10 @@ export default function ModerationPage() {
 
                 {/* Rejection Dialog */}
                 {showRejectDialog && createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={(e) => { if (e.target === e.currentTarget) { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); } }}
-                        style={{ 
+                        style={{
                             animation: 'fadeIn 0.3s ease-out',
                             top: 0,
                             left: 0,
@@ -1612,9 +1586,9 @@ export default function ModerationPage() {
                             position: 'fixed',
                         }}
                     >
-                        <div 
+                        <div
                             className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
-                            style={{ 
+                            style={{
                                 backgroundColor: '#FFF2D6',
                                 animation: 'slideUp 0.3s ease-out'
                             }}
@@ -1697,10 +1671,10 @@ export default function ModerationPage() {
 
                 {/* Unclaim Confirmation Dialog */}
                 {showUnclaimDialog && createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowUnclaimDialog(null)}
-                        style={{ 
+                        style={{
                             animation: 'fadeIn 0.3s ease-out',
                             top: 0,
                             left: 0,
@@ -1713,7 +1687,7 @@ export default function ModerationPage() {
                     >
                         <div
                             className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
-                            style={{ 
+                            style={{
                                 backgroundColor: '#FFF2D6',
                                 animation: 'slideUp 0.3s ease-out'
                             }}
@@ -1771,10 +1745,10 @@ export default function ModerationPage() {
 
                 {/* Approve Confirmation Dialog */}
                 {showApproveConfirmDialog && createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowApproveConfirmDialog(null)}
-                        style={{ 
+                        style={{
                             animation: 'fadeIn 0.3s ease-out',
                             top: 0,
                             left: 0,
@@ -1787,7 +1761,7 @@ export default function ModerationPage() {
                     >
                         <div
                             className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
-                            style={{ 
+                            style={{
                                 backgroundColor: '#FFF2D6',
                                 animation: 'slideUp 0.3s ease-out'
                             }}
@@ -1844,10 +1818,10 @@ export default function ModerationPage() {
 
                 {/* Reject Confirmation Dialog */}
                 {showRejectConfirmDialog && createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowRejectConfirmDialog(null)}
-                        style={{ 
+                        style={{
                             animation: 'fadeIn 0.3s ease-out',
                             top: 0,
                             left: 0,
@@ -1860,7 +1834,7 @@ export default function ModerationPage() {
                     >
                         <div
                             className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
-                            style={{ 
+                            style={{
                                 backgroundColor: '#FFF2D6',
                                 animation: 'slideUp 0.3s ease-out'
                             }}
@@ -1917,10 +1891,10 @@ export default function ModerationPage() {
 
                 {/* Reject Note Warning Dialog */}
                 {showRejectNoteWarningDialog && createPortal(
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowRejectNoteWarningDialog(false)}
-                        style={{ 
+                        style={{
                             animation: 'fadeIn 0.3s ease-out',
                             top: 0,
                             left: 0,
@@ -1933,7 +1907,7 @@ export default function ModerationPage() {
                     >
                         <div
                             className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform"
-                            style={{ 
+                            style={{
                                 backgroundColor: '#FFF2D6',
                                 animation: 'slideUp 0.3s ease-out'
                             }}

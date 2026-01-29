@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
+import { setItem } from "@/services/storageService";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -10,7 +11,7 @@ export default function MainLayout() {
     // Ghi nhớ trang truy cập cuối cùng (trừ các trang đăng nhập/đăng ký)
     const currentPath = location.pathname;
     if (currentPath !== "/login" && currentPath !== "/register") {
-      localStorage.setItem("lastVisitedPage", currentPath);
+      void setItem("lastVisitedPage", currentPath);
     }
   }, [location]);
 

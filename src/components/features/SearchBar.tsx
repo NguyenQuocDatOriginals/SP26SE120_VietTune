@@ -564,28 +564,6 @@ function FormField({
   );
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ElementType;
-  title: string;
-  subtitle?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3 mb-6">
-      <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
-        <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-      </div>
-      <div>
-        <h3 className="text-xl font-semibold text-neutral-900">{title}</h3>
-        {subtitle && <p className="text-sm text-neutral-600 font-medium mt-1">{subtitle}</p>}
-      </div>
-    </div>
-  );
-}
-
 function CollapsibleSection({
   icon: Icon,
   title,
@@ -608,8 +586,8 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer"
         style={{ backgroundColor: '#FFFCF5' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F0E8')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFCF5')}
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -777,53 +755,64 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
   return (
     <div className="w-full space-y-6">
-      {/* Main Search Input */}
-      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-        <SectionHeader
-          icon={Search}
-          title="Tìm kiếm bài hát"
-          subtitle="Nhập từ khóa để tìm kiếm nhanh"
-        />
-
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400" strokeWidth={2.5} />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Tìm kiếm bài hát, nhạc cụ, nghệ nhân,..."
-              className="w-full pl-14 pr-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md font-medium"
-              style={{ backgroundColor: '#FFFCF5' }}
-            />
+      {/* Main Search Input — same style as SemanticSearchPage main card */}
+      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+        <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
+          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+            <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
           </div>
+          Tìm kiếm bài hát
+        </h2>
+        <p className="text-neutral-600 font-medium leading-relaxed mb-4">
+          Nhập từ khóa để tìm kiếm nhanh. Kết hợp bộ lọc bên dưới để thu hẹp kết quả.
+        </p>
+
+        <div
+          className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-full focus-within:ring-4 focus-within:ring-primary-500/50 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4"
+          style={{ backgroundColor: "#FFFCF5" }}
+        >
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500" strokeWidth={2} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Tìm kiếm bài hát, nhạc cụ, nghệ nhân,..."
+            className="w-full pl-12 pr-32 py-2 bg-transparent text-neutral-900 placeholder-neutral-500 focus:outline-none rounded-full"
+            aria-label="Từ khóa tìm kiếm"
+          />
           <button
             type="button"
             onClick={handleSearch}
-            className="px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium flex items-center gap-2 transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-full transition-colors duration-200 flex items-center gap-2 cursor-pointer"
           >
-            <Search className="h-5 w-5" strokeWidth={2.5} />
             Tìm kiếm
+            <Search className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
 
-        {activeFilterCount > 0 && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-neutral-500">
-              {activeFilterCount} bộ lọc đang được áp dụng
-            </span>
-          </div>
+        {activeFilterCount > 0 ? (
+          <p className="text-sm text-neutral-500">
+            {activeFilterCount} bộ lọc đang được áp dụng
+          </p>
+        ) : (
+          <p className="text-sm text-neutral-500">
+            Gợi ý: nhấn Enter hoặc nút Tìm kiếm. Dùng bộ lọc bên dưới để thu hẹp kết quả.
+          </p>
         )}
       </div>
 
-      {/* Basic Filters */}
-      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-        <SectionHeader
-          icon={Music}
-          title="Bộ lọc cơ bản"
-          subtitle="Lọc theo thể loại và nguồn gốc"
-        />
+      {/* Basic Filters — same card style as SemanticSearchPage */}
+      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+        <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
+          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+            <Music className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+          </div>
+          Bộ lọc cơ bản
+        </h2>
+        <p className="text-neutral-600 font-medium leading-relaxed mb-4">
+          Lọc theo thể loại và nguồn gốc
+        </p>
 
         {/* Genre-Ethnicity Warning */}
         {genreEthnicityWarning && (

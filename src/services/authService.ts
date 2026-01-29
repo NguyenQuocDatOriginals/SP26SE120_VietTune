@@ -1,7 +1,12 @@
 import { api } from "./api";
 import { User, LoginForm, RegisterForm, ApiResponse, UserRole } from "@/types";
 import { notify } from "@/stores/notificationStore";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import {
+  getItem,
+  setItem,
+  removeItem,
+  sessionSetItem,
+} from "@/services/storageService";
 
 export const authService = {
   // Login
@@ -24,7 +29,7 @@ export const authService = {
         ? (response as LoginResponse)
         : (response as { data: LoginResponse }).data;
       if (authData && authData.token) {
-        localStorage.setItem("access_token", authData.token);
+        await setItem("access_token", authData.token);
         const user = {
           id: authData.id,
           username: authData.username,
@@ -35,7 +40,7 @@ export const authService = {
           createdAt: "",
           updatedAt: "",
         };
-        localStorage.setItem("user", JSON.stringify(user));
+        await setItem("user", JSON.stringify(user));
         return {
           success: true,
           data: {
@@ -59,7 +64,7 @@ export const authService = {
         "/auth/register",
         data,
       );
-      
+
       // For demo/local system: create user with CONTRIBUTOR role by default
       // Generate a unique ID for the new user
       const newUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -72,17 +77,19 @@ export const authService = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       // Save to users_overrides so it persists
       try {
-        const oRaw = localStorage.getItem("users_overrides");
-        const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
+        const oRaw = getItem("users_overrides");
+        const overrides = oRaw
+          ? (JSON.parse(oRaw) as Record<string, User>)
+          : {};
         overrides[newUserId] = newUser;
-        localStorage.setItem("users_overrides", JSON.stringify(overrides));
+        await setItem("users_overrides", JSON.stringify(overrides));
       } catch (err) {
         console.warn("Failed to save new user to overrides", err);
       }
-      
+
       return {
         success: true,
         data: response.data,
@@ -95,10 +102,10 @@ export const authService = {
   },
 
   // Logout
-  logout: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
-    sessionStorage.setItem("fromLogout", "1");
+  logout: async () => {
+    await removeItem("access_token");
+    await removeItem("user");
+    await sessionSetItem("fromLogout", "1");
     window.location.href = "/login";
   },
 
@@ -113,18 +120,18 @@ export const authService = {
   },
 
   // Queue a pending profile update for retry when server becomes available
-  queuePendingProfileUpdate: (
+  queuePendingProfileUpdate: async (
     userId: string | undefined,
     data: Partial<User>,
   ) => {
     if (!userId) return;
     try {
-      const raw = localStorage.getItem("pending_profile_updates");
+      const raw = getItem("pending_profile_updates");
       const pending = raw
         ? (JSON.parse(raw) as Record<string, Partial<User>>)
         : {};
       pending[userId] = data;
-      localStorage.setItem("pending_profile_updates", JSON.stringify(pending));
+      await setItem("pending_profile_updates", JSON.stringify(pending));
     } catch (err) {
       console.warn("Failed to queue pending profile update", err);
     }
@@ -133,7 +140,7 @@ export const authService = {
   // Try to process pending profile updates (called on login/fetchCurrentUser)
   processPendingProfileUpdates: async () => {
     try {
-      const raw = localStorage.getItem("pending_profile_updates");
+      const raw = getItem("pending_profile_updates");
       const pending = raw
         ? (JSON.parse(raw) as Record<string, Partial<User>>)
         : {};
@@ -147,51 +154,26 @@ export const authService = {
           if (res && res.data) {
             // Update local stored user and overrides
             const serverUser = res.data as User;
-            localStorage.setItem("user", JSON.stringify(serverUser));
-            const oRaw = localStorage.getItem("users_overrides");
+            await setItem("user", JSON.stringify(serverUser));
+            const oRaw = getItem("users_overrides");
             const overrides = oRaw
               ? (JSON.parse(oRaw) as Record<string, User>)
               : {};
             overrides[serverUser.id] = serverUser;
-            localStorage.setItem("users_overrides", JSON.stringify(overrides));
+            await setItem("users_overrides", JSON.stringify(overrides));
 
-            // Also propagate to localRecordings uploader info
-            try {
-              const rawLR = localStorage.getItem("localRecordings");
-              if (rawLR) {
-                const allLR = JSON.parse(rawLR) as LocalRecording[];
-                const updatedLR = allLR.map((r) => {
-                  if (r.uploader && typeof r.uploader === "object" && "id" in r.uploader && r.uploader.id === serverUser.id) {
-                    return {
-                      ...r,
-                      uploader: {
-                        ...r.uploader,
-                        username: serverUser.username,
-                        email: serverUser.email ?? (r.uploader && typeof r.uploader === "object" && "email" in r.uploader ? r.uploader.email : undefined),
-                        fullName: serverUser.fullName ?? (r.uploader && typeof r.uploader === "object" && "fullName" in r.uploader ? r.uploader.fullName : undefined),
-                      },
-                    };
-                  }
-                  return r;
-                });
-                localStorage.setItem(
-                  "localRecordings",
-                  JSON.stringify(updatedLR),
-                );
-              }
-            } catch (err) {
-              console.warn(
-                "Failed to propagate serverUser to localRecordings",
-                err,
-              );
-            }
+            // Do NOT load localRecordings here — it can be huge and cause OOM.
+            // Propagation to localRecordings is done only in ProfilePage when user saves profile.
 
             // Remove from pending
             delete pending[id];
 
             // Notify user that profile has been synced
             try {
-              notify.success("Thành công", "Cập nhật hồ sơ đã được đồng bộ với server.");
+              notify.success(
+                "Thành công",
+                "Cập nhật hồ sơ đã được đồng bộ với server.",
+              );
             } catch (err) {
               /* noop */
             }
@@ -203,7 +185,7 @@ export const authService = {
       }
 
       // Save remaining pending back
-      localStorage.setItem("pending_profile_updates", JSON.stringify(pending));
+      await setItem("pending_profile_updates", JSON.stringify(pending));
     } catch (err) {
       console.warn("Failed to process pending profile updates", err);
     }
@@ -219,13 +201,13 @@ export const authService = {
 
   // Get stored user
   getStoredUser: (): User | null => {
-    const userStr = localStorage.getItem("user");
+    const userStr = getItem("user");
     return userStr ? JSON.parse(userStr) : null;
   },
 
   // Check if authenticated
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem("access_token");
+    return !!getItem("access_token");
   },
 
   // Demo login helper (for local demo/testing only)
@@ -285,7 +267,7 @@ export const authService = {
 
     // Merge overrides if user was edited locally previously
     try {
-      const oRaw = localStorage.getItem("users_overrides");
+      const oRaw = getItem("users_overrides");
       const overrides = oRaw
         ? (JSON.parse(oRaw) as Record<string, Partial<User>>)
         : {};
@@ -300,18 +282,18 @@ export const authService = {
     }
 
     const token = `demo-token-${demoUser.id}`;
-    localStorage.setItem("access_token", token);
-    localStorage.setItem("user", JSON.stringify(demoUser));
+    await setItem("access_token", token);
+    await setItem("user", JSON.stringify(demoUser));
 
     // Also ensure overrides store includes this demo user so future logins keep it
     try {
-      const oRaw2 = localStorage.getItem("users_overrides");
+      const oRaw2 = getItem("users_overrides");
       const overrides2 = oRaw2
         ? (JSON.parse(oRaw2) as Record<string, User>)
         : {};
       if (demoUser.id) {
         overrides2[demoUser.id] = demoUser as User;
-        localStorage.setItem("users_overrides", JSON.stringify(overrides2));
+        await setItem("users_overrides", JSON.stringify(overrides2));
       }
     } catch (err) {
       // ignore

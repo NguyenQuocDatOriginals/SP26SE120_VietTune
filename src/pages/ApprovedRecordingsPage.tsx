@@ -7,6 +7,8 @@ import { isYouTubeUrl } from "@/utils/youtube";
 import { Trash2 } from "lucide-react";
 import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import BackButton from "@/components/common/BackButton";
+import ForbiddenPage from "@/pages/ForbiddenPage";
+import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 
 // Type for migration function
 type LocalRecordingType = LocalRecording;
@@ -67,6 +69,14 @@ export interface LocalRecording {
         title?: string;
         artist?: string;
         genre?: string;
+        recordingDate?: string;
+    };
+    culturalContext?: {
+        region?: string;
+        ethnicity?: string;
+        instruments?: string[];
+        eventType?: string;
+        province?: string;
     };
     audioData?: string | null;
     videoData?: string | null;
@@ -80,37 +90,36 @@ export interface LocalRecording {
         reviewerId?: string | null;
         reviewerName?: string | null;
         reviewedAt?: string | null;
+        rejectionNote?: string;
     };
 }
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {
-  _originalLocalData?: LocalRecording & {
-    culturalContext?: {
-      region?: string;
+    _originalLocalData?: LocalRecording & {
+        culturalContext?: {
+            region?: string;
+        };
     };
-  };
 };
 
 export default function ApprovedRecordingsPage() {
     const { user } = useAuthStore();
     const [items, setItems] = useState<LocalRecording[]>([]);
 
-    const load = useCallback(() => {
+    const load = useCallback(async () => {
         try {
-            const raw = localStorage.getItem("localRecordings");
-            const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-            // Migrate video data từ audioData sang videoData
-            const migrated = migrateVideoDataToVideoData(all as LocalRecordingType[]);
-            // Show only approved items
-            const approved = migrated.filter(
+            const metaList = await getLocalRecordingMetaList();
+            const migrated = migrateVideoDataToVideoData(metaList as LocalRecordingType[]);
+            const approvedMeta = migrated.filter(
                 (r) =>
                     r.moderation &&
                     typeof r.moderation === "object" &&
                     "status" in r.moderation &&
                     (r.moderation as { status?: string }).status === ModerationStatus.APPROVED
             );
-            setItems(approved);
+            const fullList = await Promise.all(approvedMeta.map((r) => getLocalRecordingFull(r.id ?? "")));
+            setItems(fullList.filter((r): r is LocalRecording => r != null));
         } catch (err) {
             console.error(err);
             setItems([]);
@@ -119,32 +128,22 @@ export default function ApprovedRecordingsPage() {
 
     useEffect(() => {
         load();
-        const onStorage = (e: StorageEvent) => {
-            if (e.key === "localRecordings") load();
-        };
-        window.addEventListener("storage", onStorage);
-        const interval = setInterval(load, 3000); // refresh to pick up changes in same tab
-        return () => {
-            window.removeEventListener("storage", onStorage);
-            clearInterval(interval);
-        };
+        const interval = setInterval(load, 3000);
+        return () => clearInterval(interval);
     }, [load]);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<Record<string, boolean>>({});
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (!id) return;
         try {
-            const raw = localStorage.getItem("localRecordings");
-            const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-            const filtered = all.filter((r) => r.id !== id);
-            localStorage.setItem("localRecordings", JSON.stringify(filtered));
+            await removeLocalRecording(id);
             setShowDeleteConfirm(prev => {
                 const newState = { ...prev };
                 delete newState[id];
                 return newState;
             });
-            load();
+            void load();
         } catch (err) {
             console.error(err);
         }
@@ -152,15 +151,7 @@ export default function ApprovedRecordingsPage() {
 
     if (!user || user.role !== "EXPERT") {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50 relative">
-                <div className="absolute top-4 right-4"><BackButton /></div>
-                <div className="text-center">
-                    <h1 className="text-9xl font-bold text-primary-600">403</h1>
-                    <h2 className="text-3xl font-semibold text-neutral-800 mb-4">Truy cập bị từ chối</h2>
-                    <p className="text-neutral-600 mb-8">Bạn cần tài khoản <strong>Chuyên gia</strong> để truy cập trang này.</p>
-                    <a href="/" className="btn-liquid-glass-primary inline-block">Về trang chủ</a>
-                </div>
-            </div>
+            <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang này." />
         );
     }
 

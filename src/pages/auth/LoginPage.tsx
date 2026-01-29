@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
@@ -9,19 +9,20 @@ import { LoginForm, User } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
+import { getItem, sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const fromLogout = typeof window !== "undefined" && sessionStorage.getItem("fromLogout") === "1";
+  const fromLogout = typeof window !== "undefined" && sessionGetItem("fromLogout") === "1";
 
-  // Show overridden demo usernames if present in localStorage
+  // Show overridden demo usernames if present in IndexedDB
   const [demoNames, setDemoNames] = useState<Record<string, string>>({});
 
   const loadDemoNames = () => {
     try {
-      const oRaw = localStorage.getItem("users_overrides");
+      const oRaw = getItem("users_overrides");
       const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
       setDemoNames({
         contributor: overrides["contrib_demo"]?.username || "contributor_demo",
@@ -41,15 +42,10 @@ export default function LoginPage() {
     }
   };
 
-  // Load on mount and listen to storage changes (cross-tab updates)
-  useState(() => {
+  // Load on mount
+  useEffect(() => {
     loadDemoNames();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "users_overrides") loadDemoNames();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  });
+  }, []);
 
   const {
     register,
@@ -63,7 +59,7 @@ export default function LoginPage() {
       const response = await authService.login(data);
       if (response.success && response.data) {
         setUser(response.data.user);
-        sessionStorage.removeItem("fromLogout");
+        void sessionRemoveItem("fromLogout");
         // toast.success("Đăng nhập thành công!");
         navigate("/");
       }
@@ -101,12 +97,12 @@ export default function LoginPage() {
               alt="VietTune Logo"
               className="w-12 h-12 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                sessionStorage.removeItem("fromLogout");
+                void sessionRemoveItem("fromLogout");
                 if (!authService.isAuthenticated()) {
                   navigate("/");
                   return;
                 }
-                const lastPage = localStorage.getItem("lastVisitedPage");
+                const lastPage = getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />
@@ -192,7 +188,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("contributor");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      sessionStorage.removeItem("fromLogout");
+                      void sessionRemoveItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -213,7 +209,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_a");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      sessionStorage.removeItem("fromLogout");
+                      void sessionRemoveItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -234,7 +230,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_b");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      sessionStorage.removeItem("fromLogout");
+                      void sessionRemoveItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -255,7 +251,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("expert_c");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      sessionStorage.removeItem("fromLogout");
+                      void sessionRemoveItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {
@@ -276,7 +272,7 @@ export default function LoginPage() {
                     const res = await authService.loginDemo("admin");
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
-                      sessionStorage.removeItem("fromLogout");
+                      void sessionRemoveItem("fromLogout");
                       navigate("/");
                     }
                   } catch (err) {

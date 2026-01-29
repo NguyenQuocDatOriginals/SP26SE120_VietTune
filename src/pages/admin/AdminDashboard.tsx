@@ -11,6 +11,8 @@ import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 import { ModerationStatus } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
+import { getItem, setItem } from "@/services/storageService";
+import { getLocalRecordingMetaList, removeLocalRecording } from "@/services/recordingStorage";
 
 type TabId = "users" | "analytics" | "moderation";
 
@@ -137,11 +139,10 @@ function RoleSelectDropdown({
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${
-                    value === opt.value
-                      ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
-                      : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
-                  }`}
+                  className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === opt.value
+                    ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
+                    : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
+                    }`}
                 >
                   {opt.label}
                 </button>
@@ -173,24 +174,23 @@ export default function AdminDashboard() {
   const [deleteUserTarget, setDeleteUserTarget] = useState<{ id: string; username: string } | null>(null);
   const [deletedUserIds, setDeletedUserIds] = useState<Set<string>>(new Set());
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-      const migrated = migrateVideoDataToVideoData(all as LocalRecording[]);
+      const metaList = await getLocalRecordingMetaList();
+      const migrated = migrateVideoDataToVideoData(metaList as LocalRecording[]);
       setRecordings(migrated);
     } catch {
       setRecordings([]);
     }
     try {
-      const oRaw = localStorage.getItem("users_overrides");
+      const oRaw = getItem("users_overrides");
       const o = oRaw ? (JSON.parse(oRaw) as Record<string, { role?: string; username?: string; fullName?: string }>) : {};
       setUsersOverrides(o);
     } catch {
       setUsersOverrides({});
     }
     try {
-      const dRaw = localStorage.getItem("admin_deleted_user_ids");
+      const dRaw = getItem("admin_deleted_user_ids");
       const arr = dRaw ? (JSON.parse(dRaw) as string[]) : [];
       setDeletedUserIds(new Set(arr));
     } catch {
@@ -307,11 +307,11 @@ export default function AdminDashboard() {
 
   const handleAssignRole = (userId: string, newRole: string) => {
     try {
-      const oRaw = localStorage.getItem("users_overrides");
+      const oRaw = getItem("users_overrides");
       const o = oRaw ? (JSON.parse(oRaw) as Record<string, Record<string, unknown>>) : {};
       if (!o[userId]) o[userId] = {};
       o[userId].role = newRole;
-      localStorage.setItem("users_overrides", JSON.stringify(o));
+      void setItem("users_overrides", JSON.stringify(o));
       setUsersOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], role: newRole } }));
       notify.success("Thành công", `Đã gán vai trò "${USER_ROLE_NAMES[newRole as keyof typeof USER_ROLE_NAMES] ?? newRole}" cho người dùng.`);
     } catch (e) {
@@ -324,7 +324,7 @@ export default function AdminDashboard() {
       const next = new Set(deletedUserIds);
       next.add(userId);
       setDeletedUserIds(next);
-      localStorage.setItem("admin_deleted_user_ids", JSON.stringify([...next]));
+      void setItem("admin_deleted_user_ids", JSON.stringify([...next]));
       setDeleteUserTarget(null);
       notify.success("Thành công", "Đã xóa người dùng khỏi hệ thống.");
     } catch (e) {
@@ -332,14 +332,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRemoveRecording = (id: string) => {
+  const handleRemoveRecording = async (id: string) => {
     try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-      const filtered = all.filter((r) => r.id !== id);
-      localStorage.setItem("localRecordings", JSON.stringify(filtered));
+      await removeLocalRecording(id);
       setRemoveTarget(null);
-      load();
+      void load();
       notify.success("Thành công", "Đã xóa bản ghi khỏi hệ thống.");
     } catch (e) {
       notify.error("Lỗi", "Không thể xóa bản ghi.");
@@ -367,11 +364,10 @@ export default function AdminDashboard() {
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                tab === id
-                  ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95"
-                  : "text-neutral-700 hover:bg-neutral-100 border border-neutral-200/80 shadow-md hover:shadow-lg"
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${tab === id
+                ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95"
+                : "text-neutral-700 hover:bg-neutral-100 border border-neutral-200/80 shadow-md hover:shadow-lg"
+                }`}
               style={tab !== id ? { backgroundColor: "#FFFCF5" } : undefined}
             >
               <Icon className="h-4 w-4" />
@@ -479,9 +475,8 @@ export default function AdminDashboard() {
                     {gapData.map(({ name, count }) => (
                       <span
                         key={name}
-                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
-                          count === 0 ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"
-                        }`}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${count === 0 ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-800"
+                          }`}
                       >
                         {name}: {count}
                       </span>
@@ -511,7 +506,7 @@ export default function AdminDashboard() {
                           <span className="font-medium text-neutral-900">
                             #{i + 1} {displayUsername}
                           </span>
-                        <span className="text-neutral-700 font-medium">{u.contributionCount} bản thu</span>
+                          <span className="text-neutral-700 font-medium">{u.contributionCount} bản thu</span>
                         </li>
                       );
                     })}

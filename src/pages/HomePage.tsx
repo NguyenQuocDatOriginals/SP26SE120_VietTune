@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Upload, Search, ArrowRight, Compass, TrendingUp, Clock, FileText, ShieldCheck, FileCheck, UserPlus } from "lucide-react";
+import { Upload, ArrowRight, Compass, TrendingUp, Clock, FileText, ShieldCheck, FileCheck, UserPlus, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Recording, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -126,11 +126,11 @@ export default function HomePage() {
           ]
         : [
             {
-              icon: Search,
-              title: "Tìm kiếm bài hát",
+              icon: Sparkles,
+              title: "Tìm theo ý nghĩa",
               description:
-                "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
-              to: "/search",
+                "Mô tả bằng ngôn ngữ tự nhiên để tìm bản thu phù hợp theo nghĩa",
+              to: "/semantic-search",
             },
           ]),
       ...(isAdmin
@@ -162,11 +162,11 @@ export default function HomePage() {
         to: "/moderation",
       },
       {
-        icon: Search,
-        title: "Tìm kiếm bài hát",
+        icon: Sparkles,
+        title: "Tìm theo ý nghĩa",
         description:
-          "Tìm kiếm theo thể loại, dân tộc, khu vực, nhạc cụ và nhiều tiêu chí khác",
-        to: "/search",
+          "Mô tả bằng ngôn ngữ tự nhiên để tìm bản thu phù hợp theo nghĩa",
+        to: "/semantic-search",
       },
       {
         icon: FileCheck,

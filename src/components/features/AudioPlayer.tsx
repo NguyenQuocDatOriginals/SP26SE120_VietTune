@@ -64,6 +64,7 @@ export default function AudioPlayer({
   const [dragVolume, setDragVolume] = useState<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const volumeAnimationFrameRef = useRef<number | null>(null);
+  const lastTimeUpdateRef = useRef<number>(0);
 
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -95,10 +96,15 @@ export default function AudioPlayer({
     const media = isVideo ? videoRef.current : audioRef.current;
     if (!media) return;
 
-    // Smooth time update using requestAnimationFrame
+    // Throttled time update to avoid 60fps re-renders (smoother playback)
+    const TIME_UPDATE_THROTTLE_MS = 200;
     const updateTime = () => {
       if (!isDragging && media) {
-        setCurrentTime(media.currentTime);
+        const now = Date.now();
+        if (now - lastTimeUpdateRef.current >= TIME_UPDATE_THROTTLE_MS) {
+          setCurrentTime(media.currentTime);
+          lastTimeUpdateRef.current = now;
+        }
       }
       if (!isDragging) {
         animationFrameRef.current = requestAnimationFrame(updateTime);
@@ -112,8 +118,14 @@ export default function AudioPlayer({
         }
       }
     };
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onPlay = () => {
+      lastTimeUpdateRef.current = Date.now();
+      setPlaying(true);
+    };
+    const onPause = () => {
+      if (media) setCurrentTime(media.currentTime);
+      setPlaying(false);
+    };
     const onMeta = () => {
       setDuration(isNaN(media.duration) ? 0 : media.duration || 0);
       setIsLoading(false);
@@ -412,47 +424,7 @@ export default function AudioPlayer({
 
               {/* Controls */}
               <div className="relative flex items-center justify-between">
-                {/* Left: Empty space for balance */}
-                <div className="flex items-center">
-                </div>
-
-                {/* Center: Play Controls: Lùi, Play/Pause, Tiến */}
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
-                  <button
-                    onClick={() => !isYoutube && seekBy(-5)}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-                    title="Lùi 5 giây"
-                  >
-                    <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
-                  </button>
-
-                  <button
-                    onClick={togglePlay}
-                    disabled={isYoutube ? false : isLoading}
-                    className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
-                  >
-                    {(isYoutube || showYoutubePlayer)
-                      ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
-                      : isLoading
-                        ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                        : playing
-                          ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
-                          : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
-                    }
-                  </button>
-
-                  <button
-                    onClick={() => !isYoutube && seekBy(5)}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-                    title="Tiến 5 giây"
-                  >
-                    <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
-                  </button>
-                </div>
-
-                {/* Right: Repeat & Volume */}
+                {/* Left: Repeat & Volume */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={toggleLoop}
@@ -541,6 +513,45 @@ export default function AudioPlayer({
                     </div>
                   </div>
                 </div>
+
+                {/* Center: Play Controls: Lùi, Play/Pause, Tiến */}
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+                  <button
+                    onClick={() => !isYoutube && seekBy(-5)}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    title="Lùi 5 giây"
+                  >
+                    <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
+                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+                  </button>
+
+                  <button
+                    onClick={togglePlay}
+                    disabled={isYoutube ? false : isLoading}
+                    className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+                  >
+                    {(isYoutube || showYoutubePlayer)
+                      ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
+                      : isLoading
+                        ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                        : playing
+                          ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
+                          : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
+                    }
+                  </button>
+
+                  <button
+                    onClick={() => !isYoutube && seekBy(5)}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    title="Tiến 5 giây"
+                  >
+                    <RotateCw className="w-5 h-5" strokeWidth={2.5} />
+                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+                  </button>
+                </div>
+
+                {/* Right: Empty space for balance */}
+                <div className="flex items-center" />
               </div>
             </div>
           </div>
@@ -785,81 +796,44 @@ export default function AudioPlayer({
 
         {/* Controls */}
         <div className="relative flex items-center justify-center">
-          {/* Center: Play/Pause */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => !isYoutube && seekBy(-5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-              title="Lùi 5 giây"
-            >
-              <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
-            </button>
-
-            <button
-              onClick={togglePlay}
-              disabled={isYoutube ? false : isLoading}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
-            >
-              {isYoutube
-                ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
-                : isLoading
-                  ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                  : playing
-                    ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
-                    : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
-              }
-            </button>
-
-            <button
-              onClick={() => !isYoutube && seekBy(5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-              title="Tiến 5 giây"
-            >
-              <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
-            </button>
-          </div>
-
-          {/* Left: Delete Button (Expert only) - Positioned absolutely */}
-          {isExpert && onDelete && recording && (
-            <div className="absolute left-0">
-              {showDeleteConfirm ? (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
-                  <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
+          {/* Left: Delete (if any) + Repeat & Volume */}
+          <div className="absolute left-0 flex items-center gap-2">
+            {isExpert && onDelete && recording && (
+              <div>
+                {showDeleteConfirm ? (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
+                    <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
+                    <button
+                      onClick={() => {
+                        const idToDelete = recording?.id ?? "";
+                        if (idToDelete !== "" && idToDelete !== undefined) {
+                          onDelete(String(idToDelete));
+                        }
+                        setShowDeleteConfirm(false);
+                      }}
+                      className="text-xs text-red-700 hover:text-red-900 font-semibold"
+                    >
+                      Xóa
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="text-xs text-neutral-600 hover:text-neutral-800"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => {
-                      const idToDelete = recording?.id ?? "";
-                      if (idToDelete !== "" && idToDelete !== undefined) {
-                        onDelete(String(idToDelete));
-                      }
-                      setShowDeleteConfirm(false);
-                    }}
-                    className="text-xs text-red-700 hover:text-red-900 font-semibold"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
+                    title="Xóa bản thu (Chuyên gia)"
                   >
-                    Xóa
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="text-xs text-neutral-600 hover:text-neutral-800"
-                  >
-                    Hủy
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-colors shadow-sm hover:shadow-md"
-                  title="Xóa bản thu (Chuyên gia)"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* Right: Repeat & Volume - Positioned absolutely */}
-          <div className="absolute right-0 flex items-center gap-2">
             <button
               onClick={toggleLoop}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isLooping
@@ -946,6 +920,42 @@ export default function AudioPlayer({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Center: Play/Pause */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => !isYoutube && seekBy(-5)}
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              title="Lùi 5 giây"
+            >
+              <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
+              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+            </button>
+
+            <button
+              onClick={togglePlay}
+              disabled={isYoutube ? false : isLoading}
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+            >
+              {isYoutube
+                ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
+                : isLoading
+                  ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                  : playing
+                    ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
+                    : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
+              }
+            </button>
+
+            <button
+              onClick={() => !isYoutube && seekBy(5)}
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              title="Tiến 5 giây"
+            >
+              <RotateCw className="w-5 h-5" strokeWidth={2.5} />
+              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+            </button>
           </div>
         </div>
       </div>

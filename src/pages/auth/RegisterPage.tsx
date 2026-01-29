@@ -9,12 +9,13 @@ import { notify } from "@/stores/notificationStore";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
 import TermsAndConditions from "@/components/features/TermsAndConditions";
+import { getItem, sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const fromLogout = typeof window !== "undefined" && sessionStorage.getItem("fromLogout") === "1";
+  const fromLogout = typeof window !== "undefined" && sessionGetItem("fromLogout") === "1";
 
   const {
     register,
@@ -29,7 +30,7 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await authService.register(data);
-      sessionStorage.removeItem("fromLogout");
+      void sessionRemoveItem("fromLogout");
       notify.success("Thành công", "Đăng ký thành công! Vui lòng đăng nhập.");
       navigate("/login");
     } catch (error: unknown) {
@@ -66,12 +67,12 @@ export default function RegisterPage() {
               alt="VietTune Logo"
               className="w-12 h-12 object-contain mb-1 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                sessionStorage.removeItem("fromLogout");
+                void sessionRemoveItem("fromLogout");
                 if (!authService.isAuthenticated()) {
                   navigate("/");
                   return;
                 }
-                const lastPage = localStorage.getItem("lastVisitedPage");
+                const lastPage = getItem("lastVisitedPage");
                 navigate(lastPage || "/");
               }}
             />

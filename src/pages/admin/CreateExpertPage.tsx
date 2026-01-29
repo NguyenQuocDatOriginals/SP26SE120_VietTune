@@ -6,6 +6,7 @@ import { UserPlus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole, type User } from "@/types";
 import { notify } from "@/stores/notificationStore";
+import { getItem, setItem } from "@/services/storageService";
 
 export default function CreateExpertPage() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function CreateExpertPage() {
 
     try {
       // Check if username already exists
-      const oRaw = localStorage.getItem("users_overrides");
+      const oRaw = getItem("users_overrides");
       const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
       const existingUser = Object.values(overrides).find(
         (u) => u.username.toLowerCase() === expertForm.username.trim().toLowerCase()
@@ -95,14 +96,14 @@ export default function CreateExpertPage() {
 
       // Save to users_overrides
       overrides[newExpertId] = newExpert;
-      localStorage.setItem("users_overrides", JSON.stringify(overrides));
+      void setItem("users_overrides", JSON.stringify(overrides));
 
       // Store password for demo (Chuyên gia đổi mật khẩu sau trong ProfilePage)
       try {
-        const pRaw = localStorage.getItem("demo_passwords");
+        const pRaw = getItem("demo_passwords");
         const passwords = pRaw ? (JSON.parse(pRaw) as Record<string, string>) : {};
         passwords[newExpertId] = expertForm.password;
-        localStorage.setItem("demo_passwords", JSON.stringify(passwords));
+        void setItem("demo_passwords", JSON.stringify(passwords));
       } catch (err) {
         console.warn("Failed to store expert password", err);
       }

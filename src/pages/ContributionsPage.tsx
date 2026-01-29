@@ -5,10 +5,13 @@ import { ModerationStatus, Region, RecordingType, RecordingQuality, Verification
 import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 import BackButton from "@/components/common/BackButton";
-import { Edit } from "lucide-react";
+import ConfirmationDialog from "@/components/common/ConfirmationDialog";
+import { Edit, LogIn } from "lucide-react";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
+import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
+import { sessionSetItem } from "@/services/storageService";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -56,19 +59,19 @@ export default function ContributionsPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [contributions, setContributions] = useState<LocalRecording[]>([]);
+  const [withdrawConfirmId, setWithdrawConfirmId] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-      // Migrate video data từ audioData sang videoData
-      const migrated = migrateVideoDataToVideoData(all);
+      const metaList = await getLocalRecordingMetaList();
+      const migrated = migrateVideoDataToVideoData(metaList);
       if (!user) {
         setContributions([]);
         return;
       }
-      const my = migrated.filter((r) => r.uploader?.id === user.id);
-      setContributions(my);
+      const myMeta = migrated.filter((r) => r.uploader?.id === user.id);
+      const fullList = await Promise.all(myMeta.map((r) => getLocalRecordingFull(r.id ?? "")));
+      setContributions(fullList.filter((r): r is LocalRecording => r != null));
     } catch (err) {
       console.error(err);
       setContributions([]);
@@ -77,28 +80,16 @@ export default function ContributionsPage() {
 
   useEffect(() => {
     load();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "localRecordings") load();
-    };
-    window.addEventListener("storage", onStorage);
-    const interval = setInterval(load, 3000); // refresh to pick up changes in same tab
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      clearInterval(interval);
-    };
+    const interval = setInterval(load, 3000);
+    return () => clearInterval(interval);
   }, [load]);
 
 
-  const withdraw = (id?: string) => {
+  const withdraw = async (id?: string) => {
     if (!id) return;
     try {
-      const raw = localStorage.getItem("localRecordings");
-      const all = raw ? (JSON.parse(raw) as LocalRecording[]) : [];
-      // Migrate video data trước khi xóa
-      const migrated = migrateVideoDataToVideoData(all);
-      const filtered = migrated.filter((r) => r.id !== id);
-      localStorage.setItem("localRecordings", JSON.stringify(filtered));
-      load();
+      await removeLocalRecording(id);
+      void load();
     } catch (err) {
       console.error(err);
     }
@@ -181,19 +172,13 @@ export default function ContributionsPage() {
           {/* Action Buttons */}
           <div className="ml-4 flex items-center gap-2 flex-shrink-0">
             {it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && (
-              <button 
-                onClick={() => {
-                  // Load the full recording data and navigate to upload page with edit mode
+              <button
+                onClick={async () => {
                   try {
-                    const raw = localStorage.getItem("localRecordings");
-                    if (raw) {
-                      const all = JSON.parse(raw);
-                      const recording = all.find((r: LocalRecordingStorage) => r.id === it.id);
-                      if (recording) {
-                        // Store the recording to edit in sessionStorage
-                        sessionStorage.setItem("editingRecording", JSON.stringify(recording));
-                        navigate("/upload?edit=true");
-                      }
+                    const recording = await getLocalRecordingFull(it.id ?? "");
+                    if (recording) {
+                      await sessionSetItem("editingRecording", JSON.stringify(recording));
+                      navigate("/upload?edit=true");
                     }
                   } catch (err) {
                     console.error("Error loading recording for edit:", err);
@@ -206,8 +191,8 @@ export default function ContributionsPage() {
               </button>
             )}
             {(it.moderation?.status === ModerationStatus.PENDING_REVIEW || it.moderation?.status === ModerationStatus.REJECTED) && (
-              <button 
-                onClick={() => withdraw(it.id)} 
+              <button
+                onClick={() => setWithdrawConfirmId(it.id ?? null)}
                 className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
                 Hủy đóng góp
@@ -356,8 +341,26 @@ export default function ContributionsPage() {
     return null;
   }
 
+  const isNotContributor = !user || user.role !== "CONTRIBUTOR";
+
   return (
     <div className="min-h-screen">
+      <ConfirmationDialog
+        isOpen={withdrawConfirmId != null}
+        onClose={() => setWithdrawConfirmId(null)}
+        onConfirm={() => {
+          if (withdrawConfirmId) {
+            withdraw(withdrawConfirmId);
+            setWithdrawConfirmId(null);
+          }
+        }}
+        title="Xác nhận hủy đóng góp"
+        message="Bạn có chắc muốn hủy đóng góp này?"
+        description="Bản thu sẽ bị xóa khỏi danh sách đóng góp của bạn. Hành động này không thể hoàn tác."
+        confirmText="Hủy đóng góp"
+        cancelText="Không"
+        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -365,17 +368,41 @@ export default function ContributionsPage() {
           <BackButton />
         </div>
 
-        {/* Content */}
-        {contributions.length === 0 ? (
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-            <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có đóng góp</h2>
-            <p className="text-neutral-700 font-medium">Bạn chưa có đóng góp nào.</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {contributions.filter(c => c.id).map((c) => renderRecordingItem(c))}
+        {/* Notice for non-Contributor users (same UX as UploadPage) */}
+        {isNotContributor && (
+          <div className="mb-8 border border-primary-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFF1F3' }}>
+            <h2 className="text-2xl font-semibold mb-4 text-primary-700">Bạn cần có tài khoản Người đóng góp để xem trang đóng góp</h2>
+            <div className="text-primary-700 text-base mb-4 font-medium">Vui lòng đăng nhập bằng tài khoản Người đóng góp để xem và quản lý đóng góp của bạn.</div>
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 mx-auto"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "auto" });
+                navigate("/login");
+              }}
+              type="button"
+            >
+              <LogIn className="h-5 w-5" strokeWidth={2.5} />
+              Đăng nhập
+            </button>
           </div>
         )}
+
+        {/* Main content (dimmed and disabled for non-Contributor) */}
+        <div
+          className={`rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl ${isNotContributor ? "opacity-50 pointer-events-none select-none" : ""}`}
+          style={{ backgroundColor: '#FFFCF5' }}
+        >
+          {contributions.length === 0 ? (
+            <>
+              <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có đóng góp</h2>
+              <p className="text-neutral-700 font-medium">Bạn chưa có đóng góp nào.</p>
+            </>
+          ) : (
+            <div className="space-y-8">
+              {contributions.filter(c => c.id).map((c) => renderRecordingItem(c))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

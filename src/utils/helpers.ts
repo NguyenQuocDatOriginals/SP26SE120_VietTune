@@ -70,16 +70,11 @@ export function migrateVideoDataToVideoData(
     return rec;
   });
 
-  // Nếu có thay đổi, lưu lại vào localStorage
+  // Pure function: no storage write. Callers use recordingStorage.setLocalRecording per item if needed.
   if (hasChanges) {
-    try {
-      localStorage.setItem("localRecordings", JSON.stringify(migrated));
-      console.log(
-        `Migration: Đã chuyển đổi ${migrated.filter((r) => r.videoData && !r.audioData).length} bản ghi video từ audioData sang videoData`,
-      );
-    } catch (error) {
-      console.error("Migration error:", error);
-    }
+    console.log(
+      `Migration (in-memory): ${migrated.filter((r) => r.videoData && !r.audioData).length} bản ghi video từ audioData sang videoData`,
+    );
   }
 
   return migrated;
@@ -88,51 +83,57 @@ export function migrateVideoDataToVideoData(
 /**
  * Format date and time to Vietnamese locale with full date and time
  * Format: "dd/MM/yyyy, HH:mm:ss"
- * 
+ *
  * @param dateString - ISO date string or Date object
  * @returns Formatted date string in Vietnamese locale, or '-' if invalid
  */
-export function formatDateTime(dateString: string | Date | null | undefined): string {
-  if (!dateString) return '-';
-  
+export function formatDateTime(
+  dateString: string | Date | null | undefined,
+): string {
+  if (!dateString) return "-";
+
   try {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    if (isNaN(date.getTime())) return '-';
-    
-    return date.toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return "-";
+
+    return date.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
     });
   } catch {
-    return '-';
+    return "-";
   }
 }
 
 /**
  * Format date only (without time) to Vietnamese locale
  * Format: "dd/MM/yyyy"
- * 
+ *
  * @param dateString - ISO date string or Date object
  * @returns Formatted date string in Vietnamese locale, or '-' if invalid
  */
-export function formatDate(dateString: string | Date | null | undefined): string {
-  if (!dateString) return '-';
-  
+export function formatDate(
+  dateString: string | Date | null | undefined,
+): string {
+  if (!dateString) return "-";
+
   try {
-    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    if (isNaN(date.getTime())) return '-';
-    
-    return date.toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return "-";
+
+    return date.toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
   } catch {
-    return '-';
+    return "-";
   }
 }

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { User } from "@/types";
 import { authService } from "@/services/authService";
+import { getItem, setItem, removeItem } from "@/services/storageService";
 
 interface AuthState {
   user: User | null;
@@ -48,69 +49,49 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => {
     set({ user, isAuthenticated: !!user });
 
-    // Persist user to localStorage so profile changes survive reloads/logouts
-    try {
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
+    // Persist user to IndexedDB so profile changes survive reloads/logouts
+    const persist = async () => {
+      try {
+        if (user) {
+          await setItem("user", JSON.stringify(user));
 
-        // Ensure overrides store includes this user so future demo/logins retain edits
-        try {
-          const oRaw = localStorage.getItem("users_overrides");
-          const overrides = oRaw
-            ? (JSON.parse(oRaw) as Record<string, User>)
-            : {};
-          if (user.id) {
-            overrides[user.id] = user;
-            localStorage.setItem("users_overrides", JSON.stringify(overrides));
+          // Ensure overrides store includes this user so future demo/logins retain edits
+          try {
+            const oRaw = getItem("users_overrides");
+            const overrides = oRaw
+              ? (JSON.parse(oRaw) as Record<string, User>)
+              : {};
+            if (user.id) {
+              overrides[user.id] = user;
+              await setItem("users_overrides", JSON.stringify(overrides));
+            }
+          } catch (err) {
+            console.warn("Failed to update users_overrides", err);
           }
-        } catch (err) {
-          // ignore
-          console.warn("Failed to update users_overrides", err);
-        }
 
-        // Propagate username/email/fullName changes to localRecordings uploader info
-        try {
-          const raw = localStorage.getItem("localRecordings");
-          if (raw) {
-            const all = JSON.parse(raw) as any[];
-            const updated = all.map((r) => {
-              if (r.uploader?.id === user.id) {
-                return {
-                  ...r,
-                  uploader: {
-                    ...r.uploader,
-                    username: user.username,
-                    email: user.email ?? r.uploader?.email,
-                    fullName: user.fullName ?? r.uploader?.fullName,
-                  },
-                };
-              }
-              return r;
-            });
-            localStorage.setItem("localRecordings", JSON.stringify(updated));
-          }
-        } catch (err) {
-          console.warn("Failed to propagate user to localRecordings", err);
-        }
+          // Do NOT load localRecordings here — it can be huge and cause OOM on login.
+          // Propagation to localRecordings is done only in ProfilePage when user saves profile.
 
-        // Attempt to process pending profile updates in background
-        try {
-          if (authService.isAuthenticated()) {
-            authService
-              .processPendingProfileUpdates()
-              .catch((e) =>
-                console.warn("processPendingProfileUpdates failed", e),
-              );
+          // Attempt to process pending profile updates in background
+          try {
+            if (authService.isAuthenticated()) {
+              authService
+                .processPendingProfileUpdates()
+                .catch((e) =>
+                  console.warn("processPendingProfileUpdates failed", e),
+                );
+            }
+          } catch (err) {
+            console.warn("Failed to trigger pending profile processing", err);
           }
-        } catch (err) {
-          console.warn("Failed to trigger pending profile processing", err);
+        } else {
+          await removeItem("user");
         }
-      } else {
-        localStorage.removeItem("user");
+      } catch (err) {
+        console.warn("Failed to persist user", err);
       }
-    } catch (err) {
-      console.warn("Failed to persist user", err);
-    }
+    };
+    void persist();
   },
 
   fetchCurrentUser: async () => {

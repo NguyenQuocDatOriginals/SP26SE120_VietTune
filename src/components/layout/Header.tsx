@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Bell, User, LogOut, Menu, X } from "lucide-react";
+import { Search, Bell, User, LogOut, Menu, X, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
-import { APP_NAME } from "@/config/constants";
+import { APP_NAME, INTELLIGENCE_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
 
 export default function Header() {
@@ -135,6 +135,13 @@ export default function Header() {
                 className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
               >
                 <Search className="h-5 w-5" strokeWidth={2.5} />
+              </Link>
+              <Link
+                to="/chatbot"
+                className="p-2 text-white hover:text-secondary-300 active:text-secondary-400 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer"
+                aria-label={INTELLIGENCE_NAME}
+              >
+                <MessageCircle className="h-5 w-5" strokeWidth={2.5} />
               </Link>
               {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT || user?.role === UserRole.ADMIN) && (
                 <Link
@@ -292,6 +299,13 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Về VietTune
+              </Link>
+              <Link
+                to="/chatbot"
+                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {INTELLIGENCE_NAME}
               </Link>
               {isAuthenticated ? (
                 <>

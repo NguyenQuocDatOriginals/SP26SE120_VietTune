@@ -150,7 +150,7 @@ export default function Footer() {
                 href="mailto:contact@viettune.com"
                 onClick={handleCopyEmail}
                 className="text-white/90 text-sm hover:text-secondary-300 transition-colors cursor-pointer"
-                title="Click để copy email"
+                title="Nhấn để sao chép địa chỉ email"
               >
                 contact@viettune.com
               </a>

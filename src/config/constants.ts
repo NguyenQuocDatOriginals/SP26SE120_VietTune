@@ -1,6 +1,9 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 export const APP_NAME = import.meta.env.VITE_APP_NAME || "VietTune";
 
+/** Display name for the AI / Intelligence assistant (replaces "AI VietTune"). */
+export const INTELLIGENCE_NAME = "VietTune Intelligence";
+
 export const ITEMS_PER_PAGE = 20;
 export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const SUPPORTED_AUDIO_FORMATS = [

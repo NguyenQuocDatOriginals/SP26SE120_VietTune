@@ -3,28 +3,12 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Target, Users, Heart, FileText, Trash2, AlertTriangle, X } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { ModerationStatus, User } from "@/types";
+import { User } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import { authService } from "@/services/authService";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import BackButton from "@/components/common/BackButton";
-
-interface LocalRecordingMini {
-  id?: string;
-  title?: string;
-  basicInfo?: {
-    title?: string;
-    artist?: string;
-    genre?: string;
-  };
-  uploadedAt?: string;
-  uploader?: { id?: string; username?: string };
-  moderation?: { 
-    status?: ModerationStatus | string; 
-    claimedByName?: string;
-    rejectionNote?: string;
-  };
-}
+import { getItem, setItem } from "@/services/storageService";
+import { getLocalRecordingIds, getLocalRecordingFull, setLocalRecording, clearAllLocalRecordings } from "@/services/recordingStorage";
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -111,11 +95,11 @@ export default function ProfilePage() {
         });
         if (res && res.data) {
           const serverUser = res.data as User;
-          localStorage.setItem("user", JSON.stringify(serverUser));
+          void setItem("user", JSON.stringify(serverUser));
           setUser(serverUser);
         } else {
           // fallback to local update
-          localStorage.setItem("user", JSON.stringify(updated));
+          void setItem("user", JSON.stringify(updated));
           setUser(updated);
         }
       } catch (err) {
@@ -126,7 +110,7 @@ export default function ProfilePage() {
           username: updated.username,
           email: updated.email,
         });
-        localStorage.setItem("user", JSON.stringify(updated));
+        void setItem("user", JSON.stringify(updated));
         setUser(updated);
         // Inform user that changes were saved locally and queued for sync
         notify.info(
@@ -136,41 +120,33 @@ export default function ProfilePage() {
       }
     } else {
       // Local/demo mode: persist locally and into overrides so it survives logout/login demo
-      localStorage.setItem("user", JSON.stringify(updated));
+      void setItem("user", JSON.stringify(updated));
       setUser(updated);
 
       try {
-        const oRaw = localStorage.getItem("users_overrides");
+        const oRaw = getItem("users_overrides");
         const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
         if (updated.id) {
           overrides[updated.id] = updated;
-          localStorage.setItem("users_overrides", JSON.stringify(overrides));
+          void setItem("users_overrides", JSON.stringify(overrides));
         }
       } catch (err) {
         console.error("Failed to write user override", err);
       }
     }
 
-    // Propagate changes to local recordings uploaded by this user
+    // Propagate changes to local recordings uploaded by this user (per-recording → no OOM)
     try {
-      const raw = localStorage.getItem("localRecordings");
-      if (raw) {
-        const all = JSON.parse(raw) as LocalRecordingMini[];
-        // Migrate video data trước khi cập nhật
-        const migrated = migrateVideoDataToVideoData(all);
-        const updatedAll = migrated.map((r) => {
-          if (r.uploader?.id === updated.id) {
-            return {
-              ...r,
-              uploader: {
-                ...r.uploader,
-                username: updated.username,
-              },
-            };
-          }
-          return r;
-        });
-        localStorage.setItem("localRecordings", JSON.stringify(updatedAll));
+      const ids = await getLocalRecordingIds();
+      for (const recId of ids) {
+        const full = await getLocalRecordingFull(recId);
+        if (full && full.uploader && (full.uploader as { id?: string }).id === updated.id) {
+          const merged = {
+            ...full,
+            uploader: { ...full.uploader, username: updated.username },
+          };
+          await setLocalRecording(merged);
+        }
       }
     } catch (err) {
       console.error("Failed to propagate user updates to localRecordings", err);
@@ -221,7 +197,7 @@ export default function ProfilePage() {
   // Handle ESC key to close dialogs
   useEffect(() => {
     if (!isEditOpen && !showDeleteMetadataConfirm) return;
-    
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isEditOpen) {
@@ -232,26 +208,21 @@ export default function ProfilePage() {
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isEditOpen, showDeleteMetadataConfirm]);
 
 
-  const handleDeleteAllMetadata = () => {
+  const handleDeleteAllMetadata = async () => {
     try {
-      const raw = localStorage.getItem("localRecordings");
-      if (!raw) {
+      const ids = await getLocalRecordingIds();
+      const deletedCount = ids.length;
+      if (deletedCount === 0) {
         notify.success("Thông báo", "Không có dữ liệu để xóa");
         return;
       }
-
-      const all = JSON.parse(raw) as LocalRecordingMini[];
-      const deletedCount = all.length;
-
-      // Xóa toàn bộ dữ liệu - xóa hết tất cả các bản thu
-      localStorage.removeItem("localRecordings");
-
+      await clearAllLocalRecordings();
       notify.success("Thành công", `Đã xóa thành công ${deletedCount} bản thu.`);
       setShowDeleteMetadataConfirm(false);
     } catch (err) {
@@ -287,10 +258,10 @@ export default function ProfilePage() {
 
           {/* Edit Profile Modal */}
           {isEditOpen && createPortal(
-            <div 
+            <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
               onClick={(e) => { if (e.target === e.currentTarget) setIsEditOpen(false); }}
-              style={{ 
+              style={{
                 animation: 'fadeIn 0.3s ease-out',
                 top: 0,
                 left: 0,
@@ -301,9 +272,9 @@ export default function ProfilePage() {
                 position: 'fixed',
               }}
             >
-              <div 
+              <div
                 className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
-                style={{ 
+                style={{
                   backgroundColor: '#FFF2D6',
                   animation: 'slideUp 0.3s ease-out'
                 }}
@@ -398,7 +369,7 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Công cụ quản trị</h2>
                   <p className="text-neutral-700 font-medium text-sm">
-                    Xóa toàn bộ dữ liệu từ các bản thu để giải phóng dung lượng localStorage.
+                    Xóa toàn bộ dữ liệu từ các bản thu để giải phóng dung lượng lưu trữ.
                     Tất cả thông tin sẽ bị xóa hoàn toàn, bao gồm metadata, media, và cả thông tin hệ thống (ID, thời điểm tải lên, trạng thái kiểm duyệt, người đóng góp).
                   </p>
                 </div>
@@ -433,10 +404,10 @@ export default function ProfilePage() {
 
       {/* Delete Metadata Confirmation Dialog */}
       {showDeleteMetadataConfirm && createPortal(
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
           onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteMetadataConfirm(false); }}
-          style={{ 
+          style={{
             animation: 'fadeIn 0.3s ease-out',
             top: 0,
             left: 0,
@@ -447,9 +418,9 @@ export default function ProfilePage() {
             position: 'fixed',
           }}
         >
-          <div 
+          <div
             className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
-            style={{ 
+            style={{
               backgroundColor: '#FFF2D6',
               animation: 'slideUp 0.3s ease-out'
             }}
@@ -472,7 +443,7 @@ export default function ProfilePage() {
             </div>
             <p className="text-neutral-700 font-medium mb-6">
               Bạn có chắc chắn muốn xóa toàn bộ dữ liệu từ tất cả các bản thu không?
-              Hành động này sẽ giải phóng dung lượng localStorage và xóa hoàn toàn tất cả các bản thu.
+              Hành động này sẽ giải phóng dung lượng lưu trữ và xóa hoàn toàn tất cả các bản thu.
               <br /><br />
               <strong>Lưu ý:</strong> Tất cả thông tin sẽ bị xóa hoàn toàn, bao gồm:
               <ul className="list-disc list-inside mt-2 space-y-1">

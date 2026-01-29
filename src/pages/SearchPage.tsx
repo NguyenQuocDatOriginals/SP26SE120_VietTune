@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, Sparkles } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -10,6 +11,7 @@ import SearchBar from "@/components/features/SearchBar";
 import Pagination from "@/components/common/Pagination";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 
 // Use LocalRecording type from ApprovedRecordingsPage for consistency
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
@@ -136,6 +138,7 @@ const convertLocalToRecording = async (
 
 export default function SearchPage() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
+  const [localRecordingsList, setLocalRecordingsList] = useState<LocalRecording[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,15 +161,9 @@ export default function SearchPage() {
         response = await recordingService.getRecordings(currentPage, 20);
       }
 
-      // Load local recordings from localStorage
-      const localRecordingsRaw = localStorage.getItem("localRecordings");
-      const localRecordings: LocalRecording[] = localRecordingsRaw
-        ? JSON.parse(localRecordingsRaw)
-        : [];
-      // Migrate video data từ audioData sang videoData
-      const migrated = migrateVideoDataToVideoData(localRecordings);
-
-      // Only include approved local recordings in public results
+      // Load local recordings (meta only for list → then full only for approved → no OOM)
+      const metaList = await getLocalRecordingMetaList();
+      const migrated = migrateVideoDataToVideoData(metaList);
       let approvedLocalRecordings = migrated.filter(
         (r) => r.moderation?.status === "APPROVED",
       );
@@ -196,8 +193,8 @@ export default function SearchPage() {
               ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
               ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
             ];
-            const hasMatchingTag = filters.tags.some(filterTag => 
-              recordingTags.some(recordingTag => 
+            const hasMatchingTag = filters.tags.some(filterTag =>
+              recordingTags.some(recordingTag =>
                 recordingTag.toLowerCase().includes(filterTag.toLowerCase()) ||
                 filterTag.toLowerCase().includes(recordingTag.toLowerCase())
               )
@@ -274,9 +271,16 @@ export default function SearchPage() {
         });
       }
 
+      // Load full data only for approved locals (for playback and duration) — no OOM
+      const fullApproved = await Promise.all(
+        approvedLocalRecordings.map((r) => getLocalRecordingFull(r.id ?? "")),
+      );
+      const fullList = fullApproved.filter((r): r is LocalRecording => r != null);
+      setLocalRecordingsList(fullList);
+
       // Convert local recordings to Recording format (async to get durations)
       const convertedLocalRecordings = await Promise.all(
-        approvedLocalRecordings.map(convertLocalToRecording),
+        fullList.map(convertLocalToRecording),
       );
 
       // Merge: put local recordings first, then API recordings (defensive checks in case API returns unexpected shape)
@@ -291,18 +295,14 @@ export default function SearchPage() {
       const apiTotal = (response && typeof (response as ApiResponseType).total === 'number')
         ? (response as ApiResponseType).total
         : apiItems.length;
-      setTotalResults(apiTotal + approvedLocalRecordings.length);
+      setTotalResults(apiTotal + fullList.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
 
-      // Even if API fails, try to show local recordings
+      // Even if API fails, try to show local recordings (per-recording storage → no OOM)
       try {
-        const localRecordingsRaw = localStorage.getItem("localRecordings");
-        const localRecordings: LocalRecording[] = localRecordingsRaw
-          ? JSON.parse(localRecordingsRaw)
-          : [];
-        // Migrate video data từ audioData sang videoData
-        const migrated = migrateVideoDataToVideoData(localRecordings);
+        const metaList = await getLocalRecordingMetaList();
+        const migrated = migrateVideoDataToVideoData(metaList);
         let approvedLocalRecordings = migrated.filter(
           (r) => r.moderation?.status === "APPROVED",
         );
@@ -330,8 +330,8 @@ export default function SearchPage() {
                 ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
                 ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
               ];
-              const hasMatchingTag = filters.tags.some(filterTag => 
-                recordingTags.some(recordingTag => 
+              const hasMatchingTag = filters.tags.some(filterTag =>
+                recordingTags.some(recordingTag =>
                   recordingTag.toLowerCase().includes(filterTag.toLowerCase()) ||
                   filterTag.toLowerCase().includes(recordingTag.toLowerCase())
                 )
@@ -402,11 +402,16 @@ export default function SearchPage() {
           });
         }
 
+        const fullApproved = await Promise.all(
+          approvedLocalRecordings.map((r) => getLocalRecordingFull(r.id ?? "")),
+        );
+        const fullList = fullApproved.filter((r): r is LocalRecording => r != null);
+        setLocalRecordingsList(fullList);
         const convertedLocalRecordings = await Promise.all(
-          approvedLocalRecordings.map(convertLocalToRecording),
+          fullList.map(convertLocalToRecording),
         );
         setRecordings(convertedLocalRecordings);
-        setTotalResults(approvedLocalRecordings.length);
+        setTotalResults(fullList.length);
       } catch (localError) {
         console.error("Error loading local recordings:", localError);
       }
@@ -415,16 +420,11 @@ export default function SearchPage() {
     }
   }, [currentPage, filters]);
 
-  const handleDeleteRecording = (id: string) => {
+  const handleDeleteRecording = async (id: string) => {
     const updated = recordings.filter((rec) => rec.id !== id);
     setRecordings(updated);
-    const localRecordingsRaw = localStorage.getItem("localRecordings");
-    if (localRecordingsRaw) {
-      const localRecordings = JSON.parse(localRecordingsRaw);
-      const filtered = localRecordings.filter((r: LocalRecording) => r.id !== id);
-      localStorage.setItem("localRecordings", JSON.stringify(filtered));
-    }
-    // Update total results
+    await removeLocalRecording(id);
+    setLocalRecordingsList((prev) => prev.filter((r) => r.id !== id));
     setTotalResults((prev) => Math.max(0, prev - 1));
   };
 
@@ -445,53 +445,62 @@ export default function SearchPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-800">
+          <h1 className="text-3xl font-bold text-neutral-900">
             Tìm kiếm bài hát
           </h1>
-          <BackButton />
+          <div className="flex items-center gap-3">
+            <Link
+              to="/semantic-search"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary-100/90 text-primary-700 hover:bg-primary-200/90 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 border border-primary-200/80"
+              title="Tìm theo ý nghĩa"
+            >
+              <Sparkles className="h-5 w-5" strokeWidth={2.5} />
+              <span>Tìm theo ý nghĩa</span>
+            </Link>
+            <BackButton />
+          </div>
         </div>
 
-        {/* Main Search Form */}
-        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+        {/* Main Search Form — same card style as SemanticSearchPage */}
+        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
           <SearchBar onSearch={handleSearch} initialFilters={filters} />
         </div>
 
-        {/* Search Results */}
+        {/* Search Results — same card style as SemanticSearchPage */}
         {hasSearched && (
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-semibold text-neutral-800">
-                  Kết quả tìm kiếm
-                </h2>
-                {!loading && (
-                  <p className="text-neutral-500 mt-1">
-                    Tìm thấy {totalResults} bản thu
-                  </p>
-                )}
+          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+            <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
+              <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+                <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
               </div>
-            </div>
+              Kết quả tìm kiếm
+            </h2>
 
-            {/* Results Content */}
+            {/* Results Content — same structure as SemanticSearchPage empty/loading */}
             {loading ? (
-              <div className="flex justify-center py-20">
+              <div className="flex justify-center py-12">
                 <LoadingSpinner size="lg" />
               </div>
             ) : recordings.length === 0 ? (
-              <div className="border border-neutral-200/80 rounded-xl p-12 text-center shadow-sm backdrop-blur-sm" style={{ backgroundColor: '#FFFCF5' }}>
-                <div className="p-4 bg-primary-100/90 rounded-2xl w-fit mx-auto mb-4 shadow-sm">
-                  <Search className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
-                </div>
-                <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                  Không tìm thấy bản thu
-                </h3>
-                <p className="text-neutral-600 font-medium max-w-md mx-auto leading-relaxed">
-                  Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn
+              <div className="py-10 text-center">
+                <Search className="h-12 w-12 text-neutral-400 mx-auto mb-4" strokeWidth={1.5} />
+                <h3 className="text-lg font-semibold text-neutral-800 mb-2">Không tìm thấy bản thu</h3>
+                <p className="text-neutral-600 font-medium leading-relaxed max-w-md mx-auto mb-4">
+                  Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn. Bạn cũng có thể dùng Tìm theo ý nghĩa.
                 </p>
+                <Link
+                  to="/semantic-search"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+                >
+                  Tìm theo ý nghĩa
+                  <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+                </Link>
               </div>
             ) : (
               <>
+                <p className="text-neutral-700 font-medium leading-relaxed mb-4">
+                  Tìm thấy {totalResults} bản thu
+                </p>
                 <div className="space-y-4 mb-8">
                   {recordings.map((recording, idx) => {
                     try {
@@ -500,26 +509,10 @@ export default function SearchPage() {
                         recording.uploader?.id === "local-user" ||
                         (typeof recording.audioUrl === "string" && recording.audioUrl.startsWith("data:audio"));
 
-                      // Load original LocalRecording from localStorage if it's a local recording
-                      let localRecordingData: LocalRecording | undefined = undefined;
-                      if (isLocalRecording) {
-                        try {
-                          const localRecordingsRaw = localStorage.getItem("localRecordings");
-                          if (localRecordingsRaw) {
-                            const localRecordings: LocalRecording[] = JSON.parse(localRecordingsRaw);
-                            // Migrate video data từ audioData sang videoData
-                            const migrated = migrateVideoDataToVideoData(localRecordings);
-                            const originalLocalRecording = migrated.find(
-                              (r) => r.id === recording.id
-                            );
-                            if (originalLocalRecording) {
-                              localRecordingData = originalLocalRecording;
-                            }
-                          }
-                        } catch (error) {
-                          console.error("Error loading local recording:", error);
-                        }
-                      }
+                      // Use in-memory list (loaded once per fetch) to avoid OOM from large storage
+                      const localRecordingData = isLocalRecording
+                        ? localRecordingsList.find((r) => r.id === recording.id)
+                        : undefined;
 
                       // Delete handler for local recordings
                       const handleDelete = isLocalRecording ? handleDeleteRecording : undefined;
@@ -677,14 +670,14 @@ export default function SearchPage() {
 
         {/* Initial State - Search Tips */}
         {!hasSearched && (
-          <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8" style={{ backgroundColor: "#FFFCF5" }}>
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
               <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
                 <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
               </div>
               Mẹo tìm kiếm
             </h2>
-            <ul className="space-y-3 text-neutral-700 leading-relaxed">
+            <ul className="space-y-3 text-neutral-700 font-medium leading-relaxed">
               <li className="flex items-start gap-3">
                 <span className="text-primary-600 flex-shrink-0">•</span>
                 <span>Sử dụng từ khóa cụ thể như tên bài hát, nghệ nhân, hoặc nhạc cụ</span>

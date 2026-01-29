@@ -3,9 +3,11 @@ import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, X } from "lucide-react";
 import { createPortal } from "react-dom";
+import UploadProgressDialog from "@/components/common/UploadProgressDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
+import { getLocalRecordingFull, setLocalRecording } from "@/services/recordingStorage";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -2294,11 +2296,11 @@ export default function UploadMusic() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Load editing recording from sessionStorage
+  // Load editing recording from IndexedDB (session key)
   useEffect(() => {
     if (isEditModeParam) {
       try {
-        const editingData = sessionStorage.getItem("editingRecording");
+        const editingData = sessionGetItem("editingRecording");
         if (editingData) {
           const recording = JSON.parse(editingData);
           setEditingRecordingId(recording.id);
@@ -2331,7 +2333,6 @@ export default function UploadMusic() {
         console.error("Error loading editing recording:", err);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditModeParam]);
 
   // Disable body scroll when dialogs are open
@@ -2366,7 +2367,7 @@ export default function UploadMusic() {
   // Handle ESC key to close dialogs
   useEffect(() => {
     if (!showConfirmDialog && submitStatus !== "success") return;
-    
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showConfirmDialog) {
@@ -2377,7 +2378,7 @@ export default function UploadMusic() {
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [showConfirmDialog, submitStatus]);
@@ -2539,7 +2540,7 @@ export default function UploadMusic() {
     };
 
     // Hàm xử lý dữ liệu file đã đọc
-    const processFileData = (dataUrl: string) => {
+    const processFileData = async (dataUrl: string) => {
       // Log để debug
       console.log("Processing file data, length:", dataUrl.length, "starts with data:", dataUrl.startsWith('data:'));
 
@@ -2580,83 +2581,28 @@ export default function UploadMusic() {
         recordingData.videoData = null; // Không lưu audio vào videoData
       }
 
-      const newRecording = recordingData;
+      const newRecording = recordingData as LocalRecordingStorage;
 
       try {
-        // Lấy danh sách recordings hiện tại
-        let recordings = [];
-        try {
-          const stored = localStorage.getItem("localRecordings");
-          recordings = stored ? JSON.parse(stored) : [];
-        } catch (parseError) {
-          console.warn("Không thể đọc dữ liệu cũ, sẽ tạo mới:", parseError);
-          recordings = [];
-        }
-
-        // Migrate video data từ audioData sang videoData trước khi xử lý
-        recordings = migrateVideoDataToVideoData(recordings);
-
-        // Clean up old media data to free up storage space
-        // Remove audioData/videoData from old approved recordings older than 7 days (keep only metadata)
-        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-        recordings = recordings.map((rec) => {
-          if (
-            rec.moderation &&
-            typeof rec.moderation === "object" &&
-            "status" in rec.moderation &&
-            (rec.moderation as { status?: string }).status === ModerationStatus.APPROVED
-          ) {
-            const uploadedDate = rec.uploadedDate;
-            const uploadedTime =
-              typeof uploadedDate === "string" || typeof uploadedDate === "number"
-                ? new Date(uploadedDate).getTime()
-                : 0;
-            // Remove media data from approved recordings older than 7 days to save space
-            if (uploadedTime < sevenDaysAgo) {
-              const cleaned = { ...rec };
-              delete cleaned.audioData;
-              delete cleaned.videoData;
-              return cleaned;
-            }
-          }
-          return rec;
-        });
-
-        // If editing, update existing recording instead of adding new one
+        // Per-recording storage: only save this recording (no full-list read → no OOM)
         if (isEditMode && editingRecordingId) {
-          const existingIndex = recordings.findIndex((r) => (r as LocalRecordingStorage).id === editingRecordingId);
-          if (existingIndex >= 0) {
-            const existing = recordings[existingIndex] as LocalRecordingStorage;
-            // Preserve media data if not changed (user didn't upload new file)
-            // But if new file was uploaded, use the new data
-            const newRecordingStorage = newRecording as LocalRecordingStorage;
-            const preservedUploadDate = existing.uploadedDate || existing.uploadedAt || new Date().toISOString();
-            recordings[existingIndex] = {
-              ...newRecording,
-              audioData: isVideoFile ? (existing.audioData || null) : ((newRecordingStorage.audioData as string) || existing.audioData || null),
-              videoData: isVideoFile ? ((newRecordingStorage.videoData as string) || existing.videoData || null) : (existing.videoData || null),
-              youtubeUrl: existing.youtubeUrl || null,
-              mediaType: (mediaType as "audio" | "video") || existing.mediaType || "audio",
-              uploadedDate: preservedUploadDate,
-              uploadedAt: preservedUploadDate,
-            } as LocalRecordingStorage;
-            // Clear sessionStorage after successful edit
-            sessionStorage.removeItem("editingRecording");
-          } else {
-            // If not found, add as new
-            recordings.unshift(newRecording);
-          }
+          const existing = await getLocalRecordingFull(editingRecordingId) as LocalRecordingStorage | null;
+          const preservedUploadDate = existing?.uploadedDate ?? existing?.uploadedAt ?? new Date().toISOString();
+          const toSave: LocalRecordingStorage = {
+            ...newRecording,
+            id: editingRecordingId,
+            audioData: isVideoFile ? (existing?.audioData ?? null) : ((newRecording.audioData as string) ?? existing?.audioData ?? null),
+            videoData: isVideoFile ? ((newRecording.videoData as string) ?? existing?.videoData ?? null) : (existing?.videoData ?? null),
+            youtubeUrl: existing?.youtubeUrl ?? null,
+            mediaType: (mediaType as "audio" | "video") ?? existing?.mediaType ?? "audio",
+            uploadedDate: preservedUploadDate,
+            uploadedAt: preservedUploadDate,
+          };
+          await setLocalRecording(toSave);
+          void sessionRemoveItem("editingRecording");
         } else {
-          // Thêm recording mới vào đầu danh sách
-          recordings.unshift(newRecording);
+          await setLocalRecording(newRecording);
         }
-
-        // Không giới hạn số lượng bản ghi - lưu tất cả
-        // Thử lưu vào localStorage
-        const dataToSave = JSON.stringify(recordings);
-
-        // Lưu tất cả bản ghi - không kiểm tra kích thước
-        localStorage.setItem("localRecordings", dataToSave);
 
         setSubmitStatus("success");
         setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
@@ -2844,8 +2790,8 @@ export default function UploadMusic() {
         )}
 
         <div
-        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-        style={{ backgroundColor: "#FFFCF5" }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+          style={{ backgroundColor: "#FFFCF5" }}
           aria-disabled={isFormDisabled}
         >
           <SectionHeader
@@ -3029,8 +2975,8 @@ export default function UploadMusic() {
         </div>
 
         <div
-        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-        style={{ backgroundColor: "#FFFCF5" }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+          style={{ backgroundColor: "#FFFCF5" }}
         >
           <SectionHeader
             icon={Music}
@@ -3567,12 +3513,15 @@ export default function UploadMusic() {
         </div>
       </form>
 
+      {/* Upload in progress pop-up — same UI/UX as ConfirmationDialog */}
+      <UploadProgressDialog isOpen={isSubmitting} />
+
       {/* Confirmation Dialog */}
       {showConfirmDialog && createPortal(
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
           onClick={() => setShowConfirmDialog(false)}
-          style={{ 
+          style={{
             animation: 'fadeIn 0.3s ease-out',
             top: 0,
             left: 0,
@@ -3585,7 +3534,7 @@ export default function UploadMusic() {
         >
           <div
             className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
-            style={{ 
+            style={{
               backgroundColor: '#FFF2D6',
               animation: 'slideUp 0.3s ease-out'
             }}
@@ -3639,10 +3588,10 @@ export default function UploadMusic() {
 
       {/* Success Pop-up (inline) */}
       {submitStatus === "success" && createPortal(
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
           onClick={() => setSubmitStatus("idle")}
-          style={{ 
+          style={{
             animation: 'fadeIn 0.3s ease-out',
             top: 0,
             left: 0,
@@ -3655,7 +3604,7 @@ export default function UploadMusic() {
         >
           <div
             className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
-            style={{ 
+            style={{
               backgroundColor: '#FFF2D6',
               animation: 'slideUp 0.3s ease-out'
             }}
