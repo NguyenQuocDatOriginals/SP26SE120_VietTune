@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using VietTuneArchive.Application.Mapper.DTOs;
 using static VietTuneArchive.Application.Mapper.DTOs.ReferenceDataDto;
+using RegionDtoRef = VietTuneArchive.Application.Mapper.DTOs.RegionDto;
+using ProvinceDtoRef = VietTuneArchive.Application.Mapper.DTOs.ProvinceDto;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -8,7 +11,7 @@ namespace VietTuneArchive.API.Controllers
     //[Authorize]
     public class ReferenceDataController : ControllerBase
     {
-        // GET: /api/v1/reference/ethnic-groups
+        // GET: /api/reference/ethnic-groups
         [HttpGet("ethnic-groups")]
         public ActionResult<List<EthnicGroupDto>> GetEthnicGroups()
         {
@@ -16,12 +19,12 @@ namespace VietTuneArchive.API.Controllers
             {
                 new() { Id = "1", Name = "Kinh", Code = "kinh" },
                 new() { Id = "2", Name = "Tày", Code = "tay" },
-                // ... 52 dân tộc khác (TBD load từ DB/JSON)
+                // ... 52 dân tộc khác
             };
             return Ok(ethnicGroups);
         }
 
-        // GET: /api/v1/reference/ethnic-groups/{id}
+        // GET: /api/reference/ethnic-groups/{id}
         [HttpGet("ethnic-groups/{id}")]
         public ActionResult<EthnicGroupDetailDto> GetEthnicGroup(string id)
         {
@@ -37,49 +40,46 @@ namespace VietTuneArchive.API.Controllers
             return Ok(ethnicGroup);
         }
 
-        // GET: /api/v1/reference/regions
+        // GET: /api/reference/regions
         [HttpGet("regions")]
-        public ActionResult<List<RegionDto>> GetRegions()
+        public ActionResult<List<RegionDtoRef>> GetRegions()
         {
-            var regions = new List<RegionDto>
+            var regions = new List<RegionDtoRef>
             {
-                new() { Id = "1", Name = "Bắc Bộ", Code = "bac-bo" },
-                new() { Id = "2", Name = "Trung Bộ", Code = "trung-bo" },
-                new() { Id = "3", Name = "Nam Bộ", Code = "nam-bo" },
-                // ... 5 vùng khác (Đông Bắc, Tây Bắc, Duyên hải Nam Trung Bộ, Tây Nguyên, Đồng Bằng Sông Cửu Long)
+                new() { Id = Guid.NewGuid(), Name = "Bắc Bộ", Description = "Vùng Bắc Bộ", CreatedAt = DateTime.UtcNow },
+                new() { Id = Guid.NewGuid(), Name = "Trung Bộ", Description = "Vùng Trung Bộ", CreatedAt = DateTime.UtcNow },
+                new() { Id = Guid.NewGuid(), Name = "Nam Bộ", Description = "Vùng Nam Bộ", CreatedAt = DateTime.UtcNow }
             };
             return Ok(regions);
         }
 
-        // GET: /api/v1/reference/provinces
+        // GET: /api/reference/provinces
         [HttpGet("provinces")]
-        public ActionResult<List<ProvinceDto>> GetProvinces()
+        public ActionResult<List<ProvinceDtoRef>> GetProvinces()
         {
-            var provinces = new List<ProvinceDto>
+            var provinces = new List<ProvinceDtoRef>
             {
-                new() { Id = "79", Code = "01", Name = "Hà Nội", RegionId = "1" },
-                new() { Id = "01", Code = "02", Name = "Hà Giang", RegionId = "1" },
-                new() { Id = "48", Code = "79", Name = "TP. Hồ Chí Minh", RegionId = "3" },
-                // ... 60 tỉnh/thành khác (TBD từ DB)
+                new() { Id = Guid.NewGuid(), Name = "Hà Nội", Description = "Thủ đô Hà Nội", RegionId = Guid.NewGuid(), CreatedAt = DateTime.UtcNow },
+                new() { Id = Guid.NewGuid(), Name = "Hà Giang", Description = "Hà Giang", RegionId = Guid.NewGuid(), CreatedAt = DateTime.UtcNow },
+                new() { Id = Guid.NewGuid(), Name = "TP. Hồ Chí Minh", Description = "TP. Hồ Chí Minh", RegionId = Guid.NewGuid(), CreatedAt = DateTime.UtcNow }
             };
             return Ok(provinces);
         }
 
-        // GET: /api/v1/reference/music-genres
+        // GET: /api/reference/music-genres
         [HttpGet("music-genres")]
         public ActionResult<List<MusicGenreDto>> GetMusicGenres()
         {
             var genres = new List<MusicGenreDto>
             {
-                new() { Id = "1", Name = "Dân gian", ParentId = null, Children = new List<MusicGenreDto> { /* con */ } },
+                new() { Id = "1", Name = "Dân gian", ParentId = null, Children = new List<MusicGenreDto>() },
                 new() { Id = "2", Name = "Cải lương", ParentId = null },
                 new() { Id = "3", Name = "Rap Việt", ParentId = "1" }
-                // Hierarchical: load recursive từ DB
             };
             return Ok(genres);
         }
 
-        // GET: /api/v1/reference/event-types
+        // GET: /api/reference/event-types
         [HttpGet("event-types")]
         public ActionResult<List<ReferenceItemDto>> GetEventTypes()
         {
@@ -92,7 +92,7 @@ namespace VietTuneArchive.API.Controllers
             return Ok(types);
         }
 
-        // GET: /api/v1/reference/performance-types
+        // GET: /api/reference/performance-types
         [HttpGet("performance-types")]
         public ActionResult<List<ReferenceItemDto>> GetPerformanceTypes()
         {
@@ -105,7 +105,7 @@ namespace VietTuneArchive.API.Controllers
             return Ok(types);
         }
 
-        // GET: /api/v1/reference/languages
+        // GET: /api/reference/languages
         [HttpGet("languages")]
         public ActionResult<List<LanguageDto>> GetLanguages()
         {
@@ -118,7 +118,7 @@ namespace VietTuneArchive.API.Controllers
             return Ok(languages);
         }
 
-        // GET: /api/v1/reference/license-types
+        // GET: /api/reference/license-types
         [HttpGet("license-types")]
         public ActionResult<List<ReferenceItemDto>> GetLicenseTypes()
         {
@@ -130,21 +130,19 @@ namespace VietTuneArchive.API.Controllers
             return Ok(types);
         }
 
-        // GET: /api/v1/reference/all
+        // GET: /api/reference/all
         [HttpGet("all")]
         public ActionResult<ReferenceBundleDto> GetAll()
         {
             var bundle = new ReferenceBundleDto
             {
                 EthnicGroups = new List<EthnicGroupDto>(),
-                Regions = new List<RegionDto>(),
-                Provinces = new List<ProvinceDto>(),
+                // Regions and Provinces removed from ReferenceBundleDto to avoid Swagger conflicts
                 MusicGenres = new List<MusicGenreDto>(),
                 EventTypes = new List<ReferenceItemDto>(),
                 PerformanceTypes = new List<ReferenceItemDto>(),
                 Languages = new List<LanguageDto>(),
                 LicenseTypes = new List<ReferenceItemDto>()
-                // Gộp tất cả, TBD cache hoặc load parallel
             };
             return Ok(bundle);
         }

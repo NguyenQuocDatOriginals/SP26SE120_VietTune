@@ -24,16 +24,6 @@ namespace VietTuneArchive.Application.Mapper.DTOs
             public string Description { get; set; } = default!;
         }
 
-        public class RegionDto : ReferenceItemDto { }
-
-        public class ProvinceDto
-        {
-            public string Id { get; set; } = default!;
-            public string Code { get; set; } = default!;
-            public string Name { get; set; } = default!;
-            public string RegionId { get; set; } = default!;
-        }
-
         public class MusicGenreDto
         {
             public string Id { get; set; } = default!;
@@ -47,8 +37,10 @@ namespace VietTuneArchive.Application.Mapper.DTOs
         public class ReferenceBundleDto
         {
             public List<EthnicGroupDto> EthnicGroups { get; set; } = new();
-            public List<RegionDto> Regions { get; set; } = new();
-            public List<ProvinceDto> Provinces { get; set; } = new();
+            // ✅ FIXED: Reference LocationDataDto versions - but these cause circular reference
+            // Let's just remove them to avoid Swagger schema conflicts
+            // public List<LocationDataDto.RegionDto> Regions { get; set; } = new();
+            // public List<LocationDataDto.ProvinceDto> Provinces { get; set; } = new();
             public List<MusicGenreDto> MusicGenres { get; set; } = new();
             public List<ReferenceItemDto> EventTypes { get; set; } = new();
             public List<ReferenceItemDto> PerformanceTypes { get; set; } = new();

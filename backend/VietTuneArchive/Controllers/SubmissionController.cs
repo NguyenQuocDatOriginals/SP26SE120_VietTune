@@ -180,7 +180,7 @@ namespace VietTuneArchive.API.Controllers
         // PUT: /api/v1/submissions/{id}/instruments
         [HttpPut("{id}/instruments")]
         [Authorize(Policy = "Owner")]
-        public ActionResult<BaseResponse> UpdateInstruments(string id, [FromBody] List<Application.Mapper.DTOs.SubmissionDto.InstrumentDto> instruments)
+        public ActionResult<BaseResponse> UpdateInstruments(string id, [FromBody] List<SubmissionInstrumentDto> instruments)
         {
             return Ok(new BaseResponse { Success = true });
         }

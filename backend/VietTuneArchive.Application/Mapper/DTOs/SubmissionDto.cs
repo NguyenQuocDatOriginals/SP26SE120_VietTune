@@ -19,7 +19,7 @@ namespace VietTuneArchive.Application.Mapper.DTOs
         public class CulturalContextDto { /* ethnic, region, story, etc. */ }
         public class AdditionalInfoDto { /* notes */ }
         public class CopyrightInfoDto { /* license, owner */ }
-        public class InstrumentDto { public string Id { get; set; } = default!; public string Name { get; set; } = default!; }
+        public class SubmissionInstrumentDto { public string Id { get; set; } = default!; public string Name { get; set; } = default!; }
 
 
         public class SubmissionDetailDto : SubmissionDto

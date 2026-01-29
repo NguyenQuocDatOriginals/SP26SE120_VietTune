@@ -14,7 +14,7 @@ namespace VietTuneArchive.Domain.Context
         public DBContext CreateDbContext(string[] args)
         {
 
-            var path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "EVStation-basedRentalSystem");
+            var path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "VietTuneArchive");
             var config = new ConfigurationBuilder()
                 .SetBasePath(path)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
