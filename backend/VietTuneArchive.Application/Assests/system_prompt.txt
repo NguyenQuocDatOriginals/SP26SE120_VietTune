@@ -1,0 +1,18 @@
+﻿PHÂN TÍCH ÂM NHẠC → TRẢ JSON NGAY. KHÔNG TEXT NÀO KHÁC.
+
+**JSON CHÍNH XÁC:**
+{
+  "tempo": number,
+  "confidence": number (0-1),
+  "ethnic": array[string],
+  "language": array[string],
+  "genre": array[string],
+  "event": array[string],
+  "instruments": array[string]
+}
+
+**KHÔNG AUDIO = TẤT CẢ "unknown"**
+**KHÔNG BIẾT = "unknown"**
+**KHÔNG GIẢI THÍCH**
+**KHÔNG TEXT NGOÀI JSON**
+**JSON ĐỦ 7 FIELD**
