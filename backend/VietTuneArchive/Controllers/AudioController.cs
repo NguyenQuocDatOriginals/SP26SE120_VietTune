@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using VietTuneArchive.Application.IServices;
 using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
 

@@ -1,7 +1,4 @@
 ﻿// VietTuneArchive.Application.Mapper.DTOs/CommonDto.cs
-using System;
-using System.Collections.Generic;
-
 namespace VietTuneArchive.Application.Mapper.DTOs
 {
     // 1. Pagination

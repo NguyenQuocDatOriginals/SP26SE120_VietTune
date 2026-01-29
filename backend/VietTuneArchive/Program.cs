@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service.EmailConfirmation;
 using Supabase;
-using Supabase.Interfaces;
 using VietTuneArchive.Application.Common.Email;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Services;

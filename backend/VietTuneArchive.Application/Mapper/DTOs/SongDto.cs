@@ -1,11 +1,10 @@
-﻿using System;
-using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
+﻿using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 
 namespace VietTuneArchive.Application.Mapper.DTOs
 {
     public class SongDto
     {
-        
+
         public class SongDetailDto : SongSummaryDto
         {
             public string Artist { get; set; } = default!;

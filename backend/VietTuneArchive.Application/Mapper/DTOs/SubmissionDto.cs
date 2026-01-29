@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VietTuneArchive.Application.Mapper.DTOs
+﻿namespace VietTuneArchive.Application.Mapper.DTOs
 {
     public class SubmissionDto
     {
@@ -32,11 +26,11 @@ namespace VietTuneArchive.Application.Mapper.DTOs
             public List<TimelineItemDto> Timeline { get; set; } = new();
         }
 
-        public class TimelineItemDto 
+        public class TimelineItemDto
         {
-            public string Step { get; set; } = default!; 
-            public DateTime Date { get; set; } 
-            public string Note { get; set; } = default!; 
+            public string Step { get; set; } = default!;
+            public DateTime Date { get; set; }
+            public string Note { get; set; } = default!;
         }
 
         public class SubmissionHistoryDto { /* version, changes */ }

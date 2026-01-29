@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
+using GenerativeAI;
+using GenerativeAI.Types;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using VietTuneArchive.Application.IServices;
-using VietTuneArchive.Application.Mapper.DTOs;
 using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
-using GenerativeAI;
-using GenerativeAI.Types;
 
 namespace VietTuneArchive.Application.Services
 {

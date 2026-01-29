@@ -1,14 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Supabase;
-using Supabase.Storage;
-using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
 using VietTuneArchive.Application.IServices;
+using static VietTuneArchive.Application.Mapper.DTOs.AIAnalysisDto;
 
 namespace VietTuneArchive.Application.Services
 {
