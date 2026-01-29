@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Recording, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole } from "@/types";
+import { Recording, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole, InstrumentCategory } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import { Heart, Download, Share2, Eye, User, Users, MapPin, Music } from "lucide-react";
 import Badge from "@/components/common/Badge";
@@ -21,6 +21,7 @@ import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 import { getLocalRecordingFull } from "@/services/recordingStorage";
+import { buildTagsFromLocal, getRegionDisplayName } from "@/utils/recordingTags";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -28,6 +29,10 @@ type LocalRecordingStorage = LocalRecording & {
   culturalContext?: {
     ethnicity?: string;
     region?: string; // Vietnamese region name from UploadMusic
+    performanceType?: string;
+    eventType?: string;
+    province?: string;
+    instruments?: string[];
   };
   _hasRealRegion?: boolean; // Flag to track if region was actually set by user
   file?: {
@@ -44,8 +49,12 @@ type RecordingWithLocalData = Recording & {
   };
 };
 
+type LocationState = { from?: string };
+
 export default function RecordingDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const returnTo = (location.state as LocationState | undefined)?.from;
   const [recording, setRecording] = useState<Recording | null>(null);
   const [localRecordingData, setLocalRecordingData] = useState<LocalRecordingStorage | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,12 +100,27 @@ export default function RecordingDetailPage() {
                 // We'll check in display logic to show "Không xác định" instead
                 return Region.RED_RIVER_DELTA;
               })(),
-              recordingType: local.recordingType ?? RecordingType.OTHER,
+              recordingType: (() => {
+                if (local.recordingType) return local.recordingType;
+                const key = local.culturalContext?.performanceType;
+                if (key === "instrumental") return RecordingType.INSTRUMENTAL;
+                if (key === "acappella" || key === "vocal_accompaniment") return RecordingType.VOCAL;
+                return RecordingType.OTHER;
+              })(),
               duration: local.file?.duration ?? local.duration ?? 0,
               audioUrl: local.audioUrl ?? local.audioData ?? "",
               waveformUrl: local.waveformUrl ?? "",
               coverImage: local.coverImage ?? "",
-              instruments: local.instruments ?? [],
+              instruments: (local.instruments && local.instruments.length > 0)
+                ? local.instruments
+                : (local.culturalContext?.instruments ?? []).map((name, i) => ({
+                    id: `inst-${i}`,
+                    name,
+                    nameVietnamese: name,
+                    category: InstrumentCategory.IDIOPHONE,
+                    images: [],
+                    recordingCount: 0,
+                  })),
               performers: local.performers ?? [],
               recordedDate: local.recordedDate ?? "",
               uploadedDate: local.uploadedDate ?? local.uploadedAt ?? new Date().toISOString(),
@@ -117,7 +141,7 @@ export default function RecordingDetailPage() {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               },
-              tags: local.tags ?? [local.basicInfo?.genre ?? ""].filter(Boolean),
+              tags: (local.tags && local.tags.length > 0) ? local.tags : buildTagsFromLocal(local),
               metadata: {
                 ...local.metadata,
                 recordingQuality: local.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING,
@@ -129,6 +153,7 @@ export default function RecordingDetailPage() {
               likeCount: local.likeCount ?? 0,
               downloadCount: local.downloadCount ?? 0,
             } as Recording;
+            (converted as RecordingWithLocalData)._originalLocalData = local;
             setLocalRecordingData(local);
             setRecording(converted);
             setLoading(false);
@@ -167,7 +192,7 @@ export default function RecordingDetailPage() {
             <h1 className="text-2xl font-bold text-neutral-900">
               Không tìm thấy bản thu
             </h1>
-            <BackButton />
+            <BackButton to={returnTo} />
           </div>
         </div>
       </div>
@@ -182,7 +207,7 @@ export default function RecordingDetailPage() {
           <h1 className="text-3xl font-bold text-neutral-900">
             Chi tiết bản thu
           </h1>
-          <BackButton />
+          <BackButton to={returnTo} />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -423,19 +448,7 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Vùng miền</dt>
                   <dd className="font-medium text-neutral-900">
-                    {(() => {
-                      // Check if region was actually set by user (not a default placeholder)
-                      // For local recordings, check if there was a region in the original data
-                      const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                      const hasRealRegion = originalData
-                        ? (originalData.region || originalData.culturalContext?.region)
-                        : true; // For API recordings, assume region is real
-
-                      if (!hasRealRegion || !recording.region || !REGION_NAMES[recording.region]) {
-                        return "Không xác định";
-                      }
-                      return REGION_NAMES[recording.region];
-                    })()}
+                    {getRegionDisplayName(recording.region, (recording as RecordingWithLocalData)._originalLocalData)}
                   </dd>
                 </div>
                 <div>
@@ -528,25 +541,8 @@ export default function RecordingDetailPage() {
                 );
               }
 
-              // Region tag (from AudioPlayer and VideoPlayer)
-              // AudioPlayer always shows region (even if "Không xác định"), VideoPlayer only shows if not RED_RIVER_DELTA
-              // We'll show region like AudioPlayer does - always display
-              const regionName = (() => {
-                if (!recording.region || !REGION_NAMES[recording.region]) {
-                  return "Không xác định";
-                }
-                const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                if (originalData) {
-                  const hasRealRegion = originalData.region || originalData.culturalContext?.region;
-                  if (!hasRealRegion) {
-                    return "Không xác định";
-                  }
-                }
-                if (recording.region === Region.RED_RIVER_DELTA && !originalData) {
-                  return "Không xác định";
-                }
-                return REGION_NAMES[recording.region];
-              })();
+              // Region tag: "Không xác định" when contributor did not select region in UploadMusic
+              const regionName = getRegionDisplayName(recording.region, (recording as RecordingWithLocalData)._originalLocalData);
 
               allTags.push(
                 <Badge key="region" variant="secondary" className="inline-flex items-center gap-1">

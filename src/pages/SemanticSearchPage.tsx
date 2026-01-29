@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Sparkles, Search, Music, ArrowRight } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import { Recording } from "@/types";
@@ -24,27 +24,16 @@ const SUGGESTED_QUERIES = [
  */
 export default function SemanticSearchPage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState("");
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const qFromUrl = searchParams.get("q") ?? "";
+  const [query, setQuery] = useState(qFromUrl);
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<Recording[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [allRecordings, setAllRecordings] = useState<Recording[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    recordingService
-      .getRecordings(1, 500)
-      .then((res) => {
-        if (cancelled || !res?.items) return;
-        setAllRecordings(res.items);
-      })
-      .catch(() => {
-        if (!cancelled) setAllRecordings([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const returnTo = location.pathname + location.search;
+  const hasRestoredRef = useRef(false);
 
   const tokenize = useCallback((text: string): string[] => {
     return text
@@ -77,6 +66,7 @@ export default function SemanticSearchPage() {
     (q: string) => {
       const trimmed = q.trim();
       if (!trimmed) return;
+      setSearchParams({ q: trimmed }, { replace: true });
       setIsSearching(true);
       setHasSearched(true);
       const tokens = tokenize(trimmed);
@@ -88,12 +78,48 @@ export default function SemanticSearchPage() {
       setResults(scored);
       setIsSearching(false);
     },
-    [allRecordings, tokenize, scoreRecording]
+    [allRecordings, tokenize, scoreRecording, setSearchParams]
   );
 
   const runSearch = useCallback(() => {
     runSearchWithQuery(query);
   }, [query, runSearchWithQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
+    recordingService
+      .getRecordings(1, 500)
+      .then((res) => {
+        if (cancelled) return;
+        const items = Array.isArray(res?.items) ? res.items : [];
+        setAllRecordings(items);
+      })
+      .catch(() => {
+        if (!cancelled) setAllRecordings([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Restore query from URL on mount or when URL changes (e.g. when returning from detail)
+  useEffect(() => {
+    if (qFromUrl && query !== qFromUrl) {
+      setQuery(qFromUrl);
+    }
+  }, [qFromUrl, query]);
+
+  // When we have URL query and recordings loaded, run search once to restore results (e.g. after back from detail)
+  useEffect(() => {
+    if (!qFromUrl.trim() || allRecordings.length === 0 || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+    try {
+      runSearchWithQuery(qFromUrl.trim());
+    } catch (err) {
+      hasRestoredRef.current = false;
+      console.error("SemanticSearchPage restore search failed:", err);
+    }
+  }, [qFromUrl, allRecordings.length, runSearchWithQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") runSearch();
@@ -236,11 +262,13 @@ export default function SemanticSearchPage() {
                     Tìm thấy {results.length} bản ghi
                   </p>
                   <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {results.map((r) => (
-                      <li key={r.id}>
-                        <RecordingCard recording={r} />
-                      </li>
-                    ))}
+                    {results
+                      .filter((r) => r?.id)
+                      .map((r) => (
+                        <li key={r.id}>
+                          <RecordingCard recording={r} linkState={{ from: returnTo }} />
+                        </li>
+                      ))}
                   </ul>
                 </div>
               )}

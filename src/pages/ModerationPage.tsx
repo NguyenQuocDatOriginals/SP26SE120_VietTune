@@ -6,6 +6,7 @@ import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
+import { buildTagsFromLocal } from "@/utils/recordingTags";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search, AlertCircle, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
@@ -990,7 +991,7 @@ export default function ModerationPage() {
                                         updatedAt: "",
                                     };
                                 })(),
-                                tags: (it as LocalRecordingMini & { tags?: string[] }).tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
+                                tags: buildTagsFromLocal(it),
                                 metadata: {
                                     recordingQuality: RecordingQuality.FIELD_RECORDING,
                                     lyrics: "",
@@ -1230,7 +1231,7 @@ export default function ModerationPage() {
                                                         createdAt: new Date().toISOString(),
                                                         updatedAt: new Date().toISOString(),
                                                     },
-                                                    tags: (item as LocalRecordingMini & { tags?: string[] }).tags ?? [item.basicInfo?.genre ?? ""].filter(Boolean),
+                                                    tags: buildTagsFromLocal(item),
                                                     metadata: { recordingQuality: RecordingQuality.FIELD_RECORDING, lyrics: "" },
                                                     verificationStatus: item.moderation?.status === "APPROVED" ? VerificationStatus.VERIFIED : VerificationStatus.PENDING,
                                                     viewCount: 0,

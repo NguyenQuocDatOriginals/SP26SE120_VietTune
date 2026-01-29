@@ -1866,11 +1866,13 @@ function SectionHeader({
   title,
   subtitle,
   optional = false,
+  required = false,
 }: {
   icon: React.ElementType;
   title: string;
   subtitle?: string;
   optional?: boolean;
+  required?: boolean;
 }) {
   return (
     <div className="flex items-start gap-3 mb-6">
@@ -1880,6 +1882,7 @@ function SectionHeader({
       <div>
         <h3 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
           {title}
+          {required && <span className="text-red-500" aria-hidden="true">*</span>}
           {optional && (
             <span
               className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full border border-neutral-300/80 shadow-sm"
@@ -2097,11 +2100,26 @@ export default function UploadMusic() {
       }
     }
 
-    // Tự động xác định loại media dựa trên file
+    // Mutually exclusive: once user has chosen audio or video, do not allow switching via file pick
     if ((isVideo || hasVideoExtension) && mediaType === "audio") {
-      setMediaType("video");
-    } else if ((isAudio || hasAudioExtension) && mediaType === "video") {
-      setMediaType("audio");
+      setErrors((prev) => ({
+        ...prev,
+        file: "Bạn đã chọn đóng góp file âm thanh. Không thể chuyển sang file video trong cùng bản đóng góp. Vui lòng chọn file âm thanh.",
+      }));
+      setFile(null);
+      setAudioInfo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if ((isAudio || hasAudioExtension) && mediaType === "video") {
+      setErrors((prev) => ({
+        ...prev,
+        file: "Bạn đã chọn đóng góp file video. Không thể chuyển sang file âm thanh trong cùng bản đóng góp. Vui lòng chọn file video.",
+      }));
+      setFile(null);
+      setAudioInfo(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
     }
 
     setErrors((prev) => {
@@ -2288,6 +2306,9 @@ export default function UploadMusic() {
         "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
     }
     if (!genre) newErrors.genre = "Vui lòng chọn thể loại";
+    if (!performanceType) {
+      newErrors.performanceType = "Vui lòng chọn loại hình biểu diễn";
+    }
     if (requiresInstruments && instruments.length === 0) {
       newErrors.instruments = "Vui lòng chọn ít nhất một nhạc cụ";
     }
@@ -2438,6 +2459,13 @@ export default function UploadMusic() {
         performanceType,
         instruments,
       },
+      tags: (() => {
+        const genreVal = genre === "Khác" ? customGenre : genre;
+        const ethnicityVal = ethnicity === "Khác" ? customEthnicity : ethnicity;
+        const eventVal = eventType === "Khác" ? customEventType : eventType;
+        const perfLabel = PERFORMANCE_TYPES.find((p) => p.key === performanceType)?.label ?? "";
+        return [genreVal, ethnicityVal, region, province, eventVal, perfLabel, ...instruments].filter(Boolean);
+      })(),
       additionalNotes: {
         description,
         fieldNotes,
@@ -2753,6 +2781,7 @@ export default function UploadMusic() {
     if (!artistUnknown && !artist.trim()) return false;
     if (!composerUnknown && !composer.trim()) return false;
     if (!genre) return false;
+    if (!performanceType) return false;
 
     // Instruments when required
     if (requiresInstruments && instruments.length === 0) return false;
@@ -2766,6 +2795,7 @@ export default function UploadMusic() {
     composer,
     composerUnknown,
     genre,
+    performanceType,
     requiresInstruments,
     instruments,
     isFormDisabled,
@@ -2798,17 +2828,18 @@ export default function UploadMusic() {
             icon={Upload}
             title={mediaType === "video" ? "Tải lên file video" : "Tải lên file âm thanh"}
             subtitle={mediaType === "video" ? "Hỗ trợ định dạng MP4, MOV, AVI, WebM, MKV, MPEG, WMV, 3GP, FLV" : "Hỗ trợ định dạng MP3, WAV, FLAC"}
+            required
           />
 
           {/* Media Type Selection */}
           <div className="mt-4 mb-6">
             <div className="flex flex-wrap gap-2">
-              {/* File âm thanh */}
+              {/* File âm thanh — disabled when video already uploaded (mutually exclusive) */}
               <button
                 type="button"
-                disabled={isFormDisabled}
+                disabled={isFormDisabled || (file != null && mediaType === "video")}
                 onClick={() => {
-                  if (isFormDisabled) return;
+                  if (isFormDisabled || (file != null && mediaType === "video")) return;
                   setMediaType("audio");
                   setFile(null);
                   setAudioInfo(null);
@@ -2817,14 +2848,14 @@ export default function UploadMusic() {
                 className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "audio"
                   ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
                   : "text-neutral-800 bg-neutral-100/90"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${(isFormDisabled || (file != null && mediaType === "video")) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 style={
                   mediaType !== "audio"
                     ? { backgroundColor: "#FFFCF5" }
                     : undefined
                 }
                 onMouseEnter={e => {
-                  if (isFormDisabled) return;
+                  if (isFormDisabled || (file != null && mediaType === "video")) return;
                   if (mediaType !== "audio") {
                     e.currentTarget.style.backgroundColor = "#F5F0E8";
                   }
@@ -2841,12 +2872,12 @@ export default function UploadMusic() {
                   <span>File âm thanh</span>
                 </div>
               </button>
-              {/* File video */}
+              {/* File video — disabled when audio already uploaded (mutually exclusive) */}
               <button
                 type="button"
-                disabled={isFormDisabled}
+                disabled={isFormDisabled || (file != null && mediaType === "audio")}
                 onClick={() => {
-                  if (isFormDisabled) return;
+                  if (isFormDisabled || (file != null && mediaType === "audio")) return;
                   setMediaType("video");
                   setFile(null);
                   setAudioInfo(null);
@@ -2855,14 +2886,14 @@ export default function UploadMusic() {
                 className={`px-4 py-2 rounded-full text-sm transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${mediaType === "video"
                   ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white"
                   : "text-neutral-800 bg-neutral-100/90"
-                  } ${isFormDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  } ${(isFormDisabled || (file != null && mediaType === "audio")) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 style={
                   mediaType !== "video"
                     ? { backgroundColor: "#FFFCF5" }
                     : undefined
                 }
                 onMouseEnter={e => {
-                  if (isFormDisabled) return;
+                  if (isFormDisabled || (file != null && mediaType === "audio")) return;
                   if (mediaType !== "video") {
                     e.currentTarget.style.backgroundColor = "#F5F0E8";
                   }
@@ -3176,8 +3207,8 @@ export default function UploadMusic() {
           {/* Genre-Ethnicity Warning */}
           {genreEthnicityWarning && (
             <div className="mb-4 flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl">
-              <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-              <p className="text-yellow-200 text-sm leading-relaxed">
+              <AlertCircle className="h-5 w-5 text-black flex-shrink-0 mt-0.5" />
+              <p className="text-black text-sm leading-relaxed">
                 {genreEthnicityWarning}
               </p>
             </div>
@@ -3246,7 +3277,7 @@ export default function UploadMusic() {
             </div>
 
             <div className="md:col-span-2">
-              <FormField label="Loại hình biểu diễn">
+              <FormField label="Loại hình biểu diễn" required>
                 <div className="flex flex-wrap gap-2">
                   {PERFORMANCE_TYPES.map((pt) => (
                     <button
@@ -3282,6 +3313,9 @@ export default function UploadMusic() {
                     </button>
                   ))}
                 </div>
+                {errors.performanceType && (
+                  <p className="text-sm text-red-400">{errors.performanceType}</p>
+                )}
               </FormField>
             </div>
 

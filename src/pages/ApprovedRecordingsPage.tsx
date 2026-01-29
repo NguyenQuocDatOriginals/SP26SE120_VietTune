@@ -6,6 +6,7 @@ import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { Trash2 } from "lucide-react";
 import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
+import { buildTagsFromLocal } from "@/utils/recordingTags";
 import BackButton from "@/components/common/BackButton";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
@@ -77,6 +78,7 @@ export interface LocalRecording {
         instruments?: string[];
         eventType?: string;
         province?: string;
+        performanceType?: string;
     };
     audioData?: string | null;
     videoData?: string | null;
@@ -322,7 +324,7 @@ export default function ApprovedRecordingsPage() {
                                             updatedAt: "",
                                         };
                                     })(),
-                                    tags: it.tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
+                                    tags: buildTagsFromLocal(it),
                                     metadata: {
                                         ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
                                         recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
@@ -380,7 +382,7 @@ export default function ApprovedRecordingsPage() {
                                             updatedAt: "",
                                         };
                                     })(),
-                                    tags: it.tags ?? [it.basicInfo?.genre ?? ""].filter(Boolean),
+                                    tags: buildTagsFromLocal(it),
                                     metadata: {
                                         ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
                                         recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)

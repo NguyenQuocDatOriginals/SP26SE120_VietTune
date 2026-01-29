@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Users, MapPin, Music, Repeat } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useMediaFocusStore } from "@/stores/mediaFocusStore";
-import { UserRole, Region } from "@/types";
-import { REGION_NAMES, RECORDING_TYPE_NAMES } from "@/config/constants";
+import { UserRole } from "@/types";
+import { RECORDING_TYPE_NAMES } from "@/config/constants";
+import { getRegionDisplayName } from "@/utils/recordingTags";
 import WaveformProgressBar from "./WaveformProgressBar";
 
 // Props type for AudioPlayer
@@ -30,6 +31,8 @@ type Props = {
   recording?: Recording;
   onDelete?: (id: string) => void;
   showContainer?: boolean;
+  /** When set, passed as state.from when navigating to detail (keeps search filters on back) */
+  returnTo?: string;
 };
 
 export default function AudioPlayer({
@@ -40,7 +43,8 @@ export default function AudioPlayer({
   className = "",
   recording,
   onDelete,
-  showContainer = false
+  showContainer = false,
+  returnTo
 }: Props) {
   // All hooks and variables must be declared before any hook or return
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -80,7 +84,7 @@ export default function AudioPlayer({
     const isVolumeControl = target.closest('.volume-control-container') !== null;
 
     if (!isButton && !isProgressBar && !isVolumeControl && recording?.id) {
-      navigate(`/recordings/${recording.id}`);
+      navigate(`/recordings/${recording.id}`, returnTo ? { state: { from: returnTo } } : undefined);
     }
   };
 
@@ -510,16 +514,7 @@ export default function AudioPlayer({
               )}
             <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
               <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {(() => {
-                if (!recording?.region || !REGION_NAMES[recording.region]) return "Không xác định";
-                const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                if (originalData) {
-                  const hasRealRegion = originalData.region || originalData.culturalContext?.region;
-                  if (!hasRealRegion) return "Không xác định";
-                }
-                if (recording.region === Region.RED_RIVER_DELTA && !originalData) return "Không xác định";
-                return REGION_NAMES[recording.region];
-              })()}
+              {getRegionDisplayName(recording?.region, (recording as RecordingWithLocalData)?._originalLocalData)}
             </span>
             {recording?.recordingType && RECORDING_TYPE_NAMES[recording.recordingType] && RECORDING_TYPE_NAMES[recording.recordingType] !== "Khác" && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Search, Sparkles } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
-import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
+import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole, InstrumentCategory } from "@/types";
 import { recordingService } from "@/services/recordingService";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
@@ -15,6 +15,7 @@ import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording 
 
 // Use LocalRecording type from ApprovedRecordingsPage for consistency
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import { buildTagsFromLocal, PERFORMANCE_KEY_TO_LABEL } from "@/utils/recordingTags";
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {
@@ -100,10 +101,25 @@ const convertLocalToRecording = async (
       recordingCount: 0,
     },
     region: local.region ?? Region.RED_RIVER_DELTA,
-    recordingType: local.recordingType ?? RecordingType.OTHER,
+    recordingType: (() => {
+      if (local.recordingType) return local.recordingType;
+      const key = (local as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType;
+      if (key === "instrumental") return RecordingType.INSTRUMENTAL;
+      if (key === "acappella" || key === "vocal_accompaniment") return RecordingType.VOCAL;
+      return RecordingType.OTHER;
+    })(),
     duration: local.duration ?? duration,
     audioUrl: local.audioUrl ?? mediaSrc ?? "",
-    instruments: local.instruments ?? [],
+    instruments: (local.instruments && local.instruments.length > 0)
+      ? local.instruments
+      : ((local as LocalRecording & { culturalContext?: { instruments?: string[] } }).culturalContext?.instruments ?? []).map((name, i) => ({
+        id: `inst-${i}`,
+        name,
+        nameVietnamese: name,
+        category: InstrumentCategory.IDIOPHONE,
+        images: [],
+        recordingCount: 0,
+      })),
     performers: local.performers ?? [],
     uploadedDate: local.uploadedDate ?? new Date().toISOString(),
     uploader: typeof local.uploader === "object" && local.uploader !== null ? {
@@ -123,7 +139,7 @@ const convertLocalToRecording = async (
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-    tags: local.tags ?? [local.basicInfo?.genre ?? ""].filter(Boolean),
+    tags: buildTagsFromLocal(local),
     metadata: {
       ...local.metadata,
       recordingQuality: local.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING,
@@ -133,7 +149,8 @@ const convertLocalToRecording = async (
     viewCount: local.viewCount ?? 0,
     likeCount: local.likeCount ?? 0,
     downloadCount: local.downloadCount ?? 0,
-  };
+    _originalLocalData: local,
+  } as Recording & { _originalLocalData?: LocalRecording };
 };
 
 // Build SearchFilters from URL search params (restore filter state from shareable links)
@@ -179,7 +196,9 @@ function searchParamsFromFilters(filters: SearchFilters): Record<string, string>
 }
 
 export default function SearchPage() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const returnTo = location.pathname + location.search;
 
   const initialFiltersFromUrl = useMemo(
     () => filtersFromSearchParams(searchParams),
@@ -232,8 +251,11 @@ export default function SearchPage() {
             }
           }
 
-          // Filter by tags (genres, instruments, eventType, province, ethnicity)
+          // Filter by tags (genres, instruments, eventType, province, ethnicity, region, performanceType)
           if (filters.tags && filters.tags.length > 0) {
+            const perfLabel = r.culturalContext?.performanceType
+              ? (PERFORMANCE_KEY_TO_LABEL[r.culturalContext.performanceType] ?? r.culturalContext.performanceType)
+              : "";
             const recordingTags = [
               ...(r.basicInfo?.genre ? [r.basicInfo.genre] : []),
               ...(r.tags || []),
@@ -241,6 +263,8 @@ export default function SearchPage() {
               ...(r.culturalContext?.eventType ? [r.culturalContext.eventType] : []),
               ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
               ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
+              ...(r.culturalContext?.region ? [r.culturalContext.region] : []),
+              ...(perfLabel ? [perfLabel] : []),
             ];
             const hasMatchingTag = filters.tags.some(filterTag =>
               recordingTags.some(recordingTag =>
@@ -277,9 +301,17 @@ export default function SearchPage() {
             }
           }
 
-          // Filter by recording type
+          // Filter by recording type (derive from culturalContext.performanceType for local recordings)
           if (filters.recordingTypes && filters.recordingTypes.length > 0) {
-            if (!r.recordingType || !filters.recordingTypes.includes(r.recordingType)) {
+            const effectiveType = r.recordingType ?? (
+              (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "instrumental"
+                ? RecordingType.INSTRUMENTAL
+                : (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "acappella" ||
+                  (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "vocal_accompaniment"
+                  ? RecordingType.VOCAL
+                  : null
+            );
+            if (!effectiveType || !filters.recordingTypes.includes(effectiveType)) {
               return false;
             }
           }
@@ -371,6 +403,9 @@ export default function SearchPage() {
             }
 
             if (filters.tags && filters.tags.length > 0) {
+              const perfLabel = r.culturalContext?.performanceType
+                ? (PERFORMANCE_KEY_TO_LABEL[r.culturalContext.performanceType] ?? r.culturalContext.performanceType)
+                : "";
               const recordingTags = [
                 ...(r.basicInfo?.genre ? [r.basicInfo.genre] : []),
                 ...(r.tags || []),
@@ -378,6 +413,8 @@ export default function SearchPage() {
                 ...(r.culturalContext?.eventType ? [r.culturalContext.eventType] : []),
                 ...(r.culturalContext?.province ? [r.culturalContext.province] : []),
                 ...(r.culturalContext?.ethnicity ? [r.culturalContext.ethnicity] : []),
+                ...(r.culturalContext?.region ? [r.culturalContext.region] : []),
+                ...(perfLabel ? [perfLabel] : []),
               ];
               const hasMatchingTag = filters.tags.some(filterTag =>
                 recordingTags.some(recordingTag =>
@@ -413,7 +450,15 @@ export default function SearchPage() {
             }
 
             if (filters.recordingTypes && filters.recordingTypes.length > 0) {
-              if (!r.recordingType || !filters.recordingTypes.includes(r.recordingType)) {
+              const effectiveType = r.recordingType ?? (
+                (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "instrumental"
+                  ? RecordingType.INSTRUMENTAL
+                  : (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "acappella" ||
+                    (r as LocalRecording & { culturalContext?: { performanceType?: string } }).culturalContext?.performanceType === "vocal_accompaniment"
+                    ? RecordingType.VOCAL
+                    : null
+              );
+              if (!effectiveType || !filters.recordingTypes.includes(effectiveType)) {
                 return false;
               }
             }
@@ -510,7 +555,7 @@ export default function SearchPage() {
           <div className="flex items-center gap-3">
             <Link
               to="/semantic-search"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary-100/90 text-primary-700 hover:bg-primary-200/90 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 border border-primary-200/80"
+              className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 rounded-full bg-primary-100/90 text-primary-700 hover:bg-primary-200/90 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 border border-primary-200/80"
               title="Tìm theo ý nghĩa"
             >
               <Sparkles className="h-5 w-5" strokeWidth={2.5} />
@@ -646,7 +691,7 @@ export default function SearchPage() {
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                           },
-                          tags: localRecordingData.tags ?? [localRecordingData.basicInfo?.genre ?? ""].filter(Boolean),
+                          tags: buildTagsFromLocal(localRecordingData),
                           metadata: {
                             ...localRecordingData.metadata,
                             recordingQuality: localRecordingData.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING,
@@ -667,6 +712,7 @@ export default function SearchPage() {
                             artist={localRecordingData.basicInfo?.artist}
                             recording={convertedRecording}
                             showContainer={true}
+                            returnTo={returnTo}
                           />
                         ) : (
                           <AudioPlayer
@@ -677,6 +723,7 @@ export default function SearchPage() {
                             recording={convertedRecording}
                             onDelete={handleDelete}
                             showContainer={true}
+                            returnTo={returnTo}
                           />
                         );
                       }
@@ -693,6 +740,7 @@ export default function SearchPage() {
                           artist={recording.titleVietnamese}
                           recording={recording}
                           showContainer={true}
+                          returnTo={returnTo}
                         />
                       ) : (
                         <AudioPlayer
@@ -702,6 +750,7 @@ export default function SearchPage() {
                           artist={recording.titleVietnamese}
                           recording={recording}
                           showContainer={true}
+                          returnTo={returnTo}
                         />
                       );
                     } catch (err) {

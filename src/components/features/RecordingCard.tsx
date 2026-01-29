@@ -7,15 +7,17 @@ import { Link } from "react-router-dom";
 
 interface RecordingCardProps {
   recording: Recording;
+  /** Optional state to pass when navigating to detail (e.g. { from: "/search?q=..." } to restore filters on back) */
+  linkState?: Record<string, unknown>;
 }
 
-export default function RecordingCard({ recording }: RecordingCardProps) {
+export default function RecordingCard({ recording, linkState }: RecordingCardProps) {
   if (!recording.id) {
     return null;
   }
 
   return (
-    <Link to={`/recordings/${recording.id}`} className="block cursor-pointer">
+    <Link to={`/recordings/${recording.id}`} state={linkState} className="block cursor-pointer">
       <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
         {/* Cover Image */}
         <div className="relative h-48 bg-neutral-100">
@@ -28,9 +30,9 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
           ) : (
             <div className="w-full h-full flex items-center justify-center text-neutral-400">
               <div className="text-center">
-                <img 
-                  src={logo} 
-                  alt="VietTune Logo" 
+                <img
+                  src={logo}
+                  alt="VietTune Logo"
                   className="w-24 h-24 mb-2 mx-auto object-contain opacity-40"
                 />
                 <p className="text-sm">Chưa có ảnh bìa</p>
@@ -47,59 +49,61 @@ export default function RecordingCard({ recording }: RecordingCardProps) {
             </div>
           </div>
 
-        {/* Verification badge */}
-        {recording.verificationStatus === "VERIFIED" && (
-          <div className="absolute top-2 right-2">
-            <Badge variant="success" size="sm">
-              Đã xác minh
-            </Badge>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-5">
-        <h3 className="font-semibold text-neutral-900 text-lg mb-1 line-clamp-1">
-          {recording.title}
-        </h3>
-        {recording.titleVietnamese && (
-          <p className="text-sm text-neutral-600 font-medium mb-3 line-clamp-1">
-            {recording.titleVietnamese}
-          </p>
-        )}
-
-        <div className="flex items-center gap-2.5 mb-4 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-            {recording.ethnicity.nameVietnamese}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-            {RECORDING_TYPE_NAMES[recording.recordingType]}
-          </span>
+          {/* Verification badge */}
+          {recording.verificationStatus === "VERIFIED" && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="success" size="sm">
+                Đã xác minh
+              </Badge>
+            </div>
+          )}
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-neutral-600 font-medium">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {recording.viewCount}
+        {/* Content */}
+        <div className="p-5">
+          <h3 className="font-semibold text-neutral-900 text-lg mb-1 line-clamp-1">
+            {recording.title}
+          </h3>
+          {recording.titleVietnamese && (
+            <p className="text-sm text-neutral-600 font-medium mb-3 line-clamp-1">
+              {recording.titleVietnamese}
+            </p>
+          )}
+
+          <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+              {recording.ethnicity?.nameVietnamese ?? "Không xác định"}
             </span>
-            <span className="flex items-center gap-1">
-              <Heart className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {recording.likeCount}
-            </span>
-            <span className="flex items-center gap-1">
-              <Download className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {recording.downloadCount}
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+              {recording.recordingType != null && RECORDING_TYPE_NAMES[recording.recordingType] != null
+                ? RECORDING_TYPE_NAMES[recording.recordingType]
+                : "Khác"}
             </span>
           </div>
-          <span className="tabular-nums">
-            {Math.floor(recording.duration / 60).toString().padStart(2, "0")}:
-            {(recording.duration % 60).toString().padStart(2, "0")}
-          </span>
+
+          {/* Stats */}
+          <div className="flex items-center justify-between text-xs text-neutral-600 font-medium">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {recording.viewCount ?? 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Heart className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {recording.likeCount ?? 0}
+              </span>
+              <span className="flex items-center gap-1">
+                <Download className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {recording.downloadCount ?? 0}
+              </span>
+            </div>
+            <span className="tabular-nums">
+              {Math.floor((recording.duration ?? 0) / 60).toString().padStart(2, "0")}:
+              {((recording.duration ?? 0) % 60).toString().padStart(2, "0")}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
     </Link>
   );
 }

@@ -867,9 +867,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             {activeFilterCount} bộ lọc đang được áp dụng
           </p>
         ) : (
-          <p className="text-sm text-neutral-500">
-            Gợi ý: nhấn Enter hoặc nút Tìm kiếm. Dùng bộ lọc bên dưới để thu hẹp kết quả.
-          </p>
+          null
         )}
       </div>
 

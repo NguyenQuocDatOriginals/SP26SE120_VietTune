@@ -16,8 +16,8 @@ import {
   Minimize,
 } from "lucide-react";
 import type { Recording } from "@/types";
-import { Region } from "@/types";
-import { REGION_NAMES, RECORDING_TYPE_NAMES } from "@/config/constants";
+import { RECORDING_TYPE_NAMES } from "@/config/constants";
+import { getRegionDisplayName } from "@/utils/recordingTags";
 import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
 
 /** Throttle interval for time updates (ms) - reduces re-renders during playback */
@@ -41,6 +41,8 @@ type Props = {
   className?: string;
   recording?: Recording;
   showContainer?: boolean;
+  /** When set, passed as state.from when navigating to detail (keeps search filters on back) */
+  returnTo?: string;
 };
 
 export default function VideoPlayer({
@@ -50,7 +52,8 @@ export default function VideoPlayer({
   compact = false,
   className = "",
   recording,
-  showContainer = false
+  showContainer = false,
+  returnTo
 }: Props) {
   // All hooks and variables must be declared before any return
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -133,7 +136,7 @@ export default function VideoPlayer({
     const isProgressBar = target.closest('.progress-bar-container') !== null;
     const isVolumeControl = target.closest('.volume-control-container') !== null;
     if (!isButton && !isProgressBar && !isVolumeControl && recording?.id) {
-      navigate(`/recordings/${recording.id}`);
+      navigate(`/recordings/${recording.id}`, returnTo ? { state: { from: returnTo } } : undefined);
     }
   };
 
@@ -774,16 +777,7 @@ export default function VideoPlayer({
               )}
             <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
               <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {(() => {
-                if (!recording?.region || !REGION_NAMES[recording.region]) return "Không xác định";
-                const originalData = (recording as RecordingWithLocalData)._originalLocalData;
-                if (originalData) {
-                  const hasRealRegion = originalData.region || originalData.culturalContext?.region;
-                  if (!hasRealRegion) return "Không xác định";
-                }
-                if (recording.region === Region.RED_RIVER_DELTA && !originalData) return "Không xác định";
-                return REGION_NAMES[recording.region];
-              })()}
+              {getRegionDisplayName(recording?.region, (recording as RecordingWithLocalData)?._originalLocalData)}
             </span>
             {recording?.recordingType && RECORDING_TYPE_NAMES[recording.recordingType] && RECORDING_TYPE_NAMES[recording.recordingType] !== "Khác" && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
