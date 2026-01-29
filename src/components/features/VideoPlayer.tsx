@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMediaFocusStore } from "@/stores/mediaFocusStore";
 import {
   Play,
   Pause,
@@ -69,6 +70,8 @@ export default function VideoPlayer({
   const [dragVolume, setDragVolume] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [cursorHidden, setCursorHidden] = useState(false);
+  const hideCursorTimeoutRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const volumeAnimationFrameRef = useRef<number | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
@@ -76,6 +79,9 @@ export default function VideoPlayer({
   const blobUrlRef = useRef<string | null>(null);
   const [resolvedVideoSrc, setResolvedVideoSrc] = useState<string | undefined>(undefined);
 
+  const myId = useId();
+  const activeMediaId = useMediaFocusStore((s) => s.activeMediaId);
+  const setActiveMediaId = useMediaFocusStore((s) => s.setActiveMediaId);
   const navigate = useNavigate();
   // Check if src is a video data URL or video file
   const isVideo = src && typeof src === 'string' && (src.startsWith('data:video/') || src.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
@@ -135,6 +141,26 @@ export default function VideoPlayer({
     e.stopPropagation();
   };
 
+  // When another player (audio or video) becomes active, pause this one
+  useEffect(() => {
+    if (activeMediaId === null || activeMediaId === myId) return;
+    const media = videoRef.current;
+    if (!media) return;
+    media.pause();
+    setPlaying(false);
+  }, [activeMediaId, myId]);
+
+  // Reset cursor visibility when video is paused
+  useEffect(() => {
+    if (!playing) {
+      if (hideCursorTimeoutRef.current !== null) {
+        window.clearTimeout(hideCursorTimeoutRef.current);
+        hideCursorTimeoutRef.current = null;
+      }
+      setCursorHidden(false);
+    }
+  }, [playing]);
+
   const clearHideControlsTimer = () => {
     if (hideControlsTimeoutRef.current !== null) {
       window.clearTimeout(hideControlsTimeoutRef.current);
@@ -142,14 +168,40 @@ export default function VideoPlayer({
     }
   };
 
+  /** Hide cursor over video when playing and idle; show on mouse move ("shake") */
+  const CURSOR_HIDE_DELAY_MS = 1500;
+  const clearHideCursorTimer = () => {
+    if (hideCursorTimeoutRef.current !== null) {
+      window.clearTimeout(hideCursorTimeoutRef.current);
+      hideCursorTimeoutRef.current = null;
+    }
+  };
+  const onVideoAreaMouseEnter = () => {
+    if (!playing) return;
+    clearHideCursorTimer();
+    hideCursorTimeoutRef.current = window.setTimeout(() => setCursorHidden(true), CURSOR_HIDE_DELAY_MS);
+  };
+  const onVideoAreaMouseMove = () => {
+    clearHideCursorTimer();
+    setCursorHidden(false);
+    if (playing) {
+      hideCursorTimeoutRef.current = window.setTimeout(() => setCursorHidden(true), CURSOR_HIDE_DELAY_MS);
+    }
+  };
+  const onVideoAreaMouseLeave = () => {
+    clearHideCursorTimer();
+    setCursorHidden(false);
+  };
+
+  /** Show controls and hide again after 3s (same in fullscreen and minimized). */
+  const CONTROLS_HIDE_DELAY_MS = 3000;
   const showControlsTemporarily = () => {
-    if (!isFullscreen) return;
     setControlsVisible(true);
     clearHideControlsTimer();
     hideControlsTimeoutRef.current = window.setTimeout(() => {
       setControlsVisible(false);
       hideControlsTimeoutRef.current = null;
-    }, 3000);
+    }, CONTROLS_HIDE_DELAY_MS);
   };
 
   useEffect(() => {
@@ -188,9 +240,26 @@ export default function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFullscreen]);
 
+  // When playing in minimized mode, hide controls after 3s (same as fullscreen)
+  useEffect(() => {
+    if (!playing) {
+      setControlsVisible(true);
+      clearHideControlsTimer();
+      return;
+    }
+    if (!isFullscreen) {
+      showControlsTemporarily();
+    }
+    return () => clearHideControlsTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, isFullscreen]);
+
   useEffect(() => {
     const media = videoRef.current;
     if (!media) return;
+
+    // Sync play button state with actual media (e.g. after another player paused us or on re-mount)
+    setPlaying(!media.paused);
 
     // Throttled time update to avoid 60fps re-renders (reduces lag during playback)
     const updateTime = () => {
@@ -233,7 +302,12 @@ export default function VideoPlayer({
         setSavedVolume(newVol);
       }
     };
-    const onEnded = () => setPlaying(false);
+    const onEnded = () => {
+      setPlaying(false);
+      if (useMediaFocusStore.getState().activeMediaId === myId) {
+        useMediaFocusStore.getState().setActiveMediaId(null);
+      }
+    };
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
 
@@ -272,17 +346,19 @@ export default function VideoPlayer({
         volumeAnimationFrameRef.current = null;
       }
     };
-  }, [src, isDragging, videoSrcReady]);
+  }, [src, isDragging, videoSrcReady, myId]);
 
 
   const play = async () => {
     const media = videoRef.current;
     if (!media) return;
+    setActiveMediaId(myId);
     try {
       await media.play();
       setPlaying(true);
     } catch (e) {
       console.warn("Play failed:", e);
+      setActiveMediaId(null);
     }
   };
 
@@ -291,6 +367,9 @@ export default function VideoPlayer({
     if (!media) return;
     media.pause();
     setPlaying(false);
+    if (useMediaFocusStore.getState().activeMediaId === myId) {
+      useMediaFocusStore.getState().setActiveMediaId(null);
+    }
   };
 
   const togglePlay = () => (playing ? pause() : play());
@@ -405,7 +484,6 @@ export default function VideoPlayer({
 
   // Container version with metadata
   if (showContainer && recording) {
-    // Nếu không phải YouTube, hiển thị đầy đủ controls như cũ
     return (
       <div className={className}>
         <div
@@ -415,18 +493,22 @@ export default function VideoPlayer({
         >
           <div
             ref={playerRootRef}
-            className="relative"
-            onMouseMove={isFullscreen ? showControlsTemporarily : undefined}
+            className={`relative ${isFullscreen ? "flex flex-col items-center justify-center h-full w-full min-h-0" : ""}`}
+            onMouseMove={showControlsTemporarily}
           >
             {/* Video Player (Full Version) - wrapper với overflow-hidden để góc bo tròn không bị nhô vuông */}
-            <div className="w-full rounded-md overflow-hidden" style={{ contain: "layout paint" }}>
+            <div
+              className={`w-full rounded-md overflow-hidden ${isFullscreen ? "flex-1 min-h-0 flex items-center justify-center" : ""} ${playing && cursorHidden ? "cursor-none" : ""}`}
+              style={{ contain: "layout paint" }}
+              onMouseEnter={onVideoAreaMouseEnter}
+              onMouseMove={onVideoAreaMouseMove}
+              onMouseLeave={onVideoAreaMouseLeave}
+            >
               {isVideo ? (
                 videoSrcReady ? (
-                  <video ref={videoRef} src={effectiveVideoSrc ?? undefined} preload="auto" playsInline className="w-full block" controls={false} />
+                  <video ref={videoRef} src={effectiveVideoSrc ?? undefined} preload="auto" playsInline className={isFullscreen ? "max-w-full max-h-full object-contain" : "w-full block"} controls={false} />
                 ) : (
-                  <div className="w-full aspect-video bg-neutral-200 flex items-center justify-center">
-                    <div className="w-8 h-8 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
-                  </div>
+                  <div className="w-full aspect-video bg-neutral-200" aria-busy="true" />
                 )
               ) : (
                 <div className="w-full aspect-[16/9] bg-neutral-200 flex items-center justify-center">
@@ -435,18 +517,23 @@ export default function VideoPlayer({
               )}
             </div>
 
+            {!videoSrcReady && isVideo && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200" aria-label="Đang tải video">
+                <div className="w-8 h-8 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
+              </div>
+            )}
+
             <div
-              className={`${isFullscreen ? "absolute left-4 right-4 bottom-4 z-20 bg-white/80" : "mt-5"} pt-7 px-7 pb-10 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${isFullscreen ? (controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none") : ""}`}
-              style={{ backgroundColor: '#FFFCF5' }}
+              className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl pt-7 px-7 pb-10 ${controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
             >
               {/* Title & Artist */}
               {(title || artist) && (
                 <div className="mb-5">
                   {title && (
-                    <h4 className="text-neutral-900 font-semibold text-lg mb-1 truncate leading-tight">{title}</h4>
+                    <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">{title}</h4>
                   )}
                   {artist && (
-                    <p className="text-neutral-600 text-sm font-medium truncate">{artist}</p>
+                    <p className="text-sm font-medium truncate text-white">{artist}</p>
                   )}
                 </div>
               )}
@@ -516,10 +603,10 @@ export default function VideoPlayer({
                 </div>
 
                 <div className="flex justify-between mt-2.5">
-                  <span className="text-xs text-neutral-600 font-medium tabular-nums">
+                  <span className="text-xs font-medium tabular-nums text-white">
                     {formatTime(displayTime)}
                   </span>
-                  <span className="text-xs text-neutral-600 font-medium tabular-nums">
+                  <span className="text-xs font-medium tabular-nums text-white">
                     -{formatTime(Math.max(0, duration - displayTime))}
                   </span>
                 </div>
@@ -728,7 +815,12 @@ export default function VideoPlayer({
     return (
       <div className={`${className} w-full cursor-pointer`} onClick={handleContainerClick}>
         {isVideo ? (
-          <div className="w-full h-20 rounded-md overflow-hidden">
+          <div
+            className={`w-full h-20 rounded-md overflow-hidden ${playing && cursorHidden ? "cursor-none" : ""}`}
+            onMouseEnter={onVideoAreaMouseEnter}
+            onMouseMove={onVideoAreaMouseMove}
+            onMouseLeave={onVideoAreaMouseLeave}
+          >
             {videoSrcReady ? (
               <video
                 ref={videoRef}
@@ -844,25 +936,29 @@ export default function VideoPlayer({
   return (
     <div
       ref={playerRootRef}
-      className={`${className} w-full relative cursor-pointer`}
-      onMouseMove={isFullscreen ? showControlsTemporarily : undefined}
+      className={`${className} w-full relative cursor-pointer ${isFullscreen ? "flex flex-col items-center justify-center h-full w-full min-h-0" : ""}`}
+      onMouseMove={showControlsTemporarily}
       onClick={handleContainerClick}
     >
       {isVideo ? (
-        <div className="w-full rounded-md overflow-hidden" style={{ contain: "layout paint" }}>
+        <div
+          className={`w-full rounded-md overflow-hidden ${isFullscreen ? "flex-1 min-h-0 flex items-center justify-center" : ""} ${playing && cursorHidden ? "cursor-none" : ""}`}
+          style={{ contain: "layout paint" }}
+          onMouseEnter={onVideoAreaMouseEnter}
+          onMouseMove={onVideoAreaMouseMove}
+          onMouseLeave={onVideoAreaMouseLeave}
+        >
           {videoSrcReady ? (
             <video
               ref={videoRef}
               src={effectiveVideoSrc ?? undefined}
               preload="auto"
               playsInline
-              className="w-full block"
+              className={isFullscreen ? "max-w-full max-h-full object-contain" : "w-full block"}
               controls={false}
             />
           ) : (
-            <div className="w-full aspect-[16/9] bg-neutral-200 flex items-center justify-center">
-              <div className="w-10 h-10 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
-            </div>
+            <div className="w-full aspect-[16/9] bg-neutral-200" aria-busy="true" />
           )}
         </div>
       ) : (
@@ -871,15 +967,20 @@ export default function VideoPlayer({
         </div>
       )}
 
+      {!videoSrcReady && isVideo && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200" aria-label="Đang tải video">
+          <div className="w-10 h-10 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
+        </div>
+      )}
+
       <div
-        className={`${isFullscreen ? "absolute left-4 right-4 bottom-4 z-20 bg-white/80" : "mt-5"} p-6 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl ${isFullscreen ? (controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none") : ""}`}
-        style={{ backgroundColor: "#FFFCF5" }}
+        className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl p-6 ${controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
       >
         {/* Title & Artist */}
         {(title || artist) && (
           <div className="mb-5">
-            {title && <h4 className="text-neutral-900 font-semibold text-lg mb-1 truncate leading-tight">{title}</h4>}
-            {artist && <p className="text-neutral-600 text-sm font-medium truncate">{artist}</p>}
+            {title && <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">{title}</h4>}
+            {artist && <p className="text-sm font-medium truncate text-white">{artist}</p>}
           </div>
         )}
 
@@ -953,8 +1054,8 @@ export default function VideoPlayer({
 
           {isVideo && (
             <div className="flex justify-between mt-2.5">
-              <span className="text-xs text-neutral-600 font-medium tabular-nums">{formatTime(displayTime)}</span>
-              <span className="text-xs text-neutral-600 font-medium tabular-nums">
+              <span className="text-xs font-medium tabular-nums text-white">{formatTime(displayTime)}</span>
+              <span className="text-xs font-medium tabular-nums text-white">
                 -{formatTime(Math.max(0, duration - displayTime))}
               </span>
             </div>

@@ -29,10 +29,16 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+      // Unauthorized - clear token and redirect to login (preserve current path for post-login redirect)
       await removeItem("access_token");
       await removeItem("user");
-      window.location.href = "/login";
+      const path =
+        typeof window !== "undefined" ? window.location.pathname : "";
+      const redirect =
+        path && path !== "/login"
+          ? `?redirect=${encodeURIComponent(path)}`
+          : "";
+      window.location.href = `/login${redirect}`;
     }
     return Promise.reject(error);
   },

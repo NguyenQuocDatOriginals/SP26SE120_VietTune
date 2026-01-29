@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, Pause, Volume2, VolumeX, RotateCcw, RotateCw, Trash2, Users, MapPin, Music, Repeat } from "lucide-react";
-import { isYouTubeUrl, getYouTubeId } from "../../utils/youtube";
 import { useAuthStore } from "@/stores/authStore";
+import { useMediaFocusStore } from "@/stores/mediaFocusStore";
 import { UserRole, Region } from "@/types";
 import { REGION_NAMES, RECORDING_TYPE_NAMES } from "@/config/constants";
 import WaveformProgressBar from "./WaveformProgressBar";
@@ -32,9 +32,6 @@ type Props = {
   showContainer?: boolean;
 };
 
-// Global active audio element for pausing other players
-let activeAudio: HTMLAudioElement | null = null;
-
 export default function AudioPlayer({
   src,
   title,
@@ -49,7 +46,6 @@ export default function AudioPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [showYoutubePlayer, setShowYoutubePlayer] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -66,11 +62,12 @@ export default function AudioPlayer({
   const volumeAnimationFrameRef = useRef<number | null>(null);
   const lastTimeUpdateRef = useRef<number>(0);
 
+  const myId = useId();
+  const activeMediaId = useMediaFocusStore((s) => s.activeMediaId);
+  const setActiveMediaId = useMediaFocusStore((s) => s.setActiveMediaId);
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isExpert = String(user?.role) === UserRole.EXPERT;
-  const isYoutube = isYouTubeUrl(src);
-  const youtubeId = isYoutube ? getYouTubeId(src || "") : null;
   const isVideo = src && typeof src === 'string' && src.startsWith('data:video/');
   const mediaRef = isVideo ? videoRef : audioRef;
 
@@ -92,9 +89,21 @@ export default function AudioPlayer({
     e.stopPropagation();
   };
 
+  // When another player (audio or video) becomes active, pause this one
+  useEffect(() => {
+    if (activeMediaId === null || activeMediaId === myId) return;
+    const media = isVideo ? videoRef.current : audioRef.current;
+    if (!media) return;
+    media.pause();
+    setPlaying(false);
+  }, [activeMediaId, myId, isVideo]);
+
   useEffect(() => {
     const media = isVideo ? videoRef.current : audioRef.current;
     if (!media) return;
+
+    // Sync play button state with actual media (e.g. after another player paused us or on re-mount)
+    setPlaying(!media.paused);
 
     // Throttled time update to avoid 60fps re-renders (smoother playback)
     const TIME_UPDATE_THROTTLE_MS = 200;
@@ -137,7 +146,12 @@ export default function AudioPlayer({
         setSavedVolume(newVol);
       }
     };
-    const onEnded = () => setPlaying(false);
+    const onEnded = () => {
+      setPlaying(false);
+      if (useMediaFocusStore.getState().activeMediaId === myId) {
+        useMediaFocusStore.getState().setActiveMediaId(null);
+      }
+    };
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
 
@@ -175,34 +189,8 @@ export default function AudioPlayer({
         cancelAnimationFrame(volumeAnimationFrameRef.current);
         volumeAnimationFrameRef.current = null;
       }
-      if (!isVideo && activeAudio === media) activeAudio = null;
     };
-  }, [src, isVideo, isDragging]);
-
-
-  // If YouTube, render only the YouTube player (with title/artist if present)
-  if (isYoutube && youtubeId) {
-    return (
-      <div className={className}>
-        {(title || artist) && (
-          <div className="mb-4">
-            {title && <h4 className="text-neutral-800 font-medium truncate">{title}</h4>}
-            {artist && <p className="text-neutral-500 text-sm truncate">{artist}</p>}
-          </div>
-        )}
-        <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
-          <iframe
-            title="YouTube video"
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
-            frameBorder="0"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full rounded-md"
-          />
-        </div>
-      </div>
-    );
-  }
+  }, [src, isVideo, isDragging, myId]);
 
   const formatTime = (t: number) => {
     if (!t || isNaN(t)) return "00:00";
@@ -212,28 +200,15 @@ export default function AudioPlayer({
   };
 
   const play = async () => {
-    if (isYoutube) {
-      setShowYoutubePlayer(true);
-      setPlaying(true);
-      setIsLoading(false); // Always ensure spinner is off for YouTube
-      return;
-    }
-
     const media = mediaRef.current;
     if (!media) return;
-    if (!isVideo && activeAudio && activeAudio !== media) {
-      try {
-        activeAudio.pause();
-      } catch (e) {
-        /* ignore */
-      }
-    }
+    setActiveMediaId(myId);
     try {
       await media.play();
       setPlaying(true);
-      if (!isVideo) activeAudio = media as HTMLAudioElement;
     } catch (e) {
       console.warn("Play failed:", e);
+      setActiveMediaId(null);
     }
   };
 
@@ -242,7 +217,9 @@ export default function AudioPlayer({
     if (!media) return;
     media.pause();
     setPlaying(false);
-    if (!isVideo && activeAudio === media) activeAudio = null;
+    if (useMediaFocusStore.getState().activeMediaId === myId) {
+      useMediaFocusStore.getState().setActiveMediaId(null);
+    }
   };
 
   const togglePlay = () => (playing ? pause() : play());
@@ -317,37 +294,7 @@ export default function AudioPlayer({
         >
           {/* Audio Player (Full Version) */}
           <div className="w-full">
-            {isYoutube ? (
-              !showYoutubePlayer ? (
-                <div className="relative rounded-md overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
-                  {youtubeId ? (
-                    <>
-                      <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
-                        className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
-                        aria-label="Phát video YouTube"
-                      >
-                        <Play className="w-6 h-6" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-black" />
-                  )}
-                </div>
-              ) : (
-                <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
-                  <iframe
-                    title="YouTube video"
-                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full rounded-md"
-                  />
-                </div>
-              )
-            ) : isVideo ? (
+            {isVideo ? (
               <video ref={videoRef} src={src} preload="metadata" className="w-full rounded-md" />
             ) : (
               <audio ref={audioRef} src={src} preload="metadata" />
@@ -368,58 +315,54 @@ export default function AudioPlayer({
 
               {/* Progress Bar */}
               <div className="mb-5 progress-bar-container" onClick={stopPropagation}>
-                {isYoutube ? (
-                  <div className="h-2.5 bg-neutral-200/60 rounded-full opacity-50" />
-                ) : (
-                  <WaveformProgressBar
-                    progress={progressPercent}
-                    duration={duration}
-                    currentTime={displayTime}
-                    onSeek={seekTo}
-                    formatTime={formatTime}
-                    isDragging={isDragging}
-                    onDragStart={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setIsDragging(true);
-                      const rect = e.currentTarget.getBoundingClientRect();
+                <WaveformProgressBar
+                  progress={progressPercent}
+                  duration={duration}
+                  currentTime={displayTime}
+                  onSeek={seekTo}
+                  formatTime={formatTime}
+                  isDragging={isDragging}
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setIsDragging(true);
+                    const rect = e.currentTarget.getBoundingClientRect();
 
-                      const updateProgress = (clientX: number) => {
-                        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                        const newTime = percent * duration;
-                        setDragTime(newTime);
+                    const updateProgress = (clientX: number) => {
+                      const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                      const newTime = percent * duration;
+                      setDragTime(newTime);
 
-                        if (animationFrameRef.current === null) {
-                          animationFrameRef.current = requestAnimationFrame(() => {
-                            animationFrameRef.current = null;
-                          });
-                        }
-                      };
+                      if (animationFrameRef.current === null) {
+                        animationFrameRef.current = requestAnimationFrame(() => {
+                          animationFrameRef.current = null;
+                        });
+                      }
+                    };
 
-                      updateProgress(e.clientX);
+                    updateProgress(e.clientX);
 
-                      const onMouseMove = (moveEvent: MouseEvent) => {
-                        moveEvent.preventDefault();
-                        updateProgress(moveEvent.clientX);
-                      };
+                    const onMouseMove = (moveEvent: MouseEvent) => {
+                      moveEvent.preventDefault();
+                      updateProgress(moveEvent.clientX);
+                    };
 
-                      const onMouseUp = () => {
-                        if (dragTime !== null) {
-                          seekTo(dragTime);
-                        }
-                        setIsDragging(false);
-                        setDragTime(null);
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                        document.removeEventListener('mouseleave', onMouseUp);
-                      };
+                    const onMouseUp = () => {
+                      if (dragTime !== null) {
+                        seekTo(dragTime);
+                      }
+                      setIsDragging(false);
+                      setDragTime(null);
+                      document.removeEventListener('mousemove', onMouseMove);
+                      document.removeEventListener('mouseup', onMouseUp);
+                      document.removeEventListener('mouseleave', onMouseUp);
+                    };
 
-                      document.addEventListener('mousemove', onMouseMove, { passive: false });
-                      document.addEventListener('mouseup', onMouseUp);
-                      document.addEventListener('mouseleave', onMouseUp);
-                    }}
-                  />
-                )}
+                    document.addEventListener('mousemove', onMouseMove, { passive: false });
+                    document.addEventListener('mouseup', onMouseUp);
+                    document.addEventListener('mouseleave', onMouseUp);
+                  }}
+                />
               </div>
 
               {/* Controls */}
@@ -431,16 +374,14 @@ export default function AudioPlayer({
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isLooping
                       ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/40'
                       : 'bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
-                      } ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                      }`}
                     title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
-                    disabled={isYoutube}
                   >
                     <Repeat className="w-4.5 h-4.5" strokeWidth={2.5} />
                   </button>
                   <button
                     onClick={toggleMute}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-                    disabled={isYoutube}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
                   >
                     {isMuted || volume === 0 ? (
                       <VolumeX className="w-4.5 h-4.5" strokeWidth={2.5} />
@@ -449,9 +390,9 @@ export default function AudioPlayer({
                     )}
                   </button>
                   <div
-                    className={`w-20 hidden sm:block relative volume-control-container ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    className="w-20 hidden sm:block relative volume-control-container"
                     onClick={stopPropagation}
-                    onMouseDown={isYoutube ? undefined : (e) => {
+                    onMouseDown={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                       setIsDraggingVolume(true);
@@ -517,8 +458,8 @@ export default function AudioPlayer({
                 {/* Center: Play Controls: Lùi, Play/Pause, Tiến */}
                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
                   <button
-                    onClick={() => !isYoutube && seekBy(-5)}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    onClick={() => seekBy(-5)}
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                     title="Lùi 5 giây"
                   >
                     <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
@@ -527,22 +468,20 @@ export default function AudioPlayer({
 
                   <button
                     onClick={togglePlay}
-                    disabled={isYoutube ? false : isLoading}
+                    disabled={isLoading}
                     className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
                   >
-                    {(isYoutube || showYoutubePlayer)
-                      ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
-                      : isLoading
-                        ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                        : playing
-                          ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
-                          : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
+                    {isLoading
+                      ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                      : playing
+                        ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
+                        : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
                     }
                   </button>
 
                   <button
-                    onClick={() => !isYoutube && seekBy(5)}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                    onClick={() => seekBy(5)}
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                     title="Tiến 5 giây"
                   >
                     <RotateCw className="w-5 h-5" strokeWidth={2.5} />
@@ -611,35 +550,7 @@ export default function AudioPlayer({
   if (compact) {
     return (
       <div className={`${className} w-full cursor-pointer`} onClick={handleContainerClick}>
-        {isYoutube ? (
-          !showYoutubePlayer ? (
-            <div className="relative rounded-md overflow-hidden bg-black h-20">
-              {youtubeId ? (
-                <>
-                  <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
-                    className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
-                    aria-label="Phát video YouTube"
-                  >
-                    <Play className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <div className="w-full h-full bg-black" />
-              )}
-            </div>
-          ) : (
-            <iframe
-              title="YouTube video"
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-              frameBorder="0"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              className="w-full h-20 rounded-md"
-            />
-          )
-        ) : isVideo ? (
+        {isVideo ? (
           <video ref={videoRef} src={src} preload="metadata" className="w-full rounded-md" />
         ) : (
           <audio ref={audioRef} src={src} preload="metadata" />
@@ -649,35 +560,29 @@ export default function AudioPlayer({
           {/* Play Button */}
           <button
             onClick={togglePlay}
-            disabled={isYoutube ? false : isLoading}
+            disabled={isLoading}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0 shadow-md hover:shadow-lg"
           >
-            {(isYoutube || showYoutubePlayer)
-              ? (playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />)
-              : isLoading
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : playing
-                  ? <Pause className="w-4 h-4 text-white" />
-                  : <Play className="w-4 h-4 text-white ml-0.5" />
+            {isLoading
+              ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : playing
+                ? <Pause className="w-4 h-4 text-white" />
+                : <Play className="w-4 h-4 text-white ml-0.5" />
             }
           </button>
 
           {/* Progress */}
           <div className="flex-1 min-w-0 progress-bar-container" onClick={stopPropagation}>
-            {isYoutube ? (
-              <div className="h-1.5 bg-neutral-200 rounded-full opacity-50" />
-            ) : (
-              <WaveformProgressBar
-                progress={progressPercent}
-                duration={duration}
-                currentTime={displayTime}
-                onSeek={seekTo}
-                formatTime={formatTime}
-                isDragging={isDragging}
-                barCount={60}
-                className="h-12"
-              />
-            )}
+            <WaveformProgressBar
+              progress={progressPercent}
+              duration={duration}
+              currentTime={displayTime}
+              onSeek={seekTo}
+              formatTime={formatTime}
+              isDragging={isDragging}
+              barCount={60}
+              className="h-12"
+            />
           </div>
         </div>
       </div>
@@ -687,37 +592,7 @@ export default function AudioPlayer({
   // Full version
   return (
     <div className={`${className} w-full cursor-pointer`} onClick={handleContainerClick}>
-      {isYoutube ? (
-        !showYoutubePlayer ? (
-          <div className="relative rounded-md overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
-            {youtubeId ? (
-              <>
-                <img src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`} alt="YouTube thumbnail" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => { setShowYoutubePlayer(true); setPlaying(true); setIsLoading(false); }}
-                  className="absolute inset-0 m-auto w-14 h-14 rounded-full bg-primary-600 text-white flex items-center justify-center shadow-lg"
-                  aria-label="Phát video YouTube"
-                >
-                  <Play className="w-6 h-6" />
-                </button>
-              </>
-            ) : (
-              <div className="w-full h-full bg-black" />
-            )}
-          </div>
-        ) : (
-          <div className="w-full aspect-[16/9] rounded-md overflow-hidden">
-            <iframe
-              title="YouTube video"
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-              frameBorder="0"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full rounded-md"
-            />
-          </div>
-        )
-      ) : isVideo ? (
+      {isVideo ? (
         <video ref={videoRef} src={src} preload="metadata" className="w-full rounded-md" />
       ) : (
         <audio ref={audioRef} src={src} preload="metadata" />
@@ -740,58 +615,54 @@ export default function AudioPlayer({
 
         {/* Progress Bar */}
         <div className="mb-5 progress-bar-container" onClick={stopPropagation}>
-          {isYoutube ? (
-            <div className="h-2.5 bg-neutral-200/60 rounded-full opacity-50" />
-          ) : (
-            <WaveformProgressBar
-              progress={progressPercent}
-              duration={duration}
-              currentTime={displayTime}
-              onSeek={seekTo}
-              formatTime={formatTime}
-              isDragging={isDragging}
-              onDragStart={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setIsDragging(true);
-                const rect = e.currentTarget.getBoundingClientRect();
+          <WaveformProgressBar
+            progress={progressPercent}
+            duration={duration}
+            currentTime={displayTime}
+            onSeek={seekTo}
+            formatTime={formatTime}
+            isDragging={isDragging}
+            onDragStart={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setIsDragging(true);
+              const rect = e.currentTarget.getBoundingClientRect();
 
-                const updateProgress = (clientX: number) => {
-                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                  const newTime = percent * duration;
-                  setDragTime(newTime);
+              const updateProgress = (clientX: number) => {
+                const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                const newTime = percent * duration;
+                setDragTime(newTime);
 
-                  if (animationFrameRef.current === null) {
-                    animationFrameRef.current = requestAnimationFrame(() => {
-                      animationFrameRef.current = null;
-                    });
-                  }
-                };
+                if (animationFrameRef.current === null) {
+                  animationFrameRef.current = requestAnimationFrame(() => {
+                    animationFrameRef.current = null;
+                  });
+                }
+              };
 
-                updateProgress(e.clientX);
+              updateProgress(e.clientX);
 
-                const onMouseMove = (moveEvent: MouseEvent) => {
-                  moveEvent.preventDefault();
-                  updateProgress(moveEvent.clientX);
-                };
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                moveEvent.preventDefault();
+                updateProgress(moveEvent.clientX);
+              };
 
-                const onMouseUp = () => {
-                  if (dragTime !== null) {
-                    seekTo(dragTime);
-                  }
-                  setIsDragging(false);
-                  setDragTime(null);
-                  document.removeEventListener('mousemove', onMouseMove);
-                  document.removeEventListener('mouseup', onMouseUp);
-                  document.removeEventListener('mouseleave', onMouseUp);
-                };
+              const onMouseUp = () => {
+                if (dragTime !== null) {
+                  seekTo(dragTime);
+                }
+                setIsDragging(false);
+                setDragTime(null);
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.removeEventListener('mouseleave', onMouseUp);
+              };
 
-                document.addEventListener('mousemove', onMouseMove, { passive: false });
-                document.addEventListener('mouseup', onMouseUp);
-                document.addEventListener('mouseleave', onMouseUp);
-              }}
-            />
-          )}
+              document.addEventListener('mousemove', onMouseMove, { passive: false });
+              document.addEventListener('mouseup', onMouseUp);
+              document.addEventListener('mouseleave', onMouseUp);
+            }}
+          />
         </div>
 
         {/* Controls */}
@@ -839,16 +710,14 @@ export default function AudioPlayer({
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isLooping
                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/40'
                 : 'bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
-                } ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+                }`}
               title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
-              disabled={isYoutube}
             >
               <Repeat className="w-4.5 h-4.5" strokeWidth={2.5} />
             </button>
             <button
               onClick={toggleMute}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
-              disabled={isYoutube}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-4.5 h-4.5" strokeWidth={2.5} />
@@ -857,9 +726,9 @@ export default function AudioPlayer({
               )}
             </button>
             <div
-              className={`w-20 hidden sm:block relative volume-control-container ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              className="w-20 hidden sm:block relative volume-control-container"
               onClick={stopPropagation}
-              onMouseDown={isYoutube ? undefined : (e) => {
+              onMouseDown={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 setIsDraggingVolume(true);
@@ -925,8 +794,8 @@ export default function AudioPlayer({
           {/* Center: Play/Pause */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => !isYoutube && seekBy(-5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              onClick={() => seekBy(-5)}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               title="Lùi 5 giây"
             >
               <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
@@ -935,22 +804,20 @@ export default function AudioPlayer({
 
             <button
               onClick={togglePlay}
-              disabled={isYoutube ? false : isLoading}
+              disabled={isLoading}
               className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
             >
-              {isYoutube
-                ? (playing ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} /> : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />)
-                : isLoading
-                  ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                  : playing
-                    ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
-                    : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
+              {isLoading
+                ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                : playing
+                  ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
+                  : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
               }
             </button>
 
             <button
-              onClick={() => !isYoutube && seekBy(5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${isYoutube ? 'opacity-50 pointer-events-none' : ''}`}
+              onClick={() => seekBy(5)}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               title="Tiến 5 giây"
             >
               <RotateCw className="w-5 h-5" strokeWidth={2.5} />

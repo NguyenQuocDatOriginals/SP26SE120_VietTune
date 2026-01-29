@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
@@ -11,8 +11,18 @@ import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
 import { getItem, sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 
+/** Safe internal path for post-login redirect (no open redirect). */
+function getSafeRedirect(redirect: string | null): string | null {
+  if (!redirect || typeof redirect !== "string") return null;
+  const trimmed = redirect.trim();
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) return trimmed;
+  return null;
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = getSafeRedirect(searchParams.get("redirect"));
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const fromLogout = typeof window !== "undefined" && sessionGetItem("fromLogout") === "1";
@@ -60,8 +70,7 @@ export default function LoginPage() {
       if (response.success && response.data) {
         setUser(response.data.user);
         void sessionRemoveItem("fromLogout");
-        // toast.success("Đăng nhập thành công!");
-        navigate("/");
+        navigate(redirectTo ?? "/");
       }
     } catch (error: unknown) {
       const errorMessage =
@@ -189,7 +198,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       void sessionRemoveItem("fromLogout");
-                      navigate("/");
+                      navigate(redirectTo ?? "/");
                     }
                   } catch (err) {
                     notify.error("Lỗi", "Không thể đăng nhập demo");
@@ -210,7 +219,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       void sessionRemoveItem("fromLogout");
-                      navigate("/");
+                      navigate(redirectTo ?? "/");
                     }
                   } catch (err) {
                     notify.error("Lỗi", "Không thể đăng nhập demo");
@@ -231,7 +240,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       void sessionRemoveItem("fromLogout");
-                      navigate("/");
+                      navigate(redirectTo ?? "/");
                     }
                   } catch (err) {
                     notify.error("Lỗi", "Không thể đăng nhập demo");
@@ -252,7 +261,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       void sessionRemoveItem("fromLogout");
-                      navigate("/");
+                      navigate(redirectTo ?? "/");
                     }
                   } catch (err) {
                     notify.error("Lỗi", "Không thể đăng nhập demo");
@@ -273,7 +282,7 @@ export default function LoginPage() {
                     if (res.success && res.data) {
                       setUser(res.data.user as unknown as import("@/types").User);
                       void sessionRemoveItem("fromLogout");
-                      navigate("/");
+                      navigate(redirectTo ?? "/");
                     }
                   } catch (err) {
                     notify.error("Lỗi", "Không thể đăng nhập demo");
