@@ -38,10 +38,11 @@ const EVENT_TYPES = [
   "Sinh hoạt cộng đồng", "Biểu diễn nghệ thuật", "Ghi âm studio", "Ghi âm thực địa", "Khác",
 ];
 
+// Align with UploadMusic.tsx PERFORMANCE_TYPES for consistent filter/upload values
 const PERFORMANCE_TYPES = [
   { key: "instrumental", label: "Chỉ nhạc cụ (Instrumental)" },
-  { key: "acappella", label: "Chỉ giọng hát (Acappella)" },
-  { key: "vocal_accompaniment", label: "Giọng hát có nhạc đệm" },
+  { key: "acappella", label: "Chỉ giọng hát không đệm (Acappella)" },
+  { key: "vocal_accompaniment", label: "Giọng hát có nhạc đệm (Vocal with accompaniment)" },
 ];
 
 const VERIFICATION_STATUS = [
@@ -615,6 +616,17 @@ interface SearchBarProps {
   initialFilters?: SearchFilters;
 }
 
+// Map Region enum to Vietnamese label (same order as REGIONS)
+const REGION_TO_LABEL: Record<Region, string> = {
+  [Region.NORTHERN_MOUNTAINS]: "Trung du và miền núi Bắc Bộ",
+  [Region.RED_RIVER_DELTA]: "Đồng bằng Bắc Bộ",
+  [Region.NORTH_CENTRAL]: "Bắc Trung Bộ",
+  [Region.SOUTH_CENTRAL_COAST]: "Nam Trung Bộ",
+  [Region.CENTRAL_HIGHLANDS]: "Cao nguyên Trung Bộ",
+  [Region.SOUTHEAST]: "Đông Nam Bộ",
+  [Region.MEKONG_DELTA]: "Tây Nam Bộ",
+};
+
 export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarProps) {
   const [query, setQuery] = useState(initialFilters.query || "");
   const [genres, setGenres] = useState<string[]>([]);
@@ -626,6 +638,65 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   const [instruments, setInstruments] = useState<string[]>([]);
   const [yearRange, setYearRange] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
+
+  // Hydrate form from initialFilters (e.g. URL params or parent state) so filter search can be restored
+  useEffect(() => {
+    if (!initialFilters || Object.keys(initialFilters).length === 0) return;
+    if (initialFilters.query !== undefined) setQuery(initialFilters.query);
+    if (initialFilters.regions?.length) {
+      const label = REGION_TO_LABEL[initialFilters.regions[0]];
+      if (label) setRegion(label);
+    }
+    if (initialFilters.recordingTypes?.length) {
+      const rt = initialFilters.recordingTypes[0];
+      const pt = PERFORMANCE_TYPES.find(
+        (p) =>
+          (rt === RecordingType.INSTRUMENTAL && p.key === "instrumental") ||
+          (rt === RecordingType.VOCAL && (p.key === "acappella" || p.key === "vocal_accompaniment"))
+      );
+      if (pt) setPerformanceType(pt.label);
+    }
+    if (initialFilters.verificationStatus?.length) {
+      const vs = VERIFICATION_STATUS.find((s) => s.key === initialFilters.verificationStatus![0]);
+      if (vs) setVerificationStatus(vs.label);
+    }
+    if (initialFilters.dateFrom || initialFilters.dateTo) {
+      const from = initialFilters.dateFrom;
+      const to = initialFilters.dateTo;
+      const yr = YEAR_RANGES.find((y) => {
+        switch (y.key) {
+          case "before_1950":
+            return to === "1949-12-31";
+          case "1950_1975":
+            return from === "1950-01-01" && to === "1975-12-31";
+          case "1975_2000":
+            return from === "1975-01-01" && to === "2000-12-31";
+          case "2000_2010":
+            return from === "2000-01-01" && to === "2010-12-31";
+          case "2010_2020":
+            return from === "2010-01-01" && to === "2020-12-31";
+          case "after_2020":
+            return from === "2021-01-01";
+          default:
+            return false;
+        }
+      });
+      if (yr) setYearRange(yr.label);
+    }
+    if (initialFilters.tags?.length) {
+      const tags = initialFilters.tags;
+      const newGenres = tags.filter((t) => GENRES.includes(t));
+      const newInstruments = tags.filter((t) => INSTRUMENTS.includes(t));
+      const eth = tags.find((t) => ETHNICITIES.includes(t));
+      const prov = tags.find((t) => PROVINCES.includes(t));
+      const evt = tags.find((t) => EVENT_TYPES.includes(t));
+      if (newGenres.length) setGenres(newGenres);
+      if (newInstruments.length) setInstruments(newInstruments);
+      if (eth) setEthnicity(eth);
+      if (prov) setProvince(prov);
+      if (evt) setEventType(evt);
+    }
+  }, [initialFilters]);
 
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
@@ -658,12 +729,12 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       query: query.trim() || undefined,
     };
 
-    // Map performanceType label to RecordingType enum when selected
+    // Map performanceType label to RecordingType enum (labels aligned with UploadMusic)
     if (performanceType && !performanceType.startsWith("Tất cả")) {
       const perfMap: Record<string, RecordingType> = {
         "Chỉ nhạc cụ (Instrumental)": RecordingType.INSTRUMENTAL,
-        "Chỉ giọng hát (Acappella)": RecordingType.VOCAL,
-        "Giọng hát có nhạc đệm": RecordingType.VOCAL,
+        "Chỉ giọng hát không đệm (Acappella)": RecordingType.VOCAL,
+        "Giọng hát có nhạc đệm (Vocal with accompaniment)": RecordingType.VOCAL,
       };
       const mapped = perfMap[performanceType];
       if (mapped) filters.recordingTypes = [mapped];

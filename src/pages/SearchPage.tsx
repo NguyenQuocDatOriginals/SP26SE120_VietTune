@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Search, Sparkles } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole } from "@/types";
@@ -136,15 +136,64 @@ const convertLocalToRecording = async (
   };
 };
 
+// Build SearchFilters from URL search params (restore filter state from shareable links)
+function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
+  const q = searchParams.get("q")?.trim();
+  const region = searchParams.get("region");
+  const type = searchParams.get("type");
+  const status = searchParams.get("status");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+  const tagsParam = searchParams.get("tags");
+
+  const filters: SearchFilters = {};
+  if (q) filters.query = q;
+  if (region && Object.values(Region).includes(region as Region)) {
+    filters.regions = [region as Region];
+  }
+  if (type && Object.values(RecordingType).includes(type as RecordingType)) {
+    filters.recordingTypes = [type as RecordingType];
+  }
+  if (status && Object.values(VerificationStatus).includes(status as VerificationStatus)) {
+    filters.verificationStatus = [status as VerificationStatus];
+  }
+  if (from) filters.dateFrom = from;
+  if (to) filters.dateTo = to;
+  if (tagsParam) {
+    filters.tags = tagsParam.split(",").map((t) => t.trim()).filter(Boolean);
+  }
+  return filters;
+}
+
+// Build URL search params from SearchFilters for shareable links
+function searchParamsFromFilters(filters: SearchFilters): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filters.query) params.q = filters.query;
+  if (filters.regions?.length) params.region = filters.regions[0];
+  if (filters.recordingTypes?.length) params.type = filters.recordingTypes[0];
+  if (filters.verificationStatus?.length) params.status = filters.verificationStatus[0];
+  if (filters.dateFrom) params.from = filters.dateFrom;
+  if (filters.dateTo) params.to = filters.dateTo;
+  if (filters.tags?.length) params.tags = filters.tags.join(",");
+  return params;
+}
+
 export default function SearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialFiltersFromUrl = useMemo(
+    () => filtersFromSearchParams(searchParams),
+    [searchParams]
+  );
+
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [localRecordingsList, setLocalRecordingsList] = useState<LocalRecording[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(() => Object.keys(initialFiltersFromUrl).length > 0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  const [filters, setFilters] = useState<SearchFilters>({});
+  const [filters, setFilters] = useState<SearchFilters>(initialFiltersFromUrl);
 
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
@@ -438,7 +487,17 @@ export default function SearchPage() {
     setFilters(newFilters);
     setCurrentPage(1);
     setHasSearched(true);
+    const params = searchParamsFromFilters(newFilters);
+    setSearchParams(Object.keys(params).length > 0 ? params : {}, { replace: true });
   };
+
+  // Sync filters from URL when user navigates (e.g. browser back/forward) so filter search stays restored
+  useEffect(() => {
+    const next = filtersFromSearchParams(searchParams);
+    setFilters(next);
+    setCurrentPage(1);
+    setHasSearched(Object.keys(next).length > 0);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen">
