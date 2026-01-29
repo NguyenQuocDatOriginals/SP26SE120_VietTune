@@ -10,10 +10,6 @@
             "type": "string",
             "enum": ["slow", "medium", "fast", "unknown"]
           },
-          "key": {
-            "type": "string", 
-            "enum": ["ngũ cung Bắc Bộ", "ngũ cung Nam Bộ", "chromatic", "unknown"]
-          },
           "ethnic": {
             "type": "string",
             "enum": ["Tày", "Nùng", "Kinh Bắc", "Kinh Trung", "Kinh Nam", "Chăm", "Thái", "Khmer", "H'Mông", "Dao", "Ê Đê", "unknown"]
@@ -21,6 +17,14 @@
           "language": {
             "type": "string",
             "enum": ["tiếng Tày", "tiếng Nùng", "tiếng Việt", "tiếng Chăm", "tiếng Thái", "tiếng H'Mông", "instrumental", "unknown"]
+          },
+          "instruments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["đàn bầu", "đàn tranh", "đàn đáy", "đàn tính", "khèn lá", "khèn H'Mông", "đing năm", "trống chầu", "phách", "sáo trúc", "đàn nhị", "pinpeat", "đàn kìm", "đàn cò", "instrumental", "unknown"]
+            },
+            "description": "Danh sách các nhạc cụ xuất hiện trong bản nhạc"
           },
           "genre": {
             "type": "string",

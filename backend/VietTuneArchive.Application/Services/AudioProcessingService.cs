@@ -213,9 +213,9 @@ namespace VietTuneArchive.Application.Services
                     {
                         analysesList.Add(new AIAnalysisItemDto(
                             Tempo: SafeGetString(item, "tempo"),
-                            Key: SafeGetString(item, "key"),
                             Ethnic: SafeGetString(item, "ethnic"),
                             Language: SafeGetString(item, "language"),
+                            Instruments: SafeGetStringList(item, "instruments"),
                             Genre: SafeGetString(item, "genre"),
                             Event: SafeGetString(item, "event"),
                             Confidence: SafeGetDouble(item, "confidence")
@@ -262,7 +262,23 @@ namespace VietTuneArchive.Application.Services
             }
             return "unknown";
         }
-
+        private static List<string> SafeGetStringList(JsonElement element, string property)
+        {
+            var list = new List<string>();
+            if (element.TryGetProperty(property, out var prop) && prop.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in prop.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String)
+                    {
+                        list.Add(item.GetString() ?? "unknown");
+                    }
+                }
+            }
+            // Nếu danh sách rỗng, mặc định trả về unknown
+            if (list.Count == 0) list.Add("unknown");
+            return list;
+        }
         // Cập nhật hàm Default trả về list rỗng
         private static AIAnalysisResultDto GetDefaultResult()
         {

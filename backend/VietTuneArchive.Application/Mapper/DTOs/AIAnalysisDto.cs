@@ -5,9 +5,9 @@
         // 1. Chi tiết từng phán đoán âm nhạc (khớp với items trong Schema)
         public record AIAnalysisItemDto(
             string Tempo,
-            string Key,
             string Ethnic,
-            string Language,
+            string Language, 
+            List<string> Instruments,
             string Genre,
             string Event,
             double Confidence);
