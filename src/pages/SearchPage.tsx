@@ -546,19 +546,19 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900">
+        {/* Header — wraps on small screens */}
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Tìm kiếm bài hát
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
             <Link
               to="/semantic-search"
-              className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 rounded-full bg-primary-100/90 text-primary-700 hover:bg-primary-200/90 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 border border-primary-200/80"
+              className="inline-flex items-center justify-center gap-2 min-h-[44px] px-4 sm:px-6 py-2 rounded-full bg-primary-100/90 text-primary-700 hover:bg-primary-200/90 font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 border border-primary-200/80 text-sm sm:text-base"
               title="Tìm theo ý nghĩa"
             >
-              <Sparkles className="h-5 w-5" strokeWidth={2.5} />
-              <span>Tìm theo ý nghĩa</span>
+              <Sparkles className="h-5 w-5 shrink-0" strokeWidth={2.5} />
+              <span className="whitespace-nowrap">Tìm theo ý nghĩa</span>
             </Link>
             <BackButton />
           </div>

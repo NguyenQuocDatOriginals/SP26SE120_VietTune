@@ -306,6 +306,20 @@ export default function Header() {
                 Về VietTune
               </Link>
               <Link
+                to="/search"
+                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Tìm kiếm
+              </Link>
+              <Link
+                to="/semantic-search"
+                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Tìm theo ý nghĩa
+              </Link>
+              <Link
                 to="/chatbot"
                 className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}

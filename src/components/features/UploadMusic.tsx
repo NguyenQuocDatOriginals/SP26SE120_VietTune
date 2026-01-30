@@ -1924,7 +1924,7 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer"
+        className="w-full p-4 sm:p-6 flex items-center justify-between gap-2 transition-all duration-200 cursor-pointer min-h-[44px] sm:min-h-0"
         style={{ backgroundColor: "#FFFCF5" }}
         onMouseEnter={(e) =>
           (e.currentTarget.style.backgroundColor = "#F5F0E8")
@@ -1933,12 +1933,12 @@ function CollapsibleSection({
           (e.currentTarget.style.backgroundColor = "#FFFCF5")
         }
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm flex-shrink-0">
             <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
           </div>
-          <div className="text-left">
-            <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+          <div className="text-left min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold text-neutral-900 flex items-center gap-2 break-words">
               {title}
               {optional && (
                 <span
@@ -1954,12 +1954,12 @@ function CollapsibleSection({
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 flex-shrink-0 ${isOpen ? "rotate-180" : ""
             }`}
           strokeWidth={2.5}
         />
       </button>
-      {isOpen && <div className="p-6 pt-2 space-y-4">{children}</div>}
+      {isOpen && <div className="p-4 sm:p-6 pt-2 space-y-4 min-w-0">{children}</div>}
     </div>
   );
 }
@@ -2515,10 +2515,6 @@ export default function UploadMusic() {
       return;
     }
 
-    // Log thông tin file (không giới hạn kích thước)
-    const fileSizeInMB = file.size / (1024 * 1024);
-    console.log(`Đang xử lý file: ${file.name}, kích thước: ${fileSizeInMB.toFixed(2)}MB`);
-
     const reader = new FileReader();
 
     // Set timeout để tránh treo quá lâu (tăng lên 10 phút cho file lớn)
@@ -2545,14 +2541,6 @@ export default function UploadMusic() {
         // Nếu result vẫn null/undefined (rất hiếm), sử dụng empty string và để processFileData xử lý
         const dataUrl = result ? String(result) : "";
 
-        // Log để debug
-        console.log("File read successfully:", {
-          dataUrlLength: dataUrl.length,
-          hasResult: !!result,
-          fileSize: file.size,
-          fileName: file.name
-        });
-
         // Xử lý file ngay lập tức - không kiểm tra nữa
         // Nếu onload được gọi, file đã được đọc thành công
         processFileData(dataUrl);
@@ -2569,9 +2557,6 @@ export default function UploadMusic() {
 
     // Hàm xử lý dữ liệu file đã đọc
     const processFileData = async (dataUrl: string) => {
-      // Log để debug
-      console.log("Processing file data, length:", dataUrl.length, "starts with data:", dataUrl.startsWith('data:'));
-
       // Nếu dataUrl rỗng (không nên xảy ra), vẫn tiếp tục nhưng log warning
       if (!dataUrl || dataUrl.trim().length === 0) {
         console.warn("Warning: Empty dataUrl, but continuing anyway. This should not happen.");
@@ -2700,19 +2685,6 @@ export default function UploadMusic() {
     };
 
     try {
-      // Log thông tin file trước khi đọc để debug
-      console.log("Starting to read file:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        inferredMime: mime,
-        mediaType,
-        isVideo,
-        isAudio,
-        hasVideoExtension,
-        hasAudioExtension
-      });
-
       reader.readAsDataURL(file);
     } catch (error) {
       clearTimeout(timeoutId);

@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { setItem } from "@/services/storageService";
 
 export default function MainLayout() {
@@ -16,10 +17,12 @@ export default function MainLayout() {
   }, [location]);
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#FFF2D6' }}>
+    <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden" style={{ backgroundColor: '#FFF2D6' }}>
       <Header />
-      <main className="flex-grow">
-        <Outlet />
+      <main className="flex-grow min-w-0 w-full">
+        <ErrorBoundary region="main">
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <Footer />
     </div>

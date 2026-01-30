@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import type { LocalRecording } from "@/types";
+import { ModerationStatus } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -44,8 +45,6 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export function migrateVideoDataToVideoData(
   recordings: LocalRecording[],
 ): LocalRecording[] {
-  let hasChanges = false;
-
   const migrated = recordings.map((rec) => {
     // Chỉ migrate nếu:
     // 1. mediaType === "video"
@@ -60,7 +59,6 @@ export function migrateVideoDataToVideoData(
         (typeof rec.videoData === "string" &&
           rec.videoData.trim().length === 0))
     ) {
-      hasChanges = true;
       return {
         ...rec,
         videoData: rec.audioData, // Chuyển audioData sang videoData
@@ -71,12 +69,6 @@ export function migrateVideoDataToVideoData(
   });
 
   // Pure function: no storage write. Callers use recordingStorage.setLocalRecording per item if needed.
-  if (hasChanges) {
-    console.log(
-      `Migration (in-memory): ${migrated.filter((r) => r.videoData && !r.audioData).length} bản ghi video từ audioData sang videoData`,
-    );
-  }
-
   return migrated;
 }
 
@@ -135,5 +127,31 @@ export function formatDate(
     });
   } catch {
     return "-";
+  }
+}
+
+/**
+ * Trạng thái kiểm duyệt sang tiếng Việt (dùng chung cho Contributions, Moderation, ApprovedRecordings).
+ */
+export function getModerationStatusLabel(status?: ModerationStatus | string): string {
+  if (!status) return "Không xác định";
+  switch (status) {
+    case ModerationStatus.PENDING_REVIEW:
+    case "PENDING_REVIEW":
+      return "Đang chờ được kiểm duyệt";
+    case ModerationStatus.IN_REVIEW:
+    case "IN_REVIEW":
+      return "Đang được kiểm duyệt";
+    case ModerationStatus.APPROVED:
+    case "APPROVED":
+      return "Đã được kiểm duyệt";
+    case ModerationStatus.REJECTED:
+    case "REJECTED":
+      return "Đã bị từ chối";
+    case ModerationStatus.TEMPORARILY_REJECTED:
+    case "TEMPORARILY_REJECTED":
+      return "Tạm thời bị từ chối";
+    default:
+      return String(status);
   }
 }

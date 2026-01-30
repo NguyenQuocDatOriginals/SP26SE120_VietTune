@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 export default function AdminGuard() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -22,5 +23,9 @@ export default function AdminGuard() {
   if (!user) return null;
   if (!isAdmin) return null;
 
-  return <Outlet />;
+  return (
+    <ErrorBoundary region="admin">
+      <Outlet />
+    </ErrorBoundary>
+  );
 }

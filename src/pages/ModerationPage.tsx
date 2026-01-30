@@ -5,7 +5,7 @@ import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
-import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
 import { createPortal } from "react-dom";
 import { ChevronDown, Search, AlertCircle, X } from "lucide-react";
@@ -179,31 +179,6 @@ function SearchableDropdown({
         </div>
     );
 }
-
-// Hàm dịch trạng thái sang tiếng Việt
-const getStatusLabel = (status?: ModerationStatus | string): string => {
-    if (!status) return "Không xác định";
-
-    switch (status) {
-        case ModerationStatus.PENDING_REVIEW:
-        case "PENDING_REVIEW":
-            return "Đang chờ được kiểm duyệt";
-        case ModerationStatus.IN_REVIEW:
-        case "IN_REVIEW":
-            return "Đang được kiểm duyệt";
-        case ModerationStatus.APPROVED:
-        case "APPROVED":
-            return "Đã được kiểm duyệt";
-        case ModerationStatus.REJECTED:
-        case "REJECTED":
-            return "Đã bị từ chối";
-        case ModerationStatus.TEMPORARILY_REJECTED:
-        case "TEMPORARILY_REJECTED":
-            return "Tạm thời bị từ chối";
-        default:
-            return String(status);
-    }
-};
 
 interface VerificationData {
     step1?: {
@@ -822,22 +797,22 @@ export default function ModerationPage() {
 
     return (
         <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 min-w-0">
+                {/* Header — responsive; wraps on small screens */}
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
+                    <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
                         Kiểm duyệt bản thu
                     </h1>
                     <BackButton />
                 </div>
 
-                {/* Filters */}
-                <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Filters — responsive padding */}
+                <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-neutral-800">Lọc theo trạng thái</label>
                             <SearchableDropdown
-                                value={statusFilter === "ALL" ? "" : getStatusLabel(statusFilter)}
+                                value={statusFilter === "ALL" ? "" : getModerationStatusLabel(statusFilter)}
                                 onChange={(val) => {
                                     // Map label back to status value
                                     if (val === "Tất cả") {
@@ -880,12 +855,12 @@ export default function ModerationPage() {
                 </div>
 
                 {items.length === 0 ? (
-                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-                        <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
-                        <p className="text-neutral-700 font-medium">Không có bản thu đang chờ được kiểm duyệt.</p>
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
+                        <p className="text-neutral-700 font-medium text-sm sm:text-base">Không có bản thu đang chờ được kiểm duyệt.</p>
                     </div>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-6 sm:space-y-8">
                         {items.filter(it => it.id).map((it) => {
                             // VideoPlayer CHỈ nhận videoData hoặc YouTubeURL, AudioPlayer CHỈ nhận audioData
                             let mediaSrc: string | undefined;
@@ -1005,10 +980,11 @@ export default function ModerationPage() {
                             };
 
                             return (
-                                <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-                                    <div className="mb-4 flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="text-neutral-800 font-semibold text-lg mb-2">
+                                <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 transition-all duration-300 hover:shadow-xl min-w-0" style={{ backgroundColor: '#FFFCF5' }}>
+                                    {/* Title + actions row — wraps on mobile; touch-friendly buttons */}
+                                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-neutral-800 font-semibold text-base sm:text-lg mb-2 break-words">
                                                 {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
                                             </div>
                                             {it.basicInfo?.artist && (
@@ -1017,22 +993,22 @@ export default function ModerationPage() {
                                             <div className="text-sm text-neutral-600 mb-1">Người đóng góp: {it.uploader?.username || 'Khách'}</div>
                                             <div className="text-sm text-neutral-500 mb-1">Thời điểm tải lên: {formatDateTime((it as LocalRecordingMini & { uploadedDate?: string }).uploadedDate || it.uploadedAt)}</div>
                                             <div className="text-sm mt-2">
-                                                Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+                                                Trạng thái: <span className="font-medium">{getModerationStatusLabel(it.moderation?.status)}</span>
                                                 {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
                                                     <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="ml-4 flex flex-col gap-2 flex-shrink-0">
+                                        <div className="flex flex-col gap-2 flex-shrink-0 w-full sm:w-auto sm:ml-4">
                                             {it.moderation?.status === ModerationStatus.PENDING_REVIEW && (
-                                                <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Nhận kiểm duyệt</button>
+                                                <button onClick={() => claim(it.id)} className="min-h-[44px] px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap text-sm sm:text-base">Nhận kiểm duyệt</button>
                                             )}
 
                                             {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedBy === user?.id && (
                                                 <>
-                                                    <button onClick={() => claim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Tiếp tục kiểm duyệt</button>
-                                                    <button onClick={() => unclaim(it.id)} className="px-4 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer whitespace-nowrap">Hủy nhận kiểm duyệt</button>
+                                                    <button onClick={() => claim(it.id)} className="min-h-[44px] px-4 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap text-sm sm:text-base">Tiếp tục kiểm duyệt</button>
+                                                    <button onClick={() => unclaim(it.id)} className="min-h-[44px] px-4 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap text-sm sm:text-base">Hủy nhận kiểm duyệt</button>
                                                 </>
                                             )}
                                         </div>

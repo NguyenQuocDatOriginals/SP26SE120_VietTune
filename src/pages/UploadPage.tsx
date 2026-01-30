@@ -17,11 +17,11 @@ export default function UploadPage() {
   const isNotContributor = !user || user.role !== "CONTRIBUTOR";
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900">
+    <div className="min-h-screen min-w-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header — responsive; wraps on small screens */}
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Đóng góp bản thu
           </h1>
           <BackButton />
@@ -29,8 +29,8 @@ export default function UploadPage() {
 
         {/* Notice for non-Contributor users (not dimmed, always visible) */}
         {isNotContributor && (
-          <div className="mb-8 border border-primary-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFF1F3' }}>
-            <h2 className="text-2xl font-semibold mb-4 text-primary-700">Bạn cần có tài khoản Người đóng góp để đóng góp bản thu</h2>
+          <div className="mb-6 sm:mb-8 border border-primary-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFF1F3' }}>
+            <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 text-primary-700">Bạn cần có tài khoản Người đóng góp để đóng góp bản thu</h2>
             <div className="text-primary-700 text-base mb-4 font-medium">Vui lòng đăng nhập bằng tài khoản Người đóng góp để sử dụng chức năng này.</div>
             <button
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50 mx-auto"
@@ -46,18 +46,18 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* Main Upload Form (dimmed and disabled for non-Contributor) */}
+        {/* Main Upload Form (dimmed and disabled for non-Contributor) — responsive padding */}
         <div
-          className={`rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl ${isNotContributor ? "opacity-50 pointer-events-none select-none" : ""}`}
+          className={`rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl min-w-0 overflow-x-hidden ${isNotContributor ? "opacity-50 pointer-events-none select-none" : ""}`}
           style={{ backgroundColor: '#FFFCF5' }}
         >
           {/* Only the form, no duplicate notice inside */}
           <UploadMusic />
         </div>
 
-        {/* Guidelines */}
-        <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
+        {/* Guidelines — responsive padding */}
+        <div className="border border-neutral-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-secondary-100/90 rounded-lg shadow-sm">
               <BookOpen className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />
             </div>

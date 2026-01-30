@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole, User, RecordingMetadata, Recording } from "@/types";
-import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
 import type { LocalRecording } from "@/types";
 import BackButton from "@/components/common/BackButton";
@@ -20,31 +20,6 @@ type LocalRecordingStorage = LocalRecording & {
   moderation?: LocalRecording['moderation'] & {
     rejectionNote?: string;
   };
-};
-
-// Hàm dịch trạng thái sang tiếng Việt
-const getStatusLabel = (status?: ModerationStatus | string): string => {
-  if (!status) return "Không xác định";
-
-  switch (status) {
-    case ModerationStatus.PENDING_REVIEW:
-    case "PENDING_REVIEW":
-      return "Đang chờ được kiểm duyệt";
-    case ModerationStatus.IN_REVIEW:
-    case "IN_REVIEW":
-      return "Đang được kiểm duyệt";
-    case ModerationStatus.APPROVED:
-    case "APPROVED":
-      return "Đã được kiểm duyệt";
-    case ModerationStatus.REJECTED:
-    case "REJECTED":
-      return "Đã bị từ chối";
-    case ModerationStatus.TEMPORARILY_REJECTED:
-    case "TEMPORARILY_REJECTED":
-      return "Tạm thời bị từ chối";
-    default:
-      return String(status);
-  }
 };
 
 // Extended Recording type that may include original local data
@@ -158,7 +133,7 @@ export default function ContributionsPage() {
               Thời điểm tải lên: {formatDateTime(it.uploadedDate || (it as LocalRecordingStorage).uploadedAt)}
             </div>
             <div className="text-sm mt-2">
-              Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+              Trạng thái: <span className="font-medium">{getModerationStatusLabel(it.moderation?.status)}</span>
               {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
                 <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
               )}
@@ -363,9 +338,9 @@ export default function ContributionsPage() {
         confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900">Đóng góp của bạn</h1>
+        {/* Header — responsive */}
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">Đóng góp của bạn</h1>
           <BackButton />
         </div>
 

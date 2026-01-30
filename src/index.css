@@ -32,6 +32,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: #fff2d6 !important;
+  overflow-x: hidden;
   /* Firefox scrollbar */
   scrollbar-width: thin;
   scrollbar-color: #7f1d1d transparent;

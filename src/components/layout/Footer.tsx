@@ -22,9 +22,9 @@ export default function Footer() {
   return (
     <footer className="pb-4 px-4">
       <div className="bg-gradient-to-br from-primary-700 to-primary-800 rounded-2xl px-8 py-12 shadow-lg backdrop-blur-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-48">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 lg:gap-16 gap-y-10">
           {/* About */}
-          <div className="min-w-[350px]">
+          <div className="min-w-0">
             <div className="flex items-center space-x-3 mb-4">
               <img
                 src={logo}

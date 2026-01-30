@@ -27,6 +27,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import ScrollToTop from "./components/common/ScrollToTop";
 import NotificationProvider from "./components/common/NotificationProvider";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 function App() {
   useEffect(() => {
@@ -173,8 +174,8 @@ function App() {
             <Route path="create-expert" element={<CreateExpertPage />} />
           </Route>
         </Route>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<ErrorBoundary region="auth"><LoginPage /></ErrorBoundary>} />
+        <Route path="/register" element={<ErrorBoundary region="auth"><RegisterPage /></ErrorBoundary>} />
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

@@ -143,9 +143,9 @@ export default function SemanticSearchPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header — same as UploadPage */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900">
+        {/* Header — responsive; wraps on small screens */}
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Tìm theo ý nghĩa
           </h1>
           <BackButton />
@@ -198,7 +198,7 @@ export default function SemanticSearchPage() {
           </div>
 
           <p className="text-sm text-neutral-500">
-            Gợi ý: nhấn vào một gợi ý bên dưới để tìm nhanh.
+            Gợi ý: Nhấn vào một gợi ý tìm kiếm bên dưới để tìm nhanh
           </p>
         </div>
 

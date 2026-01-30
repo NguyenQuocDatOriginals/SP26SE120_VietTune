@@ -5,36 +5,11 @@ import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { Trash2 } from "lucide-react";
-import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
+import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
 import BackButton from "@/components/common/BackButton";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
-
-// Hàm dịch trạng thái sang tiếng Việt
-const getStatusLabel = (status?: ModerationStatus | string): string => {
-    if (!status) return "Không xác định";
-
-    switch (status) {
-        case ModerationStatus.PENDING_REVIEW:
-        case "PENDING_REVIEW":
-            return "Đang chờ được kiểm duyệt";
-        case ModerationStatus.IN_REVIEW:
-        case "IN_REVIEW":
-            return "Đang được kiểm duyệt";
-        case ModerationStatus.APPROVED:
-        case "APPROVED":
-            return "Đã được kiểm duyệt";
-        case ModerationStatus.REJECTED:
-        case "REJECTED":
-            return "Đã bị từ chối";
-        case ModerationStatus.TEMPORARILY_REJECTED:
-        case "TEMPORARILY_REJECTED":
-            return "Tạm thời bị từ chối";
-        default:
-            return String(status);
-    }
-};
 
 import {
   Recording,
@@ -195,7 +170,7 @@ export default function ApprovedRecordingsPage() {
                             </div>
                         )}
                         <div className="text-sm mt-2">
-                            Trạng thái: <span className="font-medium">{getStatusLabel(it.moderation?.status)}</span>
+                            Trạng thái: <span className="font-medium">{getModerationStatusLabel(it.moderation?.status)}</span>
                         </div>
                     </div>
 
@@ -358,8 +333,8 @@ export default function ApprovedRecordingsPage() {
     return (
         <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-800">Quản lý bản thu đã được kiểm duyệt</h1>
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
+                    <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 min-w-0">Quản lý bản thu đã được kiểm duyệt</h1>
                     <BackButton />
                 </div>
 
