@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, Download } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus, RecordingQuality, UserRole, InstrumentCategory } from "@/types";
 import { recordingService } from "@/services/recordingService";
@@ -602,9 +602,43 @@ export default function SearchPage() {
               </div>
             ) : (
               <>
-                <p className="text-neutral-700 font-medium leading-relaxed mb-4">
-                  Tìm thấy {totalResults} bản thu
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                  <p className="text-neutral-700 font-medium leading-relaxed">
+                    Tìm thấy {totalResults} bản thu
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const payload = recordings.map((r) => ({
+                        id: r.id,
+                        title: r.title,
+                        titleVietnamese: r.titleVietnamese,
+                        description: r.description,
+                        ethnicity: r.ethnicity ? { name: r.ethnicity.name, nameVietnamese: r.ethnicity.nameVietnamese } : null,
+                        region: r.region,
+                        recordingType: r.recordingType,
+                        duration: r.duration,
+                        instruments: r.instruments?.map((i) => i.nameVietnamese || i.name) ?? [],
+                        performers: r.performers?.map((p) => p.nameVietnamese || p.name) ?? [],
+                        uploadedDate: r.uploadedDate,
+                        tags: r.tags,
+                        metadata: r.metadata,
+                        verificationStatus: r.verificationStatus,
+                      }));
+                      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), total: payload.length, recordings: payload }, null, 2)], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `viettune-search-export-${new Date().toISOString().slice(0, 10)}.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary-300/80 bg-primary-50/90 text-primary-700 hover:bg-primary-100/90 font-medium transition-all duration-200 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+                  >
+                    <Download className="h-4 w-4" strokeWidth={2.5} />
+                    Xuất dữ liệu (JSON)
+                  </button>
+                </div>
                 <div className="space-y-4 mb-8">
                   {recordings.map((recording, idx) => {
                     try {

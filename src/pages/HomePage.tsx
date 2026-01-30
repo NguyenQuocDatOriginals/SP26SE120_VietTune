@@ -6,6 +6,9 @@ import { recordingService } from "@/services/recordingService";
 import RecordingCard from "@/components/features/RecordingCard";
 import logo from "@/components/image/VietTune logo.png";
 import { useAuthStore } from "@/stores/authStore";
+import { getLocalRecordingMetaList, getLocalRecordingFull } from "@/services/recordingStorage";
+import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
 
 // Section Header Component
 function SectionHeader({
@@ -98,8 +101,23 @@ export default function HomePage() {
       ]);
       setPopularRecordings(popular.data || []);
       setRecentRecordings(recent.data || []);
-    } catch (error) {
-      console.error("Error fetching recordings:", error);
+    } catch {
+      // Demo: when API is unavailable, show local approved recordings
+      try {
+        const metaList = await getLocalRecordingMetaList();
+        const migrated = migrateVideoDataToVideoData(metaList);
+        const approved = migrated.filter((r) => r.moderation?.status === "APPROVED");
+        const take = Math.min(4, approved.length);
+        const fullList = await Promise.all(
+          approved.slice(0, take).map((r) => getLocalRecordingFull(r.id ?? ""))
+        );
+        const valid = fullList.filter((r): r is NonNullable<typeof r> => r != null);
+        const converted = await Promise.all(valid.map(convertLocalToRecording));
+        setPopularRecordings(converted);
+        setRecentRecordings(converted);
+      } catch (localErr) {
+        console.error("Error loading local recordings:", localErr);
+      }
     }
   };
 

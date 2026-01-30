@@ -474,10 +474,10 @@ export default function VideoPlayer({
       } catch {
         // ignore
       }
-    } else if (videoRef.current && (videoRef.current as any).webkitEnterFullscreen) {
+    } else if (videoRef.current && "webkitEnterFullscreen" in videoRef.current && typeof (videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen === "function") {
       // iOS Safari fallback for <video>
       try {
-        (videoRef.current as any).webkitEnterFullscreen();
+        (videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen();
       } catch {
         // ignore
       }

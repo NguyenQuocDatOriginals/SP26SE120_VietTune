@@ -97,11 +97,11 @@ export const RECORDING_TYPE_NAMES = {
 };
 
 export const INSTRUMENT_CATEGORY_NAMES = {
-  STRING: "String",
-  WIND: "Wind",
-  PERCUSSION: "Percussion",
-  IDIOPHONE: "Idiophone",
-  VOICE: "Voice",
+  STRING: "Dây",
+  WIND: "Hơi",
+  PERCUSSION: "Màng rung",
+  IDIOPHONE: "Thể rắn",
+  VOICE: "Giọng",
 };
 
 export const USER_ROLE_NAMES = {

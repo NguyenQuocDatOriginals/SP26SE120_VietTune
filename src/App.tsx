@@ -7,6 +7,7 @@ import RecordingDetailPage from "./pages/RecordingDetailPage";
 import UploadPage from "./pages/UploadPage";
 import SearchPage from "./pages/SearchPage";
 import SemanticSearchPage from "./pages/SemanticSearchPage";
+import KnowledgeGraphPage from "./pages/KnowledgeGraphPage";
 import ChatbotPage from "./pages/ChatbotPage";
 import InstrumentsPage from "./pages/InstrumentsPage";
 import EthnicitiesPage from "./pages/EthnicitiesPage";
@@ -157,6 +158,7 @@ function App() {
           <Route path="upload" element={<UploadPage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="semantic-search" element={<SemanticSearchPage />} />
+          <Route path="knowledge-graph" element={<KnowledgeGraphPage />} />
           <Route path="chatbot" element={<ChatbotPage />} />
           <Route path="instruments" element={<InstrumentsPage />} />
           <Route path="ethnicities" element={<EthnicitiesPage />} />
