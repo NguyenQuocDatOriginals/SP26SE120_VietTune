@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
@@ -27,6 +27,11 @@ export default function RegisterPage() {
   } = useForm<RegisterForm>();
 
   const password = watch("password");
+
+  // Clear fromLogout when entering Register so that returning to Login shows "Trở về".
+  useEffect(() => {
+    void sessionRemoveItem("fromLogout");
+  }, []);
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);

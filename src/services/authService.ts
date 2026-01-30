@@ -118,12 +118,12 @@ export const authService = {
     }
   },
 
-  // Logout
+  // Logout: only clear storage. Navigation to /login is handled by the caller
+  // so we avoid a full page reload and a brief blank screen flash.
   logout: async () => {
     await removeItem("access_token");
     await removeItem("user");
     await sessionSetItem("fromLogout", "1");
-    window.location.href = "/login";
   },
 
   // Get current user

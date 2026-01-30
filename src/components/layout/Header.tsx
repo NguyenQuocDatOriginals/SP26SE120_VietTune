@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
 import { APP_NAME, INTELLIGENCE_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
+import { sessionSetItem } from "@/services/storageService";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,8 +19,12 @@ export default function Header() {
   const firstMenuItemRef = useRef<HTMLAnchorElement | null>(null);
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    // Set fromLogout before navigate so LoginPage sees it on mount and hides "Trở về".
+    sessionSetItem("fromLogout", "1");
+    // Navigate first so we never render a "logged out" state on the current
+    // page (which can show blank, e.g. AdminGuard returns null when !user).
+    navigate("/login", { replace: true });
+    queueMicrotask(() => logout());
   };
 
   // Close menu on outside click and Escape key; update position on resize/scroll
