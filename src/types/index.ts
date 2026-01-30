@@ -224,3 +224,58 @@ export interface RegisterForm {
   confirmPassword: string;
   fullName: string;
 }
+
+/** Local recording (upload/moderation/IndexedDB) — used when backend is unavailable (demo). */
+export interface LocalRecording {
+  id?: string;
+  title?: string;
+  titleVietnamese?: string;
+  description?: string;
+  ethnicity?: Ethnicity;
+  region?: Region;
+  recordingType?: RecordingType;
+  duration?: number;
+  audioUrl?: string;
+  waveformUrl?: string;
+  coverImage?: string;
+  instruments?: Instrument[];
+  performers?: Performer[];
+  recordedDate?: string;
+  uploadedDate?: string;
+  uploader?: User | { id?: string; username?: string; email?: string; fullName?: string; role?: string; createdAt?: string; updatedAt?: string };
+  tags?: string[];
+  metadata?: Partial<RecordingMetadata>;
+  verificationStatus?: VerificationStatus;
+  verifiedBy?: User;
+  viewCount?: number;
+  likeCount?: number;
+  downloadCount?: number;
+  basicInfo?: {
+    title?: string;
+    artist?: string;
+    genre?: string;
+    recordingDate?: string;
+  };
+  culturalContext?: {
+    region?: string;
+    ethnicity?: string;
+    instruments?: string[];
+    eventType?: string;
+    province?: string;
+    performanceType?: string;
+  };
+  audioData?: string | null;
+  videoData?: string | null;
+  youtubeUrl?: string | null;
+  mediaType?: "audio" | "video" | "youtube";
+  moderation?: {
+    status?: ModerationStatus | string;
+    claimedBy?: string | null;
+    claimedByName?: string | null;
+    claimedAt?: string | null;
+    reviewerId?: string | null;
+    reviewerName?: string | null;
+    reviewedAt?: string | null;
+    rejectionNote?: string;
+  };
+}

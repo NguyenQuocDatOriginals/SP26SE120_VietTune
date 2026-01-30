@@ -18,7 +18,7 @@ import {
 import type { Recording } from "@/types";
 import { RECORDING_TYPE_NAMES } from "@/config/constants";
 import { getRegionDisplayName } from "@/utils/recordingTags";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 
 /** Throttle interval for time updates (ms) - reduces re-renders during playback */
 const TIME_UPDATE_THROTTLE_MS = 200;

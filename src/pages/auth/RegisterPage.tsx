@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
+import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
 import BackButton from "@/components/common/BackButton";
 import { RegisterForm } from "@/types";
@@ -13,6 +14,7 @@ import { getItem, sessionGetItem, sessionRemoveItem } from "@/services/storageSe
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const fromLogout = typeof window !== "undefined" && sessionGetItem("fromLogout") === "1";
@@ -29,10 +31,17 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      await authService.register(data);
+      const result = await authService.register(data);
       void sessionRemoveItem("fromLogout");
-      notify.success("Thành công", "Đăng ký thành công! Vui lòng đăng nhập.");
-      navigate("/login");
+      const user = result?.data && typeof result.data === "object" && "user" in result.data ? (result.data as { user: import("@/types").User }).user : null;
+      if (user) {
+        setUser(user);
+        notify.success("Thành công", result.message ?? "Đăng ký thành công. Bạn đã được đăng nhập.");
+        navigate("/");
+      } else {
+        notify.success("Thành công", "Đăng ký thành công! Vui lòng đăng nhập.");
+        navigate("/login");
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error && "response" in error

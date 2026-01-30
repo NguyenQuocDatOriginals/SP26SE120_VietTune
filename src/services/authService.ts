@@ -59,24 +59,22 @@ export const authService = {
 
   // Register
   register: async (data: RegisterForm) => {
+    const newUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const newUser: User = {
+      id: newUserId,
+      username: data.username,
+      email: data.email,
+      fullName: data.fullName,
+      role: UserRole.CONTRIBUTOR,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
     try {
       const response = await api.post<ApiResponse<unknown>>(
         "/auth/register",
         data,
       );
-
-      // For demo/local system: create user with CONTRIBUTOR role by default
-      // Generate a unique ID for the new user
-      const newUserId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const newUser: User = {
-        id: newUserId,
-        username: data.username,
-        email: data.email,
-        fullName: data.fullName,
-        role: UserRole.CONTRIBUTOR, // Default role is CONTRIBUTOR
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
 
       // Save to users_overrides so it persists
       try {
@@ -96,8 +94,27 @@ export const authService = {
         message: "Registration successful",
       };
     } catch (error) {
-      console.error("Register error:", error);
-      throw error;
+      // Demo mode: when API is unavailable, create user locally and return so caller can log in
+      console.warn("Register API failed, creating user locally for demo:", error);
+      try {
+        const oRaw = getItem("users_overrides");
+        const overrides = oRaw
+          ? (JSON.parse(oRaw) as Record<string, User>)
+          : {};
+        overrides[newUserId] = newUser;
+        await setItem("users_overrides", JSON.stringify(overrides));
+        const token = `demo-token-${newUserId}`;
+        await setItem("access_token", token);
+        await setItem("user", JSON.stringify(newUser));
+      } catch (err) {
+        console.warn("Failed to create local user:", err);
+        throw error;
+      }
+      return {
+        success: true,
+        data: { user: newUser },
+        message: "Đăng ký thành công (chế độ demo, chưa kết nối backend).",
+      };
     }
   },
 

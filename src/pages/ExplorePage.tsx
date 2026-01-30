@@ -10,7 +10,7 @@ import { recordingService } from "@/services/recordingService";
 import { getLocalRecordingMetaList, getLocalRecordingFull } from "@/services/recordingStorage";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import { buildTagsFromLocal, PERFORMANCE_KEY_TO_LABEL } from "@/utils/recordingTags";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 
 // Helper: audio duration from data URL
 const getAudioDuration = (audioDataUrl: string): Promise<number> => {
@@ -214,8 +214,24 @@ export default function ExplorePage() {
       setTotalResults(apiTotal + fullList.length);
     } catch (error) {
       console.error("Error fetching recordings:", error);
-      setRecordings([]);
-      setTotalResults(0);
+      // Demo: when API is unavailable, show local approved recordings only
+      try {
+        const metaList = await getLocalRecordingMetaList();
+        const migrated = migrateVideoDataToVideoData(metaList);
+        const approved = migrated.filter((r) => r.moderation?.status === "APPROVED");
+        const filteredLocal = filterLocalRecordings(approved, filters);
+        const fullList = (await Promise.all(filteredLocal.map((r) => getLocalRecordingFull(r.id ?? "")))).filter((r): r is LocalRecording => r != null);
+        const convertedLocal = await Promise.all(fullList.map(convertLocalToRecording));
+        const sorted = [...convertedLocal].sort((a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime());
+        const pageSize = 20;
+        const start = (currentPage - 1) * pageSize;
+        setRecordings(sorted.slice(start, start + pageSize));
+        setTotalResults(sorted.length);
+      } catch (localErr) {
+        console.error("Error loading local recordings:", localErr);
+        setRecordings([]);
+        setTotalResults(0);
+      }
     } finally {
       setLoading(false);
     }

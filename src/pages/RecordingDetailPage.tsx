@@ -19,7 +19,7 @@ import { migrateVideoDataToVideoData, formatDateTime, formatDate, formatDuration
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import { getLocalRecordingFull } from "@/services/recordingStorage";
 import { buildTagsFromLocal, getRegionDisplayName } from "@/utils/recordingTags";
 

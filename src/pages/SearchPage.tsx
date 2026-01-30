@@ -13,8 +13,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 
-// Use LocalRecording type from ApprovedRecordingsPage for consistency
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import { buildTagsFromLocal, PERFORMANCE_KEY_TO_LABEL } from "@/utils/recordingTags";
 
 // Extended Recording type that may include original local data

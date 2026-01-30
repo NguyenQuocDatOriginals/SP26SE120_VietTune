@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
 import { USER_ROLE_NAMES } from "@/config/constants";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import { ModerationStatus } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";

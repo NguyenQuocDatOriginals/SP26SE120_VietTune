@@ -4,7 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole, User, RecordingMetadata, Recording } from "@/types";
 import { migrateVideoDataToVideoData, formatDateTime } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import BackButton from "@/components/common/BackButton";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
 import { Edit, LogIn } from "lucide-react";

@@ -2,7 +2,7 @@
  * Shared conversion from LocalRecording (upload/moderation storage) to Recording (display/API type).
  * Used for demo fallback when API is unavailable (HomePage, SemanticSearchPage, etc.).
  */
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import {
   Recording,
   Region,

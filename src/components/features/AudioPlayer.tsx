@@ -11,7 +11,7 @@ import WaveformProgressBar from "./WaveformProgressBar";
 // Props type for AudioPlayer
 
 import type { Recording } from "@/types";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {

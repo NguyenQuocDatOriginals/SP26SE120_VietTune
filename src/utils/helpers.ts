@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);

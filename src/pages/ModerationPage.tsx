@@ -520,7 +520,7 @@ export default function ModerationPage() {
                 const merged = full
                     ? { ...full, ...item, audioData: full.audioData, videoData: full.videoData, youtubeUrl: full.youtubeUrl }
                     : item;
-                await setLocalRecording(merged as import("@/pages/ApprovedRecordingsPage").LocalRecording);
+                await setLocalRecording(merged as import("@/types").LocalRecording);
             }
             void load();
         } catch (err) {

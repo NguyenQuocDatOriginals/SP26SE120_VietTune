@@ -5,7 +5,7 @@ import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Sea
 import { createPortal } from "react-dom";
 import UploadProgressDialog from "@/components/common/UploadProgressDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 import { getLocalRecordingFull, setLocalRecording } from "@/services/recordingStorage";
 

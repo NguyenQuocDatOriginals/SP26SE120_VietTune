@@ -11,9 +11,6 @@ import BackButton from "@/components/common/BackButton";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 
-// Type for migration function
-type LocalRecordingType = LocalRecording;
-
 // Hàm dịch trạng thái sang tiếng Việt
 const getStatusLabel = (status?: ModerationStatus | string): string => {
     if (!status) return "Không xác định";
@@ -39,62 +36,17 @@ const getStatusLabel = (status?: ModerationStatus | string): string => {
     }
 };
 
-import { Ethnicity, Region, RecordingType, Instrument, Performer, RecordingMetadata, VerificationStatus, User, RecordingQuality, UserRole, Recording } from "@/types";
-
-export interface LocalRecording {
-    id?: string;
-    title?: string;
-    titleVietnamese?: string;
-    description?: string;
-    ethnicity?: Ethnicity;
-    region?: Region;
-    recordingType?: RecordingType;
-    duration?: number;
-    audioUrl?: string;
-    waveformUrl?: string;
-    coverImage?: string;
-    instruments?: Instrument[];
-    performers?: Performer[];
-    recordedDate?: string;
-    uploadedDate?: string;
-    uploader?: User | { id?: string; username?: string; email?: string; fullName?: string; role?: string; createdAt?: string; updatedAt?: string };
-    tags?: string[];
-    metadata?: Partial<RecordingMetadata>;
-    verificationStatus?: VerificationStatus;
-    verifiedBy?: User;
-    viewCount?: number;
-    likeCount?: number;
-    downloadCount?: number;
-    // legacy/local-only fields
-    basicInfo?: {
-        title?: string;
-        artist?: string;
-        genre?: string;
-        recordingDate?: string;
-    };
-    culturalContext?: {
-        region?: string;
-        ethnicity?: string;
-        instruments?: string[];
-        eventType?: string;
-        province?: string;
-        performanceType?: string;
-    };
-    audioData?: string | null;
-    videoData?: string | null;
-    youtubeUrl?: string | null;
-    mediaType?: "audio" | "video" | "youtube";
-    moderation?: {
-        status?: ModerationStatus | string;
-        claimedBy?: string | null;
-        claimedByName?: string | null;
-        claimedAt?: string | null;
-        reviewerId?: string | null;
-        reviewerName?: string | null;
-        reviewedAt?: string | null;
-        rejectionNote?: string;
-    };
-}
+import {
+  Recording,
+  Region,
+  RecordingType,
+  User,
+  UserRole,
+  RecordingMetadata,
+  RecordingQuality,
+  VerificationStatus,
+} from "@/types";
+import type { LocalRecording } from "@/types";
 
 // Extended Recording type that may include original local data
 type RecordingWithLocalData = Recording & {
@@ -112,7 +64,7 @@ export default function ApprovedRecordingsPage() {
     const load = useCallback(async () => {
         try {
             const metaList = await getLocalRecordingMetaList();
-            const migrated = migrateVideoDataToVideoData(metaList as LocalRecordingType[]);
+            const migrated = migrateVideoDataToVideoData(metaList as LocalRecording[]);
             const approvedMeta = migrated.filter(
                 (r) =>
                     r.moderation &&

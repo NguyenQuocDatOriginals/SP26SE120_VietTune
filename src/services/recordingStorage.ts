@@ -5,7 +5,7 @@
  * - localRecording_full:{id}: full record including media
  */
 
-import type { LocalRecording } from "@/pages/ApprovedRecordingsPage";
+import type { LocalRecording } from "@/types";
 import { getItemAsync, setItem, removeItem } from "@/services/storageService";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 
