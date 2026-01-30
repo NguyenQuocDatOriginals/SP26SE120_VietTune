@@ -115,12 +115,6 @@ export default function Header() {
                 Dân tộc Việt Nam
               </Link>
               <Link
-                to="/knowledge-graph"
-                className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
-              >
-                Đồ thị tri thức
-              </Link>
-              <Link
                 to="/masters"
                 className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
               >
@@ -291,13 +285,6 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Dân tộc Việt Nam
-              </Link>
-              <Link
-                to="/knowledge-graph"
-                className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Đồ thị tri thức
               </Link>
               <Link
                 to="/masters"
