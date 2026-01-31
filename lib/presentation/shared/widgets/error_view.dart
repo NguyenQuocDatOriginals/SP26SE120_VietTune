@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 
-/// Error view widget with retry functionality
+/// Error view widget with retry functionality.
+/// Uses Phosphor Light (warning, arrowClockwise) per UI consistency audit — 100% đồng bộ.
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
@@ -22,23 +24,23 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon ?? Icons.error_outline,
+            PhosphorIcon(
+              icon ?? PhosphorIconsLight.warning,
               size: 64,
               color: AppColors.error,
             ),
             const SizedBox(height: 16),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: AppTypography.bodyLarge(color: AppColors.textPrimary),
               textAlign: TextAlign.center,
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
+                icon: PhosphorIcon(PhosphorIconsLight.arrowClockwise, size: 20, color: AppColors.textOnPrimary),
+                label: Text('Thử lại', style: AppTypography.button(color: AppColors.textOnPrimary)),
               ),
             ],
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:video_player/video_player.dart';
 import '../../../domain/entities/video_metadata.dart';
 import '../../../core/services/video_storage_service.dart';
@@ -21,7 +22,7 @@ class VideoPlayerDialog extends StatefulWidget {
   static void show(BuildContext context, {required VideoMetadata video}) {
     showDialog(
       context: context,
-      barrierColor: Colors.black87,
+      barrierColor: AppColors.primaryDark.withValues(alpha: 0.9),
       builder: (context) => VideoPlayerDialog(video: video),
     );
   }
@@ -137,27 +138,24 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(
-                color: Colors.white,
+                color: AppColors.textOnPrimary,
               ),
             ),
-          // Error message
+          // Error message — Phosphor Light, AppTypography
           if (_hasError)
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white,
+                  PhosphorIcon(
+                    PhosphorIconsLight.warning,
+                    color: AppColors.textOnPrimary,
                     size: 48,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     _errorMessage ?? 'Có lỗi xảy ra',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: AppTypography.bodyLarge(color: AppColors.textOnPrimary),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -177,12 +175,12 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.black54,
+                          color: AppColors.primaryDark.withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: Colors.white,
+                        child: PhosphorIcon(
+                          _isPlaying ? PhosphorIconsLight.pause : PhosphorIconsLight.play,
+                          color: AppColors.textOnPrimary,
                           size: 48,
                         ),
                       ),
@@ -204,7 +202,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [
-                      Colors.black87,
+                      AppColors.primaryDark.withValues(alpha: 0.9),
                       Colors.transparent,
                     ],
                   ),
@@ -217,10 +215,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                       children: [
                         Text(
                           _formatDuration(_position),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                          style: AppTypography.labelMedium(color: AppColors.textOnPrimary),
                         ),
                         Expanded(
                           child: Slider(
@@ -234,15 +229,12 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                               _seek(Duration(milliseconds: value.toInt()));
                             },
                             activeColor: AppColors.primary,
-                            inactiveColor: Colors.white24,
+                            inactiveColor: AppColors.textOnPrimary.withValues(alpha: 0.3),
                           ),
                         ),
                         Text(
                           _formatDuration(_duration),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                          style: AppTypography.labelMedium(color: AppColors.textOnPrimary),
                         ),
                       ],
                     ),
@@ -255,7 +247,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
             top: 16,
             right: 16,
             child: Material(
-              color: Colors.black54,
+              color: AppColors.primaryDark.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(20),
               child: InkWell(
                 onTap: () {
@@ -263,11 +255,11 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                   Navigator.of(context).pop();
                 },
                 borderRadius: BorderRadius.circular(20),
-                child: const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: PhosphorIcon(
+                    PhosphorIconsLight.x,
+                    color: AppColors.textOnPrimary,
                     size: 24,
                   ),
                 ),

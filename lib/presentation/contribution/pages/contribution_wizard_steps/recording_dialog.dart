@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/services/recording_service.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -59,7 +60,7 @@ class _RecordingDialogState extends State<RecordingDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Không thể bắt đầu ghi âm. Vui lòng kiểm tra quyền truy cập microphone.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -116,7 +117,7 @@ class _RecordingDialogState extends State<RecordingDialog> {
             // Title
             Text(
               'Đang ghi âm',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: AppTypography.titleLarge().copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -129,13 +130,13 @@ class _RecordingDialogState extends State<RecordingDialog> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isRecording && !isPaused
-                    ? Colors.red.withOpacity(0.2)
-                    : Colors.grey.withOpacity(0.2),
+                    ? AppColors.error.withValues(alpha: 0.2)
+                    : AppColors.divider,
               ),
-              child: Icon(
-                Icons.mic,
+              child: PhosphorIcon(
+                PhosphorIconsLight.microphone,
                 size: 40,
-                color: isRecording && !isPaused ? Colors.red : Colors.grey,
+                color: isRecording && !isPaused ? AppColors.error : AppColors.textTertiary,
               ),
             ),
             const SizedBox(height: 24),
@@ -143,17 +144,14 @@ class _RecordingDialogState extends State<RecordingDialog> {
             // Duration
             Text(
               _formatDuration(_duration),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: AppTypography.heading4(color: AppColors.primary).copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               isPaused ? 'Đã tạm dừng' : 'Đang ghi âm...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.bodyMedium(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 32),
             
@@ -164,9 +162,9 @@ class _RecordingDialogState extends State<RecordingDialog> {
                 // Cancel button
                 IconButton(
                   onPressed: _cancelRecording,
-                  icon: const Icon(Icons.close),
+                  icon: PhosphorIcon(PhosphorIconsLight.x),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: AppColors.divider,
                     padding: const EdgeInsets.all(12),
                   ),
                   tooltip: 'Hủy',
@@ -176,7 +174,7 @@ class _RecordingDialogState extends State<RecordingDialog> {
                 if (isRecording)
                   IconButton(
                     onPressed: _togglePause,
-                    icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                    icon: PhosphorIcon(isPaused ? PhosphorIconsLight.play : PhosphorIconsLight.pause),
                     style: IconButton.styleFrom(
                       backgroundColor: AppColors.primary.withOpacity(0.1),
                       padding: const EdgeInsets.all(12),
@@ -187,7 +185,7 @@ class _RecordingDialogState extends State<RecordingDialog> {
                 // Stop button
                 IconButton(
                   onPressed: isRecording ? _stopRecording : null,
-                  icon: const Icon(Icons.stop),
+                  icon: PhosphorIcon(PhosphorIconsLight.stop),
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textOnPrimary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/haptic_service.dart';
 
@@ -40,8 +41,7 @@ class _ProgressiveDisclosureSectionState
         if (widget.title != null) ...[
           Text(
             widget.title!,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.titleMedium(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -92,16 +92,13 @@ class _ProgressiveDisclosureSectionState
           setState(() => _isExpanded = true);
           HapticService.onFieldFocus();
         },
-        icon: const Icon(
-          Icons.add_circle_outline,
+        icon: PhosphorIcon(
+          PhosphorIconsLight.plusCircle,
           size: 18,
         ),
         label: Text(
           widget.expandButtonText,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.labelLarge().copyWith(fontWeight: FontWeight.w500),
         ),
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
@@ -121,16 +118,13 @@ class _ProgressiveDisclosureSectionState
           setState(() => _isExpanded = false);
           HapticService.onFieldFocus();
         },
-        icon: const Icon(
-          Icons.remove_circle_outline,
+        icon: PhosphorIcon(
+          PhosphorIconsLight.minusCircle,
           size: 18,
         ),
         label: Text(
           widget.collapseButtonText,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.labelLarge(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w500),
         ),
         style: TextButton.styleFrom(
           foregroundColor: AppColors.textSecondary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import 'dong_son_drum_icon.dart';
 
@@ -29,13 +30,13 @@ class ModernBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(
-            icon: Icons.home_rounded,
+            icon: PhosphorIconsLight.house,
             label: 'Trang chủ',
             index: 0,
             isActive: currentIndex == 0,
           ),
           _buildNavItem(
-            icon: Icons.chat_bubble_outline_rounded,
+            icon: PhosphorIconsLight.chatCircle,
             label: 'Hỏi AI',
             index: 1,
             isActive: currentIndex == 1,
@@ -43,13 +44,13 @@ class ModernBottomNav extends StatelessWidget {
           // Spacer for FAB
           const SizedBox(width: 40),
           _buildNavItem(
-            icon: Icons.account_tree_outlined,
+            icon: PhosphorIconsLight.treeStructure,
             label: 'Mạng lưới',
             index: 2,
             isActive: currentIndex == 2,
           ),
           _buildNavItem(
-            icon: Icons.person_outline_rounded,
+            icon: PhosphorIconsLight.user,
             label: isGuest ? 'Đăng nhập' : 'Cá nhân',
             index: 3,
             isActive: currentIndex == 3,
@@ -71,7 +72,7 @@ class ModernBottomNav extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            PhosphorIcon(
               icon,
               color: isActive ? AppColors.primary : AppColors.textSecondary,
               size: 24,

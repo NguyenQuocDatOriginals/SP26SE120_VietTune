@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/entities/enums.dart';
@@ -187,8 +188,8 @@ class DiscoverHomePage extends ConsumerWidget {
                 color: AppColors.secondary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                Icons.music_note_rounded,
+                            child: PhosphorIcon(
+                PhosphorIconsLight.musicNotes,
                 size: 32,
                 color: AppColors.secondary,
                             ),

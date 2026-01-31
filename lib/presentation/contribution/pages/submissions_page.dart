@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/contribution_providers.dart';
@@ -49,7 +50,7 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
         foregroundColor: AppColors.textOnGradient,
         actions: [
           PopupMenuButton<VerificationStatus?>(
-            icon: const Icon(Icons.filter_list),
+            icon: PhosphorIcon(PhosphorIconsLight.funnel),
             onSelected: (status) {
               setState(() {
                 _selectedFilter = status;
@@ -87,15 +88,15 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.inbox_outlined,
+                  PhosphorIcon(
+                    PhosphorIconsLight.tray,
                     size: 64,
-                    color: Colors.grey[400],
+                    color: AppColors.textTertiary,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Chưa có đóng góp nào',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: AppTypography.titleMedium(),
                   ),
                 ],
               ),
@@ -118,7 +119,7 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
                   child: ListTile(
                     title: Text(
                       contribution.songData?.title ?? 'Không có tiêu đề',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: AppTypography.titleMedium(),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,21 +130,21 @@ class _SubmissionsPageState extends ConsumerState<SubmissionsPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Gửi lúc: ${contribution.submittedAt!.toVietnameseDateTime()}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: AppTypography.bodySmall(),
                           ),
                         ],
                         if (contribution.reviewComments != null) ...[
                           const SizedBox(height: 4),
                           Text(
                             'Nhận xét: ${contribution.reviewComments}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: AppTypography.bodySmall(),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ],
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: PhosphorIcon(PhosphorIconsLight.caretRight, color: AppColors.textSecondary),
                     onTap: () {
                       context.push(
                         '/contribute/submission/${contribution.id}',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Metadata chip widget for displaying tags and metadata
 class MetadataChip extends StatelessWidget {
@@ -27,7 +28,7 @@ class MetadataChip extends StatelessWidget {
         label: Text(label),
         onDeleted: onTap != null ? () => onTap!() : null,
         deleteIcon: onTap != null
-            ? Icon(Icons.arrow_forward_ios, size: 12, color: color)
+            ? PhosphorIcon(PhosphorIconsLight.caretRight, size: 12, color: color)
             : null,
       ),
     );

@@ -157,10 +157,13 @@ class AppRoutes {
   // Discovery
   static const String discover = '/discover';
   static const String discoverSong = '/discover/song/:id';
+  /// Full path to song detail (nested under home): use for context.push('$discoverSongPath/$id').
+  static const String discoverSongPath = '/home/discover/song';
   static const String discoverSearch = '/discover/search';
   static const String discoverInstrument = '/discover/instrument/:id';
   static const String discoverEthnicGroup = '/discover/ethnic-group/:id';
-  
+  static const String discoverPlayer = '/home/discover/player';
+
   // Contribution
   static const String contribute = '/contribute';
   static const String contributeNew = '/contribute/new';

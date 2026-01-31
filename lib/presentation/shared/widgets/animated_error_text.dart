@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Animated error text widget with slide-in and fade animations
@@ -37,8 +38,8 @@ class AnimatedErrorText extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon ?? Icons.error_outline,
+            PhosphorIcon(
+              icon ?? PhosphorIconsLight.warning,
               size: 16,
               color: AppColors.error,
             ),
@@ -47,9 +48,7 @@ class AnimatedErrorText extends StatelessWidget {
           Expanded(
             child: Text(
               errorText!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.error,
+              style: AppTypography.bodySmall(color: AppColors.error).copyWith(
                 height: 1.4,
               ),
             ),

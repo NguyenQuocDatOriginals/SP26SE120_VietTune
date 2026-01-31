@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
-import '../../../../core/theme/app_theme.dart' show AppColors;
+import '../../../../core/theme/app_theme.dart';
 
 /// Step 4: Lyrics (Optional)
 class LyricsStep extends ConsumerStatefulWidget {
@@ -60,8 +60,7 @@ class _LyricsStepState extends ConsumerState<LyricsStep> {
         children: [
           Text(
             'Bước 4: Lời bài hát (Tùy chọn)',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -69,7 +68,7 @@ class _LyricsStepState extends ConsumerState<LyricsStep> {
           const SizedBox(height: 8),
           Text(
             'Nhập lời bài hát bằng ngôn ngữ gốc và bản dịch tiếng Việt',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTypography.bodyMedium(),
           ),
           const SizedBox(height: 24),
           // Native script

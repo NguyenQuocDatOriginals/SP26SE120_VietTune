@@ -1,4 +1,5 @@
 /// Data layer models (DTOs) for JSON serialization
+export 'address/address_models.dart';
 export 'audio_metadata_model.dart';
 export 'contribution_request_model.dart';
 export 'cultural_context_model.dart';

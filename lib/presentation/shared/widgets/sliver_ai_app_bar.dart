@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -96,8 +97,8 @@ class _AISearchBar extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: Icon(
-                    Icons.search_rounded,
+                  child: PhosphorIcon(
+                    PhosphorIconsLight.magnifyingGlass,
                     color: AppColors.textSecondary,
                     size: 18,
                   ),
@@ -130,8 +131,8 @@ class _AISearchBar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      Icons.mic_rounded,
+                    child: PhosphorIcon(
+                      PhosphorIconsLight.microphone,
                       color: AppColors.textOnPrimary,
                       size: 18,
                     ),

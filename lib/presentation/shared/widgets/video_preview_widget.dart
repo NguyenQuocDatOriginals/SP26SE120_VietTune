@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../domain/entities/video_metadata.dart';
 import '../../../core/services/video_storage_service.dart';
 import '../../../core/di/injection.dart';
@@ -73,19 +74,19 @@ class VideoPreviewWidget extends StatelessWidget {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black26,
+                    color: AppColors.primaryDark.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: AppColors.primaryDark.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.play_arrow,
-                        color: Colors.white,
+                      child: PhosphorIcon(
+                        PhosphorIconsLight.play,
+                        color: AppColors.textOnPrimary,
                         size: 32,
                       ),
                     ),
@@ -103,25 +104,21 @@ class VideoPreviewWidget extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black87,
+                      color: AppColors.primaryDark.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.access_time,
+                        PhosphorIcon(
+                          PhosphorIconsLight.clock,
                           size: 12,
-                          color: Colors.white,
+                          color: AppColors.textOnPrimary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           _formatDuration(video.durationInSeconds!),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -133,7 +130,7 @@ class VideoPreviewWidget extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: Material(
-                    color: Colors.black54,
+                    color: AppColors.primaryDark.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       onTap: () {
@@ -141,12 +138,12 @@ class VideoPreviewWidget extends StatelessWidget {
                         onRemove?.call();
                       },
                       borderRadius: BorderRadius.circular(20),
-                      child: const Padding(
-                        padding: EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.close,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: PhosphorIcon(
+                          PhosphorIconsLight.x,
                           size: 18,
-                          color: Colors.white,
+                          color: AppColors.textOnPrimary,
                         ),
                       ),
                     ),
@@ -200,18 +197,15 @@ class VideoPreviewWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.videocam_off,
+          PhosphorIcon(
+            PhosphorIconsLight.videoCameraSlash,
             size: 32,
             color: AppColors.textSecondary,
           ),
           const SizedBox(height: 4),
           Text(
             'Không thể tải video',
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.labelSmall(color: AppColors.textSecondary).copyWith(fontSize: 10),
           ),
         ],
       ),

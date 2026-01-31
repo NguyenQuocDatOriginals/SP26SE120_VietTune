@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../domain/entities/video_metadata.dart';
@@ -101,7 +102,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
             children: [
               Text(
                 widget.label!,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: AppTypography.titleMedium().copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -109,10 +110,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                 const SizedBox(width: 4),
                 Text(
                   '*',
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 16,
-                  ),
+                  style: AppTypography.bodyLarge(color: AppColors.error),
                 ),
               ],
             ],
@@ -151,7 +149,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black54,
+                color: AppColors.primaryDark.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -165,25 +163,18 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                         value: progress,
                         strokeWidth: 3,
                         color: AppColors.primary,
-                        backgroundColor: Colors.white24,
+                        backgroundColor: AppColors.textOnPrimary.withValues(alpha: 0.24),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '${(progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelMedium(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Đang xử lý...',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary.withValues(alpha: 0.85)),
                     ),
                   ],
                 ),
@@ -201,9 +192,9 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white,
+                  PhosphorIcon(
+                    PhosphorIconsLight.warning,
+                    color: AppColors.textOnPrimary,
                     size: 32,
                   ),
                   const SizedBox(height: 8),
@@ -211,11 +202,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       error,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -231,20 +218,16 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                       ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      side: const BorderSide(color: Colors.white),
+                      side: BorderSide(color: AppColors.textOnPrimary),
                     ),
-                    icon: const Icon(
-                      Icons.refresh,
+                    icon: PhosphorIcon(
+                      PhosphorIconsLight.arrowClockwise,
                       size: 14,
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Thử lại',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -267,12 +250,10 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             )
-          : const Icon(Icons.videocam),
+          : PhosphorIcon(PhosphorIconsLight.videoCamera),
       label: Text(
         _isPicking ? 'Đang xử lý...' : 'Thêm video',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.button().copyWith(color: AppColors.primary),
       ),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 48),
@@ -309,8 +290,8 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.error_outline,
+            PhosphorIcon(
+              PhosphorIconsLight.warning,
               size: 16,
               color: AppColors.error,
             ),
@@ -318,10 +299,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
             Expanded(
               child: Text(
                 error,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.error,
-                ),
+                style: AppTypography.bodySmall(color: AppColors.error),
               ),
             ),
           ],
@@ -343,7 +321,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
           children: [
             if (widget.allowRecording)
               ListTile(
-                leading: const Icon(Icons.videocam, color: AppColors.primary),
+                leading: PhosphorIcon(PhosphorIconsLight.videoCamera, color: AppColors.primary),
                 title: const Text('Quay video'),
                 onTap: () {
                   Navigator.pop(context);
@@ -351,7 +329,7 @@ class _VideoPickerWidgetState extends ConsumerState<VideoPickerWidget> {
                 },
               ),
             ListTile(
-              leading: const Icon(Icons.video_library, color: AppColors.primary),
+              leading: PhosphorIcon(PhosphorIconsLight.videoCamera, color: AppColors.primary),
               title: const Text('Chọn từ thư viện'),
               onTap: () {
                 Navigator.pop(context);

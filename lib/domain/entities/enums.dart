@@ -53,6 +53,53 @@ enum AudioQuality {
   professional,
 }
 
+/// Serialization: AudioQuality → string (use in data layer instead of .name).
+String audioQualityToJsonValue(AudioQuality q) {
+  switch (q) {
+    case AudioQuality.low:
+      return 'low';
+    case AudioQuality.medium:
+      return 'medium';
+    case AudioQuality.high:
+      return 'high';
+    case AudioQuality.professional:
+      return 'professional';
+  }
+}
+
+/// Parse string → AudioQuality (use in data layer).
+AudioQuality? audioQualityFromJsonValue(String? s) {
+  if (s == null) return null;
+  switch (s) {
+    case 'low':
+      return AudioQuality.low;
+    case 'medium':
+      return AudioQuality.medium;
+    case 'high':
+      return AudioQuality.high;
+    case 'professional':
+      return AudioQuality.professional;
+    default:
+      return null;
+  }
+}
+
+extension AudioQualityExtension on AudioQuality {
+  /// Display label for UI.
+  String get displayName {
+    switch (this) {
+      case AudioQuality.low:
+        return 'Thấp';
+      case AudioQuality.medium:
+        return 'Trung bình';
+      case AudioQuality.high:
+        return 'Cao';
+      case AudioQuality.professional:
+        return 'Chuyên nghiệp';
+    }
+  }
+}
+
 /// Performance types for contributions
 enum PerformanceType {
   instrumental,           // Chỉ nhạc cụ

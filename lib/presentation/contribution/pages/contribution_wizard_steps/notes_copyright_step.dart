@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/contribution_providers.dart';
@@ -112,7 +113,7 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Đóng góp đã được gửi thành công!'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
                 duration: Duration(seconds: 2),
               ),
             );
@@ -133,7 +134,7 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
     }
   }
@@ -152,8 +153,7 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
         children: [
           Text(
             'Bước 5: Ghi chú & Bản quyền',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -161,19 +161,14 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
           const SizedBox(height: 16),
           Text(
             'Lời bài hát (ngôn ngữ gốc)',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _nativeScriptController,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
             decoration: InputDecoration(
               filled: true,
               fillColor: AppColors.surface,
@@ -199,19 +194,14 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
           const SizedBox(height: 16),
           Text(
             'Bản dịch tiếng Việt',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _vietnameseTranslationController,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
             decoration: InputDecoration(
               filled: true,
               fillColor: AppColors.surface,
@@ -237,25 +227,17 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
           const SizedBox(height: 16),
           Text(
             'Bản quyền/Tổ chức lưu trữ',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _copyrightController,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Thông tin bản quyền hoặc tổ chức lưu trữ',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -280,25 +262,17 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
           const SizedBox(height: 16),
           Text(
             'Ghi chú thực địa',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _fieldNotesController,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Ghi chú, quan sát khi thu âm',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -335,10 +309,10 @@ class _NotesCopyrightStepState extends ConsumerState<NotesCopyrightStep> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
-        title: Text(label, style: Theme.of(context).textTheme.titleSmall),
+        title: Text(label, style: AppTypography.titleSmall()),
         subtitle: Text(value),
         trailing: IconButton(
-          icon: const Icon(Icons.edit),
+          icon: PhosphorIcon(PhosphorIconsLight.pencil),
           onPressed: onEdit,
         ),
       ),

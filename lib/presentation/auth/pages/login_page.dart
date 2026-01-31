@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -43,20 +44,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Text(
                     'VietTune Archive',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppColors.textOnGradient,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
+                    style: AppTypography.heading4(color: AppColors.textOnGradient).copyWith(letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Đăng nhập để tiếp tục',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondaryOnGradient,
-                      letterSpacing: 0.3,
-                    ),
+                    style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient).copyWith(letterSpacing: 0.3),
                   ),
                   const SizedBox(height: 48),
                   // Login Form Card
@@ -75,15 +69,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.email_outlined,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.envelope,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -114,15 +106,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             obscureText: true,
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _handleLogin(),
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Mật khẩu',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.lock,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -173,14 +163,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     )
                                   : Text(
                                       'Đăng nhập',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                        color: AppColors.textOnGradient,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.5,
-                                      ),
+                                      style: AppTypography.button(color: AppColors.textOnGradient).copyWith(letterSpacing: 0.5),
                                     ),
                             ),
                           ),
@@ -198,8 +181,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     child: Text(
                       'Chưa có tài khoản? Đăng ký',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textOnGradient,
+                      style: AppTypography.bodyMedium(color: AppColors.textOnGradient).copyWith(
                         decoration: TextDecoration.underline,
                         decorationColor: AppColors.textOnGradient,
                       ),
@@ -232,18 +214,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.info_outline,
+                PhosphorIcon(
+                  PhosphorIconsLight.info,
                   size: 20,
                   color: AppColors.info,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Tài khoản demo',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: AppTypography.heading5(color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -273,24 +252,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(
-                  Icons.lock_outline,
+                PhosphorIcon(
+                  PhosphorIconsLight.lock,
                   size: 16,
                   color: AppColors.textSecondary,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Mật khẩu: ',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                 ),
                 Text(
                   'password123',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.labelLarge(color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -325,27 +299,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             Expanded(
               child: Text(
                 '$role: ',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTypography.labelMedium(color: AppColors.textSecondary),
               ),
             ),
             Expanded(
               flex: 2,
               child: Text(
                 email,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.bodySmall(color: AppColors.textPrimary),
               ),
             ),
             if (onTap != null) ...[
               const SizedBox(width: 8),
-              Icon(
-                Icons.touch_app,
+              PhosphorIcon(
+                PhosphorIconsLight.handPointing,
                 size: 16,
-                color: AppColors.primaryRed.withValues(alpha: 0.6),
+                color: AppColors.primary.withValues(alpha: 0.6),
               ),
             ],
           ],

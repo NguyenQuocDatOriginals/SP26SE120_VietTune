@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/constants.dart';
 
 /// Bottom sheet to prompt guest users to login or register
@@ -38,21 +40,21 @@ class GuestAuthPromptBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.person_outline,
+          PhosphorIcon(
+            PhosphorIconsLight.user,
             size: 64,
             color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 16),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge,
+            style: AppTypography.titleLarge(),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTypography.bodyMedium(),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),

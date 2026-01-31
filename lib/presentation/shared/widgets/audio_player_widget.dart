@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/extensions.dart';
 
@@ -174,13 +175,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Loop button
+              // Loop button (Phosphor Light per PLAN-phosphor-icons-modern-ethnic)
               IconButton(
-                icon: Icon(
-                  _isLooping ? Icons.repeat_one : Icons.repeat,
+                icon: PhosphorIcon(
+                  _isLooping ? PhosphorIconsLight.repeatOnce : PhosphorIconsLight.repeat,
                   color: _isLooping
                       ? AppColors.primary
                       : AppColors.textSecondary,
+                  size: 24,
                 ),
                 onPressed: _toggleLoop,
                 tooltip: 'Lặp lại',
@@ -220,8 +222,8 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                             ),
                           ),
                         )
-                      : Icon(
-                          _isPlaying ? Icons.pause : Icons.play_arrow,
+                      : PhosphorIcon(
+                          _isPlaying ? PhosphorIconsLight.pause : PhosphorIconsLight.play,
                           color: AppColors.textOnPrimary,
                           size: 32,
                         ),

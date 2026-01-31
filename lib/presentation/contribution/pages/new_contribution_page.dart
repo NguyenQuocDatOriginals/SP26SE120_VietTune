@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../contribution/providers/contribution_providers.dart';
 import 'contribution_wizard_steps/audio_upload_step.dart';
 import 'contribution_wizard_steps/identity_step.dart';
@@ -46,13 +47,14 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
     'Xem lại & Gửi',
   ];
   
+  /// Phosphor Light icons per PLAN-phosphor-icons-modern-ethnic (Phase 2).
   static const List<IconData> _stepIcons = [
-    Icons.upload_file,
-    Icons.info_outline,
-    Icons.people_outline,
-    Icons.public,
-    Icons.music_note,
-    Icons.rate_review,
+    PhosphorIconsLight.microphone,      // 1. Ghi âm / Tải lên
+    PhosphorIconsLight.identificationCard, // 2. Thông tin định danh
+    PhosphorIconsLight.users,           // 3. Thông tin người thực hiện
+    PhosphorIconsLight.flowerLotus,     // 4. Bối cảnh văn hóa
+    PhosphorIconsLight.musicNotes,      // 5. Chi tiết biểu diễn
+    PhosphorIconsLight.clipboardText,   // 6. Xem lại & Gửi
   ];
 
   @override
@@ -146,9 +148,9 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop('discard'),
-            child: const Text(
+            child: Text(
               'Hủy không lưu',
-              style: TextStyle(color: Colors.red),
+              style: AppTypography.bodyMedium(color: AppColors.error),
             ),
           ),
           TextButton(
@@ -234,6 +236,7 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
               totalSteps: _steps.length,
               stepTitles: _stepTitles,
               stepIcons: _stepIcons,
+              usePhosphorIcons: true,
               onStepTap: (index) {
                 if (formNotifier.canJumpToStep(index)) {
                   formNotifier.updateStep(index);
@@ -273,19 +276,11 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                   children: [
                     Text(
                       'Bước ${formState.currentStep + 1}/${_steps.length}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
+                      style: AppTypography.labelLarge(color: AppColors.textPrimary),
                     ),
                     Text(
                       '$progressPercentage%',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                      style: AppTypography.labelLarge(color: AppColors.primary).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -295,16 +290,14 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                   children: [
                     Text(
                       _stepTitles[formState.currentStep],
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                      style: AppTypography.bodyMedium(color: AppColors.textSecondary).copyWith(
                         fontSize: (14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3)),
                       ),
                     ),
                     if (estimatedMinutes > 0)
                       Text(
                         '~$estimatedMinutes phút',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textTertiary,
+                        style: AppTypography.bodySmall(color: AppColors.textTertiary).copyWith(
                           fontSize: (12 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3)),
                         ),
                       ),
@@ -390,9 +383,8 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                       ),
                       child: Text(
                         'Quay lại',
-                        style: TextStyle(
+                        style: AppTypography.button(color: AppColors.textPrimary).copyWith(
                           fontSize: (16 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3)),
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -416,12 +408,9 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                             vertical: 16,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Bỏ qua',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.button(color: AppColors.textSecondary),
                         ),
                       ),
                     ),
@@ -436,12 +425,9 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                                   formNotifier.updateStep(formState.currentStep + 1);
                                 },
                                 isFullWidth: true,
-                                child: const Text(
+                                child: Text(
                                   'Tiếp theo',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: AppTypography.button(color: AppColors.textOnPrimary),
                                 ),
                               )
                             : Container(
@@ -464,12 +450,9 @@ class _NewContributionPageState extends ConsumerState<NewContributionPage> {
                                     ),
                                     elevation: 0,
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Tiếp theo',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: AppTypography.button(color: AppColors.textSecondary),
                                   ),
                                 ),
                               );

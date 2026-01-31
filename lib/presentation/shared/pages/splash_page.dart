@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -46,8 +47,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
                   color: AppColors.surface.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.music_note,
+                child: PhosphorIcon(
+                  PhosphorIconsLight.musicNotes,
                   size: 80,
                   color: AppColors.textOnGradient,
                 ),
@@ -55,19 +56,12 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               const SizedBox(height: 32),
               Text(
                 'VietTune Archive',
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: AppColors.textOnGradient,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
+                style: AppTypography.heading2(color: AppColors.textOnGradient).copyWith(letterSpacing: 0.5),
               ),
               const SizedBox(height: 12),
               Text(
                 'Preserving Vietnamese Traditional Music',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondaryOnGradient,
-                  letterSpacing: 0.3,
-                ),
+                style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient).copyWith(letterSpacing: 0.3),
               ),
               const SizedBox(height: 48),
               CircularProgressIndicator(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
@@ -8,6 +9,7 @@ import '../../../shared/widgets/ethnic_group_selector.dart';
 import '../../../shared/widgets/chip_input.dart';
 import '../../../shared/widgets/animated_error_text.dart';
 import '../../../shared/widgets/field_progress_indicator.dart';
+import '../../../shared/widgets/location_field.dart';
 
 /// Step 2: Basic Information
 class BasicInfoStep extends ConsumerWidget {
@@ -26,8 +28,7 @@ class BasicInfoStep extends ConsumerWidget {
         children: [
           Text(
             'Bước 2: Thông tin định danh',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -45,10 +46,8 @@ class BasicInfoStep extends ConsumerWidget {
                       children: [
                         Text(
                           'Tiêu đề/Tên bản nhạc *',
-                          style: TextStyle(
-                            fontSize: 15,
+                          style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -80,10 +79,8 @@ class BasicInfoStep extends ConsumerWidget {
                     children: [
                       Text(
                         'Nhạc sĩ/Tác giả *',
-                        style: TextStyle(
-                          fontSize: 15,
+                        style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -99,16 +96,10 @@ class BasicInfoStep extends ConsumerWidget {
                   TextFormField(
                     enabled: !isFolkChecked,
                     initialValue: isFolkChecked ? '' : (song?.author ?? ''),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Tên người sáng tác',
-                      hintStyle: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
+                      hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
@@ -139,10 +130,7 @@ class BasicInfoStep extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             title: Text(
               'Dân gian/Không rõ tác giả',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondaryOnGradient,
-              ),
+              style: AppTypography.bodyMedium(color: AppColors.textSecondaryOnGradient),
             ),
             value: song?.author?.toLowerCase() == 'dân gian',
             activeColor: AppColors.primary,
@@ -159,25 +147,17 @@ class BasicInfoStep extends ConsumerWidget {
           // Genre dropdown
           Text(
             'Thể loại/Loại hình *',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<MusicGenre>(
             value: song?.genre ?? MusicGenre.folk,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Chọn thể loại',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -209,65 +189,17 @@ class BasicInfoStep extends ConsumerWidget {
             },
           ),
           const SizedBox(height: 16),
-          // Recording location
           Text(
             'Địa điểm ghi âm',
-            style: TextStyle(
-              fontSize: 15,
+            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            initialValue: song?.audioMetadata?.recordingLocation?.commune,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Nhập địa điểm cụ thể',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-              filled: true,
-              fillColor: AppColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.divider),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.divider),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 2,
-                ),
-              ),
-            ),
-            onChanged: (value) {
-              // Update recording location commune
-              final location = song?.audioMetadata?.recordingLocation;
-              formNotifier.updateRecordingLocation(
-                location?.province ?? '',
-                value,
-              );
-            },
-          ),
-          // Example text for recording location
-          Padding(
-            padding: const EdgeInsets.only(top: 8, left: 4),
-            child: Text(
-              'Ví dụ: Đình làng X, Nhà văn hóa Y',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondaryOnGradient,
-                    fontSize: 12,
-                  ),
-            ),
+          LocationField(
+            value: song?.audioMetadata?.recordingLocation,
+            onChanged: (location) =>
+                formNotifier.updateRecordingLocation(location),
           ),
           const SizedBox(height: 16),
           // Artist/Performer
@@ -323,10 +255,7 @@ class BasicInfoStep extends ConsumerWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(
                   'Không rõ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondaryOnGradient,
-                  ),
+                  style: AppTypography.bodyMedium(color: AppColors.textSecondaryOnGradient),
                 ),
                 value: isUnknownChecked,
                 activeColor: AppColors.primary,
@@ -390,25 +319,17 @@ class BasicInfoStep extends ConsumerWidget {
           children: [
             Text(
               'Ngôn ngữ',
-              style: TextStyle(
-                fontSize: 15,
+              style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: selected,
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textPrimary,
-              ),
+              style: AppTypography.bodyLarge(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Chọn ngôn ngữ',
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
+                hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
                 border: OutlineInputBorder(
@@ -485,10 +406,8 @@ class BasicInfoStep extends ConsumerWidget {
           children: [
             Text(
               'Ngày ghi âm',
-              style: TextStyle(
-                fontSize: 15,
+              style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(width: 8),
@@ -534,10 +453,7 @@ class BasicInfoStep extends ConsumerWidget {
           child: InputDecorator(
             decoration: InputDecoration(
               hintText: 'Chọn ngày/tháng/năm',
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
@@ -555,15 +471,14 @@ class BasicInfoStep extends ConsumerWidget {
                   width: 2,
                 ),
               ),
-              suffixIcon: const Icon(
-                Icons.calendar_today,
+              suffixIcon: PhosphorIcon(
+                PhosphorIconsLight.calendar,
                 color: AppColors.primary,
               ),
             ),
             child: Text(
               dateText,
-              style: TextStyle(
-                fontSize: 16,
+              style: AppTypography.bodyLarge(
                 color: currentDate != null
                     ? AppColors.textPrimary
                     : AppColors.textSecondary,
@@ -575,13 +490,10 @@ class BasicInfoStep extends ConsumerWidget {
         CheckboxListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            'Ngày ước tính',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondaryOnGradient,
+            title: Text(
+              'Ngày ước tính',
+              style: AppTypography.bodyMedium(color: AppColors.textSecondaryOnGradient),
             ),
-          ),
           value: isEstimated,
           activeColor: AppColors.primary,
           checkColor: AppColors.textPrimary,
@@ -653,16 +565,10 @@ class _TitleFieldState extends State<_TitleField> {
       children: [
         TextFormField(
           controller: _controller,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.textPrimary,
-          ),
+          style: AppTypography.bodyLarge(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: 'Nhập tên bản nhạc',
-            hintStyle: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
             filled: true,
             fillColor: AppColors.surface,
             border: OutlineInputBorder(
@@ -710,7 +616,7 @@ class _TitleFieldState extends State<_TitleField> {
         const SizedBox(height: 4),
         AnimatedErrorText(
           errorText: _hasInteracted ? _errorText : null,
-          icon: Icons.error_outline,
+          icon: PhosphorIconsLight.warning,
         ),
       ],
     );

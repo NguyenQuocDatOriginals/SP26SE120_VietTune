@@ -1,0 +1,63 @@
+{
+  "provinces": [
+    {
+      "code": "16",
+      "name": "Hà Nội",
+      "districts": [
+        {
+          "code": "001",
+          "name": "Ba Đình",
+          "wards": [
+            {"code": "00001", "name": "Phường Điện Biên"},
+            {"code": "00002", "name": "Phường Đội Cấn"},
+            {"code": "00003", "name": "Phường Điện Biên"}
+          ]
+        },
+        {
+          "code": "002",
+          "name": "Hoàn Kiếm",
+          "wards": [
+            {"code": "00019", "name": "Phường Phan Chu Trinh"},
+            {"code": "00020", "name": "Phường Hàng Buồm"}
+          ]
+        }
+      ]
+    },
+    {
+      "code": "50",
+      "name": "Thành phố Hồ Chí Minh",
+      "districts": [
+        {
+          "code": "760",
+          "name": "Quận 1",
+          "wards": [
+            {"code": "26734", "name": "Phường Bến Nghé"},
+            {"code": "26735", "name": "Phường Bến Thành"}
+          ]
+        },
+        {
+          "code": "761",
+          "name": "Quận 3",
+          "wards": [
+            {"code": "26794", "name": "Phường 1"},
+            {"code": "26795", "name": "Phường 2"}
+          ]
+        }
+      ]
+    },
+    {
+      "code": "42",
+      "name": "Đắk Lắk",
+      "districts": [
+        {
+          "code": "650",
+          "name": "Thành phố Buôn Ma Thuột",
+          "wards": [
+            {"code": "24328", "name": "Phường Ea Tam"},
+            {"code": "24329", "name": "Phường Khánh Xuân"}
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -50,6 +50,8 @@ import '../services/image_upload_service.dart';
 import '../services/image_cleanup_service.dart';
 import '../services/video_storage_service.dart';
 import '../services/video_upload_service.dart';
+import '../services/location_data_service.dart';
+import '../services/semantic_mapper.dart';
 import '../../data/repositories/image_repository_impl.dart';
 import '../../data/repositories/image_repository.dart';
 import '../../data/repositories/video_repository_impl.dart';
@@ -58,7 +60,18 @@ import '../../data/repositories/video_repository.dart';
 final getIt = GetIt.instance;
 
 @InjectableInit()
-void configureDependencies() => getIt.init();
+void configureDependencies() {
+  getIt.init();
+  // Manual registration (no codegen) for LocationDataService
+  if (!getIt.isRegistered<LocationDataService>()) {
+    getIt.registerLazySingleton<LocationDataService>(
+      () => LocationDataService(),
+    );
+  }
+  if (!getIt.isRegistered<SemanticMapper>()) {
+    getIt.registerLazySingleton<SemanticMapper>(() => SemanticMapper());
+  }
+}
 
 @module
 abstract class DataSourceModule {

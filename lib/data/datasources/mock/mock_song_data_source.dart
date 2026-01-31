@@ -3,7 +3,9 @@ import '../../models/audio_metadata_model.dart';
 import '../../models/cultural_context_model.dart';
 import '../../models/location_model.dart';
 
-/// Mock data source for songs with ~50 Vietnamese traditional songs
+/// Mock data source for songs with ~50 Vietnamese traditional songs.
+/// Một số bài đầu (song_001–song_003) dùng URL audio thật để chạy thử player:
+/// SoundHelix (public domain test MP3), Freetestdata.
 abstract class MockSongDataSource {
   Future<List<SongModel>> getAllSongs();
   Future<SongModel?> getSongById(String id);
@@ -76,9 +78,31 @@ class MockSongDataSourceImpl implements MockSongDataSource {
       }).toList();
     }
 
-    // Filter by genre
+    // Filter by genre (OR: song matches any selected genre)
     if (genres != null && genres.isNotEmpty) {
       results = results.where((song) => genres.contains(song.genre)).toList();
+      // Khi chọn nhiều thể loại: xếp xen kẽ để cả hai loại hiện trên màn hình đầu (vd. Dân ca + Nghi lễ).
+      if (genres.length > 1) {
+        final byGenre = <String, List<SongModel>>{};
+        for (final g in genres) {
+          byGenre[g] = results.where((s) => s.genre == g).toList();
+        }
+        final interleaved = <SongModel>[];
+        var index = 0;
+        while (true) {
+          var added = 0;
+          for (final g in genres) {
+            final list = byGenre[g]!;
+            if (index < list.length) {
+              interleaved.add(list[index]);
+              added++;
+            }
+          }
+          if (added == 0) break;
+          index++;
+        }
+        results = interleaved;
+      }
     }
 
     // Filter by context type
@@ -116,8 +140,9 @@ class MockSongDataSourceImpl implements MockSongDataSource {
         ethnicGroupId: 'ethnic_kinh',
         verificationStatus: 'verified',
         audioMetadata: AudioMetadataModel(
-          url: 'https://example.com/audio/ly_con_sao.mp3',
-          durationInSeconds: 180,
+          // URL thật để test phát nhạc (SoundHelix, public domain)
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+          durationInSeconds: 480,
           quality: 'high',
           recordingDate: '2020-03-15T10:30:00Z',
           instrumentIds: ['inst_dan_tranh', 'inst_dan_bau'],
@@ -164,8 +189,9 @@ class MockSongDataSourceImpl implements MockSongDataSource {
         ethnicGroupId: 'ethnic_kinh',
         verificationStatus: 'verified',
         audioMetadata: AudioMetadataModel(
-          url: 'https://example.com/audio/quan_ho_bac_ninh.mp3',
-          durationInSeconds: 240,
+          // URL thật để test phát nhạc (SoundHelix)
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+          durationInSeconds: 480,
           quality: 'professional',
           recordingDate: '2019-05-20T14:00:00Z',
           instrumentIds: ['inst_dan_nhi', 'inst_dan_tam'],
@@ -212,8 +238,9 @@ class MockSongDataSourceImpl implements MockSongDataSource {
         ethnicGroupId: 'ethnic_kinh',
         verificationStatus: 'verified',
         audioMetadata: AudioMetadataModel(
-          url: 'https://example.com/audio/vi_dam_nghe_tinh.mp3',
-          durationInSeconds: 200,
+          // URL thật ngắn để test nhanh (Freetestdata, ~1MB MP3)
+          url: 'https://freetestdata.com/wp-content/uploads/2021/09/Free_Test_Data_1MB_MP3.mp3',
+          durationInSeconds: 65,
           quality: 'high',
           recordingDate: '2021-08-10T09:00:00Z',
           instrumentIds: ['inst_dan_nhi'],
@@ -261,8 +288,9 @@ class MockSongDataSourceImpl implements MockSongDataSource {
         ethnicGroupId: 'ethnic_kinh',
         verificationStatus: 'verified',
         audioMetadata: AudioMetadataModel(
-          url: 'https://example.com/audio/nha_nhac_hue.mp3',
-          durationInSeconds: 360,
+          // URL thật để test phát nhạc (SoundHelix)
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+          durationInSeconds: 480,
           quality: 'professional',
           recordingDate: '2018-11-05T15:30:00Z',
           instrumentIds: ['inst_dan_tranh', 'inst_dan_ty_ba', 'inst_dan_nhi', 'inst_trong'],

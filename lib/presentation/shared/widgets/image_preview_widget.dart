@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../domain/entities/image_metadata.dart';
 import '../../../core/services/image_storage_service.dart';
 import '../../../core/di/injection.dart';
@@ -80,16 +81,15 @@ class ImagePreviewWidget extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.star,
+                        PhosphorIcon(
+                          PhosphorIconsLight.star,
                           size: 14,
                           color: AppColors.textOnPrimary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Ảnh chính',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.textOnPrimary,
+                          style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -103,7 +103,7 @@ class ImagePreviewWidget extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: Material(
-                    color: Colors.black54,
+                    color: AppColors.primaryDark.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(20),
                     child: InkWell(
                       onTap: () {
@@ -111,12 +111,12 @@ class ImagePreviewWidget extends StatelessWidget {
                         onRemove?.call();
                       },
                       borderRadius: BorderRadius.circular(20),
-                      child: const Padding(
-                        padding: EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.close,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: PhosphorIcon(
+                          PhosphorIconsLight.x,
                           size: 18,
-                          color: Colors.white,
+                          color: AppColors.textOnPrimary,
                         ),
                       ),
                     ),
@@ -158,18 +158,15 @@ class ImagePreviewWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.broken_image,
+          PhosphorIcon(
+            PhosphorIconsLight.image,
             size: 32,
             color: AppColors.textSecondary,
           ),
           const SizedBox(height: 4),
           Text(
             'Không thể tải ảnh',
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+            style: AppTypography.labelSmall(color: AppColors.textSecondary).copyWith(fontSize: 10),
           ),
         ],
       ),

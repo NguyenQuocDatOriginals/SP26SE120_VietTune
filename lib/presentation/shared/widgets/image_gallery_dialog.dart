@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../domain/entities/image_metadata.dart';
 import '../../../core/services/image_storage_service.dart';
 import '../../../core/di/injection.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Full-screen image gallery dialog
 /// 
@@ -28,7 +30,7 @@ class ImageGalleryDialog extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
-      barrierColor: Colors.black87,
+      barrierColor: AppColors.primaryDark.withValues(alpha: 0.9),
       builder: (context) => ImageGalleryDialog(
         images: images,
         initialIndex: initialIndex,
@@ -58,17 +60,17 @@ class _ImageGalleryDialogState extends State<ImageGalleryDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.primaryDark,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: PhosphorIcon(PhosphorIconsLight.x, color: AppColors.textOnPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           '${_currentIndex + 1} / ${widget.images.length}',
-          style: const TextStyle(color: Colors.white),
+          style: AppTypography.titleMedium(color: AppColors.textOnPrimary),
         ),
         centerTitle: true,
       ),
@@ -94,7 +96,7 @@ class _ImageGalleryDialogState extends State<ImageGalleryDialog> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+            child: CircularProgressIndicator(color: AppColors.textOnPrimary),
           );
         }
 
@@ -103,15 +105,15 @@ class _ImageGalleryDialogState extends State<ImageGalleryDialog> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.broken_image,
+                PhosphorIcon(
+                  PhosphorIconsLight.warning,
                   size: 64,
-                  color: Colors.white54,
+                  color: AppColors.textOnPrimary.withValues(alpha: 0.54),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Không thể tải ảnh',
-                  style: TextStyle(color: Colors.white54),
+                  style: AppTypography.bodyMedium(color: AppColors.textOnPrimary.withValues(alpha: 0.54)),
                 ),
               ],
             ),
@@ -128,11 +130,11 @@ class _ImageGalleryDialogState extends State<ImageGalleryDialog> {
               file,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(
-                    Icons.broken_image,
+                return Center(
+                  child: PhosphorIcon(
+                    PhosphorIconsLight.image,
                     size: 64,
-                    color: Colors.white54,
+                    color: AppColors.textOnPrimary.withValues(alpha: 0.54),
                   ),
                 );
               },

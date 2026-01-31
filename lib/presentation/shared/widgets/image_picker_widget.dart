@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../domain/entities/image_metadata.dart';
 import '../../../data/repositories/image_repository.dart';
 import '../../../core/di/injection.dart';
@@ -104,19 +105,15 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
             children: [
               Text(
                 widget.label!,
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               if (widget.required) ...[
                 const SizedBox(width: 4),
                 Text(
                   '*',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppColors.error,
+                  style: AppTypography.labelLarge(color: AppColors.error).copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -132,10 +129,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               '${widget.images.length}/${widget.maxImages} ảnh',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary),
             ),
           ),
 
@@ -193,7 +187,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: AppColors.primaryDark.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -207,25 +201,18 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                         value: progress,
                         strokeWidth: 3,
                         color: AppColors.primary,
-                        backgroundColor: Colors.white24,
+                        backgroundColor: AppColors.textOnPrimary.withValues(alpha: 0.24),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '${(progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelMedium(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Đang xử lý...',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 10,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary.withValues(alpha: 0.85)),
                     ),
                   ],
                 ),
@@ -237,15 +224,15 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.9),
+                color: AppColors.error.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.white,
+                  PhosphorIcon(
+                    PhosphorIconsLight.warning,
+                    color: AppColors.textOnPrimary,
                     size: 32,
                   ),
                   const SizedBox(height: 8),
@@ -253,11 +240,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       error,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w500),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -273,20 +256,16 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                       ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      side: const BorderSide(color: Colors.white),
+                      side: BorderSide(color: AppColors.textOnPrimary),
                     ),
-                    icon: const Icon(
-                      Icons.refresh,
+                    icon: PhosphorIcon(
+                      PhosphorIconsLight.arrowClockwise,
                       size: 14,
-                      color: Colors.white,
+                      color: AppColors.textOnPrimary,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Thử lại',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTypography.labelSmall(color: AppColors.textOnPrimary).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -305,13 +284,13 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                 decoration: BoxDecoration(
                   color: image.isMainImage
                       ? AppColors.primary
-                      : Colors.black54,
+                      : AppColors.primaryDark.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  image.isMainImage ? Icons.star : Icons.star_border,
+                child: PhosphorIcon(
+                  PhosphorIconsLight.star,
                   size: 16,
-                  color: Colors.white,
+                  color: AppColors.textOnPrimary,
                 ),
               ),
             ),
@@ -332,12 +311,10 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
               ),
             )
-          : const Icon(Icons.add_photo_alternate),
+          : PhosphorIcon(PhosphorIconsLight.imageSquare),
       label: Text(
         _isPicking ? 'Đang xử lý...' : 'Thêm ảnh',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.button().copyWith(color: AppColors.primary),
       ),
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(double.infinity, 48),
@@ -384,8 +361,8 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.error_outline,
+                  PhosphorIcon(
+                    PhosphorIconsLight.warning,
                     size: 16,
                     color: AppColors.error,
                   ),
@@ -393,10 +370,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
                   Expanded(
                     child: Text(
                       error,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.error,
-                      ),
+                      style: AppTypography.bodySmall(color: AppColors.error),
                     ),
                   ),
                 ],
@@ -420,7 +394,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+              leading: PhosphorIcon(PhosphorIconsLight.camera, color: AppColors.primary),
               title: const Text('Chụp ảnh'),
               onTap: () {
                 Navigator.pop(context);
@@ -428,7 +402,7 @@ class _ImagePickerWidgetState extends ConsumerState<ImagePickerWidget> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              leading: PhosphorIcon(PhosphorIconsLight.imagesSquare, color: AppColors.primary),
               title: const Text('Chọn từ thư viện'),
               onTap: () {
                 Navigator.pop(context);

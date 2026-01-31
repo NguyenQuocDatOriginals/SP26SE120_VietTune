@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/ethnic_group.dart';
 import '../../../domain/usecases/reference/get_ethnic_groups.dart';
@@ -45,7 +46,7 @@ class EthnicGroupSelector extends ConsumerWidget {
           province,
         );
         
-        // Get priority groups for suggestions badge
+        // Priority groups for star indicator in dropdown (when province provided)
         final priorityGroups = suggestionService.getPriorityGroups(
           groups,
           province,
@@ -59,78 +60,6 @@ class EthnicGroupSelector extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Suggested groups badge (if province provided and has suggestions)
-            if (province != null && priorityGroups.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Gợi ý cho $province:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: priorityGroups.take(5).map((group) {
-                        final isSelected = group.id == selectedId;
-                        return FilterChip(
-                          label: Text(
-                            group.name,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                              color: isSelected
-                                  ? AppColors.textOnPrimary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                          selected: isSelected,
-                          selectedColor: AppColors.primary,
-                          checkmarkColor: AppColors.textOnPrimary,
-                          onSelected: (selected) {
-                            HapticService.onButtonTap();
-                            onSelected?.call(selected ? group : null);
-                          },
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            
             // Autocomplete dropdown
             Autocomplete<EthnicGroup>(
           initialValue: selectedId != null
@@ -164,7 +93,7 @@ class EthnicGroupSelector extends ConsumerWidget {
                 border: const OutlineInputBorder(),
                 suffixIcon: allowClear && selectedId != null
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: PhosphorIcon(PhosphorIconsLight.x),
                         onPressed: () {
                           textEditingController.clear();
                           onSelected?.call(null);
@@ -195,8 +124,8 @@ class EthnicGroupSelector extends ConsumerWidget {
                       final isPriority = priorityGroups.any((g) => g.id == group.id);
                       return ListTile(
                         leading: isPriority
-                            ? Icon(
-                                Icons.star,
+                            ? PhosphorIcon(
+                                PhosphorIconsLight.star,
                                 size: 18,
                                 color: AppColors.primary,
                               )

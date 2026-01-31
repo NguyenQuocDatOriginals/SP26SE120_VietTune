@@ -150,7 +150,7 @@ class InstrumentDetailPage extends ConsumerWidget {
                         return SongCard(
                           song: song,
                           onTap: () {
-                            context.push('/discover/song/${song.id}');
+                            context.push('${AppRoutes.discoverSongPath}/${song.id}');
                           },
                         );
                       },

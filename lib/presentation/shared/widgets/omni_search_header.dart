@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../discovery/pages/search_page.dart';
@@ -113,8 +114,8 @@ class _OmniSearchHeaderState extends ConsumerState<OmniSearchHeader> {
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.search_rounded,
+              PhosphorIcon(
+                PhosphorIconsLight.magnifyingGlass,
                 color: AppColors.textSecondary,
                 size: 24,
               ),
@@ -142,8 +143,8 @@ class _OmniSearchHeaderState extends ConsumerState<OmniSearchHeader> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.mic_rounded,
+                  child: PhosphorIcon(
+                    PhosphorIconsLight.microphone,
                     color: AppColors.primary,
                     size: 20,
                   ),
@@ -265,7 +266,7 @@ class _OmniSearchModalState extends ConsumerState<_OmniSearchModal> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const PhosphorIcon(PhosphorIconsLight.x),
                     onPressed: () => context.pop(),
                   ),
                 ],
@@ -312,8 +313,8 @@ class _OmniSearchModalState extends ConsumerState<_OmniSearchModal> {
                               : AppColors.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                        child: PhosphorIcon(
+                          _isListening ? PhosphorIconsLight.stop : PhosphorIconsLight.microphone,
                           color: _isListening
                               ? AppColors.textOnPrimary
                               : AppColors.primary,
@@ -337,8 +338,8 @@ class _OmniSearchModalState extends ConsumerState<_OmniSearchModal> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.mic_rounded,
+                      PhosphorIcon(
+                        PhosphorIconsLight.microphone,
                         color: AppColors.primary,
                         size: 20,
                       ),
@@ -473,7 +474,7 @@ class _VoiceSearchModalState extends ConsumerState<_VoiceSearchModal> {
           Align(
             alignment: Alignment.topRight,
             child: IconButton(
-              icon: const Icon(Icons.close_rounded),
+              icon: const PhosphorIcon(PhosphorIconsLight.x),
               onPressed: () => context.pop(),
             ),
           ),
@@ -499,8 +500,8 @@ class _VoiceSearchModalState extends ConsumerState<_VoiceSearchModal> {
                   ),
                 ],
               ),
-              child: Icon(
-                _isListening ? Icons.stop_rounded : Icons.mic_rounded,
+              child: PhosphorIcon(
+                _isListening ? PhosphorIconsLight.stop : PhosphorIconsLight.microphone,
                 size: 48,
                 color: _isListening
                     ? AppColors.textOnPrimary
@@ -557,7 +558,7 @@ class _QuickFiltersSection extends ConsumerWidget {
         // Ethnic Groups
         _FilterChipGroup(
           title: 'Dân tộc',
-          icon: Icons.people_rounded,
+          icon: PhosphorIconsLight.users,
           onTap: () {
             // Show ethnic group selector
             showModalBottomSheet(
@@ -581,7 +582,7 @@ class _QuickFiltersSection extends ConsumerWidget {
         // Instruments
         _FilterChipGroup(
           title: 'Nhạc cụ',
-          icon: Icons.music_note_rounded,
+          icon: PhosphorIconsLight.musicNotes,
           onTap: () {
             // Show instrument selector
             showModalBottomSheet(
@@ -605,7 +606,7 @@ class _QuickFiltersSection extends ConsumerWidget {
         // Regions
         _FilterChipGroup(
           title: 'Vùng miền',
-          icon: Icons.map_rounded,
+          icon: PhosphorIconsLight.mapTrifold,
           onTap: () {
             // Show region selector
             _showRegionSelector(context);
@@ -680,7 +681,7 @@ class _FilterChipGroup extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(
+              child: PhosphorIcon(
                 icon,
                 color: AppColors.primary,
                 size: 20,
@@ -693,8 +694,8 @@ class _FilterChipGroup extends StatelessWidget {
                 style: AppTypography.labelLarge(),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
+            PhosphorIcon(
+              PhosphorIconsLight.caretRight,
               color: AppColors.textSecondary,
             ),
           ],

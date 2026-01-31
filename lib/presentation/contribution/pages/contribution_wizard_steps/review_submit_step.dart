@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
@@ -87,7 +88,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Speech recognition không khả dụng. Vui lòng kiểm tra quyền microphone.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -196,7 +197,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
     }
   }
@@ -232,9 +233,9 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                         color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.check_circle,
-                        color: Colors.white,
+                      child: PhosphorIcon(
+                        PhosphorIconsLight.checkCircle,
+                        color: AppColors.textOnPrimary,
                         size: 50,
                       ),
                     ),
@@ -244,8 +245,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               const SizedBox(height: 24),
               Text(
                 'Đóng góp thành công!',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.textPrimary,
+                style: AppTypography.heading5(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -253,21 +253,16 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               const SizedBox(height: 8),
               Text(
                 'Cảm ơn bạn đã đóng góp vào kho tàng âm nhạc dân tộc Việt Nam',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               AppTheme.createPillButton(
                 onPressed: () => Navigator.of(context).pop(),
                 isFullWidth: true,
-                child: const Text(
+                child: Text(
                   'Đóng',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTypography.button(),
                 ),
               ),
             ],
@@ -293,8 +288,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
         children: [
           Text(
             'Bước 6: Xem xét, Ghi chú & Gửi',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -302,10 +296,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
           const SizedBox(height: 8),
           Text(
             'Xem lại thông tin và thêm ghi chú trước khi gửi',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           // Review sections with inline editing
@@ -391,19 +382,14 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               // Lyrics - Native script
               Text(
                 'Lời bài hát (ngôn ngữ gốc)',
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nativeScriptController,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.surface,
@@ -423,12 +409,12 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                     ),
                   ),
                   suffixIcon: IconButton(
-                    icon: Icon(
+                    icon: PhosphorIcon(
                       _isListening && _activeController == _nativeScriptController
-                          ? Icons.mic
-                          : Icons.mic_none,
+                          ? PhosphorIconsLight.microphone
+                          : PhosphorIconsLight.microphoneSlash,
                       color: _isListening && _activeController == _nativeScriptController
-                          ? Colors.red
+                          ? AppColors.error
                           : AppColors.textSecondary,
                     ),
                     onPressed: () => _startListening(_nativeScriptController),
@@ -452,9 +438,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                       const SizedBox(width: 8),
                       Text(
                         'Đang nghe...',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primary,
+                        style: AppTypography.bodySmall(color: AppColors.primary).copyWith(
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -466,19 +450,14 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               // Lyrics - Vietnamese translation
               Text(
                 'Bản dịch tiếng Việt',
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _vietnameseTranslationController,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: AppColors.surface,
@@ -498,12 +477,12 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                     ),
                   ),
                   suffixIcon: IconButton(
-                    icon: Icon(
+                    icon: PhosphorIcon(
                       _isListening && _activeController == _vietnameseTranslationController
-                          ? Icons.mic
-                          : Icons.mic_none,
+                          ? PhosphorIconsLight.microphone
+                          : PhosphorIconsLight.microphoneSlash,
                       color: _isListening && _activeController == _vietnameseTranslationController
-                          ? Colors.red
+                          ? AppColors.error
                           : AppColors.textSecondary,
                     ),
                     onPressed: () => _startListening(_vietnameseTranslationController),
@@ -527,9 +506,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                       const SizedBox(width: 8),
                       Text(
                         'Đang nghe...',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primary,
+                        style: AppTypography.bodySmall(color: AppColors.primary).copyWith(
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -541,25 +518,17 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               // Copyright
               Text(
                 'Bản quyền/Tổ chức lưu trữ',
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _copyrightController,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Thông tin bản quyền hoặc tổ chức lưu trữ',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
+                  hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(
@@ -587,25 +556,17 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               // Field notes
               Text(
                 'Ghi chú thực địa',
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _fieldNotesController,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textPrimary,
-                ),
+                style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Ghi chú, quan sát khi thu âm',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
+                  hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(
@@ -671,12 +632,9 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               : AppTheme.createPillButton(
                   onPressed: _submitContribution,
                   isFullWidth: true,
-                  child: const Text(
+                  child: Text(
                     'Gửi đóng góp',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTypography.button(),
                   ),
                 ),
         ],
@@ -699,14 +657,13 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
         child: ListTile(
           title: Text(
             label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
-                  MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+            style: AppTypography.titleSmall().copyWith(
+              fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
             ),
           ),
           subtitle: Text(
             value,
-            style: TextStyle(
+            style: AppTypography.bodyMedium().copyWith(
               fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
             ),
           ),
@@ -714,7 +671,7 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
             label: 'Chỉnh sửa $label',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.edit),
+              icon: PhosphorIcon(PhosphorIconsLight.pencil),
               onPressed: onEdit,
             ),
           ),
@@ -781,19 +738,18 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
           ListTile(
             title: Text(
               label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
-                    MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+              style: AppTypography.titleSmall().copyWith(
+                fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
               ),
             ),
             subtitle: Text(
               '$imageCount ảnh',
-              style: TextStyle(
+              style: AppTypography.bodyMedium().copyWith(
                 fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
               ),
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.edit),
+              icon: PhosphorIcon(PhosphorIconsLight.pencil),
               onPressed: onEdit,
             ),
           ),
@@ -892,18 +848,13 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
                           children: [
                             Text(
                               '+${images.length - 4}',
-                              style: TextStyle(
-                                fontSize: 18,
+                              style: AppTypography.heading5(color: AppColors.textSecondary).copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
                               ),
                             ),
                             Text(
                               'thêm',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.textSecondary,
-                              ),
+                              style: AppTypography.labelSmall(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -939,9 +890,8 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
           ListTile(
             title: Text(
               label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 14) *
-                    MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
+              style: AppTypography.titleSmall().copyWith(
+                fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
               ),
             ),
             subtitle: Column(
@@ -949,20 +899,20 @@ class _ReviewSubmitStepState extends ConsumerState<ReviewSubmitStep> {
               children: [
                 Text(
                   'Thời lượng: $durationText',
-                  style: TextStyle(
+                  style: AppTypography.bodyMedium().copyWith(
                     fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
                   ),
                 ),
                 Text(
                   'Kích thước: $sizeText',
-                  style: TextStyle(
+                  style: AppTypography.bodyMedium().copyWith(
                     fontSize: 14 * MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.3),
                   ),
                 ),
               ],
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.edit),
+              icon: PhosphorIcon(PhosphorIconsLight.pencil),
               onPressed: onEdit,
             ),
           ),

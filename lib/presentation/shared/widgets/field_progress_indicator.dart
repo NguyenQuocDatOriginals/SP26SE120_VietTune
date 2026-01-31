@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Progress indicator for individual form fields
@@ -51,9 +52,9 @@ class FieldProgressIndicator extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(
-        Icons.check,
-        color: Colors.white,
+      child: PhosphorIcon(
+        PhosphorIconsLight.check,
+        color: AppColors.textOnPrimary,
         size: 14,
       ),
     );
@@ -85,17 +86,13 @@ class StepProgressBar extends StatelessWidget {
           children: [
             Text(
               'Tiến độ',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
+              style: AppTypography.bodySmall(color: AppColors.textSecondary).copyWith(
                 fontWeight: FontWeight.w500,
               ),
             ),
             Text(
               '$completedFields/$totalFields',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
+              style: AppTypography.bodySmall(color: AppColors.textSecondary).copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),

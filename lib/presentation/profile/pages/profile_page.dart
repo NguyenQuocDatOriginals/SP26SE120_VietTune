@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/widgets/role_badge.dart';
 import '../../../domain/entities/enums.dart';
@@ -106,12 +107,7 @@ class ProfilePage extends ConsumerWidget {
               child: Center(
                 child: Text(
                   initials,
-                  style: const TextStyle(
-                    color: AppColors.textOnPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+                  style: AppTypography.heading3(color: AppColors.textOnPrimary).copyWith(letterSpacing: 0.5),
                 ),
               ),
             ),
@@ -124,7 +120,7 @@ class ProfilePage extends ConsumerWidget {
                 children: [
                   Text(
                     user.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: AppTypography.titleLarge().copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                       fontSize: 20,
@@ -135,10 +131,7 @@ class ProfilePage extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     user.email,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
+                    style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -177,10 +170,7 @@ class ProfilePage extends ConsumerWidget {
         children: [
           Text(
             'Thống kê',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.heading5(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           Row(
@@ -188,7 +178,7 @@ class ProfilePage extends ConsumerWidget {
               Expanded(
                 child: _buildStatItem(
                   context,
-                  icon: Icons.upload_file,
+                  icon: PhosphorIconsLight.upload,
                   label: 'Đóng góp',
                   value: '0',
                   color: AppColors.primary,
@@ -198,7 +188,7 @@ class ProfilePage extends ConsumerWidget {
               Expanded(
                 child: _buildStatItem(
                   context,
-                  icon: Icons.favorite,
+                  icon: PhosphorIconsLight.heart,
                   label: 'Yêu thích',
                   value: '0',
                   color: AppColors.error,
@@ -233,19 +223,12 @@ class ProfilePage extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: color,
-              ),
+              PhosphorIcon(icon, size: 20, color: color),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.bodySmall(color: AppColors.textSecondary),
                 ),
               ),
             ],
@@ -253,11 +236,7 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              fontSize: 24,
-            ),
+            style: AppTypography.heading3(color: color),
           ),
         ],
       ),
@@ -281,15 +260,12 @@ class ProfilePage extends ConsumerWidget {
         children: [
           Text(
             'Thao tác nhanh',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+            style: AppTypography.heading5(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
           _buildActionTile(
             context,
-            icon: Icons.favorite_border,
+            icon: PhosphorIconsLight.heart,
             title: 'Yêu thích',
             subtitle: 'Xem các bài hát đã yêu thích',
             onTap: () {
@@ -299,7 +275,7 @@ class ProfilePage extends ConsumerWidget {
           const Divider(height: 32),
           _buildActionTile(
             context,
-            icon: Icons.settings_outlined,
+            icon: PhosphorIconsLight.gear,
             title: 'Cài đặt',
             subtitle: 'Quản lý tài khoản và cài đặt',
             onTap: () {
@@ -332,11 +308,7 @@ class ProfilePage extends ConsumerWidget {
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                icon,
-                color: AppColors.primary,
-                size: 20,
-              ),
+              child: PhosphorIcon(icon, color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -345,24 +317,18 @@ class ProfilePage extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppTypography.labelLarge(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: AppTypography.bodySmall(color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
+            PhosphorIcon(
+              PhosphorIconsLight.caretRight,
               color: AppColors.textSecondary,
               size: 20,
             ),
@@ -393,14 +359,11 @@ class ProfilePage extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.upgrade, size: 20),
+            PhosphorIcon(PhosphorIconsLight.arrowUp, size: 20, color: AppColors.textOnPrimary),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Đăng ký làm Người đóng góp',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.button(color: AppColors.textOnPrimary),
             ),
           ],
         ),
@@ -427,18 +390,15 @@ class ProfilePage extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.logout,
+            PhosphorIcon(
+              PhosphorIconsLight.signOut,
               size: 20,
               color: AppColors.textPrimary,
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Đăng xuất',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.button(color: AppColors.textPrimary),
             ),
           ],
         ),
@@ -477,7 +437,7 @@ class ProfilePage extends ConsumerWidget {
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
               'Hủy',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: AppTypography.bodyMedium(color: AppColors.textSecondary),
             ),
           ),
           TextButton(

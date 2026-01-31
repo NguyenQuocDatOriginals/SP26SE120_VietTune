@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Map exploration page with heatmap visualization
@@ -22,7 +23,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
         title: const Text('Bản đồ âm nhạc'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: PhosphorIcon(PhosphorIconsLight.funnel),
             onPressed: _showFilters,
             tooltip: 'Lọc dữ liệu',
           ),
@@ -84,22 +85,20 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.map,
+                          PhosphorIcon(
+                            PhosphorIconsLight.mapTrifold,
                             size: 64,
                             color: AppColors.textSecondary,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Bản đồ Việt Nam',
-                            style: Theme.of(context).textTheme.titleLarge,
+                            style: AppTypography.titleLarge(),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Heatmap sẽ hiển thị mật độ bản thu âm\nVùng xám = chưa có dữ liệu',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 24),
@@ -112,7 +111,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.explore),
+                            icon: PhosphorIcon(PhosphorIconsLight.compass),
                             label: const Text('Khám phá bản đồ'),
                           ),
                         ],
@@ -143,7 +142,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
                           children: [
                             Text(
                               'Chú thích',
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              style: AppTypography.titleSmall().copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -177,19 +176,19 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
                     context,
                     'Tổng bản thu',
                     '1,234',
-                    Icons.audiotrack,
+                    PhosphorIconsLight.musicNotes,
                   ),
                   _buildStatItem(
                     context,
                     'Vùng đã khảo sát',
                     '45/63',
-                    Icons.map,
+                    PhosphorIconsLight.mapTrifold,
                   ),
                   _buildStatItem(
                     context,
                     'Dân tộc',
                     '32/54',
-                    Icons.people,
+                    PhosphorIconsLight.users,
                   ),
                 ],
               ),
@@ -203,7 +202,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
           // Navigate to contribute
           // TODO: Navigate to contribute page
         },
-        icon: const Icon(Icons.add_location_alt),
+        icon: PhosphorIcon(PhosphorIconsLight.mapPin),
         label: const Text('Thêm bản thu'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textOnPrimary,
@@ -227,7 +226,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
           const SizedBox(width: 8),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: AppTypography.bodySmall(),
           ),
         ],
       ),
@@ -243,11 +242,11 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: AppColors.primary, size: 24),
+        PhosphorIcon(icon, color: AppColors.primary, size: 24),
         const SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: AppTypography.titleLarge().copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
           ),
@@ -255,9 +254,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
         const SizedBox(height: 2),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTypography.bodySmall(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -277,14 +274,14 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
           children: [
             Text(
               'Lọc dữ liệu',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: AppTypography.titleLarge().copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'Dân tộc',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.titleMedium(),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -315,7 +312,7 @@ class _MapExplorePageState extends ConsumerState<MapExplorePage> {
             const SizedBox(height: 24),
             Text(
               'Vùng miền',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTypography.titleMedium(),
             ),
             const SizedBox(height: 8),
             Wrap(

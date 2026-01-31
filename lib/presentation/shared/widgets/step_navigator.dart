@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/haptic_service.dart';
 
@@ -17,6 +18,8 @@ class StepNavigator extends StatelessWidget {
   final int totalSteps;
   final List<String> stepTitles;
   final List<IconData>? stepIcons;
+  /// When true, step icons are rendered with [PhosphorIcon] (Phosphor Light).
+  final bool usePhosphorIcons;
   final ValueChanged<int>? onStepTap;
   final bool Function(int step)? canJumpToStep;
 
@@ -26,6 +29,7 @@ class StepNavigator extends StatelessWidget {
     required this.totalSteps,
     required this.stepTitles,
     this.stepIcons,
+    this.usePhosphorIcons = false,
     this.onStepTap,
     this.canJumpToStep,
   });
@@ -252,7 +256,12 @@ class StepNavigator extends StatelessWidget {
                               : null,
                     ),
                     child: Center(
-                      child: _buildStepContent(index, status, stepIcon),
+                      child: _buildStepContent(
+                        index,
+                        status,
+                        stepIcon,
+                        usePhosphorIcons: usePhosphorIcons,
+                      ),
                     ),
                   ),
                 // Step title - hide in compact mode
@@ -262,7 +271,7 @@ class StepNavigator extends StatelessWidget {
                     constraints: const BoxConstraints(maxWidth: 80),
                     child: Text(
                       stepTitle,
-                      style: TextStyle(
+                      style: AppTypography.labelSmall(color: _getStepTextColor(status)).copyWith(
                         fontSize: 11,
                         height: 1.3,
                         fontWeight: status == StepStatus.inProgress
@@ -270,7 +279,6 @@ class StepNavigator extends StatelessWidget {
                             : status == StepStatus.completed
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                        color: _getStepTextColor(status),
                         letterSpacing: status == StepStatus.inProgress ? 0.2 : 0,
                       ),
                       textAlign: TextAlign.center,
@@ -312,32 +320,42 @@ class StepNavigator extends StatelessWidget {
     );
   }
 
-  Widget _buildStepContent(int index, StepStatus status, IconData stepIcon) {
+  Widget _buildStepContent(
+    int index,
+    StepStatus status,
+    IconData stepIcon, {
+    bool usePhosphorIcons = false,
+  }) {
     if (status == StepStatus.completed) {
-      return const Icon(
-        Icons.check_rounded,
-        color: Colors.white,
+      return PhosphorIcon(
+        PhosphorIconsLight.checkCircle,
+        color: AppColors.textOnPrimary,
         size: 22,
       );
     } else if (status == StepStatus.skipped) {
-      return const Icon(
-        Icons.remove_rounded,
-        color: Colors.white,
+      return PhosphorIcon(
+        PhosphorIconsLight.minus,
+        color: AppColors.textOnPrimary,
         size: 22,
       );
     } else if (status == StepStatus.inProgress) {
-      // Show icon for active step if available
-      return Icon(
+      if (usePhosphorIcons) {
+        return PhosphorIcon(
+          stepIcon,
+          color: AppColors.textOnPrimary,
+          size: 20,
+        );
+      }
+      return PhosphorIcon(
         stepIcon,
-        color: Colors.white,
+        color: AppColors.textOnPrimary,
         size: 20,
       );
     } else {
       // Pending step - show number
       return Text(
         '${index + 1}',
-        style: TextStyle(
-          color: _getStepTextColor(status),
+        style: AppTypography.bodyMedium(color: _getStepTextColor(status)).copyWith(
           fontWeight: FontWeight.bold,
           fontSize: 15,
           letterSpacing: -0.5,
@@ -404,22 +422,22 @@ class StepNavigator extends StatelessWidget {
   }
 
   IconData _getDefaultIcon(int index) {
-    // Default icons for each step type
+    // Default icons for each step (Phosphor Light per Phase 4)
     switch (index) {
       case 0:
-        return Icons.upload_file_rounded;
+        return PhosphorIconsLight.upload;
       case 1:
-        return Icons.info_outline_rounded;
+        return PhosphorIconsLight.info;
       case 2:
-        return Icons.people_outline_rounded;
+        return PhosphorIconsLight.users;
       case 3:
-        return Icons.music_note_rounded;
+        return PhosphorIconsLight.musicNotes;
       case 4:
-        return Icons.note_outlined;
+        return PhosphorIconsLight.note;
       case 5:
-        return Icons.rate_review_rounded;
+        return PhosphorIconsLight.clipboardText;
       default:
-        return Icons.circle_outlined;
+        return PhosphorIconsLight.circle;
     }
   }
 }

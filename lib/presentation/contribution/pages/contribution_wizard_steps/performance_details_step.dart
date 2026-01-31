@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../domain/entities/enums.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -24,8 +25,7 @@ class PerformanceDetailsStep extends ConsumerWidget {
         children: [
           Text(
             'Bước 4: Chi tiết biểu diễn',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -33,10 +33,8 @@ class PerformanceDetailsStep extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             'Loại hình biểu diễn *',
-            style: TextStyle(
+            style: AppTypography.bodyMedium(color: AppColors.textSecondaryOnGradient).copyWith(
               fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: AppColors.textSecondaryOnGradient,
             ),
           ),
           const SizedBox(height: 8),
@@ -48,11 +46,11 @@ class PerformanceDetailsStep extends ConsumerWidget {
                 groupValue: song?.performanceType,
                 title: Text(
                   _getPerformanceTypeText(type),
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: AppTypography.bodyLarge(
                     color: isSelected
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
+                  ).copyWith(
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
@@ -73,18 +71,14 @@ class PerformanceDetailsStep extends ConsumerWidget {
               children: [
                 Text(
                   'Nhạc cụ *',
-                  style: TextStyle(
+                  style: AppTypography.bodyMedium(color: AppColors.textSecondary).copyWith(
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '(Bắt buộc)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.error,
+                  style: AppTypography.bodySmall(color: AppColors.error).copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -103,9 +97,7 @@ class PerformanceDetailsStep extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Vui lòng chọn ít nhất một nhạc cụ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.error,
+                  style: AppTypography.bodySmall(color: AppColors.error).copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -129,21 +121,18 @@ class PerformanceDetailsStep extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.info.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue[200]!),
+                border: Border.all(color: AppColors.info.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 20, color: Colors.blue[700]),
+                  PhosphorIcon(PhosphorIconsLight.info, size: 20, color: AppColors.info),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Loại hình này không yêu cầu nhạc cụ. Bạn có thể tùy chọn upload lời bài hát ở bước tiếp theo.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue[900],
-                      ),
+                      style: AppTypography.bodySmall(color: AppColors.info).copyWith(fontSize: 12),
                     ),
                   ),
                 ],

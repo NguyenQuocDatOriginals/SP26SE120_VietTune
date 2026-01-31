@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/constants.dart';
 import '../../presentation/contribution/pages/new_contribution_page.dart';
 import '../../presentation/contribution/pages/submissions_page.dart';
 import '../../presentation/contribution/pages/contribution_detail_page.dart';
 import '../../presentation/discovery/pages/discover_home_page.dart';
-import '../../presentation/discovery/pages/song_detail_page.dart';
+import '../../presentation/discovery/pages/unified_song_page.dart';
 import '../../presentation/discovery/pages/search_page.dart';
 import '../../presentation/discovery/pages/instrument_detail_page.dart';
 import '../../presentation/discovery/pages/ethnic_group_detail_page.dart';
@@ -14,6 +16,7 @@ import '../../presentation/profile/pages/favorites_page.dart';
 import '../../presentation/profile/pages/settings_page.dart';
 import '../../presentation/shared/pages/splash_page.dart';
 import '../../presentation/shared/pages/home_page.dart';
+import '../../presentation/shared/widgets/full_screen_player.dart';
 import '../../presentation/auth/pages/login_page.dart';
 import '../../presentation/auth/pages/register_page.dart';
 import 'auth_session.dart';
@@ -34,6 +37,7 @@ final appRouter = GoRouter(
       AppRoutes.home,
       '/home/discover',
       '/home/discover/song',
+      '/home/discover/player',
       '/home/discover/search',
       '/home/discover/instrument',
       '/home/discover/ethnic-group',
@@ -98,7 +102,42 @@ final appRouter = GoRouter(
           name: 'discover-song',
           builder: (context, state) {
             final id = state.pathParameters['id']!;
-            return SongDetailPage(songId: id);
+            return UnifiedSongPage(songId: id);
+          },
+        ),
+        // Phase 3 Option A: full-screen player route; open from SongDetail (tap player or "Mở player full màn hình")
+        GoRoute(
+          path: 'discover/player',
+          name: 'discover-player',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            if (extra == null) {
+              return const Scaffold(
+                body: Center(child: Text('Thiếu dữ liệu phát.')),
+              );
+            }
+            final audioUrl = extra['audioUrl'] as String?;
+            final title = extra['title'] as String? ?? '';
+            if (audioUrl == null || audioUrl.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Thiếu URL audio.')),
+              );
+            }
+            final chipLabels = extra['metadataChipLabels'] as List<dynamic>?;
+            final list = chipLabels
+                ?.map((e) => e.toString())
+                .toList() ?? <String>[];
+            return FullScreenPlayer(
+              audioUrl: audioUrl,
+              title: title,
+              artist: extra['artist'] as String?,
+              imageUrl: extra['imageUrl'] as String?,
+              duration: extra['durationSeconds'] != null
+                  ? Duration(seconds: extra['durationSeconds'] as int)
+                  : null,
+              metadataChipLabels: list,
+              onClose: () => GoRouter.of(context).pop(),
+            );
           },
         ),
         GoRoute(
@@ -178,16 +217,16 @@ final appRouter = GoRouter(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          PhosphorIcon(PhosphorIconsLight.warning, size: 64, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
             'Page not found',
-            style: Theme.of(context).textTheme.headlineMedium,
+            style: AppTypography.heading4(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             state.error?.toString() ?? 'Unknown error',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(

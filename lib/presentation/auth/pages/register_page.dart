@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -52,20 +53,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   Text(
                     'Tạo tài khoản mới',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppColors.textOnGradient,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
+                    style: AppTypography.heading4(color: AppColors.textOnGradient).copyWith(letterSpacing: 0.5),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     'Tham gia cộng đồng bảo tồn âm nhạc truyền thống',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondaryOnGradient,
-                      letterSpacing: 0.3,
-                    ),
+                    style: AppTypography.bodyLarge(color: AppColors.textSecondaryOnGradient).copyWith(letterSpacing: 0.3),
                   ),
                   const SizedBox(height: 48),
                   Card(
@@ -82,15 +76,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           TextField(
                             controller: _nameController,
                             textInputAction: TextInputAction.next,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Họ tên',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.person_outline,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.user,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -120,15 +112,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.email_outlined,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.envelope,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -158,15 +148,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             controller: _passwordController,
                             obscureText: true,
                             textInputAction: TextInputAction.next,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Mật khẩu',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.lock,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -197,15 +185,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             obscureText: true,
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _handleRegister(),
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Xác nhận mật khẩu',
-                              labelStyle: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock_outline,
-                                color: AppColors.primaryRed,
+                              labelStyle: AppTypography.labelLarge(color: AppColors.textSecondary),
+                              prefixIcon: PhosphorIcon(
+                                PhosphorIconsLight.lock,
+                                color: AppColors.primary,
                               ),
                               filled: true,
                               fillColor: AppColors.secondaryLight,
@@ -256,14 +242,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     )
                                   : Text(
                                       'Tạo tài khoản',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                        color: AppColors.textOnGradient,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.5,
-                                      ),
+                                      style: AppTypography.button(color: AppColors.textOnGradient).copyWith(letterSpacing: 0.5),
                                     ),
                             ),
                           ),
@@ -280,8 +259,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                     child: Text(
                       'Đã có tài khoản? Đăng nhập',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textOnGradient,
+                      style: AppTypography.bodyMedium(color: AppColors.textOnGradient).copyWith(
                         decoration: TextDecoration.underline,
                         decorationColor: AppColors.textOnGradient,
                       ),

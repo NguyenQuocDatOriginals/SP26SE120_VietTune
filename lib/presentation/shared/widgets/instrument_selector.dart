@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/instrument.dart';
 import '../../../domain/entities/enums.dart';
@@ -116,14 +117,14 @@ class _InstrumentSelectorState extends ConsumerState<InstrumentSelector> {
                 children: [
                   Text(
                     'Nhạc cụ sử dụng',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: AppTypography.titleMedium().copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '*',
-                    style: TextStyle(color: AppColors.error, fontSize: 16),
+                    style: AppTypography.bodyLarge(color: AppColors.error),
                   ),
                 ],
               ),
@@ -144,9 +145,7 @@ class _InstrumentSelectorState extends ConsumerState<InstrumentSelector> {
                 ),
                 child: Text(
                   'Tìm và chọn nhạc cụ...',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                  style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -159,17 +158,14 @@ class _InstrumentSelectorState extends ConsumerState<InstrumentSelector> {
                 children: selectedInstruments.map((instrument) {
                   return InputChip(
                     onDeleted: () => _toggleSelection(instrument.id),
-                    deleteIcon: Icon(
-                      Icons.close,
+                    deleteIcon: PhosphorIcon(
+                      PhosphorIconsLight.x,
                       size: 16,
                       color: AppColors.textOnPrimary,
                     ),
                     label: Text(_formatInstrumentName(instrument)),
                     backgroundColor: AppColors.primaryLight.withValues(alpha: 0.15),
-                    labelStyle: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    labelStyle: AppTypography.labelMedium(color: AppColors.primary),
                     side: BorderSide(
                       color: AppColors.primary.withValues(alpha: 0.3),
                       width: 1,
@@ -186,9 +182,7 @@ class _InstrumentSelectorState extends ConsumerState<InstrumentSelector> {
             // Hint text
             Text(
               'Chọn một hoặc nhiều nhạc cụ',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary),
             ),
           ],
         );
@@ -275,13 +269,13 @@ class _InstrumentPickerBottomSheetState
               Expanded(
                 child: Text(
                   'Chọn nhạc cụ',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: AppTypography.titleLarge().copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: const PhosphorIcon(PhosphorIconsLight.x),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -294,10 +288,10 @@ class _InstrumentPickerBottomSheetState
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Tìm kiếm nhạc cụ...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: const PhosphorIcon(PhosphorIconsLight.magnifyingGlass),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
+                      icon: PhosphorIcon(PhosphorIconsLight.x),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _searchQuery = '');
@@ -327,9 +321,7 @@ class _InstrumentPickerBottomSheetState
                   ? Center(
                       child: Text(
                         'Không tìm thấy nhạc cụ phù hợp',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                        style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                       ),
                     )
                   : ListView.builder(
@@ -343,7 +335,7 @@ class _InstrumentPickerBottomSheetState
                           dense: true,
                           title: Text(
                             widget.formatInstrumentName(instrument),
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: AppTypography.bodyMedium(),
                           ),
                           value: isSelected,
                           onChanged: (_) => _toggleSelection(instrument.id),

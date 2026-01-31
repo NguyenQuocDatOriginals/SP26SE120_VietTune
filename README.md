@@ -119,13 +119,28 @@ The app currently uses mock data sources for development:
   - `contributor@viettune.vn`
   - `expert@viettune.vn`
 
+## Project Status
+
+**Overall Progress:** **85%** ██████████████████░░
+
+- ✅ **6/10 modules** completed (100%)
+- ⚠️ **4/10 modules** in progress (70-99%)
+
+### Documentation
+
+- 📊 [Project Status Dashboard](./docs/PROJECT-STATUS.md) - Main status overview với visual indicators
+- 📈 [Features Progress Tracking](./docs/FEATURES-PROGRESS.md) - Detailed feature tracking cho 10 modules
+- 📋 [Implementation Summary](./docs/IMPLEMENTATION-SUMMARY.md) - Comprehensive feature list
+- 🔍 [Phase 1 Analysis Results](./docs/PHASE1-ANALYSIS-RESULTS.md) - Codebase analysis results
+
 ## Future Enhancements
 
-- Backend API integration
-- User authentication
+- Backend API integration (in progress)
+- Real user authentication (mock currently)
 - Offline caching
-- Audio recording functionality
-- Image uploads
+- ✅ Audio recording functionality (implemented)
+- ✅ Image uploads (implemented)
+- ✅ Video uploads (implemented)
 - Push notifications
 - Social sharing
 
@@ -135,6 +150,14 @@ The app currently uses mock data sources for development:
 - All audio files are handled through mock URLs (ready for real file upload)
 - Authentication is mock-only; replace with real API before production
 - Code generation is required after modifying Freezed/JSON serializable classes
+
+## Test Coverage
+
+- **Current:** ~6% (12/193 files)
+- **Target:** 80%+
+- **Status:** ⚠️ Needs improvement
+
+Most test coverage is in Media Upload module (9 test files). Other modules need test implementation.
 
 ## License
 

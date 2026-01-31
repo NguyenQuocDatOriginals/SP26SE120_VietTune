@@ -65,10 +65,7 @@ class AudioMetadataModel {
     return AudioMetadata(
       url: url,
       durationInSeconds: durationInSeconds,
-      quality: AudioQuality.values.firstWhere(
-        (e) => e.name == quality,
-        orElse: () => AudioQuality.medium,
-      ),
+      quality: audioQualityFromJsonValue(quality) ?? AudioQuality.medium,
       recordingDate: DateTime.parse(recordingDate),
       instrumentIds: instrumentIds,
       recordingLocation: recordingLocation?.toEntity(),
@@ -89,7 +86,7 @@ class AudioMetadataModel {
     return AudioMetadataModel(
       url: entity.url,
       durationInSeconds: entity.durationInSeconds,
-      quality: entity.quality.name,
+      quality: audioQualityToJsonValue(entity.quality),
       recordingDate: entity.recordingDate.toIso8601String(),
       instrumentIds: entity.instrumentIds,
       recordingLocation: entity.recordingLocation != null

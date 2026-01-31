@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contribution_providers.dart';
 import '../../../../core/utils/audio_utils.dart';
@@ -46,36 +47,29 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
         children: [
           Text(
             'Bước 1: Tải lên Media',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
+            style: AppTypography.heading4(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             'Chọn file âm thanh hoặc video từ thiết bị, hoặc ghi âm trực tiếp',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTypography.bodyMedium(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 24),
           // File picker button - Pill style with gradient
           AppTheme.createPillButton(
             onPressed: () => _pickAudioFile(context, formNotifier),
-            icon: Icons.upload_file,
+            icon: PhosphorIconsLight.upload,
             isFullWidth: true,
-            child: const Text(
+            child: Text(
               'Đóng góp bản thu',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.button(color: AppColors.textOnPrimary),
             ),
           ),
           const SizedBox(height: 16),
           // Record button
           OutlinedButton.icon(
             onPressed: () => _showRecordDialog(context, formNotifier),
-            icon: const Icon(Icons.mic),
+            icon: PhosphorIcon(PhosphorIconsLight.microphone),
             label: const Text('Ghi âm trực tiếp'),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 48),
@@ -88,13 +82,13 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.green[50],
+                color: AppColors.success.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green),
+                border: Border.all(color: AppColors.success),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green),
+                  PhosphorIcon(PhosphorIconsLight.checkCircle, color: AppColors.success),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -102,12 +96,12 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
                       children: [
                         Text(
                           'File đã chọn',
-                          style: Theme.of(context).textTheme.titleSmall,
+                          style: AppTypography.titleSmall(),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           audioUrl,
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: AppTypography.bodySmall(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -115,7 +109,7 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: PhosphorIcon(PhosphorIconsLight.x),
                     onPressed: () => formNotifier.updateAudioUrl(null),
                   ),
                 ],
@@ -141,7 +135,7 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
             const SizedBox(height: 8),
             Text(
               _extractError!,
-              style: const TextStyle(color: Colors.red),
+              style: AppTypography.bodyMedium(color: AppColors.error),
             ),
           ],
           if (audioMetadata != null &&
@@ -154,14 +148,14 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
           Divider(height: 32, thickness: 1),
           Text(
             'Video (Tùy chọn)',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            style: AppTypography.titleLarge().copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Bạn có thể tải lên video minh họa cho bản ghi âm',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: AppTypography.bodyMedium(),
           ),
           const SizedBox(height: 16),
           VideoPickerWidget(
@@ -178,19 +172,19 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: AppColors.info.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: Colors.blue),
+                PhosphorIcon(PhosphorIconsLight.info, color: AppColors.info),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Định dạng hỗ trợ: ${AudioUtils.getSupportedFormatsString()}\n'
                     'Kích thước tối đa: ${(AppConstants.maxAudioFileSize / (1024 * 1024)).toInt()}MB\n'
                     'Video: MP4, MOV (tối đa 100MB)',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: AppTypography.bodySmall(),
                   ),
                 ),
               ],
@@ -421,13 +415,12 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, color: Theme.of(context).primaryColor, size: 20),
+                PhosphorIcon(PhosphorIconsLight.info, color: AppColors.primary, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Thông tin ghi âm',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: AppTypography.titleMedium(color: AppColors.primary).copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ],
@@ -452,7 +445,7 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: AppTypography.labelLarge().copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           Expanded(child: Text(value)),
@@ -481,20 +474,20 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Tìm thấy thông tin từ file. Bạn có muốn tự động điền vào form không?',
-              style: TextStyle(fontSize: 14),
+              style: AppTypography.bodyMedium(),
             ),
             const SizedBox(height: 16),
             if (title != null) ...[
               Row(
                 children: [
-                  const Icon(Icons.music_note, size: 16),
+                  PhosphorIcon(PhosphorIconsLight.musicNotes, size: 16, color: AppColors.textPrimary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Tiêu đề: $title',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: AppTypography.labelLarge().copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -504,12 +497,12 @@ class _AudioUploadStepState extends ConsumerState<AudioUploadStep> {
             if (artist != null) ...[
               Row(
                 children: [
-                  const Icon(Icons.person, size: 16),
+                  PhosphorIcon(PhosphorIconsLight.user, size: 16, color: AppColors.textPrimary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Nghệ sĩ: $artist',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: AppTypography.labelLarge().copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],

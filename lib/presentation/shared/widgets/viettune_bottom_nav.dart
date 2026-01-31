@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../../core/theme/app_theme.dart';
 
-/// VietTune BottomAppBar with centered FAB notch and dot indicator
+/// VietTune BottomAppBar with centered FAB notch and dot indicator.
+/// Uses Phosphor Icons (Light) per PLAN-phosphor-icons-modern-ethnic.
+/// Colors from AppColors per UI consistency audit.
 class VietTuneBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -12,14 +16,14 @@ class VietTuneBottomNav extends StatelessWidget {
     required this.onTap,
   });
 
-  static const Color _activeColor = Color(0xFFB22222);
-  static const Color _inactiveColor = Color(0xFF8D8D8D);
+  static const Color _activeColor = AppColors.primary;
+  static const Color _inactiveColor = AppColors.textSecondary;
 
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
       height: 70,
-      color: const Color(0xFFFFFFFF),
+      color: AppColors.surface,
       elevation: 8,
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
@@ -28,26 +32,26 @@ class VietTuneBottomNav extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _NavItem(
-            icon: Icons.grid_view_rounded,
+            icon: PhosphorIconsLight.compass,
             label: 'Explore',
             isActive: currentIndex == 0,
             onTap: () => _handleTap(0),
           ),
           _NavItem(
-            icon: Icons.auto_awesome_outlined,
+            icon: PhosphorIconsLight.robot,
             label: 'AI Assistant',
             isActive: currentIndex == 1,
             onTap: () => _handleTap(1),
           ),
           const SizedBox(width: 40),
           _NavItem(
-            icon: Icons.hub_outlined,
+            icon: PhosphorIconsLight.mapTrifold,
             label: 'Network',
             isActive: currentIndex == 2,
             onTap: () => _handleTap(2),
           ),
           _NavItem(
-            icon: Icons.person_outline_rounded,
+            icon: PhosphorIconsLight.userCircle,
             label: 'Library',
             isActive: currentIndex == 3,
             onTap: () => _handleTap(3),
@@ -78,31 +82,36 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = isActive
+        ? VietTuneBottomNav._activeColor
+        : VietTuneBottomNav._inactiveColor;
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isActive
-                  ? VietTuneBottomNav._activeColor
-                  : VietTuneBottomNav._inactiveColor,
-              size: 22,
-            ),
+      child: Semantics(
+        label: label,
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              PhosphorIcon(
+                icon,
+                color: color,
+                size: 22,
+              ),
             const SizedBox(height: 1),
             Flexible(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                style: AppTypography.labelSmall(
                   color: isActive
                       ? VietTuneBottomNav._activeColor
                       : VietTuneBottomNav._inactiveColor,
+                ).copyWith(
+                  fontSize: 9,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                   height: 1.1,
                 ),
                 maxLines: 1,
@@ -122,6 +131,7 @@ class _NavItem extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

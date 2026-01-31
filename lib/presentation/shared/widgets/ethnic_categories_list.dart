@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/ethnic_group.dart';
@@ -94,8 +95,8 @@ class _CategoryItem extends StatelessWidget {
                     color: AppColors.primary,
                   ),
                   child: Center(
-                    child: Icon(
-                      Icons.people_rounded,
+                    child: PhosphorIcon(
+                      PhosphorIconsLight.users,
                       size: 30,
                       color: AppColors.textOnPrimary.withValues(alpha: 0.9),
                     ),

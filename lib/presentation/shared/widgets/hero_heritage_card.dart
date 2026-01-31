@@ -1,11 +1,11 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/constants.dart';
 import '../../../domain/entities/song.dart';
 
-/// Large hero card with cinematic image, glassmorphism panel, and dynamic waveform
+/// Large hero card with cinematic image, red gradient overlay, and dynamic waveform
 class HeroHeritageCard extends StatefulWidget {
   final Song song;
   final String? imageUrl;
@@ -46,7 +46,7 @@ class _HeroHeritageCardState extends State<HeroHeritageCard>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onTap ?? () => context.push('/discover/song/${widget.song.id}'),
+      onTap: widget.onTap ?? () => context.push('${AppRoutes.discoverSongPath}/${widget.song.id}'),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         height: 320,
@@ -131,12 +131,13 @@ class _HeroHeritageCardState extends State<HeroHeritageCard>
     );
   }
 
+  /// Red gradient only (no black) so text is readable without a dark strip.
   Widget _buildGradientOverlay() {
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
-      height: 140,
+      height: 160,
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -144,95 +145,78 @@ class _HeroHeritageCardState extends State<HeroHeritageCard>
             end: Alignment.bottomCenter,
             colors: [
               Colors.transparent,
-              Colors.black.withValues(alpha: 0.8),
+              AppColors.primaryDark.withValues(alpha: 0.5),
+              AppColors.primaryDark.withValues(alpha: 0.85),
             ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
       ),
     );
   }
 
+  /// Content panel: no blur, no black; sits on red gradient.
   Widget _buildGlassmorphismPanel(BuildContext context) {
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(24),
-              ),
-              border: Border(
-                top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Title
-                Text(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
                   widget.song.title,
                   style: AppTypography.heading4(
                     color: AppColors.textOnPrimary,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                // Artist/Instrument info
-                if (widget.artistName != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 16,
-                        color: AppColors.gold,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        widget.artistName!,
-                        style: AppTypography.bodyMedium(
-                          color: AppColors.gold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            // Artist/Instrument info
+            if (widget.artistName != null)
+              Row(
+                children: [
+                  Icon(
+                    Icons.person_outline_rounded,
+                    size: 16,
+                    color: AppColors.gold,
                   ),
-                const SizedBox(height: 8),
-                // Heritage badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    'Di sản nổi bật',
-                    style: AppTypography.labelSmall(
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.artistName!,
+                    style: AppTypography.bodyMedium(
                       color: AppColors.gold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                ],
+              ),
+            const SizedBox(height: 8),
+            // Heritage badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.gold.withValues(alpha: 0.5),
+                  width: 1,
                 ),
-              ],
+              ),
+              child: Text(
+                'Di sản nổi bật',
+                style: AppTypography.labelSmall(
+                  color: AppColors.gold,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/haptic_service.dart';
@@ -187,14 +188,11 @@ class _ChipInputState extends State<ChipInput> {
           if (widget.label != null) ...[
             Text(
               widget.label! + (widget.required ? ' *' : ''),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+              style: AppTypography.labelLarge(
                 color: widget.enabled 
                     ? AppColors.textPrimary 
                     : AppColors.textSecondary,
-                height: 1.4,
-              ),
+              ).copyWith(fontWeight: FontWeight.w600, height: 1.4),
             ),
             const SizedBox(height: 8),
           ],
@@ -242,26 +240,19 @@ class _ChipInputState extends State<ChipInput> {
                         return Chip(
                           label: Text(
                             chip,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: AppTypography.labelMedium(),
                           ),
                           onDeleted: widget.enabled
                               ? () => _removeChip(chip)
                               : null,
-                          deleteIcon: const Icon(Icons.close, size: 18),
+                          deleteIcon: const PhosphorIcon(PhosphorIconsLight.x, size: 18),
                           backgroundColor: AppColors.primary.withOpacity(0.1),
                           deleteIconColor: AppColors.textSecondary,
                           side: BorderSide(
                             color: AppColors.primary.withOpacity(0.3),
                             width: 1,
                           ),
-                          labelStyle: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          labelStyle: AppTypography.labelMedium(color: AppColors.textPrimary),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
@@ -275,17 +266,14 @@ class _ChipInputState extends State<ChipInput> {
                     controller: _textController,
                     focusNode: _focusNode,
                     enabled: widget.enabled,
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: AppTypography.bodyLarge(
                       color: widget.enabled 
                           ? AppColors.textPrimary 
                           : AppColors.textSecondary,
-                      height: 1.5,
-                    ),
+                    ).copyWith(height: 1.5),
                     decoration: InputDecoration(
                       hintText: widget.hintText ?? 'Nhập và nhấn Enter',
-                      hintStyle: TextStyle(
-                        fontSize: 14,
+                      hintStyle: AppTypography.bodyMedium(
                         color: AppColors.textSecondary.withOpacity(0.7),
                       ),
                       border: InputBorder.none,
@@ -313,8 +301,8 @@ class _ChipInputState extends State<ChipInput> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.error_outline,
+                  PhosphorIcon(
+                    PhosphorIconsLight.warning,
                     size: 16,
                     color: AppColors.error,
                   ),
@@ -322,9 +310,7 @@ class _ChipInputState extends State<ChipInput> {
                   Expanded(
                     child: Text(
                       errorText,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.error,
+                      style: AppTypography.bodySmall(color: AppColors.error).copyWith(
                         fontWeight: FontWeight.w500,
                         height: 1.4,
                       ),
@@ -338,11 +324,9 @@ class _ChipInputState extends State<ChipInput> {
             const SizedBox(height: 6),
             Text(
               widget.helperText!,
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTypography.bodySmall(
                 color: AppColors.textSecondary.withOpacity(0.8),
-                height: 1.4,
-              ),
+              ).copyWith(height: 1.4),
             ),
           ],
       ],

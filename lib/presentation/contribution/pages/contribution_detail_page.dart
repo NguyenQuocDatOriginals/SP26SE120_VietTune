@@ -4,6 +4,7 @@ import '../providers/contribution_providers.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/utils/extensions.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/genre_tag.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../../core/theme/app_theme.dart';
@@ -45,20 +46,19 @@ class ContributionDetailPage extends ConsumerWidget {
                 if (song != null) ...[
                   Text(
                     song.title,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: AppColors.textOnGradient,
+                    style: AppTypography.heading4(color: AppColors.textOnGradient).copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
                   // Genre
-                  Chip(label: Text(_getGenreText(song.genre))),
+                  GenreTag(label: _getGenreText(song.genre)),
                   const SizedBox(height: 24),
                   // Submitted date
                   if (contribution.submittedAt != null)
                     Text(
                       'Gửi lúc: ${contribution.submittedAt!.toVietnameseDateTime()}',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: AppTypography.bodyMedium(),
                     ),
                   const SizedBox(height: 16),
                   // Review comments
@@ -72,7 +72,7 @@ class ContributionDetailPage extends ConsumerWidget {
                           children: [
                             Text(
                               'Nhận xét từ người duyệt:',
-                              style: Theme.of(context).textTheme.titleSmall,
+                              style: AppTypography.titleSmall(),
                             ),
                             const SizedBox(height: 8),
                             Text(contribution.reviewComments!),
@@ -86,7 +86,7 @@ class ContributionDetailPage extends ConsumerWidget {
                   if (song.description != null) ...[
                     Text(
                       'Mô tả',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: AppTypography.titleMedium(),
                     ),
                     const SizedBox(height: 8),
                     Text(song.description!),

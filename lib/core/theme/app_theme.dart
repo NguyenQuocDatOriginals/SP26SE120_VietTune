@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// "Modern Ethnic" color scheme - Phong cách dân tộc hiện đại
 class AppColors {
@@ -412,7 +413,7 @@ class AppTheme {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 20),
+                  PhosphorIcon(icon, size: 20, color: AppColors.textOnPrimary),
                   const SizedBox(width: 8),
                   child,
                 ],
@@ -455,7 +456,7 @@ class AppTheme {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 20, color: AppColors.primary),
+                  PhosphorIcon(icon, size: 20, color: AppColors.primary),
                   const SizedBox(width: 8),
                   child,
                 ],
@@ -467,6 +468,10 @@ class AppTheme {
 }
 
 /// Audio player specific theme
+///
+/// Inline player (card): uses [background], [waveformActive] = primary.
+/// Full-screen player: uses [fullScreen*] colors per docs/PLAN-audioplayer-app-colors.md
+/// — gold for circular border, waveform, progress; primary for Play/Pause CTA.
 class AudioPlayerTheme {
   static const Color primary = AppColors.primary;
   static const Color secondary = AppColors.secondary;
@@ -476,6 +481,23 @@ class AudioPlayerTheme {
   static const Color textSecondary = AppColors.textSecondary;
   static const Color waveformActive = AppColors.primary;
   static const Color waveformInactive = AppColors.divider;
+
+  // --- Full-screen player (layout like reference, app colors) ---
+  static const Color fullScreenBackground = AppColors.background;
+  static const Color fullScreenHeaderText = AppColors.textPrimary;
+  static const Color fullScreenCircularBorderColor = AppColors.gold;
+  static const Color fullScreenCircularBorderShadow = AppColors.goldDark;
+  static const Color fullScreenWaveformActive = AppColors.gold;
+  static const Color fullScreenWaveformInactive = AppColors.divider;
+  static const Color fullScreenProgressActive = AppColors.gold;
+  static const Color fullScreenProgressInactive = AppColors.divider;
+  static const Color fullScreenProgressThumb = AppColors.gold;
+  static const Color fullScreenMetadataChipBackground = AppColors.surface;
+  static const Color fullScreenMetadataChipBorder = AppColors.border;
+  static const Color fullScreenMetadataChipText = AppColors.textPrimary;
+  static const Color fullScreenControlIconColor = AppColors.gold;
+  static const Color fullScreenPlayButtonGradientStart = AppColors.primary;
+  static const Color fullScreenPlayButtonGradientEnd = AppColors.primaryDark;
 }
 
 /// Metadata card theme
@@ -590,6 +612,29 @@ class AppTypography {
     color: color ?? AppColors.textOnPrimary,
     letterSpacing: 0.5,
     height: 1.4,
+  );
+
+  // Title styles (Material-aligned)
+  static TextStyle titleLarge({Color? color}) => _bodyFont.copyWith(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    color: color ?? AppColors.textPrimary,
+    letterSpacing: 0,
+    height: 1.3,
+  );
+  static TextStyle titleMedium({Color? color}) => _bodyFont.copyWith(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: color ?? AppColors.textPrimary,
+    letterSpacing: 0.15,
+    height: 1.5,
+  );
+  static TextStyle titleSmall({Color? color}) => _bodyFont.copyWith(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: color ?? AppColors.textPrimary,
+    letterSpacing: 0.1,
+    height: 1.5,
   );
   
   // Caption (Noto Sans)

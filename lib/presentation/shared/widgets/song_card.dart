@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../domain/entities/song.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../core/utils/extensions.dart';
 import '../../../core/theme/app_theme.dart';
 import 'status_badge.dart';
+import 'genre_tag.dart';
 
 /// Song card widget for displaying songs in lists
 class SongCard extends StatelessWidget {
@@ -39,9 +41,11 @@ class SongCard extends StatelessWidget {
                   width: 80,
                   height: 80,
                   color: AppColors.divider,
-                  child: song.audioMetadata?.url != null
-                      ? const Icon(Icons.music_note, size: 40)
-                      : const Icon(Icons.audio_file, size: 40),
+                  child: PhosphorIcon(
+                    PhosphorIconsLight.musicNotes,
+                    size: 40,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -55,14 +59,14 @@ class SongCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             song.title,
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: AppTypography.titleMedium(),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (onFavoriteTap != null)
                           IconButton(
-                            icon: const Icon(Icons.favorite_border),
+                            icon: const PhosphorIcon(PhosphorIconsLight.heart),
                             onPressed: onFavoriteTap,
                             iconSize: 20,
                             padding: EdgeInsets.zero,
@@ -75,7 +79,7 @@ class SongCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         song.alternativeTitles!.join(', '),
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: AppTypography.bodySmall(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -83,39 +87,32 @@ class SongCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 4,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         StatusBadge(status: song.verificationStatus),
-                        Chip(
-                          label: Text(
-                            _getGenreText(song.genre),
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                          padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                        ),
+                        GenreTag(label: _getGenreText(song.genre)),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         if (song.playCount != null) ...[
-                          Icon(
-                            Icons.play_arrow,
+                          PhosphorIcon(
+                            PhosphorIconsLight.play,
                             size: 14,
                             color: AppColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${song.playCount}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: AppTypography.bodySmall(),
                           ),
                           const SizedBox(width: 16),
                         ],
                         if (song.audioMetadata != null) ...[
-                          Icon(
-                            Icons.access_time,
+                          PhosphorIcon(
+                            PhosphorIconsLight.clock,
                             size: 14,
                             color: AppColors.textSecondary,
                           ),
@@ -123,7 +120,7 @@ class SongCard extends StatelessWidget {
                           Text(
                             Duration(seconds: song.audioMetadata!.durationInSeconds)
                                 .toMMSS(),
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: AppTypography.bodySmall(),
                           ),
                         ],
                       ],

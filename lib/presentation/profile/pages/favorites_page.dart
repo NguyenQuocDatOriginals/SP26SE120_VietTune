@@ -19,9 +19,7 @@ class FavoritesPage extends StatelessWidget {
           child: Center(
             child: Text(
               'Favorites Page - Coming Soon',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textOnGradient,
-              ),
+              style: AppTypography.bodyLarge(color: AppColors.textOnGradient),
             ),
           ),
         ),

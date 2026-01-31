@@ -19,9 +19,7 @@ class SettingsPage extends StatelessWidget {
           child: Center(
             child: Text(
               'Settings Page - Coming Soon',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textOnGradient,
-              ),
+              style: AppTypography.bodyLarge(color: AppColors.textOnGradient),
             ),
           ),
         ),

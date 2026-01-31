@@ -27,8 +27,7 @@ class PeopleStep extends ConsumerWidget {
         children: [
           Text(
             'Bước 3: Thông tin người thực hiện',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textPrimary,
+            style: AppTypography.heading4(color: AppColors.textPrimary).copyWith(
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -36,10 +35,7 @@ class PeopleStep extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Thông tin về nghệ sĩ, dân tộc và tác giả',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           
@@ -69,10 +65,8 @@ class PeopleStep extends ConsumerWidget {
                               children: [
                                 Text(
                                   'Nghệ sĩ/Người biểu diễn *',
-                                  style: TextStyle(
-                                    fontSize: 15,
+                                  style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
                                     height: 1.4,
                                   ),
                                 ),
@@ -80,17 +74,14 @@ class PeopleStep extends ConsumerWidget {
                                 TextFormField(
                                   enabled: !isUnknownChecked,
                                   initialValue: artistName,
-                                  style: TextStyle(
-                                    fontSize: 16,
+                                  style: AppTypography.bodyLarge(
                                     color: isUnknownChecked 
                                         ? AppColors.textSecondary 
                                         : AppColors.textPrimary,
-                                    height: 1.5,
-                                  ),
+                                  ).copyWith(height: 1.5),
                                   decoration: InputDecoration(
                                     hintText: 'Nhập tên người biểu diễn',
-                                    hintStyle: TextStyle(
-                                      fontSize: 14,
+                                    hintStyle: AppTypography.bodyMedium(
                                       color: AppColors.textSecondary.withOpacity(0.7),
                                     ),
                                     filled: true,
@@ -139,9 +130,7 @@ class PeopleStep extends ConsumerWidget {
                                     errorText: hasError 
                                         ? 'Vui lòng nhập tên người biểu diễn'
                                         : null,
-                                    errorStyle: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.error,
+                                    errorStyle: AppTypography.bodySmall(color: AppColors.error).copyWith(
                                       fontWeight: FontWeight.w500,
                                       height: 1.4,
                                     ),
@@ -172,13 +161,10 @@ class PeopleStep extends ConsumerWidget {
                       CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          'Không rõ',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
+                          title: Text(
+                            'Không rõ',
+                            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                           ),
-                        ),
                         value: isUnknownChecked,
                         activeColor: AppColors.primary,
                         checkColor: AppColors.textPrimary,
@@ -201,10 +187,8 @@ class PeopleStep extends ConsumerWidget {
                 children: [
                   Text(
                     'Dân tộc *',
-                    style: TextStyle(
-                      fontSize: 15,
+                    style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -236,10 +220,8 @@ class PeopleStep extends ConsumerWidget {
                         children: [
                           Text(
                             'Nhạc sĩ/Tác giả',
-                            style: TextStyle(
-                              fontSize: 15,
+                            style: AppTypography.labelLarge(color: AppColors.textPrimary).copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -255,16 +237,10 @@ class PeopleStep extends ConsumerWidget {
                       TextFormField(
                         enabled: !isFolkChecked,
                         initialValue: isFolkChecked ? '' : (song?.author ?? ''),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.textPrimary,
-                        ),
+                        style: AppTypography.bodyLarge(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Tên người sáng tác',
-                          hintStyle: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
+                          hintStyle: AppTypography.bodyMedium(color: AppColors.textSecondary),
                           filled: true,
                           fillColor: AppColors.surface,
                           border: OutlineInputBorder(
@@ -290,13 +266,10 @@ class PeopleStep extends ConsumerWidget {
                       CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          'Dân gian/Không rõ tác giả',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
+                          title: Text(
+                            'Dân gian/Không rõ tác giả',
+                            style: AppTypography.bodyMedium(color: AppColors.textSecondary),
                           ),
-                        ),
                         value: isFolkChecked,
                         activeColor: AppColors.primary,
                         checkColor: AppColors.textPrimary,
