@@ -7,12 +7,14 @@ import { buildTagsFromLocal } from "@/utils/recordingTags";
 import type { LocalRecording } from "@/types";
 import BackButton from "@/components/common/BackButton";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
-import { Edit, LogIn } from "lucide-react";
+import { Edit, LogIn, Trash2, FileEdit } from "lucide-react";
+import { recordingRequestService } from "@/services/recordingRequestService";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 import { sessionSetItem } from "@/services/storageService";
+import { notify } from "@/stores/notificationStore";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -36,6 +38,9 @@ export default function ContributionsPage() {
   const navigate = useNavigate();
   const [contributions, setContributions] = useState<LocalRecording[]>([]);
   const [withdrawConfirmId, setWithdrawConfirmId] = useState<string | null>(null);
+  const [deleteRecordingConfirm, setDeleteRecordingConfirm] = useState<LocalRecording | null>(null);
+  const [editRequestConfirm, setEditRequestConfirm] = useState<LocalRecording | null>(null);
+  const [editApprovedIds, setEditApprovedIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -59,6 +64,21 @@ export default function ContributionsPage() {
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
   }, [load]);
+
+  useEffect(() => {
+    if (!user) return;
+    const check = async () => {
+      const ids = new Set<string>();
+      for (const c of contributions) {
+        if (c.id && c.moderation?.status === ModerationStatus.APPROVED) {
+          const ok = await recordingRequestService.isEditApprovedForRecording(c.id);
+          if (ok) ids.add(c.id);
+        }
+      }
+      setEditApprovedIds(ids);
+    };
+    void check();
+  }, [user, contributions]);
 
 
   const withdraw = async (id?: string) => {
@@ -175,7 +195,42 @@ export default function ContributionsPage() {
               </button>
             )}
             {it.moderation?.status === ModerationStatus.APPROVED && (
-              <div className="text-sm text-green-600 font-medium whitespace-nowrap">Đã được kiểm duyệt</div>
+              <>
+                {editApprovedIds.has(it.id ?? "") ? (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const recording = await getLocalRecordingFull(it.id ?? "");
+                        if (recording) {
+                          await sessionSetItem("editingRecording", JSON.stringify(recording));
+                          navigate("/upload?edit=true");
+                        }
+                      } catch (err) {
+                        console.error("Error loading recording for edit:", err);
+                      }
+                    }}
+                    className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                  >
+                    <Edit className="h-4 w-4" strokeWidth={2.5} />
+                    Chỉnh sửa
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setEditRequestConfirm(it)}
+                    className="px-4 py-2 rounded-full bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer font-medium"
+                  >
+                    <FileEdit className="h-4 w-4" strokeWidth={2.5} />
+                    Yêu cầu chỉnh sửa
+                  </button>
+                )}
+                <button
+                  onClick={() => setDeleteRecordingConfirm(it)}
+                  className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                  Xoá bản thu
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -319,6 +374,40 @@ export default function ContributionsPage() {
 
   const isNotContributor = !user || user.role !== "CONTRIBUTOR";
 
+  const handleDeleteRecordingConfirm = async () => {
+    if (!deleteRecordingConfirm || !user) return;
+    try {
+      await recordingRequestService.requestDeleteRecording(
+        deleteRecordingConfirm.id ?? "",
+        deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề",
+        user.id,
+        user.fullName || user.username
+      );
+      setDeleteRecordingConfirm(null);
+      notify.success("Thành công", "Yêu cầu xóa bản thu đã được gửi đến Quản trị viên.");
+    } catch (err) {
+      console.error(err);
+      notify.error("Lỗi", "Không thể gửi yêu cầu xóa. Vui lòng thử lại.");
+    }
+  };
+
+  const handleEditRequestConfirm = async () => {
+    if (!editRequestConfirm || !user) return;
+    try {
+      await recordingRequestService.requestEditRecording(
+        editRequestConfirm.id ?? "",
+        editRequestConfirm.basicInfo?.title || editRequestConfirm.title || "Không có tiêu đề",
+        user.id,
+        user.fullName || user.username
+      );
+      setEditRequestConfirm(null);
+      notify.success("Thành công", "Yêu cầu chỉnh sửa đã được gửi đến Quản trị viên.");
+    } catch (err) {
+      console.error(err);
+      notify.error("Lỗi", "Không thể gửi yêu cầu chỉnh sửa. Vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <ConfirmationDialog
@@ -336,6 +425,28 @@ export default function ContributionsPage() {
         confirmText="Hủy đóng góp"
         cancelText="Không"
         confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+      />
+      <ConfirmationDialog
+        isOpen={!!deleteRecordingConfirm}
+        onClose={() => setDeleteRecordingConfirm(null)}
+        onConfirm={handleDeleteRecordingConfirm}
+        title="Xác nhận yêu cầu xóa bản thu"
+        message={deleteRecordingConfirm ? `Bạn có chắc muốn gửi yêu cầu xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}"?` : ""}
+        description="Yêu cầu sẽ được gửi đến Quản trị viên, sau đó chuyển đến Chuyên gia để xóa hoàn toàn bản thu khỏi hệ thống."
+        confirmText="Gửi yêu cầu xóa"
+        cancelText="Hủy"
+        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+      />
+      <ConfirmationDialog
+        isOpen={!!editRequestConfirm}
+        onClose={() => setEditRequestConfirm(null)}
+        onConfirm={handleEditRequestConfirm}
+        title="Xác nhận yêu cầu chỉnh sửa bản thu"
+        message={editRequestConfirm ? `Bạn có chắc muốn gửi yêu cầu chỉnh sửa bản thu "${editRequestConfirm.basicInfo?.title || editRequestConfirm.title || "Không có tiêu đề"}"?` : ""}
+        description="Yêu cầu sẽ được gửi đến Quản trị viên. Sau khi được duyệt, bạn có thể chỉnh sửa bản thu và gửi Chuyên gia kiểm duyệt lại."
+        confirmText="Gửi yêu cầu chỉnh sửa"
+        cancelText="Hủy"
+        confirmButtonStyle="bg-primary-600 text-white hover:bg-primary-500"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header — responsive */}

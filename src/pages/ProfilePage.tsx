@@ -1,18 +1,22 @@
 import { useEffect, useState, FormEvent } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
-import { Target, Users, Heart, FileText, Trash2, AlertTriangle, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Target, Users, Heart, FileText, Trash2, AlertTriangle, X, UserMinus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { User } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import { authService } from "@/services/authService";
 import BackButton from "@/components/common/BackButton";
+import ConfirmationDialog from "@/components/common/ConfirmationDialog";
 import { getItem, setItem } from "@/services/storageService";
 import { getLocalRecordingIds, getLocalRecordingFull, setLocalRecording, clearAllLocalRecordings } from "@/services/recordingStorage";
+import { accountDeletionService } from "@/services/accountDeletionService";
 
 export default function ProfilePage() {
-  const { user, setUser } = useAuthStore();
+  const { user, setUser, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [showDeleteMetadataConfirm, setShowDeleteMetadataConfirm] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
 
   // Edit profile modal state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -165,9 +169,32 @@ export default function ProfilePage() {
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
+  const handleDeleteAccountConfirm = async () => {
+    if (!user) return;
+    try {
+      if (user.role === "CONTRIBUTOR") {
+        await accountDeletionService.deleteAccountContributor(user.id);
+        logout();
+        navigate("/login", { replace: true });
+        notify.success("Thành công", "Tài khoản đã được xóa khỏi hệ thống.");
+      } else if (user.role === "EXPERT") {
+        await accountDeletionService.requestExpertAccountDeletion({
+          expertId: user.id,
+          expertUsername: user.username,
+          expertFullName: user.fullName,
+        });
+        setShowDeleteAccountConfirm(false);
+        notify.success("Thành công", "Yêu cầu xóa tài khoản đã được gửi đến Quản trị viên. Bạn sẽ được xóa khỏi hệ thống sau khi được duyệt.");
+      }
+    } catch (err) {
+      console.error("Delete account error:", err);
+      notify.error("Lỗi", "Không thể xử lý yêu cầu. Vui lòng thử lại.");
+    }
+  };
+
   // Disable body scroll when dialogs are open
   useEffect(() => {
-    if (isEditOpen || showDeleteMetadataConfirm) {
+    if (isEditOpen || showDeleteMetadataConfirm || showDeleteAccountConfirm) {
       // Save current scroll position
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
@@ -192,26 +219,23 @@ export default function ProfilePage() {
       document.body.style.width = '';
       document.body.style.overflow = '';
     };
-  }, [isEditOpen, showDeleteMetadataConfirm]);
+  }, [isEditOpen, showDeleteMetadataConfirm, showDeleteAccountConfirm]);
 
   // Handle ESC key to close dialogs
   useEffect(() => {
-    if (!isEditOpen && !showDeleteMetadataConfirm) return;
+    if (!isEditOpen && !showDeleteMetadataConfirm && !showDeleteAccountConfirm) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isEditOpen) {
-          setIsEditOpen(false);
-        }
-        if (showDeleteMetadataConfirm) {
-          setShowDeleteMetadataConfirm(false);
-        }
+        if (isEditOpen) setIsEditOpen(false);
+        if (showDeleteMetadataConfirm) setShowDeleteMetadataConfirm(false);
+        if (showDeleteAccountConfirm) setShowDeleteAccountConfirm(false);
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isEditOpen, showDeleteMetadataConfirm]);
+  }, [isEditOpen, showDeleteMetadataConfirm, showDeleteAccountConfirm]);
 
 
   const handleDeleteAllMetadata = async () => {
@@ -384,6 +408,30 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {/* Delete account (Contributor & Expert) */}
+          {(user?.role === "CONTRIBUTOR" || user?.role === "EXPERT") && (
+            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Xoá tài khoản</h2>
+                  <p className="text-neutral-700 font-medium text-sm">
+                    {user.role === "CONTRIBUTOR"
+                      ? "Xóa tài khoản sẽ đăng xuất và xóa dữ liệu tài khoản khỏi hệ thống. Hành động không thể hoàn tác."
+                      : "Chuyên gia xóa tài khoản cần được Quản trị viên duyệt. Sau khi duyệt, tài khoản sẽ bị xóa khỏi hệ thống."}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteAccountConfirm(true)}
+                className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer flex items-center gap-2"
+              >
+                <UserMinus className="w-4 h-4" strokeWidth={2.5} />
+                Xoá tài khoản
+              </button>
+            </div>
+          )}
+
           {/* Terms and Conditions Link */}
           <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
             <div className="bg-neutral-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
@@ -401,6 +449,27 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteAccountConfirm}
+        onClose={() => setShowDeleteAccountConfirm(false)}
+        onConfirm={handleDeleteAccountConfirm}
+        title="Xác nhận xóa tài khoản"
+        message={
+          user?.role === "CONTRIBUTOR"
+            ? "Bạn có chắc chắn muốn xóa tài khoản khỏi hệ thống?"
+            : "Bạn có chắc chắn muốn gửi yêu cầu xóa tài khoản đến Quản trị viên?"
+        }
+        description={
+          user?.role === "CONTRIBUTOR"
+            ? "Tài khoản và dữ liệu liên quan sẽ bị xóa. Hành động này không thể hoàn tác."
+            : "Sau khi Quản trị viên duyệt, tài khoản của bạn sẽ bị xóa khỏi hệ thống."
+        }
+        confirmText={user?.role === "CONTRIBUTOR" ? "Xóa tài khoản" : "Gửi yêu cầu"}
+        cancelText="Hủy"
+        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+      />
 
       {/* Delete Metadata Confirmation Dialog */}
       {showDeleteMetadataConfirm && createPortal(

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import BackButton from "@/components/common/BackButton";
-import { Users, BarChart3, Shield, ChevronRight, ChevronDown, User as UserIcon, Music, MapPin, FileWarning } from "lucide-react";
+import { Users, BarChart3, Shield, ChevronRight, ChevronDown, User as UserIcon, Music, MapPin, FileWarning, UserMinus, Trash2, FileEdit } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { UserRole } from "@/types";
 import { USER_ROLE_NAMES } from "@/config/constants";
@@ -13,8 +13,11 @@ import { notify } from "@/stores/notificationStore";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
 import { getItem, setItem } from "@/services/storageService";
 import { getLocalRecordingMetaList, removeLocalRecording } from "@/services/recordingStorage";
+import { accountDeletionService } from "@/services/accountDeletionService";
+import { recordingRequestService } from "@/services/recordingRequestService";
+import type { ExpertAccountDeletionRequest, DeleteRecordingRequest, EditRecordingRequest } from "@/types";
 
-type TabId = "users" | "analytics" | "moderation";
+type TabId = "users" | "analytics" | "moderation" | "expertDeletion" | "recordRequests";
 
 interface AggregatedUser {
   id: string;
@@ -172,6 +175,11 @@ export default function AdminDashboard() {
   const [usersOverrides, setUsersOverrides] = useState<Record<string, { role?: string; username?: string; fullName?: string }>>({});
   const [removeTarget, setRemoveTarget] = useState<{ id: string; title?: string } | null>(null);
   const [deleteUserTarget, setDeleteUserTarget] = useState<{ id: string; username: string } | null>(null);
+  const [expertDeletionApproveTarget, setExpertDeletionApproveTarget] = useState<ExpertAccountDeletionRequest | null>(null);
+  const [pendingExpertDeletions, setPendingExpertDeletions] = useState<ExpertAccountDeletionRequest[]>([]);
+  const [deleteRecordingRequests, setDeleteRecordingRequests] = useState<DeleteRecordingRequest[]>([]);
+  const [editRecordingRequests, setEditRecordingRequests] = useState<EditRecordingRequest[]>([]);
+  const [forwardDeleteExpertId, setForwardDeleteExpertId] = useState<{ requestId: string; expertId: string } | null>(null);
   const [deletedUserIds, setDeletedUserIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
@@ -196,6 +204,9 @@ export default function AdminDashboard() {
     } catch {
       setDeletedUserIds(new Set());
     }
+    setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
+    recordingRequestService.getDeleteRecordingRequests().then(setDeleteRecordingRequests);
+    recordingRequestService.getEditRecordingRequests().then(setEditRecordingRequests);
   }, []);
 
   useEffect(() => {
@@ -345,10 +356,26 @@ export default function AdminDashboard() {
 
   if (!user || user.role !== UserRole.ADMIN) return null;
 
+  const expertOptions = (() => {
+    const oRaw = getItem("users_overrides");
+    const o = oRaw ? (JSON.parse(oRaw) as Record<string, { id?: string; username?: string; fullName?: string; role?: string }>) : {};
+    const experts: { id: string; username: string; fullName?: string }[] = [];
+    ["expert_a", "expert_b", "expert_c"].forEach((id) => {
+      const u = o[id];
+      if (u?.role === UserRole.EXPERT || !u) experts.push({ id, username: u?.username ?? id, fullName: u?.fullName });
+    });
+    Object.entries(o).forEach(([id, u]) => {
+      if (u?.role === UserRole.EXPERT && !experts.some((e) => e.id === id)) experts.push({ id, username: u.username ?? id, fullName: u.fullName });
+    });
+    return experts;
+  })();
+
   const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
     { id: "users", label: "Quản lý người dùng", icon: Users },
     { id: "analytics", label: "Phân tích bộ sưu tập", icon: BarChart3 },
     { id: "moderation", label: "Kiểm duyệt nội dung", icon: Shield },
+    { id: "expertDeletion", label: "Yêu cầu xóa tài khoản Chuyên gia", icon: UserMinus },
+    { id: "recordRequests", label: "Yêu cầu xóa / chỉnh sửa bản thu", icon: FileEdit },
   ];
 
   return (
@@ -516,6 +543,162 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {tab === "recordRequests" && (
+            <div className="p-8">
+              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
+                <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+                  <FileEdit className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+                </div>
+                Yêu cầu xóa / chỉnh sửa bản thu
+              </h2>
+              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
+                Yêu cầu xóa bản thu từ Người đóng góp: chuyển đến Chuyên gia để thực hiện xóa. Yêu cầu chỉnh sửa: duyệt để Người đóng góp có thể chỉnh sửa rồi gửi Chuyên gia kiểm duyệt lại.
+              </p>
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                    <Trash2 className="h-5 w-5 text-red-600" strokeWidth={2.5} />
+                    Yêu cầu xóa bản thu (chờ chuyển Chuyên gia)
+                  </h3>
+                  {deleteRecordingRequests.filter((r) => r.status === "pending_admin").length === 0 ? (
+                    <p className="text-neutral-500 font-medium text-sm">Chưa có yêu cầu.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {deleteRecordingRequests
+                        .filter((r) => r.status === "pending_admin")
+                        .map((req) => (
+                          <div
+                            key={req.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 p-4"
+                            style={{ backgroundColor: "#FFFCF5" }}
+                          >
+                            <div>
+                              <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
+                              <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <select
+                                className="px-3 py-2 rounded-full border border-neutral-300 text-neutral-900 text-sm font-medium bg-white cursor-pointer"
+                                value={forwardDeleteExpertId?.requestId === req.id ? forwardDeleteExpertId.expertId : ""}
+                                onChange={(e) => setForwardDeleteExpertId(e.target.value ? { requestId: req.id, expertId: e.target.value } : null)}
+                              >
+                                <option value="">-- Chọn Chuyên gia --</option>
+                                {expertOptions.map((ex) => (
+                                  <option key={ex.id} value={ex.id}>{ex.fullName ?? ex.username}</option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                disabled={!forwardDeleteExpertId || forwardDeleteExpertId.requestId !== req.id || !forwardDeleteExpertId.expertId}
+                                onClick={async () => {
+                                  if (!forwardDeleteExpertId || forwardDeleteExpertId.requestId !== req.id) return;
+                                  try {
+                                    await recordingRequestService.forwardDeleteToExpert(req.id, forwardDeleteExpertId.expertId);
+                                    setForwardDeleteExpertId(null);
+                                    setDeleteRecordingRequests(await recordingRequestService.getDeleteRecordingRequests());
+                                    notify.success("Thành công", "Đã chuyển yêu cầu xóa đến Chuyên gia.");
+                                  } catch (e) {
+                                    notify.error("Lỗi", "Không thể chuyển yêu cầu.");
+                                  }
+                                }}
+                                className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium cursor-pointer"
+                              >
+                                Chuyển đến Chuyên gia
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                    <FileEdit className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+                    Yêu cầu chỉnh sửa bản thu (chờ duyệt)
+                  </h3>
+                  {editRecordingRequests.filter((r) => r.status === "pending").length === 0 ? (
+                    <p className="text-neutral-500 font-medium text-sm">Chưa có yêu cầu.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {editRecordingRequests
+                        .filter((r) => r.status === "pending")
+                        .map((req) => (
+                          <div
+                            key={req.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 p-4"
+                            style={{ backgroundColor: "#FFFCF5" }}
+                          >
+                            <div>
+                              <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
+                              <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await recordingRequestService.approveEditRequest(req.id);
+                                  setEditRecordingRequests(await recordingRequestService.getEditRecordingRequests());
+                                  notify.success("Thành công", "Đã duyệt yêu cầu chỉnh sửa. Người đóng góp có thể chỉnh sửa bản thu.");
+                                } catch (e) {
+                                  notify.error("Lỗi", "Không thể duyệt yêu cầu.");
+                                }
+                              }}
+                              className="px-4 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium cursor-pointer"
+                            >
+                              Duyệt chỉnh sửa
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === "expertDeletion" && (
+            <div className="p-8">
+              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
+                <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+                  <UserMinus className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+                </div>
+                Yêu cầu xóa tài khoản Chuyên gia
+              </h2>
+              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
+                Chuyên gia gửi yêu cầu xóa tài khoản sẽ hiển thị tại đây. Sau khi bạn duyệt, tài khoản Chuyên gia đó sẽ bị xóa khỏi hệ thống.
+              </p>
+              {pendingExpertDeletions.length === 0 ? (
+                <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300" style={{ backgroundColor: "#FFFCF5" }}>
+                  <p className="text-neutral-500 font-medium">Chưa có yêu cầu xóa tài khoản Chuyên gia nào.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingExpertDeletions.map((req) => (
+                    <div
+                      key={req.expertId}
+                      className="flex items-center justify-between rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
+                      style={{ backgroundColor: "#FFFCF5" }}
+                    >
+                      <div>
+                        <p className="font-semibold text-neutral-900 mb-1">{req.expertFullName ?? req.expertUsername}</p>
+                        <p className="text-sm text-neutral-600 font-medium">
+                          @{req.expertUsername} · Yêu cầu lúc: {new Date(req.requestedAt).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpertDeletionApproveTarget(req)}
+                        className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white border border-red-200/80 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
+                      >
+                        Duyệt xóa tài khoản
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === "moderation" && (
             <div className="p-8">
               <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
@@ -597,6 +780,39 @@ export default function AdminDashboard() {
         message={deleteUserTarget ? `Bạn có chắc muốn xóa "${deleteUserTarget.username}" khỏi hệ thống?` : ""}
         description="Người dùng sẽ không còn hiển thị trong danh sách quản lý. Hành động này không thể hoàn tác."
         confirmText="Xóa"
+        cancelText="Hủy"
+        confirmButtonStyle="bg-red-600 hover:bg-red-500 text-white"
+      />
+
+      <ConfirmationDialog
+        isOpen={!!expertDeletionApproveTarget}
+        onClose={() => setExpertDeletionApproveTarget(null)}
+        onConfirm={async () => {
+          if (!expertDeletionApproveTarget) return;
+          try {
+            await accountDeletionService.approveExpertAccountDeletion(
+              expertDeletionApproveTarget.expertId,
+              user?.id,
+              user?.role
+            );
+            await recordingRequestService.addNotification({
+              type: "expert_account_deletion_approved",
+              title: "Đã duyệt xóa tài khoản Chuyên gia",
+              body: `Tài khoản ${expertDeletionApproveTarget.expertFullName ?? expertDeletionApproveTarget.expertUsername} đã được xóa khỏi hệ thống.`,
+              forRoles: [UserRole.ADMIN],
+            });
+            setExpertDeletionApproveTarget(null);
+            setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
+            notify.success("Thành công", "Đã duyệt xóa tài khoản Chuyên gia khỏi hệ thống.");
+            void load();
+          } catch (e) {
+            notify.error("Lỗi", "Không thể duyệt xóa tài khoản.");
+          }
+        }}
+        title="Duyệt xóa tài khoản Chuyên gia"
+        message={expertDeletionApproveTarget ? `Bạn có chắc chắn duyệt xóa tài khoản "${expertDeletionApproveTarget.expertFullName ?? expertDeletionApproveTarget.expertUsername}" khỏi hệ thống?` : ""}
+        description="Chuyên gia này sẽ bị xóa khỏi hệ thống. Nếu đang đăng nhập bằng tài khoản đó, họ sẽ bị đăng xuất. Hành động không thể hoàn tác."
+        confirmText="Duyệt xóa"
         cancelText="Hủy"
         confirmButtonStyle="bg-red-600 hover:bg-red-500 text-white"
       />

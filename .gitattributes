@@ -1,6 +1,9 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Build output: do not normalize line endings (avoid CRLF/LF warnings)
+dist/** -text
+
 # Source code files - use LF line endings
 *.ts text eol=lf
 *.tsx text eol=lf

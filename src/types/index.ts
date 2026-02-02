@@ -279,3 +279,48 @@ export interface LocalRecording {
     rejectionNote?: string;
   };
 }
+
+// Account deletion (Expert phải qua kiểm duyệt Admin)
+export interface ExpertAccountDeletionRequest {
+  expertId: string;
+  expertUsername: string;
+  expertFullName?: string;
+  requestedAt: string;
+}
+
+// Yêu cầu xóa bản thu: Người đóng góp → Admin → Chuyên gia
+export interface DeleteRecordingRequest {
+  id: string;
+  recordingId: string;
+  recordingTitle: string;
+  contributorId: string;
+  contributorName: string;
+  requestedAt: string;
+  status: "pending_admin" | "forwarded_to_expert";
+  forwardedToExpertId?: string;
+  forwardedAt?: string;
+}
+
+// Yêu cầu chỉnh sửa bản thu (đã duyệt): Người đóng góp → Admin
+export interface EditRecordingRequest {
+  id: string;
+  recordingId: string;
+  recordingTitle: string;
+  contributorId: string;
+  contributorName: string;
+  requestedAt: string;
+  status: "pending" | "approved";
+  approvedAt?: string;
+}
+
+// Thông báo hệ thống (sau khi xóa bản thu, duyệt xóa tài khoản, v.v.)
+export interface AppNotification {
+  id: string;
+  type: "recording_deleted" | "expert_account_deletion_approved";
+  title: string;
+  body: string;
+  forRoles: UserRole[];
+  recordingId?: string;
+  createdAt: string;
+  read?: boolean;
+}

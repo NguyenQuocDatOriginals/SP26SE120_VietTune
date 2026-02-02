@@ -8,9 +8,10 @@ import { Trash2 } from "lucide-react";
 import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
 import BackButton from "@/components/common/BackButton";
+import ConfirmationDialog from "@/components/common/ConfirmationDialog";
 import ForbiddenPage from "@/pages/ForbiddenPage";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
-
+import { recordingRequestService } from "@/services/recordingRequestService";
 import {
   Recording,
   Region,
@@ -21,6 +22,7 @@ import {
   RecordingQuality,
   VerificationStatus,
 } from "@/types";
+import type { DeleteRecordingRequest } from "@/types";
 import type { LocalRecording } from "@/types";
 
 // Extended Recording type that may include original local data
@@ -61,18 +63,39 @@ export default function ApprovedRecordingsPage() {
         return () => clearInterval(interval);
     }, [load]);
 
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<Record<string, boolean>>({});
+    const [deleteTarget, setDeleteTarget] = useState<{ type: "direct"; id: string; title: string } | { type: "request"; req: DeleteRecordingRequest } | null>(null);
+    const [forwardedDeletes, setForwardedDeletes] = useState<DeleteRecordingRequest[]>([]);
 
-    const handleDelete = async (id: string) => {
-        if (!id) return;
+    useEffect(() => {
+        if (!user?.id) return;
+        recordingRequestService.getForwardedDeleteRequestsForExpert(user.id).then(setForwardedDeletes);
+        const t = setInterval(() => {
+            recordingRequestService.getForwardedDeleteRequestsForExpert(user.id).then(setForwardedDeletes);
+        }, 4000);
+        return () => clearInterval(t);
+    }, [user?.id]);
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
         try {
-            await removeLocalRecording(id);
-            setShowDeleteConfirm(prev => {
-                const newState = { ...prev };
-                delete newState[id];
-                return newState;
-            });
+            if (deleteTarget.type === "request") {
+                await recordingRequestService.completeDeleteRecording(
+                    deleteTarget.req.id,
+                    removeLocalRecording
+                );
+            } else {
+                await removeLocalRecording(deleteTarget.id);
+                await recordingRequestService.addNotification({
+                    type: "recording_deleted",
+                    title: "Bản thu đã được xóa khỏi hệ thống",
+                    body: `Bản thu "${deleteTarget.title}" đã được xóa hoàn toàn khỏi hệ thống.`,
+                    forRoles: [UserRole.ADMIN, UserRole.CONTRIBUTOR, UserRole.EXPERT],
+                    recordingId: deleteTarget.id,
+                });
+            }
+            setDeleteTarget(null);
             void load();
+            setForwardedDeletes(await recordingRequestService.getForwardedDeleteRequestsForExpert(user?.id ?? ""));
         } catch (err) {
             console.error(err);
         }
@@ -174,34 +197,18 @@ export default function ApprovedRecordingsPage() {
                         </div>
                     </div>
 
-                    {/* Delete Button */}
-                    <div className="ml-4">
-                        {showDeleteConfirm[it.id || ''] ? (
-                            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-3 py-1.5">
-                                <span className="text-xs text-red-700 font-medium">Xác nhận?</span>
-                                <button
-                                    onClick={() => handleDelete(it.id || '')}
-                                    className="text-xs text-red-700 hover:text-red-900 font-semibold"
-                                >
-                                    Xóa
-                                </button>
-                                <button
-                                    onClick={() => setShowDeleteConfirm(prev => ({ ...prev, [it.id || '']: false }))}
-                                    className="text-xs text-neutral-600 hover:text-neutral-800"
-                                >
-                                    Hủy
-                                </button>
-                            </div>
-                        ) : (
+                    {/* Delete Button - only for recordings I approved */}
+                    {isMyReview && (
+                        <div className="ml-4">
                             <button
-                                onClick={() => setShowDeleteConfirm(prev => ({ ...prev, [it.id || '']: true }))}
+                                onClick={() => setDeleteTarget({ type: "direct", id: it.id ?? "", title: it.basicInfo?.title || it.title || "Không có tiêu đề" })}
                                 className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 active:scale-95 cursor-pointer"
                                 title="Xóa bản thu khỏi hệ thống"
                             >
                                 <Trash2 className="w-4 h-4" strokeWidth={2.5} />
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Media Player */}
@@ -332,20 +339,56 @@ export default function ApprovedRecordingsPage() {
 
     return (
         <div className="min-h-screen">
+            <ConfirmationDialog
+                isOpen={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteConfirm}
+                title="Xác nhận xóa bản thu"
+                message={deleteTarget ? (deleteTarget.type === "request" ? `Bạn có chắc muốn xóa bản thu "${deleteTarget.req.recordingTitle}" khỏi hệ thống?` : `Bạn có chắc muốn xóa bản thu "${deleteTarget.title}" khỏi hệ thống?`) : ""}
+                description="Bản thu sẽ bị xóa hoàn toàn. Người đóng góp, Chuyên gia và Quản trị viên sẽ nhận thông báo. Hành động không thể hoàn tác."
+                confirmText="Xóa bản thu"
+                cancelText="Hủy"
+                confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+            />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
                     <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 min-w-0">Quản lý bản thu đã được kiểm duyệt</h1>
                     <BackButton />
                 </div>
 
-                {items.length === 0 ? (
+                {forwardedDeletes.length > 0 && (
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
+                        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Yêu cầu xóa bản thu đã chuyển đến bạn</h2>
+                        <p className="text-neutral-700 font-medium mb-4 text-sm">Quản trị viên đã chuyển các yêu cầu xóa từ Người đóng góp. Bạn có thể xóa bản thu khỏi hệ thống.</p>
+                        <div className="space-y-4">
+                            {forwardedDeletes.map((req) => (
+                                <div key={req.id} className="flex items-center justify-between rounded-xl border border-neutral-200/80 p-4" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div>
+                                        <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
+                                        <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · Yêu cầu lúc: {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeleteTarget({ type: "request", req })}
+                                        className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-all cursor-pointer"
+                                    >
+                                        <Trash2 className="w-4 h-4 inline-block mr-2" strokeWidth={2.5} />
+                                        Xóa bản thu
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {items.length === 0 && forwardedDeletes.length === 0 ? (
                     <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                         <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
                         <p className="text-neutral-700 font-medium">Không có bản thu nào đã được kiểm duyệt.</p>
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        {/* Bản thu do tôi kiểm duyệt */}
+                        {/* Bản thu do tôi kiểm duyệt - có nút Xóa bản thu */}
                         {myApproved.length > 0 && (
                             <div>
                                 <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">

@@ -5,7 +5,7 @@ import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
 import BackButton from "@/components/common/BackButton";
-import { RegisterForm } from "@/types";
+import { RegisterForm, UserRole } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import backgroundImage from "@/components/image/Đàn bầu.png";
 import logo from "@/components/image/VietTune logo.png";
@@ -38,7 +38,11 @@ export default function RegisterPage() {
     try {
       const result = await authService.register(data);
       void sessionRemoveItem("fromLogout");
-      const user = result?.data && typeof result.data === "object" && "user" in result.data ? (result.data as { user: import("@/types").User }).user : null;
+      const rawUser = result?.data && typeof result.data === "object" && "user" in result.data ? (result.data as { user: import("@/types").User }).user : null;
+      // Mặc định khách đăng ký là Người đóng góp (CONTRIBUTOR)
+      const user = rawUser
+        ? { ...rawUser, role: (rawUser.role ?? UserRole.CONTRIBUTOR) as import("@/types").UserRole }
+        : null;
       if (user) {
         setUser(user);
         notify.success("Thành công", result.message ?? "Đăng ký thành công. Bạn đã được đăng nhập.");
