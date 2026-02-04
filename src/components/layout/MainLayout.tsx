@@ -19,7 +19,7 @@ export default function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden" style={{ backgroundColor: '#FFF2D6' }}>
       <Header />
-      <main className="flex-grow min-w-0 w-full">
+      <main className="flex-grow min-w-0 w-full pt-[4.5rem]">
         <ErrorBoundary region="main">
           <Outlet />
         </ErrorBoundary>

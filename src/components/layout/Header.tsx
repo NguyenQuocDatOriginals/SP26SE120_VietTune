@@ -56,7 +56,7 @@ export default function Header() {
     }
   }, [isMenuOpen]);
   return (
-    <header className="sticky top-0 z-[60] pt-4 px-4">
+    <header className="fixed top-0 left-0 right-0 z-[60] pt-4 px-4">
       <nav className="bg-gradient-to-br from-primary-700 to-primary-800 rounded-full shadow-lg backdrop-blur-sm">
         <div className="px-6 py-2.5">
           <div className="flex items-center justify-between">
