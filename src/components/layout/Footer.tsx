@@ -25,16 +25,16 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_1fr_1fr_1fr] gap-8 sm:gap-12 lg:gap-16 gap-y-10">
           {/* About */}
           <div className="min-w-0">
-            <div className="flex items-center space-x-3 mb-4">
+            <Link to="/" className="group flex items-center space-x-3 mb-4 w-fit text-white transition-colors hover:text-secondary-300">
               <img
                 src={logo}
                 alt="VietTune Logo"
                 className="h-10 w-10 object-contain rounded-xl"
               />
-              <span className="text-xl font-bold text-white">
+              <span className="text-xl font-bold text-white transition-colors group-hover:text-secondary-300">
                 {APP_NAME}
               </span>
-            </div>
+            </Link>
             <p className="text-white/90 text-sm leading-relaxed">
               Hệ thống lưu giữ âm nhạc truyền thống Việt Nam
               <br />

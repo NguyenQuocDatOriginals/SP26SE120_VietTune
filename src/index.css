@@ -33,6 +33,8 @@ body {
   min-height: 100vh;
   background-color: #fff2d6 !important;
   overflow-x: hidden;
+  /* Default cursor on text (no I-beam on hover) */
+  cursor: default;
   /* Firefox scrollbar */
   scrollbar-width: thin;
   scrollbar-color: #7f1d1d transparent;
@@ -41,10 +43,64 @@ body {
 #root {
   min-height: 100vh;
   background-color: #fff2d6 !important;
+  cursor: default;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* No I-beam on text hover: default cursor for all elements. */
+*,
+*::before,
+*::after {
+  cursor: default;
+}
+
+/* Input and textarea: always I-beam on hover/focus, including over placeholder. */
+input,
+textarea {
+  cursor: text;
+}
+
+/* Buttons, links, and selection controls: pointer (hand) on hover. Must come after input so submit/button inputs get pointer. */
+a,
+button,
+select,
+option,
+[role="button"],
+[role="listbox"],
+[role="combobox"],
+[role="option"],
+[role="menuitem"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="image"] {
+  cursor: pointer;
+}
+
+/* Pointer on hover over content inside buttons, links, or selection controls — overrides * { cursor: default } on descendants. */
+a *,
+a::before,
+a::after,
+button *,
+button::before,
+button::after,
+[role="button"] *,
+[role="button"]::before,
+[role="button"]::after,
+select *,
+option,
+[role="listbox"] *,
+[role="combobox"] *,
+[role="option"],
+[role="menuitem"] *,
+input[type="button"] *,
+input[type="submit"] *,
+input[type="reset"] *,
+input[type="image"] * {
+  cursor: pointer;
 }
 
 /* Prefer not to disable text selection globally (accessibility). Use utility class `.no-select` where needed */
@@ -263,6 +319,7 @@ body::-webkit-scrollbar-thumb:hover,
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -273,6 +330,7 @@ body::-webkit-scrollbar-thumb:hover,
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -281,17 +339,23 @@ body::-webkit-scrollbar-thumb:hover,
 
 /* Water ripple animation for waveform reflection */
 @keyframes waterRipple {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0) scaleY(1);
   }
+
   25% {
     transform: translateX(1px) scaleY(1.01);
   }
+
   50% {
     transform: translateX(0) scaleY(1);
   }
+
   75% {
     transform: translateX(-1px) scaleY(0.99);
   }
 }
+
 /* stylelint-enable */

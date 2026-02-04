@@ -62,13 +62,13 @@ export default function Header() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
-              <Link to="/" className="flex items-center space-x-2">
+              <Link to="/" className="group flex items-center space-x-2 text-white transition-colors hover:text-secondary-300">
                 <img
                   src={logo}
                   alt="VietTune Logo"
                   className="h-9 w-9 object-contain rounded-lg"
                 />
-                <span className="text-xl font-bold text-white">
+                <span className="text-xl font-bold text-white transition-colors group-hover:text-secondary-300">
                   {APP_NAME}
                 </span>
               </Link>
