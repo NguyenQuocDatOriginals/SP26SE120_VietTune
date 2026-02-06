@@ -11,6 +11,8 @@ import type { LocalRecording } from "@/types";
 import { ModerationStatus } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
+import Button from "@/components/common/Button";
+import Card from "@/components/common/Card";
 import { getItem, setItem } from "@/services/storageService";
 import { getLocalRecordingMetaList, removeLocalRecording } from "@/services/recordingStorage";
 import { accountDeletionService } from "@/services/accountDeletionService";
@@ -103,8 +105,7 @@ function RoleSelectDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-        style={{ backgroundColor: "#FFFCF5" }}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md bg-[#FFFCF5] ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       >
         <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>{label}</span>
         <ChevronDown
@@ -386,25 +387,28 @@ export default function AdminDashboard() {
           <BackButton />
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8">
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 ${tab === id
-                ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95"
-                : "text-neutral-700 hover:bg-neutral-100 border border-neutral-200/80 shadow-md hover:shadow-lg"
-                }`}
-              style={tab !== id ? { backgroundColor: "#FFFCF5" } : undefined}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-              <ChevronRight className="h-4 w-4 opacity-70" />
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-3 sm:gap-4 mb-8">
+          {tabs.map(({ id, label, icon: Icon }) => {
+            const isActive = tab === id;
+            return (
+              <Button
+                key={id}
+                type="button"
+                variant={isActive ? "primary" : "outline"}
+                size="lg"
+                onClick={() => setTab(id)}
+                className="gap-2"
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+                <ChevronRight className="h-4 w-4 opacity-70" />
+              </Button>
+            );
+          })}
         </div>
 
-        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+        <Card variant="bordered" className="!p-0 overflow-hidden">
           {tab === "users" && (
             <div className="p-8">
               <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
@@ -757,7 +761,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       <ConfirmationDialog

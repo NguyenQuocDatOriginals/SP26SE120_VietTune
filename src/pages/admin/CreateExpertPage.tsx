@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "@/components/common/BackButton";
+import Button from "@/components/common/Button";
+import Card from "@/components/common/Card";
 import Input from "@/components/common/Input";
 import { UserPlus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
@@ -127,122 +129,127 @@ export default function CreateExpertPage() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">Cấp tài khoản Chuyên gia</h1>
           <BackButton />
         </div>
-        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm transition-all duration-300" style={{ backgroundColor: "#FFFCF5" }}>
-          <div className="p-8">
-            <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
-              <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
-                <UserPlus className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-              </div>
-              Cấp tài khoản Chuyên gia
-            </h2>
-            <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-              Tạo tài khoản Chuyên gia mới để họ có thể kiểm duyệt và xác minh bản thu âm nhạc truyền thống.
-            </p>
-            <div className="max-w-2xl">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Tên người dùng"
-                    value={expertForm.username}
-                    onChange={(e) => {
-                      setExpertForm({ ...expertForm, username: e.target.value });
-                      if (expertFormErrors.username) {
-                        setExpertFormErrors({ ...expertFormErrors, username: undefined });
-                      }
-                    }}
-                    error={expertFormErrors.username}
-                    required
-                    placeholder="Nhập tên người dùng"
-                  />
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={expertForm.email}
-                    onChange={(e) => {
-                      setExpertForm({ ...expertForm, email: e.target.value });
-                      if (expertFormErrors.email) {
-                        setExpertFormErrors({ ...expertFormErrors, email: undefined });
-                      }
-                    }}
-                    error={expertFormErrors.email}
-                    required
-                    placeholder="Nhập địa chỉ email"
-                  />
-                </div>
+
+        <Card variant="bordered" className="p-6 sm:p-8">
+          <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
+            <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
+              <UserPlus className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+            </div>
+            Tạo tài khoản mới
+          </h2>
+          <p className="text-neutral-700 font-medium leading-relaxed mb-6">
+            Tạo tài khoản Chuyên gia mới để họ có thể kiểm duyệt và xác minh bản thu âm nhạc truyền thống.
+          </p>
+          <div className="max-w-2xl">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Họ và tên"
-                  value={expertForm.fullName}
+                  label="Tên người dùng"
+                  value={expertForm.username}
                   onChange={(e) => {
-                    setExpertForm({ ...expertForm, fullName: e.target.value });
-                    if (expertFormErrors.fullName) {
-                      setExpertFormErrors({ ...expertFormErrors, fullName: undefined });
+                    setExpertForm({ ...expertForm, username: e.target.value });
+                    if (expertFormErrors.username) {
+                      setExpertFormErrors({ ...expertFormErrors, username: undefined });
                     }
                   }}
-                  error={expertFormErrors.fullName}
+                  error={expertFormErrors.username}
                   required
-                  placeholder="Nhập họ và tên"
+                  placeholder="Nhập tên người dùng"
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Mật khẩu"
-                    type="password"
-                    value={expertForm.password}
-                    onChange={(e) => {
-                      setExpertForm({ ...expertForm, password: e.target.value });
-                      if (expertFormErrors.password) {
-                        setExpertFormErrors({ ...expertFormErrors, password: undefined });
-                      }
-                    }}
-                    error={expertFormErrors.password}
-                    required
-                    placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                  />
-                  <Input
-                    label="Xác nhận mật khẩu"
-                    type="password"
-                    value={expertForm.confirmPassword}
-                    onChange={(e) => {
-                      setExpertForm({ ...expertForm, confirmPassword: e.target.value });
-                      if (expertFormErrors.confirmPassword) {
-                        setExpertFormErrors({ ...expertFormErrors, confirmPassword: undefined });
-                      }
-                    }}
-                    error={expertFormErrors.confirmPassword}
-                    required
-                    placeholder="Nhập lại mật khẩu"
-                  />
-                </div>
-                <div className="flex items-center gap-4 pt-4">
-                  <button
-                    onClick={handleCreateExpert}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
-                  >
-                    <UserPlus className="h-5 w-5" strokeWidth={2.5} />
-                    Tạo tài khoản Chuyên gia
-                  </button>
-                  <button
-                    onClick={() => {
-                      setExpertForm({
-                        username: "",
-                        email: "",
-                        fullName: "",
-                        password: "",
-                        confirmPassword: "",
-                      });
-                      setExpertFormErrors({});
-                    }}
-                    className="px-6 py-3 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer"
-                  >
-                    Đặt lại
-                  </button>
-                </div>
+                <Input
+                  label="Email"
+                  type="email"
+                  value={expertForm.email}
+                  onChange={(e) => {
+                    setExpertForm({ ...expertForm, email: e.target.value });
+                    if (expertFormErrors.email) {
+                      setExpertFormErrors({ ...expertFormErrors, email: undefined });
+                    }
+                  }}
+                  error={expertFormErrors.email}
+                  required
+                  placeholder="Nhập địa chỉ email"
+                />
+              </div>
+              <Input
+                label="Họ và tên"
+                value={expertForm.fullName}
+                onChange={(e) => {
+                  setExpertForm({ ...expertForm, fullName: e.target.value });
+                  if (expertFormErrors.fullName) {
+                    setExpertFormErrors({ ...expertFormErrors, fullName: undefined });
+                  }
+                }}
+                error={expertFormErrors.fullName}
+                required
+                placeholder="Nhập họ và tên"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Mật khẩu"
+                  type="password"
+                  value={expertForm.password}
+                  onChange={(e) => {
+                    setExpertForm({ ...expertForm, password: e.target.value });
+                    if (expertFormErrors.password) {
+                      setExpertFormErrors({ ...expertFormErrors, password: undefined });
+                    }
+                  }}
+                  error={expertFormErrors.password}
+                  required
+                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                />
+                <Input
+                  label="Xác nhận mật khẩu"
+                  type="password"
+                  value={expertForm.confirmPassword}
+                  onChange={(e) => {
+                    setExpertForm({ ...expertForm, confirmPassword: e.target.value });
+                    if (expertFormErrors.confirmPassword) {
+                      setExpertFormErrors({ ...expertFormErrors, confirmPassword: undefined });
+                    }
+                  }}
+                  error={expertFormErrors.confirmPassword}
+                  required
+                  placeholder="Nhập lại mật khẩu"
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-4">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  onClick={handleCreateExpert}
+                  className="gap-2"
+                >
+                  <UserPlus className="h-5 w-5" strokeWidth={2.5} />
+                  Tạo tài khoản Chuyên gia
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => {
+                    setExpertForm({
+                      username: "",
+                      email: "",
+                      fullName: "",
+                      password: "",
+                      confirmPassword: "",
+                    });
+                    setExpertFormErrors({});
+                  }}
+                >
+                  Đặt lại
+                </Button>
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
