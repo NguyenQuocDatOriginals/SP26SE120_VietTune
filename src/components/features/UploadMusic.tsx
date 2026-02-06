@@ -1981,6 +1981,15 @@ export default function UploadMusic() {
     bitrate?: number;
     sampleRate?: number;
   } | null>(null);
+  const [existingMediaSrc, setExistingMediaSrc] = useState<string | null>(null);
+  const [existingMediaInfo, setExistingMediaInfo] = useState<{
+    name: string;
+    size: number;
+    type: string;
+    duration: number;
+    bitrate?: number;
+    sampleRate?: number;
+  } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -2292,7 +2301,7 @@ export default function UploadMusic() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!file) {
+    if (!file && !(isEditMode && !!existingMediaSrc)) {
       newErrors.file = mediaType === "audio"
         ? "Vui lòng chọn file âm thanh"
         : "Vui lòng chọn file video";
@@ -2320,10 +2329,15 @@ export default function UploadMusic() {
   // Load editing recording from IndexedDB (session key)
   useEffect(() => {
     if (isEditModeParam) {
-      try {
-        const editingData = sessionGetItem("editingRecording");
-        if (editingData) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const editingData = sessionGetItem("editingRecording");
+          if (!editingData) return;
+
           const recording = JSON.parse(editingData);
+          if (cancelled) return;
+
           setEditingRecordingId(recording.id);
           setMediaType(recording.mediaType || "audio");
           setTitle(recording.basicInfo?.title || "");
@@ -2348,11 +2362,36 @@ export default function UploadMusic() {
           setCopyright(recording.adminInfo?.copyright || "");
           setArchiveOrg(recording.adminInfo?.archiveOrg || "");
           setCatalogId(recording.adminInfo?.catalogId || "");
+
+          // Load full recording (with media data) to show existing contribution in edit mode
+          const existing = await getLocalRecordingFull(recording.id) as LocalRecordingStorage | null;
+          if (cancelled) return;
+
+          const effectiveMediaType = (existing?.mediaType || recording.mediaType || "audio") as "audio" | "video";
+          const src =
+            (existing?.youtubeUrl && typeof existing.youtubeUrl === "string" && existing.youtubeUrl.trim())
+              ? existing.youtubeUrl.trim()
+              : (effectiveMediaType === "video" ? (existing?.videoData ?? null) : (existing?.audioData ?? null));
+
+          setExistingMediaSrc(typeof src === "string" && src.trim().length > 0 ? src : null);
+          setExistingMediaInfo({
+            name: existing?.file?.name || recording?.file?.name || (effectiveMediaType === "video" ? "Video đã tải lên" : "Âm thanh đã tải lên"),
+            size: Number(existing?.file?.size || recording?.file?.size || 0),
+            type: existing?.file?.type || recording?.file?.type || "",
+            duration: Number(existing?.file?.duration || recording?.file?.duration || 0),
+            bitrate: existing?.file?.bitrate || recording?.file?.bitrate,
+            sampleRate: existing?.file?.sampleRate || recording?.file?.sampleRate,
+          });
+
           setIsEditMode(true);
+        } catch (err) {
+          console.error("Error loading editing recording:", err);
         }
-      } catch (err) {
-        console.error("Error loading editing recording:", err);
-      }
+      })();
+
+      return () => {
+        cancelled = true;
+      };
     }
   }, [isEditModeParam]);
 
@@ -2483,6 +2522,54 @@ export default function UploadMusic() {
 
     // Xử lý file upload (audio hoặc video)
     if (!file) {
+      // Edit mode: allow contributor to keep existing media and update metadata only
+      if (isEditMode && editingRecordingId && existingMediaSrc) {
+        (async () => {
+          try {
+            const existing = await getLocalRecordingFull(editingRecordingId) as LocalRecordingStorage | null;
+            const preservedUploadDate = existing?.uploadedDate ?? existing?.uploadedAt ?? new Date().toISOString();
+            const toSave: LocalRecordingStorage = {
+              ...(existing ?? ({} as LocalRecordingStorage)),
+              ...(formData as unknown as LocalRecordingStorage),
+              id: editingRecordingId,
+              // Preserve media content when contributor doesn't re-upload
+              audioData: existing?.audioData ?? null,
+              videoData: existing?.videoData ?? null,
+              youtubeUrl: existing?.youtubeUrl ?? null,
+              mediaType: (existing?.mediaType ?? mediaType) as "audio" | "video",
+              file: (existing?.file ?? (formData as any).file) as any,
+              uploadedDate: preservedUploadDate,
+              uploadedAt: preservedUploadDate,
+              moderation: {
+                status: ModerationStatus.PENDING_REVIEW,
+                claimedBy: null,
+                claimedByName: null,
+                reviewedAt: null,
+                reviewerId: null,
+                rejectionNote: undefined,
+              },
+              uploader: {
+                id: currentUser?.id || "anonymous",
+                username: currentUser?.username || "Khách",
+              },
+            };
+
+            await setLocalRecording(toSave);
+            void sessionRemoveItem("editingRecording");
+
+            setSubmitStatus("success");
+            setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
+            setIsSubmitting(false);
+          } catch (error) {
+            console.error("Lỗi khi lưu dữ liệu (edit mode, metadata only):", error);
+            setIsSubmitting(false);
+            setSubmitStatus("error");
+            setSubmitMessage(error instanceof Error ? `Lỗi: ${error.message}. Vui lòng thử lại.` : "Lỗi không xác định khi lưu dữ liệu. Vui lòng thử lại.");
+          }
+        })();
+        return;
+      }
+
       setIsSubmitting(false);
       setSubmitStatus("error");
       setSubmitMessage("Vui lòng chọn file.");
@@ -2947,6 +3034,72 @@ export default function UploadMusic() {
                       className="text-sm text-neutral-800/60 hover:text-red-400 transition-colors"
                     >
                       Chọn file khác
+                    </button>
+                  </div>
+                ) : isEditMode && existingMediaSrc && existingMediaInfo ? (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-primary-600/20 rounded-2xl w-fit mx-auto">
+                      {mediaType === "video" ? (
+                        <Video className="h-8 w-8 text-primary-600" />
+                      ) : (
+                        <FileAudio className="h-8 w-8 text-primary-600" />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-neutral-800 font-medium">
+                        {existingMediaInfo.name}
+                      </p>
+                      <div className="flex items-center justify-center gap-4 mt-2 text-sm text-neutral-800/60">
+                        <span>{formatFileSize(existingMediaInfo.size)}</span>
+                        <span>•</span>
+                        <span>{formatDuration(existingMediaInfo.duration)}</span>
+                        {existingMediaInfo.bitrate && (
+                          <>
+                            <span>•</span>
+                            <span>~{existingMediaInfo.bitrate} kbps</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Existing media preview (edit mode) */}
+                      <div className="mt-3">
+                        {mediaType === "video" ? (
+                          existingMediaSrc.startsWith("http") ? (
+                            <p className="text-sm text-neutral-800/70 break-all">
+                              Đang dùng video YouTube/URL: {existingMediaSrc}
+                            </p>
+                          ) : (
+                            <video
+                              controls
+                              className="w-full max-w-md mx-auto rounded-xl border border-neutral-200/80"
+                              src={existingMediaSrc}
+                            />
+                          )
+                        ) : (
+                          existingMediaSrc.startsWith("http") ? (
+                            <p className="text-sm text-neutral-800/70 break-all">
+                              Đang dùng audio URL: {existingMediaSrc}
+                            </p>
+                          ) : (
+                            <audio
+                              controls
+                              className="w-full max-w-md mx-auto"
+                              src={existingMediaSrc}
+                            />
+                          )
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isFormDisabled || isAnalyzing) return;
+                        fileInputRef.current?.click();
+                      }}
+                      className="text-sm text-neutral-800/60 hover:text-primary-600 transition-colors"
+                    >
+                      Chọn file khác để thay thế
                     </button>
                   </div>
                 ) : (

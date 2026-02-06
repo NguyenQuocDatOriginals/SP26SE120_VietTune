@@ -1063,7 +1063,7 @@ export default function ModerationPage() {
                     ];
                     return createPortal(
                         <div
-                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                             onClick={() => cancelVerification(showVerificationDialog)}
                             style={{
                                 animation: 'fadeIn 0.3s ease-out',
@@ -1077,11 +1077,11 @@ export default function ModerationPage() {
                             }}
                         >
                             <div
-                                className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-16"
+                                className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-5xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-8"
                                 style={{
                                     backgroundColor: '#FFF2D6',
                                     animation: 'slideUp 0.3s ease-out',
-                                    maxHeight: 'calc(100vh - 8rem)'
+                                    maxHeight: 'calc(100vh - 4rem)'
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
@@ -1098,7 +1098,7 @@ export default function ModerationPage() {
                                 </div>
 
                                 {/* Content */}
-                                <div className="overflow-y-auto p-6 max-h-[70vh]">
+                                <div className="overflow-y-auto p-6 max-h-[80vh]">
                                     <div className="space-y-6">
                                         {/* Media Player Section */}
                                         <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
@@ -1348,33 +1348,36 @@ export default function ModerationPage() {
                                                 <div className="space-y-4">
                                                     <h3 className="font-semibold text-neutral-800 mb-3">Yêu cầu kiểm tra (Tất cả đều bắt buộc):</h3>
                                                     <div className="space-y-3">
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoComplete || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoComplete', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoAccurate || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoAccurate', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.formatCorrect || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'formatCorrect', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu</span>
-                                                        </label>
+                                                        </div>
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -1396,33 +1399,36 @@ export default function ModerationPage() {
                                                 <div className="space-y-4">
                                                     <h3 className="font-semibold text-neutral-800 mb-3">Đánh giá chuyên môn (Tất cả đều bắt buộc):</h3>
                                                     <div className="space-y-3">
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.culturalValue || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'culturalValue', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.authenticity || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'authenticity', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.accuracy || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'accuracy', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu</span>
-                                                        </label>
+                                                        </div>
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -1444,33 +1450,36 @@ export default function ModerationPage() {
                                                 <div className="space-y-4">
                                                     <h3 className="font-semibold text-neutral-800 mb-3">Đối chiếu và phê duyệt cuối cùng (Tất cả đều bắt buộc):</h3>
                                                     <div className="space-y-3">
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.crossChecked || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'crossChecked', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.sourcesVerified || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'sourcesVerified', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh</span>
-                                                        </label>
-                                                        <label className="flex items-start gap-3 cursor-pointer">
+                                                        </div>
+                                                        <div className="flex items-start gap-3">
                                                             <input
                                                                 type="checkbox"
+                                                                aria-label="Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.finalApproval || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'finalApproval', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này</span>
-                                                        </label>
+                                                        </div>
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -1550,7 +1559,7 @@ export default function ModerationPage() {
                 {/* Rejection Dialog */}
                 {showRejectDialog && createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={(e) => { if (e.target === e.currentTarget) { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); } }}
                         style={{
                             animation: 'fadeIn 0.3s ease-out',
@@ -1649,7 +1658,7 @@ export default function ModerationPage() {
                 {/* Unclaim Confirmation Dialog */}
                 {showUnclaimDialog && createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowUnclaimDialog(null)}
                         style={{
                             animation: 'fadeIn 0.3s ease-out',
@@ -1723,7 +1732,7 @@ export default function ModerationPage() {
                 {/* Approve Confirmation Dialog */}
                 {showApproveConfirmDialog && createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowApproveConfirmDialog(null)}
                         style={{
                             animation: 'fadeIn 0.3s ease-out',
@@ -1796,7 +1805,7 @@ export default function ModerationPage() {
                 {/* Reject Confirmation Dialog */}
                 {showRejectConfirmDialog && createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowRejectConfirmDialog(null)}
                         style={{
                             animation: 'fadeIn 0.3s ease-out',
@@ -1869,7 +1878,7 @@ export default function ModerationPage() {
                 {/* Reject Note Warning Dialog */}
                 {showRejectNoteWarningDialog && createPortal(
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                        className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
                         onClick={() => setShowRejectNoteWarningDialog(false)}
                         style={{
                             animation: 'fadeIn 0.3s ease-out',
