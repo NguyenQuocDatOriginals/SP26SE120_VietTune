@@ -8,7 +8,7 @@ COPY . .
 RUN dotnet restore VietTuneArchive.sln
 
 # publish đúng project API
-RUN dotnet publish VietTuneArchive/VietTuneArchive.csproj \
+RUN dotnet publish VietTuneArchive/VietTuneArchive.API.csproj \
     -c Release \
     -o /app/publish \
     --no-restore
