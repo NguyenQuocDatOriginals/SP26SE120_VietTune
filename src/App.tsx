@@ -22,6 +22,7 @@ import CreateExpertPage from "./pages/admin/CreateExpertPage";
 import AdminGuard from "./components/admin/AdminGuard";
 import ModerationPage from "./pages/ModerationPage";
 import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
+import EditRecordingPage from "./pages/EditRecordingPage";
 import NotificationPage from "./pages/NotificationPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -155,6 +156,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="explore" element={<ExplorePage />} />
           <Route path="recordings/:id" element={<RecordingDetailPage />} />
+          <Route path="recordings/:id/edit" element={<EditRecordingPage />} />
           <Route path="upload" element={<UploadPage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="semantic-search" element={<SemanticSearchPage />} />

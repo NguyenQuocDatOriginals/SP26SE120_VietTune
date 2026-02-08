@@ -13,7 +13,6 @@ import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
-import { sessionSetItem } from "@/services/storageService";
 import { notify } from "@/stores/notificationStore";
 
 // Extended type for local recording storage (supports both legacy and new formats)
@@ -41,6 +40,10 @@ export default function ContributionsPage() {
   const [deleteRecordingConfirm, setDeleteRecordingConfirm] = useState<LocalRecording | null>(null);
   const [editRequestConfirm, setEditRequestConfirm] = useState<LocalRecording | null>(null);
   const [editApprovedIds, setEditApprovedIds] = useState<Set<string>>(new Set());
+  const [editPendingIds, setEditPendingIds] = useState<Set<string>>(new Set());
+  const [deleteApprovedIds, setDeleteApprovedIds] = useState<Set<string>>(new Set());
+  const [deletePendingIds, setDeletePendingIds] = useState<Set<string>>(new Set());
+  const [pendingEditSubmissionIds, setPendingEditSubmissionIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -50,7 +53,7 @@ export default function ContributionsPage() {
         setContributions([]);
         return;
       }
-      const myMeta = migrated.filter((r) => r.uploader?.id === user.id);
+      const myMeta = migrated.filter((r) => String(r.uploader?.id ?? "") === String(user.id ?? ""));
       const fullList = await Promise.all(myMeta.map((r) => getLocalRecordingFull(r.id ?? "")));
       setContributions(fullList.filter((r): r is LocalRecording => r != null));
     } catch (err) {
@@ -68,14 +71,22 @@ export default function ContributionsPage() {
   useEffect(() => {
     if (!user) return;
     const check = async () => {
-      const ids = new Set<string>();
+      const approved = new Set<string>();
       for (const c of contributions) {
         if (c.id && c.moderation?.status === ModerationStatus.APPROVED) {
           const ok = await recordingRequestService.isEditApprovedForRecording(c.id);
-          if (ok) ids.add(c.id);
+          if (ok) approved.add(c.id);
         }
       }
-      setEditApprovedIds(ids);
+      setEditApprovedIds(approved);
+      const pending = await recordingRequestService.getPendingEditRecordingIdsForContributor(user.id ?? "");
+      setEditPendingIds(new Set(pending));
+      const deleteApproved = await recordingRequestService.getDeleteApprovedRecordingIdsForContributor(user.id ?? "");
+      setDeleteApprovedIds(new Set(deleteApproved));
+      const deletePending = await recordingRequestService.getPendingDeleteRecordingIdsForContributor(user.id ?? "");
+      setDeletePendingIds(new Set(deletePending));
+      const editSubmissions = await recordingRequestService.getPendingEditSubmissionRecordingIdsForContributor(user.id ?? "");
+      setPendingEditSubmissionIds(new Set(editSubmissions));
     };
     void check();
   }, [user, contributions]);
@@ -159,7 +170,7 @@ export default function ContributionsPage() {
               )}
               {it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && it.moderation?.rejectionNote && (
                 <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800"><strong>Ghi chú từ Expert:</strong> {it.moderation.rejectionNote}</p>
+                  <p className="text-sm text-yellow-800"><strong>Ghi chú từ Chuyên gia:</strong> {it.moderation.rejectionNote}</p>
                 </div>
               )}
             </div>
@@ -168,25 +179,42 @@ export default function ContributionsPage() {
           {/* Action Buttons */}
           <div className="ml-4 flex items-center gap-2 flex-shrink-0">
             {it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && (
-              <button
-                onClick={async () => {
-                  try {
-                    const recording = await getLocalRecordingFull(it.id ?? "");
-                    if (recording) {
-                      await sessionSetItem("editingRecording", JSON.stringify(recording));
-                      navigate("/upload?edit=true");
-                    }
-                  } catch (err) {
-                    console.error("Error loading recording for edit:", err);
-                  }
-                }}
-                className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <Edit className="h-4 w-4" strokeWidth={2.5} />
-                Chỉnh sửa
-              </button>
+              <>
+                <button
+                  onClick={() => navigate(`/recordings/${it.id}/edit`)}
+                  className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <Edit className="h-4 w-4" strokeWidth={2.5} />
+                  Chỉnh sửa bản thu
+                </button>
+                <button
+                  disabled
+                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                  Yêu cầu xóa bản thu
+                </button>
+              </>
             )}
-            {(it.moderation?.status === ModerationStatus.PENDING_REVIEW || it.moderation?.status === ModerationStatus.REJECTED) && (
+            {it.moderation?.status === ModerationStatus.PENDING_REVIEW && it.resubmittedForModeration && (
+              <>
+                <button
+                  disabled
+                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                >
+                  <FileEdit className="h-4 w-4" strokeWidth={2.5} />
+                  Yêu cầu chỉnh sửa bản thu
+                </button>
+                <button
+                  disabled
+                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                  Yêu cầu xóa bản thu
+                </button>
+              </>
+            )}
+            {((it.moderation?.status === ModerationStatus.PENDING_REVIEW && !it.resubmittedForModeration) || it.moderation?.status === ModerationStatus.REJECTED) && (
               <button
                 onClick={() => setWithdrawConfirmId(it.id ?? null)}
                 className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
@@ -197,39 +225,56 @@ export default function ContributionsPage() {
             {it.moderation?.status === ModerationStatus.APPROVED && (
               <>
                 {editApprovedIds.has(it.id ?? "") ? (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const recording = await getLocalRecordingFull(it.id ?? "");
-                        if (recording) {
-                          await sessionSetItem("editingRecording", JSON.stringify(recording));
-                          navigate("/upload?edit=true");
-                        }
-                      } catch (err) {
-                        console.error("Error loading recording for edit:", err);
-                      }
-                    }}
-                    className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                  >
-                    <Edit className="h-4 w-4" strokeWidth={2.5} />
-                    Chỉnh sửa
-                  </button>
+                  pendingEditSubmissionIds.has(it.id ?? "") ? (
+                    <button
+                      disabled
+                      className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                    >
+                      <Edit className="h-4 w-4" strokeWidth={2.5} />
+                      Chờ duyệt chỉnh sửa
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => navigate(`/recordings/${it.id}/edit`)}
+                      className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                      <Edit className="h-4 w-4" strokeWidth={2.5} />
+                      Chỉnh sửa bản thu
+                    </button>
+                  )
                 ) : (
                   <button
-                    onClick={() => setEditRequestConfirm(it)}
-                    className="px-4 py-2 rounded-full bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer font-medium"
+                    onClick={() => !(editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")) && setEditRequestConfirm(it)}
+                    disabled={editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")}
+                    className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 font-medium ${
+                      editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")
+                        ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                        : "bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 hover:scale-105 active:scale-95 cursor-pointer"
+                    }`}
                   >
                     <FileEdit className="h-4 w-4" strokeWidth={2.5} />
-                    Yêu cầu chỉnh sửa
+                    Yêu cầu chỉnh sửa bản thu
                   </button>
                 )}
-                <button
-                  onClick={() => setDeleteRecordingConfirm(it)}
-                  className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                  Xoá bản thu
-                </button>
+                {(() => {
+                  const rid = it.id ?? "";
+                  const deleteDisabled =
+                    deletePendingIds.has(rid) || editPendingIds.has(rid) || editApprovedIds.has(rid);
+                  return (
+                    <button
+                      onClick={() => !deleteDisabled && setDeleteRecordingConfirm(it)}
+                      disabled={deleteDisabled}
+                      className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${
+                        deleteDisabled
+                          ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                          : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                      }`}
+                    >
+                      <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                      {deleteApprovedIds.has(rid) ? "Xóa bản thu" : "Yêu cầu xóa bản thu"}
+                    </button>
+                  );
+                })()}
               </>
             )}
           </div>
@@ -376,18 +421,34 @@ export default function ContributionsPage() {
 
   const handleDeleteRecordingConfirm = async () => {
     if (!deleteRecordingConfirm || !user) return;
+    const id = deleteRecordingConfirm.id ?? "";
+    const isApprovedDelete = deleteApprovedIds.has(id);
     try {
-      await recordingRequestService.requestDeleteRecording(
-        deleteRecordingConfirm.id ?? "",
-        deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề",
-        user.id,
-        user.fullName || user.username
-      );
-      setDeleteRecordingConfirm(null);
-      notify.success("Thành công", "Yêu cầu xóa bản thu đã được gửi đến Quản trị viên.");
+      if (isApprovedDelete) {
+        await removeLocalRecording(id);
+        await recordingRequestService.revokeDeleteApproval(id, user.id ?? "");
+        setDeleteApprovedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setDeleteRecordingConfirm(null);
+        void load();
+        notify.success("Thành công", "Bản thu đã được xóa khỏi hệ thống.");
+      } else {
+        await recordingRequestService.requestDeleteRecording(
+          id,
+          deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề",
+          user.id,
+          user.fullName || user.username
+        );
+        setDeletePendingIds((prev) => new Set([...prev, id]));
+        setDeleteRecordingConfirm(null);
+        notify.success("Thành công", "Yêu cầu xóa bản thu đã được gửi đến Quản trị viên.");
+      }
     } catch (err) {
       console.error(err);
-      notify.error("Lỗi", "Không thể gửi yêu cầu xóa. Vui lòng thử lại.");
+      notify.error("Lỗi", isApprovedDelete ? "Không thể xóa bản thu. Vui lòng thử lại." : "Không thể gửi yêu cầu xóa bản thu. Vui lòng thử lại.");
     }
   };
 
@@ -401,10 +462,12 @@ export default function ContributionsPage() {
         user.fullName || user.username
       );
       setEditRequestConfirm(null);
-      notify.success("Thành công", "Yêu cầu chỉnh sửa đã được gửi đến Quản trị viên.");
+      const pending = await recordingRequestService.getPendingEditRecordingIdsForContributor(user.id ?? "");
+      setEditPendingIds(new Set(pending));
+      notify.success("Thành công", "Yêu cầu chỉnh sửa bản thu đã được gửi đến Quản trị viên.");
     } catch (err) {
       console.error(err);
-      notify.error("Lỗi", "Không thể gửi yêu cầu chỉnh sửa. Vui lòng thử lại.");
+      notify.error("Lỗi", "Không thể gửi yêu cầu chỉnh sửa bản thu. Vui lòng thử lại.");
     }
   };
 
@@ -430,10 +493,10 @@ export default function ContributionsPage() {
         isOpen={!!deleteRecordingConfirm}
         onClose={() => setDeleteRecordingConfirm(null)}
         onConfirm={handleDeleteRecordingConfirm}
-        title="Xác nhận yêu cầu xóa bản thu"
-        message={deleteRecordingConfirm ? `Bạn có chắc muốn gửi yêu cầu xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}"?` : ""}
-        description="Yêu cầu sẽ được gửi đến Quản trị viên, sau đó chuyển đến Chuyên gia để xóa hoàn toàn bản thu khỏi hệ thống."
-        confirmText="Gửi yêu cầu xóa"
+        title={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Xác nhận xóa bản thu" : "Xác nhận yêu cầu xóa bản thu"}
+        message={deleteRecordingConfirm ? (deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? `Bạn có chắc muốn xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}" khỏi hệ thống?` : `Bạn có chắc muốn gửi yêu cầu xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}"?`) : ""}
+        description={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Bản thu sẽ bị xóa hoàn toàn khỏi hệ thống. Hành động này không thể hoàn tác." : "Yêu cầu sẽ được gửi đến Quản trị viên, sau đó chuyển đến Chuyên gia để xóa hoàn toàn bản thu khỏi hệ thống."}
+        confirmText={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Xóa bản thu" : "Gửi yêu cầu xóa bản thu"}
         cancelText="Hủy"
         confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
       />
@@ -444,7 +507,7 @@ export default function ContributionsPage() {
         title="Xác nhận yêu cầu chỉnh sửa bản thu"
         message={editRequestConfirm ? `Bạn có chắc muốn gửi yêu cầu chỉnh sửa bản thu "${editRequestConfirm.basicInfo?.title || editRequestConfirm.title || "Không có tiêu đề"}"?` : ""}
         description="Yêu cầu sẽ được gửi đến Quản trị viên. Sau khi được duyệt, bạn có thể chỉnh sửa bản thu và gửi Chuyên gia kiểm duyệt lại."
-        confirmText="Gửi yêu cầu chỉnh sửa"
+        confirmText="Gửi yêu cầu chỉnh sửa bản thu"
         cancelText="Hủy"
         confirmButtonStyle="bg-primary-600 text-white hover:bg-primary-500"
       />

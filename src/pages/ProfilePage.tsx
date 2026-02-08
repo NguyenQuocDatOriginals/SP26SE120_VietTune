@@ -386,8 +386,8 @@ export default function ProfilePage() {
             <p className="text-neutral-700 font-medium">Hỗ trợ việc thu thập, lưu trữ và phổ biến các bản thu truyền thống theo chuẩn khoa học và tôn trọng bản quyền.</p>
           </div>
 
-          {/* Expert Tools - Xóa metadata */}
-          {user?.role === "EXPERT" && (
+          {/* Admin Tools - Xóa metadata (chỉ hiển thị trong Hồ sơ của admin) */}
+          {user?.role === "ADMIN" && (
             <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
               <div className="flex items-start justify-between mb-4">
                 <div>

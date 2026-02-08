@@ -120,6 +120,11 @@ export async function setLocalRecording(
   const withId = { ...recording, id };
   const migrated = migrateVideoDataToVideoData([withId])[0];
   const meta = toMeta(migrated);
+  // Đảm bảo meta luôn có uploader (ContributionsPage lọc theo uploader.id)
+  const metaRecord = meta as Record<string, unknown>;
+  if (migrated.uploader != null && metaRecord.uploader == null) {
+    metaRecord.uploader = migrated.uploader;
+  }
 
   const idsRaw = await getItemAsync(IDS_KEY);
   let ids: string[] = idsRaw ? (JSON.parse(idsRaw) as string[]) : [];

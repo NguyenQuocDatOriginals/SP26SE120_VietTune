@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, CheckCircle, Trash2 } from "lucide-react";
+import { Bell, CheckCircle, Edit3, Trash2, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import { useAuthStore } from "@/stores/authStore";
 import { recordingRequestService } from "@/services/recordingRequestService";
@@ -23,6 +23,23 @@ export default function NotificationPage() {
     await recordingRequestService.markNotificationRead(id);
     if (user?.role) setNotifications(await recordingRequestService.getNotificationsForRole(user.role));
   };
+  const handleMarkUnread = async (id: string) => {
+    await recordingRequestService.markNotificationUnread(id);
+    if (user?.role) setNotifications(await recordingRequestService.getNotificationsForRole(user.role));
+  };
+
+  const hasUnread = notifications.some((n) => !n.read);
+  const hasRead = notifications.some((n) => n.read);
+  const handleMarkAllRead = async () => {
+    if (!user?.role) return;
+    await recordingRequestService.markAllNotificationsReadForRole(user.role);
+    setNotifications(await recordingRequestService.getNotificationsForRole(user.role));
+  };
+  const handleMarkAllUnread = async () => {
+    if (!user?.role) return;
+    await recordingRequestService.markAllNotificationsUnreadForRole(user.role);
+    setNotifications(await recordingRequestService.getNotificationsForRole(user.role));
+  };
 
   return (
     <div className="min-h-screen">
@@ -31,7 +48,27 @@ export default function NotificationPage() {
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 min-w-0">
             Thông báo
           </h1>
-          <BackButton />
+          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={handleMarkAllUnread}
+              disabled={!hasRead}
+              title={hasRead ? "Đánh dấu tất cả thông báo là chưa đọc" : "Không còn thông báo đã đọc"}
+              className="inline-flex items-center justify-center min-h-[44px] px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm"
+            >
+              Đánh dấu chưa đọc tất cả thông báo
+            </button>
+            <button
+              type="button"
+              onClick={handleMarkAllRead}
+              disabled={!hasUnread}
+              title={hasUnread ? "Đánh dấu tất cả thông báo là đã đọc" : "Không còn thông báo chưa đọc"}
+              className="inline-flex items-center justify-center min-h-[44px] px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm"
+            >
+              Đánh dấu đã đọc tất cả thông báo
+            </button>
+            <BackButton />
+          </div>
         </div>
 
         <div
@@ -66,8 +103,17 @@ export default function NotificationPage() {
                         {n.type === "recording_deleted" && (
                           <Trash2 className="h-5 w-5 text-red-600 flex-shrink-0" strokeWidth={2.5} />
                         )}
+                        {n.type === "recording_edited" && (
+                          <Edit3 className="h-5 w-5 text-primary-600 flex-shrink-0" strokeWidth={2.5} />
+                        )}
+                        {n.type === "edit_submission_approved" && (
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
+                        )}
                         {n.type === "expert_account_deletion_approved" && (
                           <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" strokeWidth={2.5} />
+                        )}
+                        {n.type === "delete_request_rejected" && (
+                          <X className="h-5 w-5 text-neutral-600 flex-shrink-0" strokeWidth={2.5} />
                         )}
                         <h3 className="font-semibold text-neutral-900">{n.title}</h3>
                         {!n.read && (
@@ -77,15 +123,26 @@ export default function NotificationPage() {
                       <p className="text-neutral-700 font-medium text-sm">{n.body}</p>
                       <p className="text-neutral-500 text-xs mt-2">{formatDateTime(n.createdAt)}</p>
                     </div>
-                    {!n.read && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleMarkUnread(n.id)}
+                        disabled={!n.read}
+                        title={n.read ? "Đánh dấu thông báo này là chưa đọc" : "Đã ở trạng thái chưa đọc"}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm"
+                      >
+                        Đánh dấu chưa đọc
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleMarkRead(n.id)}
-                        className="px-3 py-1.5 rounded-full text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition-colors cursor-pointer flex-shrink-0"
+                        disabled={n.read}
+                        title={!n.read ? "Đánh dấu thông báo này là đã đọc" : "Đã ở trạng thái đã đọc"}
+                        className="px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-sm"
                       >
                         Đánh dấu đã đọc
                       </button>
-                    )}
+                    </div>
                   </div>
                 </li>
               ))}

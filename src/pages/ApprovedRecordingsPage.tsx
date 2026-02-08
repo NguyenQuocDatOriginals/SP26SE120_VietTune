@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { ModerationStatus } from "@/types";
 import AudioPlayer from "@/components/features/AudioPlayer";
 import VideoPlayer from "@/components/features/VideoPlayer";
 import { isYouTubeUrl } from "@/utils/youtube";
-import { Trash2 } from "lucide-react";
+import { Edit, Trash2, Check, X } from "lucide-react";
 import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
 import { buildTagsFromLocal } from "@/utils/recordingTags";
 import BackButton from "@/components/common/BackButton";
@@ -22,7 +23,7 @@ import {
   RecordingQuality,
   VerificationStatus,
 } from "@/types";
-import type { DeleteRecordingRequest } from "@/types";
+import type { DeleteRecordingRequest, EditSubmissionForReview } from "@/types";
 import type { LocalRecording } from "@/types";
 
 // Extended Recording type that may include original local data
@@ -36,6 +37,7 @@ type RecordingWithLocalData = Recording & {
 
 export default function ApprovedRecordingsPage() {
     const { user } = useAuthStore();
+    const navigate = useNavigate();
     const [items, setItems] = useState<LocalRecording[]>([]);
 
     const load = useCallback(async () => {
@@ -64,7 +66,10 @@ export default function ApprovedRecordingsPage() {
     }, [load]);
 
     const [deleteTarget, setDeleteTarget] = useState<{ type: "direct"; id: string; title: string } | { type: "request"; req: DeleteRecordingRequest } | null>(null);
+    const [rejectTarget, setRejectTarget] = useState<DeleteRecordingRequest | null>(null);
     const [forwardedDeletes, setForwardedDeletes] = useState<DeleteRecordingRequest[]>([]);
+    const [editSubmissions, setEditSubmissions] = useState<EditSubmissionForReview[]>([]);
+    const [approveEditTarget, setApproveEditTarget] = useState<EditSubmissionForReview | null>(null);
 
     useEffect(() => {
         if (!user?.id) return;
@@ -74,6 +79,14 @@ export default function ApprovedRecordingsPage() {
         }, 4000);
         return () => clearInterval(t);
     }, [user?.id]);
+
+    useEffect(() => {
+        recordingRequestService.getPendingEditSubmissionsForExpert().then(setEditSubmissions);
+        const t = setInterval(() => {
+            recordingRequestService.getPendingEditSubmissionsForExpert().then(setEditSubmissions);
+        }, 4000);
+        return () => clearInterval(t);
+    }, []);
 
     const handleDeleteConfirm = async () => {
         if (!deleteTarget) return;
@@ -96,6 +109,36 @@ export default function ApprovedRecordingsPage() {
             setDeleteTarget(null);
             void load();
             setForwardedDeletes(await recordingRequestService.getForwardedDeleteRequestsForExpert(user?.id ?? ""));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleRejectConfirm = async () => {
+        if (!rejectTarget || !user) return;
+        try {
+            await recordingRequestService.removeDeleteRequest(rejectTarget.id);
+            await recordingRequestService.addNotification({
+                type: "delete_request_rejected",
+                title: "Yêu cầu xóa bản thu đã bị từ chối",
+                body: `Chuyên gia đã từ chối yêu cầu xóa bản thu "${rejectTarget.recordingTitle}".`,
+                forRoles: [UserRole.ADMIN, UserRole.CONTRIBUTOR, UserRole.EXPERT],
+                recordingId: rejectTarget.recordingId,
+            });
+            setRejectTarget(null);
+            setForwardedDeletes(await recordingRequestService.getForwardedDeleteRequestsForExpert(user.id));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleApproveEditConfirm = async () => {
+        if (!approveEditTarget) return;
+        try {
+            await recordingRequestService.approveEditSubmission(approveEditTarget.id);
+            setApproveEditTarget(null);
+            setEditSubmissions(await recordingRequestService.getPendingEditSubmissionsForExpert());
+            void load();
         } catch (err) {
             console.error(err);
         }
@@ -158,6 +201,7 @@ export default function ApprovedRecordingsPage() {
         }
 
         const isMyReview = it.moderation?.reviewerId === user?.id;
+        const hasPendingDeleteRequest = forwardedDeletes.some((req) => req.recordingId === (it.id ?? ""));
 
         return (
             <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
@@ -197,18 +241,31 @@ export default function ApprovedRecordingsPage() {
                         </div>
                     </div>
 
-                    {/* Delete Button - only for recordings I approved */}
-                    {isMyReview && (
-                        <div className="ml-4">
-                            <button
-                                onClick={() => setDeleteTarget({ type: "direct", id: it.id ?? "", title: it.basicInfo?.title || it.title || "Không có tiêu đề" })}
-                                className="w-9 h-9 rounded-full flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-110 active:scale-95 cursor-pointer"
-                                title="Xóa bản thu khỏi hệ thống"
-                            >
-                                <Trash2 className="w-4 h-4" strokeWidth={2.5} />
-                            </button>
-                        </div>
-                    )}
+                    {/* Action Buttons — Mờ khi bản thu đang có yêu cầu xóa chờ xử lý (cho đến khi expert từ chối) */}
+                    <div className="ml-4 flex items-center gap-2 flex-shrink-0">
+                        <button
+                            onClick={() => !hasPendingDeleteRequest && navigate(`/recordings/${it.id}/edit`)}
+                            disabled={hasPendingDeleteRequest}
+                            className={hasPendingDeleteRequest
+                                ? "px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                                : "px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                            }
+                        >
+                            <Edit className="h-4 w-4" strokeWidth={2.5} />
+                            Chỉnh sửa bản thu
+                        </button>
+                        <button
+                            onClick={() => !hasPendingDeleteRequest && setDeleteTarget({ type: "direct", id: it.id ?? "", title: it.basicInfo?.title || it.title || "Không có tiêu đề" })}
+                            disabled={hasPendingDeleteRequest}
+                            className={hasPendingDeleteRequest
+                                ? "px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
+                                : "px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                            }
+                        >
+                            <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                            Xoá bản thu
+                        </button>
+                    </div>
                 </div>
 
                 {/* Media Player */}
@@ -346,77 +403,146 @@ export default function ApprovedRecordingsPage() {
                 title="Xác nhận xóa bản thu"
                 message={deleteTarget ? (deleteTarget.type === "request" ? `Bạn có chắc muốn xóa bản thu "${deleteTarget.req.recordingTitle}" khỏi hệ thống?` : `Bạn có chắc muốn xóa bản thu "${deleteTarget.title}" khỏi hệ thống?`) : ""}
                 description="Bản thu sẽ bị xóa hoàn toàn. Người đóng góp, Chuyên gia và Quản trị viên sẽ nhận thông báo. Hành động không thể hoàn tác."
-                confirmText="Xóa bản thu"
+                confirmText="Chấp nhận xóa bản thu"
                 cancelText="Hủy"
                 confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
             />
+            <ConfirmationDialog
+                isOpen={!!rejectTarget}
+                onClose={() => setRejectTarget(null)}
+                onConfirm={handleRejectConfirm}
+                title="Từ chối yêu cầu xóa bản thu"
+                message={rejectTarget ? `Bạn có chắc muốn từ chối yêu cầu xóa bản thu "${rejectTarget.recordingTitle}"? Người đóng góp sẽ được thông báo.` : ""}
+                description="Yêu cầu xóa sẽ bị hủy và bản thu vẫn giữ nguyên trong hệ thống."
+                confirmText="Từ chối xóa bản thu"
+                cancelText="Hủy"
+                confirmButtonStyle="bg-neutral-600 text-white hover:bg-neutral-500"
+            />
+            <ConfirmationDialog
+                isOpen={!!approveEditTarget}
+                onClose={() => setApproveEditTarget(null)}
+                onConfirm={handleApproveEditConfirm}
+                title="Duyệt chỉnh sửa bản thu"
+                message={approveEditTarget ? `Bạn có chắc muốn duyệt chỉnh sửa bản thu "${approveEditTarget.recordingTitle}"? Người đóng góp sẽ được thông báo và coi là đã hoàn tất chỉnh sửa.` : ""}
+                description="Sau khi duyệt, quyền chỉnh sửa của người đóng góp sẽ được thu hồi cho đến khi họ gửi yêu cầu chỉnh sửa mới."
+                confirmText="Duyệt chỉnh sửa"
+                cancelText="Hủy"
+                confirmButtonStyle="bg-primary-600 text-white hover:bg-primary-500"
+            />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
-                    <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 min-w-0">Quản lý bản thu đã được kiểm duyệt</h1>
+                    <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">Quản lý bản thu đã được kiểm duyệt</h1>
                     <BackButton />
                 </div>
 
-                {forwardedDeletes.length > 0 && (
+                {editSubmissions.length > 0 && (
                     <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
-                        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Yêu cầu xóa bản thu đã chuyển đến bạn</h2>
-                        <p className="text-neutral-700 font-medium mb-4 text-sm">Quản trị viên đã chuyển các yêu cầu xóa từ Người đóng góp. Bạn có thể xóa bản thu khỏi hệ thống.</p>
+                        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Chỉnh sửa bản thu chờ duyệt</h2>
+                        <p className="text-neutral-700 font-medium mb-4 text-sm">Người đóng góp đã gửi chỉnh sửa và chờ bạn duyệt. Sau khi duyệt, họ mới được coi là hoàn tất chỉnh sửa.</p>
                         <div className="space-y-4">
-                            {forwardedDeletes.map((req) => (
-                                <div key={req.id} className="flex items-center justify-between rounded-xl border border-neutral-200/80 p-4" style={{ backgroundColor: '#FFFCF5' }}>
+                            {editSubmissions.map((sub) => (
+                                <div key={sub.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4" style={{ backgroundColor: '#FFFCF5' }}>
                                     <div>
-                                        <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
-                                        <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · Yêu cầu lúc: {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
+                                        <p className="font-medium text-neutral-900">{sub.recordingTitle}</p>
+                                        <p className="text-sm text-neutral-600">Người đóng góp: {sub.contributorName} · Gửi lúc: {new Date(sub.submittedAt).toLocaleString("vi-VN")}</p>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDeleteTarget({ type: "request", req })}
-                                        className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-all cursor-pointer"
-                                    >
-                                        <Trash2 className="w-4 h-4 inline-block mr-2" strokeWidth={2.5} />
-                                        Xóa bản thu
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(`/recordings/${sub.recordingId}/edit`)}
+                                            className="px-4 py-2 rounded-full bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 text-sm font-medium transition-all cursor-pointer flex items-center gap-2"
+                                        >
+                                            <Edit className="h-4 w-4" strokeWidth={2.5} />
+                                            Xem / Chỉnh sửa
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setApproveEditTarget(sub)}
+                                            className="px-4 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-all cursor-pointer flex items-center gap-2"
+                                        >
+                                            <Check className="h-4 w-4" strokeWidth={2.5} />
+                                            Duyệt chỉnh sửa
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {items.length === 0 && forwardedDeletes.length === 0 ? (
-                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                {forwardedDeletes.length > 0 && (
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
+                        <h2 className="text-xl font-semibold text-neutral-900 mb-4">Yêu cầu xóa bản thu đã chuyển đến bạn</h2>
+                        <p className="text-neutral-700 font-medium mb-4 text-sm">Quản trị viên đã chuyển các yêu cầu xóa từ Người đóng góp. Bạn có thể chấp nhận (xóa bản thu) hoặc từ chối yêu cầu.</p>
+                        <div className="space-y-4">
+                            {forwardedDeletes.map((req) => (
+                                <div key={req.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4" style={{ backgroundColor: '#FFFCF5' }}>
+                                    <div>
+                                        <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
+                                        <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · Yêu cầu lúc: {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeleteTarget({ type: "request", req })}
+                                            className="px-4 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-all cursor-pointer flex items-center gap-2"
+                                        >
+                                            <Check className="w-4 h-4" strokeWidth={2.5} />
+                                            Chấp nhận xóa bản thu
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setRejectTarget(req)}
+                                            className="px-4 py-2 rounded-full bg-neutral-500 hover:bg-neutral-600 text-white text-sm font-medium transition-all cursor-pointer flex items-center gap-2"
+                                        >
+                                            <X className="w-4 h-4" strokeWidth={2.5} />
+                                            Từ chối xóa bản thu
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {items.length === 0 && forwardedDeletes.length === 0 && editSubmissions.length === 0 ? (
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
                         <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
                         <p className="text-neutral-700 font-medium">Không có bản thu nào đã được kiểm duyệt.</p>
                     </div>
                 ) : (
-                    <div className="space-y-8">
-                        {/* Bản thu do tôi kiểm duyệt - có nút Xóa bản thu */}
-                        {myApproved.length > 0 && (
-                            <div>
-                                <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
-                                        Bản thu do tôi kiểm duyệt
-                                    </span>
-                                    <span className="text-sm font-normal text-neutral-600">({myApproved.length})</span>
-                                </h2>
-                                <div className="space-y-6">
-                                    {myApproved.map((it) => renderRecordingItem(it))}
+                    <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+                        <div className="space-y-8">
+                            {/* Bản thu do tôi kiểm duyệt */}
+                            {myApproved.length > 0 && (
+                                <div>
+                                    <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
+                                            Bản thu do tôi kiểm duyệt
+                                        </span>
+                                        <span className="text-sm font-normal text-neutral-600">({myApproved.length})</span>
+                                    </h2>
+                                    <div className="space-y-6">
+                                        {myApproved.map((it) => renderRecordingItem(it))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Bản thu do chuyên gia khác kiểm duyệt */}
-                        {othersApproved.length > 0 && (
-                            <div>
-                                <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
-                                        Bản thu do chuyên gia khác kiểm duyệt
-                                    </span>
-                                    <span className="text-sm font-normal text-neutral-600">({othersApproved.length})</span>
-                                </h2>
-                                <div className="space-y-6">
-                                    {othersApproved.map((it) => renderRecordingItem(it))}
+                            {/* Bản thu do chuyên gia khác kiểm duyệt */}
+                            {othersApproved.length > 0 && (
+                                <div>
+                                    <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200">
+                                            Bản thu do chuyên gia khác kiểm duyệt
+                                        </span>
+                                        <span className="text-sm font-normal text-neutral-600">({othersApproved.length})</span>
+                                    </h2>
+                                    <div className="space-y-6">
+                                        {othersApproved.map((it) => renderRecordingItem(it))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

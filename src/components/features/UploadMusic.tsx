@@ -6,8 +6,10 @@ import { createPortal } from "react-dom";
 import UploadProgressDialog from "@/components/common/UploadProgressDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { LocalRecording } from "@/types";
+import { UserRole } from "@/types";
 import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 import { getLocalRecordingFull, setLocalRecording } from "@/services/recordingStorage";
+import { recordingRequestService } from "@/services/recordingRequestService";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -15,6 +17,11 @@ type LocalRecordingStorage = LocalRecording & {
   culturalContext?: {
     ethnicity?: string;
   };
+};
+
+// Type for saving (storage may persist file metadata)
+type LocalRecordingForSave = LocalRecordingStorage & {
+  file?: { name?: string; size?: number; type?: string; duration?: number; bitrate?: number; sampleRate?: number };
 };
 
 // ===== CONSTANTS =====
@@ -1965,10 +1972,17 @@ function CollapsibleSection({
 }
 
 // ===== MAIN COMPONENT =====
-export default function UploadMusic() {
+export interface UploadMusicProps {
+  /** When provided (e.g. from EditRecordingPage), load recording by id from storage instead of session. */
+  recordingId?: string;
+  /** When true, save preserves moderation status APPROVED instead of resetting to PENDING_REVIEW. */
+  isApprovedEdit?: boolean;
+}
+
+export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusicProps = {}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isEditModeParam = searchParams.get("edit") === "true";
+  const isEditModeParam = searchParams.get("edit") === "true" || !!recordingId;
   const [isEditMode, setIsEditMode] = useState(isEditModeParam);
   const [editingRecordingId, setEditingRecordingId] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
@@ -2014,7 +2028,8 @@ export default function UploadMusic() {
   const [region, setRegion] = useState("");
 
   const { user: currentUser } = useAuthStore();
-  const isFormDisabled = !currentUser || currentUser.role !== "CONTRIBUTOR";
+  // Upload: only CONTRIBUTOR. Edit (isApprovedEdit): CONTRIBUTOR or EXPERT — same UI/UX and logic for both.
+  const isFormDisabled = !currentUser || (isApprovedEdit ? (currentUser.role !== "CONTRIBUTOR" && currentUser.role !== "EXPERT") : currentUser.role !== "CONTRIBUTOR");
   const [province, setProvince] = useState("");
   const [eventType, setEventType] = useState("");
   const [customEventType, setCustomEventType] = useState("");
@@ -2326,9 +2341,75 @@ export default function UploadMusic() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Load editing recording from IndexedDB (session key)
+  // Shape used when loading from storage (storage may have extra fields not in LocalRecording type)
+  type LoadedRecording = LocalRecordingStorage & {
+    basicInfo?: { composer?: string; language?: string; dateEstimated?: boolean; dateNote?: string; recordingLocation?: string };
+    additionalNotes?: { description?: string; fieldNotes?: string; transcription?: string };
+    adminInfo?: { collector?: string; copyright?: string; archiveOrg?: string; catalogId?: string };
+    file?: { name?: string; size?: number; type?: string; duration?: number; bitrate?: number; sampleRate?: number };
+  };
+
+  // Load editing recording: by recordingId (EditRecordingPage) or from session (ContributionsPage → /upload?edit=true)
   useEffect(() => {
-    if (isEditModeParam) {
+    if (recordingId) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const existing = await getLocalRecordingFull(recordingId) as LocalRecordingStorage | null;
+          if (cancelled || !existing) return;
+          const recording = existing as LoadedRecording;
+
+          setEditingRecordingId(recording.id ?? null);
+          setMediaType((recording.mediaType || "audio") as "audio" | "video");
+          setTitle(recording.basicInfo?.title || "");
+          setArtist(recording.basicInfo?.artist || "");
+          setComposer(recording.basicInfo?.composer || "");
+          setLanguage(recording.basicInfo?.language || "");
+          setGenre(recording.basicInfo?.genre || "");
+          setRecordingDate(recording.basicInfo?.recordingDate || "");
+          setDateEstimated(recording.basicInfo?.dateEstimated || false);
+          setDateNote(recording.basicInfo?.dateNote || "");
+          setRecordingLocation(recording.basicInfo?.recordingLocation || "");
+          setEthnicity(recording.culturalContext?.ethnicity || "");
+          setRegion(recording.culturalContext?.region || "");
+          setProvince(recording.culturalContext?.province || "");
+          setEventType(recording.culturalContext?.eventType || "");
+          setPerformanceType(recording.culturalContext?.performanceType || "");
+          setInstruments(recording.culturalContext?.instruments || []);
+          setDescription(recording.additionalNotes?.description || "");
+          setFieldNotes(recording.additionalNotes?.fieldNotes || "");
+          setTranscription(recording.additionalNotes?.transcription || "");
+          setCollector(recording.adminInfo?.collector || "");
+          setCopyright(recording.adminInfo?.copyright || "");
+          setArchiveOrg(recording.adminInfo?.archiveOrg || "");
+          setCatalogId(recording.adminInfo?.catalogId || "");
+
+          const effectiveMediaType = (recording.mediaType || "audio") as "audio" | "video";
+          const src =
+            (recording.youtubeUrl && typeof recording.youtubeUrl === "string" && recording.youtubeUrl.trim())
+              ? recording.youtubeUrl.trim()
+              : (effectiveMediaType === "video" ? (recording.videoData ?? null) : (recording.audioData ?? null));
+
+          setExistingMediaSrc(typeof src === "string" && src.trim().length > 0 ? src : null);
+          setExistingMediaInfo({
+            name: recording.file?.name || (effectiveMediaType === "video" ? "Video đã tải lên" : "Âm thanh đã tải lên"),
+            size: Number(recording.file?.size || 0),
+            type: recording.file?.type || "",
+            duration: Number(recording.file?.duration || 0),
+            bitrate: recording.file?.bitrate,
+            sampleRate: recording.file?.sampleRate,
+          });
+
+          setIsEditMode(true);
+        } catch (err) {
+          console.error("Error loading recording by id:", err);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (isEditModeParam && !recordingId) {
       let cancelled = false;
       (async () => {
         try {
@@ -2363,9 +2444,10 @@ export default function UploadMusic() {
           setArchiveOrg(recording.adminInfo?.archiveOrg || "");
           setCatalogId(recording.adminInfo?.catalogId || "");
 
-          // Load full recording (with media data) to show existing contribution in edit mode
           const existing = await getLocalRecordingFull(recording.id) as LocalRecordingStorage | null;
           if (cancelled) return;
+          const existingLoaded = existing as LoadedRecording | null;
+          const recordingLoaded = recording as LoadedRecording;
 
           const effectiveMediaType = (existing?.mediaType || recording.mediaType || "audio") as "audio" | "video";
           const src =
@@ -2375,12 +2457,12 @@ export default function UploadMusic() {
 
           setExistingMediaSrc(typeof src === "string" && src.trim().length > 0 ? src : null);
           setExistingMediaInfo({
-            name: existing?.file?.name || recording?.file?.name || (effectiveMediaType === "video" ? "Video đã tải lên" : "Âm thanh đã tải lên"),
-            size: Number(existing?.file?.size || recording?.file?.size || 0),
-            type: existing?.file?.type || recording?.file?.type || "",
-            duration: Number(existing?.file?.duration || recording?.file?.duration || 0),
-            bitrate: existing?.file?.bitrate || recording?.file?.bitrate,
-            sampleRate: existing?.file?.sampleRate || recording?.file?.sampleRate,
+            name: existingLoaded?.file?.name || recordingLoaded?.file?.name || (effectiveMediaType === "video" ? "Video đã tải lên" : "Âm thanh đã tải lên"),
+            size: Number(existingLoaded?.file?.size || recordingLoaded?.file?.size || 0),
+            type: existingLoaded?.file?.type || recordingLoaded?.file?.type || "",
+            duration: Number(existingLoaded?.file?.duration || recordingLoaded?.file?.duration || 0),
+            bitrate: existingLoaded?.file?.bitrate || recordingLoaded?.file?.bitrate,
+            sampleRate: existingLoaded?.file?.sampleRate || recordingLoaded?.file?.sampleRate,
           });
 
           setIsEditMode(true);
@@ -2393,7 +2475,7 @@ export default function UploadMusic() {
         cancelled = true;
       };
     }
-  }, [isEditModeParam]);
+  }, [isEditModeParam, recordingId]);
 
   // Disable body scroll when dialogs are open
   useEffect(() => {
@@ -2528,7 +2610,12 @@ export default function UploadMusic() {
           try {
             const existing = await getLocalRecordingFull(editingRecordingId) as LocalRecordingStorage | null;
             const preservedUploadDate = existing?.uploadedDate ?? existing?.uploadedAt ?? new Date().toISOString();
-            const toSave: LocalRecordingStorage = {
+            // Luôn giữ uploader gốc (contributor) khi chỉnh sửa — dù contributor tự sửa hay expert sửa — để ContributionsPage vẫn hiển thị bản thu đó
+            const uploaderToSave =
+              existing?.uploader != null && typeof existing.uploader === "object"
+                ? { id: String((existing.uploader as { id?: string }).id ?? ""), username: String((existing.uploader as { username?: string }).username ?? "Khách") }
+                : { id: currentUser?.id || "anonymous", username: currentUser?.username || "Khách" };
+            const toSave: LocalRecordingForSave = {
               ...(existing ?? ({} as LocalRecordingStorage)),
               ...(formData as unknown as LocalRecordingStorage),
               id: editingRecordingId,
@@ -2537,28 +2624,49 @@ export default function UploadMusic() {
               videoData: existing?.videoData ?? null,
               youtubeUrl: existing?.youtubeUrl ?? null,
               mediaType: (existing?.mediaType ?? mediaType) as "audio" | "video",
-              file: (existing?.file ?? (formData as any).file) as any,
+              file: (existing as LocalRecordingForSave)?.file ?? (formData as LocalRecordingForSave).file,
               uploadedDate: preservedUploadDate,
               uploadedAt: preservedUploadDate,
-              moderation: {
-                status: ModerationStatus.PENDING_REVIEW,
-                claimedBy: null,
-                claimedByName: null,
-                reviewedAt: null,
-                reviewerId: null,
-                rejectionNote: undefined,
-              },
-              uploader: {
-                id: currentUser?.id || "anonymous",
-                username: currentUser?.username || "Khách",
-              },
+              moderation:
+                isApprovedEdit && currentUser?.role !== "CONTRIBUTOR" && existing?.moderation
+                  ? existing.moderation
+                  : {
+                    status: ModerationStatus.PENDING_REVIEW,
+                    claimedBy: null,
+                    claimedByName: null,
+                    reviewedAt: null,
+                    reviewerId: null,
+                    rejectionNote: undefined,
+                  },
+              uploader: uploaderToSave,
+              ...(isApprovedEdit && currentUser?.role === "CONTRIBUTOR" ? { resubmittedForModeration: true } : {}),
             };
 
             await setLocalRecording(toSave);
-            void sessionRemoveItem("editingRecording");
+            if (!isApprovedEdit) void sessionRemoveItem("editingRecording");
+            if (isApprovedEdit && editingRecordingId) {
+              if (currentUser?.role === "CONTRIBUTOR") {
+                await recordingRequestService.revokeApprovedEdit(editingRecordingId);
+              } else {
+                await recordingRequestService.addNotification({
+                  type: "recording_edited",
+                  title: "Bản thu đã được chỉnh sửa",
+                  body: `Bản thu "${title || "Không có tiêu đề"}" đã được chỉnh sửa.`,
+                  forRoles: [UserRole.ADMIN, UserRole.CONTRIBUTOR, UserRole.EXPERT],
+                  recordingId: editingRecordingId,
+                });
+                await recordingRequestService.revokeApprovedEdit(editingRecordingId);
+              }
+            }
 
             setSubmitStatus("success");
-            setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
+            setSubmitMessage(
+              isApprovedEdit
+                ? (currentUser?.role === "CONTRIBUTOR"
+                    ? "Bản thu đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ."
+                    : "Chi tiết bản thu đã được cập nhật thành công. Bản thu vẫn ở trạng thái đã duyệt.")
+                : "Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!"
+            );
             setIsSubmitting(false);
           } catch (error) {
             console.error("Lỗi khi lưu dữ liệu (edit mode, metadata only):", error);
@@ -2653,17 +2761,18 @@ export default function UploadMusic() {
       // Xác định nơi lưu dữ liệu dựa trên mediaType
       const isVideoFile = mediaType === "video";
       const uploadTimestamp = new Date().toISOString();
+      const defaultModeration = {
+        status: ModerationStatus.PENDING_REVIEW,
+        claimedBy: null,
+        claimedByName: null,
+        reviewedAt: null,
+        reviewerId: null,
+        rejectionNote: undefined as string | undefined,
+      };
       const recordingData: Record<string, unknown> = {
         ...formData,
         id: isEditMode && editingRecordingId ? editingRecordingId : `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        moderation: {
-          status: ModerationStatus.PENDING_REVIEW,
-          claimedBy: null,
-          claimedByName: null,
-          reviewedAt: null,
-          reviewerId: null,
-          rejectionNote: undefined, // Clear rejection note when resubmitting
-        },
+        moderation: defaultModeration,
         uploader: {
           id: currentUser?.id || "anonymous",
           username: currentUser?.username || "Khách",
@@ -2688,6 +2797,11 @@ export default function UploadMusic() {
         if (isEditMode && editingRecordingId) {
           const existing = await getLocalRecordingFull(editingRecordingId) as LocalRecordingStorage | null;
           const preservedUploadDate = existing?.uploadedDate ?? existing?.uploadedAt ?? new Date().toISOString();
+          // Luôn giữ uploader gốc (contributor) khi chỉnh sửa — dù contributor tự sửa hay expert sửa — để ContributionsPage vẫn hiển thị bản thu đó
+          const uploaderToSave =
+            existing?.uploader != null && typeof existing.uploader === "object"
+              ? { id: String((existing.uploader as { id?: string }).id ?? ""), username: String((existing.uploader as { username?: string }).username ?? "Khách") }
+              : { id: newRecording.uploader?.id ?? currentUser?.id ?? "anonymous", username: newRecording.uploader?.username ?? currentUser?.username ?? "Khách" };
           const toSave: LocalRecordingStorage = {
             ...newRecording,
             id: editingRecordingId,
@@ -2697,15 +2811,41 @@ export default function UploadMusic() {
             mediaType: (mediaType as "audio" | "video") ?? existing?.mediaType ?? "audio",
             uploadedDate: preservedUploadDate,
             uploadedAt: preservedUploadDate,
+            moderation:
+              isApprovedEdit && currentUser?.role !== "CONTRIBUTOR" && existing?.moderation
+                ? existing.moderation
+                : newRecording.moderation,
+            uploader: uploaderToSave,
+            ...(isApprovedEdit && currentUser?.role === "CONTRIBUTOR" ? { resubmittedForModeration: true } : {}),
           };
           await setLocalRecording(toSave);
-          void sessionRemoveItem("editingRecording");
+          if (!isApprovedEdit) void sessionRemoveItem("editingRecording");
+          if (isApprovedEdit && editingRecordingId) {
+            if (currentUser?.role === "CONTRIBUTOR") {
+              await recordingRequestService.revokeApprovedEdit(editingRecordingId);
+            } else {
+              await recordingRequestService.addNotification({
+                type: "recording_edited",
+                title: "Bản thu đã được chỉnh sửa",
+                body: `Bản thu "${title || "Không có tiêu đề"}" đã được chỉnh sửa.`,
+                forRoles: [UserRole.ADMIN, UserRole.CONTRIBUTOR, UserRole.EXPERT],
+                recordingId: editingRecordingId,
+              });
+              await recordingRequestService.revokeApprovedEdit(editingRecordingId);
+            }
+          }
         } else {
           await setLocalRecording(newRecording);
         }
 
         setSubmitStatus("success");
-        setSubmitMessage("Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!");
+        setSubmitMessage(
+          isApprovedEdit
+            ? (currentUser?.role === "CONTRIBUTOR"
+                ? "Bản thu đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Quy trình giống như đóng góp mới."
+                : "Chi tiết bản thu đã được cập nhật thành công. Bản thu vẫn ở trạng thái đã duyệt.")
+            : "Bản đóng góp của bạn đã được gửi thành công đến các Chuyên gia! Bạn vui lòng theo dõi quá trình kiểm duyệt qua trang hồ sơ. Cảm ơn bạn đã đóng góp!"
+        );
 
         // success popup removed; use submitStatus/submitMessage for confirmations
         setIsSubmitting(false);
@@ -2828,12 +2968,12 @@ export default function UploadMusic() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Pure check for whether all required fields are filled (does not mutate state)
+  // Pure check for whether all required fields are filled (does not mutate state). Same required fields as validateForm.
   const isFormComplete = useMemo(() => {
     if (isFormDisabled) return false;
 
-    // Media presence
-    if (!file) return false;
+    // Media presence: file or (edit mode with existing media)
+    if (!file && !(isEditMode && !!existingMediaSrc)) return false;
 
     // Basic required fields
     if (!title.trim()) return false;
@@ -2848,6 +2988,8 @@ export default function UploadMusic() {
     return true;
   }, [
     file,
+    isEditMode,
+    existingMediaSrc,
     title,
     artist,
     artistUnknown,
@@ -3653,7 +3795,7 @@ export default function UploadMusic() {
             <button
               type="submit"
               disabled={!isFormComplete || isAnalyzing || isSubmitting || isFormDisabled}
-              title={isFormDisabled ? "Bạn cần có tài khoản Người đóng góp để đóng góp bản thu" : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
+              title={isFormDisabled ? (isApprovedEdit ? "Bạn cần có tài khoản Người đóng góp hoặc Chuyên gia để chỉnh sửa bản thu" : "Bạn cần có tài khoản Người đóng góp để đóng góp bản thu") : (!isFormComplete ? "Vui lòng hoàn thành các trường bắt buộc" : undefined)}
               className="px-8 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2 cursor-pointer"
             >
               {isSubmitting ? (
@@ -3664,7 +3806,7 @@ export default function UploadMusic() {
               ) : (
                 <>
                   <Upload className="h-4 w-4" strokeWidth={2.5} />
-                  Đóng góp
+                  {isApprovedEdit ? "Hoàn tất chỉnh sửa" : "Đóng góp"}
                 </>
               )}
             </button>
@@ -3701,7 +3843,7 @@ export default function UploadMusic() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
-              <h2 className="text-2xl font-bold text-white">Xác nhận đóng góp</h2>
+              <h2 className="text-2xl font-bold text-white">{isApprovedEdit ? "Xác nhận chỉnh sửa" : "Xác nhận đóng góp"}</h2>
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
@@ -3737,7 +3879,7 @@ export default function UploadMusic() {
                 onClick={handleConfirmSubmit}
                 className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
               >
-                Gửi
+                {isApprovedEdit ? "Hoàn tất chỉnh sửa" : "Gửi"}
               </button>
             </div>
           </div>
@@ -3771,7 +3913,7 @@ export default function UploadMusic() {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
-              <h2 className="text-2xl font-bold text-white">Đóng góp thành công</h2>
+              <h2 className="text-2xl font-bold text-white">{isApprovedEdit ? "Chỉnh sửa thành công" : "Đóng góp thành công"}</h2>
               <button
                 onClick={() => setSubmitStatus("idle")}
                 className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white hover:text-white cursor-pointer"
@@ -3797,7 +3939,7 @@ export default function UploadMusic() {
                           <p key={index}>{sentence.trim()}</p>
                         ))
                     ) : (
-                      <p>Cảm ơn bạn đã đóng góp bản thu!</p>
+                      <p>{isApprovedEdit ? "Cảm ơn bạn đã cập nhật bản thu!" : "Cảm ơn bạn đã đóng góp bản thu!"}</p>
                     )}
                   </div>
                 </div>

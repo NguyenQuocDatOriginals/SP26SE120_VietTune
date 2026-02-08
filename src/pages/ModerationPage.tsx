@@ -560,6 +560,12 @@ export default function ModerationPage() {
         return false;
     };
 
+    /** True only when all checkboxes in step 1, 2 and 3 are ticked. */
+    const allVerificationStepsComplete = (id: string | null): boolean => {
+        if (!id) return false;
+        return validateStep(id, 1) && validateStep(id, 2) && validateStep(id, 3);
+    };
+
     const getCurrentVerificationStep = (id: string | null): number => {
         if (!id) return 1;
         const item = allItems.find(it => it.id === id);
@@ -658,6 +664,7 @@ export default function ModerationPage() {
                 });
                 return {
                     ...it,
+                    resubmittedForModeration: false,
                     moderation: {
                         ...it.moderation,
                         status: ModerationStatus.APPROVED,
@@ -1346,7 +1353,7 @@ export default function ModerationPage() {
                                             {/* Step 1 Form */}
                                             {currentStep === 1 && showVerificationDialog && (
                                                 <div className="space-y-4">
-                                                    <h3 className="font-semibold text-neutral-800 mb-3">Yêu cầu kiểm tra (Tất cả đều bắt buộc):</h3>
+                                                    <h3 className="font-semibold text-neutral-800 mb-3">Yêu cầu kiểm tra <span className="text-sm text-neutral-500">(Bắt buộc)</span></h3>
                                                     <div className="space-y-3">
                                                         <div className="flex items-start gap-3">
                                                             <input
@@ -1381,7 +1388,7 @@ export default function ModerationPage() {
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                                            Ghi chú kiểm tra sơ bộ <span className="text-neutral-500">(Tùy chọn)</span>
+                                                            Ghi chú kiểm tra sơ bộ <span className="text-sm text-neutral-500">(Tùy chọn)</span>
                                                         </label>
                                                         <textarea
                                                             value={verificationForms[showVerificationDialog]?.step1?.notes || ''}
@@ -1397,7 +1404,7 @@ export default function ModerationPage() {
                                             {/* Step 2 Form */}
                                             {currentStep === 2 && showVerificationDialog && (
                                                 <div className="space-y-4">
-                                                    <h3 className="font-semibold text-neutral-800 mb-3">Đánh giá chuyên môn (Tất cả đều bắt buộc):</h3>
+                                                    <h3 className="font-semibold text-neutral-800 mb-3">Đánh giá chuyên môn <span className="text-sm text-neutral-500">(Bắt buộc)</span></h3>
                                                     <div className="space-y-3">
                                                         <div className="flex items-start gap-3">
                                                             <input
@@ -1432,7 +1439,7 @@ export default function ModerationPage() {
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                                            Đánh giá chuyên môn <span className="text-neutral-500">(Tùy chọn)</span>
+                                                            Đánh giá chuyên môn <span className="text-sm text-neutral-500">(Tùy chọn)</span>
                                                         </label>
                                                         <textarea
                                                             value={verificationForms[showVerificationDialog]?.step2?.expertNotes || ''}
@@ -1448,7 +1455,7 @@ export default function ModerationPage() {
                                             {/* Step 3 Form */}
                                             {currentStep === 3 && showVerificationDialog && (
                                                 <div className="space-y-4">
-                                                    <h3 className="font-semibold text-neutral-800 mb-3">Đối chiếu và phê duyệt cuối cùng (Tất cả đều bắt buộc):</h3>
+                                                    <h3 className="font-semibold text-neutral-800 mb-3">Đối chiếu và phê duyệt cuối cùng <span className="text-sm text-neutral-500">(Bắt buộc)</span></h3>
                                                     <div className="space-y-3">
                                                         <div className="flex items-start gap-3">
                                                             <input
@@ -1483,7 +1490,7 @@ export default function ModerationPage() {
                                                     </div>
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                                            Ghi chú cuối cùng <span className="text-neutral-500">(Tùy chọn)</span>
+                                                            Ghi chú cuối cùng <span className="text-sm text-neutral-500">(Tùy chọn)</span>
                                                         </label>
                                                         <textarea
                                                             value={verificationForms[showVerificationDialog]?.step3?.finalNotes || ''}
@@ -1542,7 +1549,7 @@ export default function ModerationPage() {
                                                         nextVerificationStep(showVerificationDialog);
                                                     }
                                                 }}
-                                                disabled={!validateStep(showVerificationDialog, currentStep)}
+                                                disabled={!allVerificationStepsComplete(showVerificationDialog)}
                                                 className="px-6 py-2.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-green-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                             >
                                                 Hoàn thành kiểm duyệt

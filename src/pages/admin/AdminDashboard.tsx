@@ -105,7 +105,8 @@ function RoleSelectDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md bg-[#FFFCF5] ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>{label}</span>
         <ChevronDown
@@ -161,6 +162,116 @@ function RoleSelectDropdown({
               >
                 Xóa khỏi hệ thống
               </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+/** Dropdown UI/UX aligned with UploadMusic.tsx: pill trigger, rounded-2xl panel, primary gradient selected, hover primary-100. */
+function ExpertSelectDropdown({
+  options,
+  value,
+  onChange,
+  placeholder = " -- Chọn Chuyên gia -- ",
+  disabled,
+}: {
+  options: { id: string; label: string }[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isClickOnScrollbar(event)) return;
+      const target = event.target as Node;
+      const outDropdown = dropdownRef.current && !dropdownRef.current.contains(target);
+      const outMenu = menuRef.current && !menuRef.current.contains(target);
+      if (outDropdown && (menuRef.current ? outMenu : true)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const updateRect = () => {
+      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
+    };
+    if (isOpen) updateRect();
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [isOpen]);
+
+  const selectedLabel = value ? options.find((o) => o.id === value)?.label ?? placeholder : placeholder;
+
+  return (
+    <div ref={dropdownRef} className="relative min-w-[180px]">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        style={{ backgroundColor: "#FFFCF5" }}
+      >
+        <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>{selectedLabel}</span>
+        <ChevronDown
+          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          strokeWidth={2.5}
+        />
+      </button>
+      {isOpen &&
+        menuRect &&
+        createPortal(
+          <div
+            ref={(el) => (menuRef.current = el)}
+            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
+            style={{
+              backgroundColor: "#FFFCF5",
+              position: "absolute",
+              left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
+              top: menuRect.bottom + (window.scrollY ?? 0) + 8,
+              width: Math.max(menuRect.width, 200),
+              zIndex: 40,
+            }}
+          >
+            <div className="max-h-60 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("");
+                  setIsOpen(false);
+                }}
+                className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${!value ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium" : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"}`}
+              >
+                {placeholder}
+              </button>
+              {options.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.id);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === opt.id ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium" : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>,
           document.body,
@@ -556,7 +667,9 @@ export default function AdminDashboard() {
                 Yêu cầu xóa / chỉnh sửa bản thu
               </h2>
               <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-                Yêu cầu xóa bản thu từ Người đóng góp: chuyển đến Chuyên gia để thực hiện xóa. Yêu cầu chỉnh sửa: duyệt để Người đóng góp có thể chỉnh sửa rồi gửi Chuyên gia kiểm duyệt lại.
+                Yêu cầu xóa bản thu từ Người đóng góp được Quản trị viên chuyển đến Chuyên gia để chấp nhận hoặc từ chối xóa bản thu.
+                <br />
+                Yêu cầu chỉnh sửa bản thu từ Người đóng góp được Quản trị viên duyệt để Người đóng góp chỉnh sửa bản thu và gửi Chuyên gia kiểm duyệt bản thu.
               </p>
               <div className="space-y-8">
                 <div>
@@ -581,16 +694,12 @@ export default function AdminDashboard() {
                               <p className="text-sm text-neutral-600">Người đóng góp: {req.contributorName} · {new Date(req.requestedAt).toLocaleString("vi-VN")}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <select
-                                className="px-3 py-2 rounded-full border border-neutral-300 text-neutral-900 text-sm font-medium bg-white cursor-pointer"
+                              <ExpertSelectDropdown
+                                options={expertOptions.map((ex) => ({ id: ex.id, label: ex.fullName ?? ex.username }))}
                                 value={forwardDeleteExpertId?.requestId === req.id ? forwardDeleteExpertId.expertId : ""}
-                                onChange={(e) => setForwardDeleteExpertId(e.target.value ? { requestId: req.id, expertId: e.target.value } : null)}
-                              >
-                                <option value="">-- Chọn Chuyên gia --</option>
-                                {expertOptions.map((ex) => (
-                                  <option key={ex.id} value={ex.id}>{ex.fullName ?? ex.username}</option>
-                                ))}
-                              </select>
+                                onChange={(id) => setForwardDeleteExpertId(id ? { requestId: req.id, expertId: id } : null)}
+                                placeholder=" -- Chọn Chuyên gia -- "
+                              />
                               <button
                                 type="button"
                                 disabled={!forwardDeleteExpertId || forwardDeleteExpertId.requestId !== req.id || !forwardDeleteExpertId.expertId}
@@ -642,14 +751,14 @@ export default function AdminDashboard() {
                                 try {
                                   await recordingRequestService.approveEditRequest(req.id);
                                   setEditRecordingRequests(await recordingRequestService.getEditRecordingRequests());
-                                  notify.success("Thành công", "Đã duyệt yêu cầu chỉnh sửa. Người đóng góp có thể chỉnh sửa bản thu.");
+                                  notify.success("Thành công", "Đã duyệt yêu cầu chỉnh sửa bản thu. Người đóng góp có thể chỉnh sửa bản thu.");
                                 } catch (e) {
-                                  notify.error("Lỗi", "Không thể duyệt yêu cầu.");
+                                  notify.error("Lỗi", "Không thể duyệt yêu cầu chỉnh sửa bản thu. Vui lòng thử lại.");
                                 }
                               }}
                               className="px-4 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium cursor-pointer"
                             >
-                              Duyệt chỉnh sửa
+                              Duyệt yêu cầu chỉnh sửa bản thu
                             </button>
                           </div>
                         ))}

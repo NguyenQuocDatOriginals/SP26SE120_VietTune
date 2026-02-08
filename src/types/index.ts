@@ -278,6 +278,8 @@ export interface LocalRecording {
     reviewedAt?: string | null;
     rejectionNote?: string;
   };
+  /** True khi bản thu đang PENDING_REVIEW do contributor bấm "Hoàn tất chỉnh sửa" (đang chờ expert kiểm duyệt lại). */
+  resubmittedForModeration?: boolean;
 }
 
 // Account deletion (Expert phải qua kiểm duyệt Admin)
@@ -313,10 +315,20 @@ export interface EditRecordingRequest {
   approvedAt?: string;
 }
 
+// Chỉnh sửa bản thu đã gửi chờ chuyên gia duyệt (contributor bấm "Hoàn tất chỉnh sửa" → chờ expert duyệt)
+export interface EditSubmissionForReview {
+  id: string;
+  recordingId: string;
+  recordingTitle: string;
+  contributorId: string;
+  contributorName: string;
+  submittedAt: string;
+}
+
 // Thông báo hệ thống (sau khi xóa bản thu, duyệt xóa tài khoản, v.v.)
 export interface AppNotification {
   id: string;
-  type: "recording_deleted" | "expert_account_deletion_approved";
+  type: "recording_deleted" | "recording_edited" | "expert_account_deletion_approved" | "delete_request_rejected" | "edit_submission_approved";
   title: string;
   body: string;
   forRoles: UserRole[];
