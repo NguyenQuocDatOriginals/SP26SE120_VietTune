@@ -20,6 +20,7 @@ type LocalRecordingStorage = LocalRecording & {
   uploadedAt?: string; // Legacy field
   moderation?: LocalRecording['moderation'] & {
     rejectionNote?: string;
+    contributorEditLocked?: boolean;
   };
 };
 
@@ -168,11 +169,6 @@ export default function ContributionsPage() {
               {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
                 <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
               )}
-              {it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && it.moderation?.rejectionNote && (
-                <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800"><strong>Ghi chú từ Chuyên gia:</strong> {it.moderation.rejectionNote}</p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -214,7 +210,21 @@ export default function ContributionsPage() {
                 </button>
               </>
             )}
-            {((it.moderation?.status === ModerationStatus.PENDING_REVIEW && !it.resubmittedForModeration) || it.moderation?.status === ModerationStatus.REJECTED) && (
+            {it.moderation?.status === ModerationStatus.REJECTED && (it.moderation as LocalRecordingStorage['moderation'])?.contributorEditLocked && (
+              <button
+                onClick={() => !(deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")) && setDeleteRecordingConfirm(it)}
+                disabled={deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")}
+                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${
+                  deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")
+                    ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                    : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                }`}
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+                Yêu cầu xóa bản thu
+              </button>
+            )}
+            {((it.moderation?.status === ModerationStatus.PENDING_REVIEW && !it.resubmittedForModeration) || (it.moderation?.status === ModerationStatus.REJECTED && !(it.moderation as LocalRecordingStorage['moderation'])?.contributorEditLocked)) && (
               <button
                 onClick={() => setWithdrawConfirmId(it.id ?? null)}
                 className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
@@ -279,6 +289,14 @@ export default function ContributionsPage() {
             )}
           </div>
         </div>
+
+        {/* Lý do từ chối — full width, cùng chiều rộng với Media Player */}
+        {(it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED || it.moderation?.status === ModerationStatus.REJECTED) && it.moderation?.rejectionNote && (
+          <div className="w-full mt-4 rounded-2xl border border-neutral-200/80 p-4 shadow-sm" style={{ backgroundColor: "#FFFCF5" }}>
+            <p className="text-sm text-neutral-800 font-medium">Lý do từ chối từ Chuyên gia:</p>
+            <p className="text-sm text-neutral-700 mt-1">{it.moderation.rejectionNote}</p>
+          </div>
+        )}
 
         {/* Media Player */}
         {mediaSrc && (

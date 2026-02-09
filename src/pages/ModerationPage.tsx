@@ -255,7 +255,10 @@ interface LocalRecordingMini {
         verificationStep?: number;
         verificationData?: VerificationData;
         rejectionNote?: string;
+        contributorEditLocked?: boolean;
     };
+    /** True khi bản thu đang PENDING_REVIEW do contributor bấm "Hoàn tất chỉnh sửa" (đang chờ expert kiểm duyệt lại). */
+    resubmittedForModeration?: boolean;
 }
 
 // Extended Recording type that may include original local data
@@ -779,6 +782,8 @@ export default function ModerationPage() {
                 if (it.moderation?.claimedBy !== user?.id && it.moderation?.reviewerId !== user?.id) {
                     return it;
                 }
+                const wasResubmission = it.resubmittedForModeration === true;
+                const contributorEditLocked = type === "direct" && wasResubmission;
                 return {
                     ...it,
                     moderation: {
@@ -788,6 +793,7 @@ export default function ModerationPage() {
                         reviewerName: user?.username,
                         reviewedAt: new Date().toISOString(),
                         rejectionNote: note || "",
+                        contributorEditLocked: contributorEditLocked || it.moderation?.contributorEditLocked,
                         claimedBy: null,
                         claimedByName: null,
                     },
@@ -829,8 +835,8 @@ export default function ModerationPage() {
                                             "Đang chờ được kiểm duyệt": ModerationStatus.PENDING_REVIEW,
                                             "Đang được kiểm duyệt": ModerationStatus.IN_REVIEW,
                                             "Đã được kiểm duyệt": ModerationStatus.APPROVED,
-                                            "Đã bị từ chối": ModerationStatus.REJECTED,
-                                            "Tạm thời bị từ chối": ModerationStatus.TEMPORARILY_REJECTED,
+                                            "Đã bị từ chối vĩnh viễn": ModerationStatus.REJECTED,
+                                            "Đã bị từ chối tạm thời": ModerationStatus.TEMPORARILY_REJECTED,
                                         };
                                         setStatusFilter(statusMap[val] || "ALL");
                                     }
@@ -840,8 +846,8 @@ export default function ModerationPage() {
                                     "Đang chờ được kiểm duyệt",
                                     "Đang được kiểm duyệt",
                                     "Đã được kiểm duyệt",
-                                    "Đã bị từ chối",
-                                    "Tạm thời bị từ chối",
+                                    "Đã bị từ chối vĩnh viễn",
+                                    "Đã bị từ chối tạm thời",
                                 ]}
                                 placeholder="Chọn trạng thái"
                             />
@@ -1361,7 +1367,7 @@ export default function ModerationPage() {
                                                                 aria-label="Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoComplete || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoComplete', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ</span>
                                                         </div>
@@ -1371,7 +1377,7 @@ export default function ModerationPage() {
                                                                 aria-label="Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoAccurate || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoAccurate', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn</span>
                                                         </div>
@@ -1381,7 +1387,7 @@ export default function ModerationPage() {
                                                                 aria-label="Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.formatCorrect || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'formatCorrect', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu</span>
                                                         </div>
@@ -1412,7 +1418,7 @@ export default function ModerationPage() {
                                                                 aria-label="Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.culturalValue || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'culturalValue', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể</span>
                                                         </div>
@@ -1422,7 +1428,7 @@ export default function ModerationPage() {
                                                                 aria-label="Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.authenticity || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'authenticity', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép</span>
                                                         </div>
@@ -1432,7 +1438,7 @@ export default function ModerationPage() {
                                                                 aria-label="Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.accuracy || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'accuracy', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu</span>
                                                         </div>
@@ -1463,7 +1469,7 @@ export default function ModerationPage() {
                                                                 aria-label="Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.crossChecked || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'crossChecked', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan</span>
                                                         </div>
@@ -1473,7 +1479,7 @@ export default function ModerationPage() {
                                                                 aria-label="Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.sourcesVerified || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'sourcesVerified', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh</span>
                                                         </div>
@@ -1483,7 +1489,7 @@ export default function ModerationPage() {
                                                                 aria-label="Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.finalApproval || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'finalApproval', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này</span>
                                                         </div>
@@ -1592,48 +1598,49 @@ export default function ModerationPage() {
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-700 mb-2">Loại từ chối</label>
                                     <div className="space-y-2">
-                                        <label className="flex items-center gap-3 cursor-pointer">
+                                        <div className="flex items-center gap-3 select-none">
                                             <input
                                                 type="radio"
                                                 name="rejectType"
                                                 value="direct"
                                                 checked={rejectType === "direct"}
                                                 onChange={(e) => setRejectType(e.target.value as "direct" | "temporary")}
-                                                className="h-4 w-4 text-primary-600"
+                                                aria-label="Từ chối vĩnh viễn"
+                                                className="h-4 w-4 shrink-0 cursor-pointer accent-primary-600 hover:accent-primary-700"
                                             />
                                             <div>
                                                 <span className="text-neutral-800 font-medium">Từ chối vĩnh viễn</span>
                                                 <p className="text-sm text-neutral-600">Dùng khi sai thông tin trầm trọng, bị trùng file, v.v.</p>
                                             </div>
-                                        </label>
-                                        <label className="flex items-center gap-3 cursor-pointer">
+                                        </div>
+                                        <div className="flex items-center gap-3 select-none">
                                             <input
                                                 type="radio"
                                                 name="rejectType"
                                                 value="temporary"
                                                 checked={rejectType === "temporary"}
                                                 onChange={(e) => setRejectType(e.target.value as "direct" | "temporary")}
-                                                className="h-4 w-4 text-primary-600"
+                                                aria-label="Từ chối tạm thời"
+                                                className="h-4 w-4 shrink-0 cursor-pointer accent-primary-600 hover:accent-primary-700"
                                             />
                                             <div>
                                                 <span className="text-neutral-800 font-medium">Từ chối tạm thời</span>
                                                 <p className="text-sm text-neutral-600">Người đóng góp có thể chỉnh sửa và gửi lại</p>
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
                                 </div>
-                                {rejectType === "temporary" && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-neutral-700 mb-2">Ghi chú cho người đóng góp</label>
-                                        <textarea
-                                            value={rejectNote}
-                                            onChange={(e) => setRejectNote(e.target.value)}
-                                            rows={4}
-                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                            placeholder="Nhập ghi chú về những điểm cần chỉnh sửa..."
-                                        />
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">Lý do từ chối</label>
+                                    <textarea
+                                        value={rejectNote}
+                                        onChange={(e) => setRejectNote(e.target.value)}
+                                        rows={4}
+                                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        style={{ backgroundColor: "#FFFCF5" }}
+                                        placeholder={rejectType === "temporary" ? "Nhập lý do từ chối và ghi chú những điểm cần chỉnh sửa..." : "Nhập lý do từ chối..."}
+                                    />
+                                </div>
                                 <div className="flex justify-end gap-3">
                                     <button
                                         onClick={() => { setShowRejectDialog(null); setRejectNote(""); setRejectType("direct"); }}
@@ -1644,7 +1651,7 @@ export default function ModerationPage() {
                                     <button
                                         onClick={() => {
                                             if (showRejectDialog) {
-                                                if (rejectType === "temporary" && !rejectNote.trim()) {
+                                                if (!rejectNote.trim()) {
                                                     setShowRejectNoteWarningDialog(true);
                                                     return;
                                                 }
@@ -1856,7 +1863,7 @@ export default function ModerationPage() {
                                             Bạn có chắc chắn muốn {rejectType === "direct" ? "từ chối vĩnh viễn" : "từ chối tạm thời"} bản thu này?
                                         </h3>
                                         <div className="text-neutral-700 text-center space-y-1">
-                                            <p>{rejectType === "direct" ? "Bản thu sẽ bị từ chối vĩnh viễn và không thể chỉnh sửa." : "Bản thu sẽ bị từ chối tạm thời và người đóng góp có thể chỉnh sửa và gửi lại."}</p>
+                                            <p>{rejectType === "direct" ? "Bản thu sẽ bị từ chối vĩnh viễn. Người đóng góp sẽ không thể chỉnh sửa bản thu." : "Bản thu sẽ bị từ chối tạm thời. Người đóng góp sẽ có thể chỉnh sửa bản thu."}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1926,10 +1933,10 @@ export default function ModerationPage() {
                                             <AlertCircle className="h-8 w-8 text-primary-600" />
                                         </div>
                                         <h3 className="text-xl font-semibold text-neutral-800 text-center">
-                                            Vui lòng nhập ghi chú cho người đóng góp khi tạm thời bị từ chối.
+                                            Vui lòng nhập lý do từ chối
                                         </h3>
                                         <div className="text-neutral-700 text-center space-y-1">
-                                            <p>Khi từ chối tạm thời, bạn cần cung cấp ghi chú để người đóng góp biết những điểm cần chỉnh sửa.</p>
+                                            <p>Cho dù từ chối tạm thời hay từ chối vĩnh viễn, bạn đều cần phải nhập lý do từ chối.</p>
                                         </div>
                                     </div>
                                 </div>

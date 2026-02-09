@@ -40,11 +40,14 @@ export default function EditRecordingPage() {
         const status = r.moderation && typeof r.moderation === "object" && "status" in r.moderation
           ? (r.moderation as { status?: string }).status
           : undefined;
+        const mod = r.moderation as { status?: string; contributorEditLocked?: boolean } | undefined;
+        const contributorEditLocked = mod?.contributorEditLocked === true;
         const isApproved = status === ModerationStatus.APPROVED;
         const isTemporarilyRejected = status === ModerationStatus.TEMPORARILY_REJECTED;
+        const isRejected = status === ModerationStatus.REJECTED;
         const canEdit =
-          (isContributor && isOwner && (isApproved || isTemporarilyRejected)) ||
-          (isExpert && isApproved);
+          (isContributor && isOwner && (isApproved || isTemporarilyRejected) && !contributorEditLocked) ||
+          (isExpert && (isApproved || (isRejected && contributorEditLocked)));
         if (!canEdit) {
           setForbidden(true);
           setRecording(null);

@@ -147,10 +147,10 @@ export function getModerationStatusLabel(status?: ModerationStatus | string): st
       return "Đã được kiểm duyệt";
     case ModerationStatus.REJECTED:
     case "REJECTED":
-      return "Đã bị từ chối";
+      return "Đã bị từ chối vĩnh viễn";
     case ModerationStatus.TEMPORARILY_REJECTED:
     case "TEMPORARILY_REJECTED":
-      return "Tạm thời bị từ chối";
+      return "Đã bị từ chối tạm thời";
     default:
       return String(status);
   }

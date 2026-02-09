@@ -277,6 +277,8 @@ export interface LocalRecording {
     reviewerName?: string | null;
     reviewedAt?: string | null;
     rejectionNote?: string;
+    /** True khi expert từ chối vĩnh viễn bản thu mà contributor đã chỉnh sửa (resubmission): contributor không được chỉnh sửa nữa, chỉ được yêu cầu xóa; chỉ expert được chỉnh sửa. */
+    contributorEditLocked?: boolean;
   };
   /** True khi bản thu đang PENDING_REVIEW do contributor bấm "Hoàn tất chỉnh sửa" (đang chờ expert kiểm duyệt lại). */
   resubmittedForModeration?: boolean;
