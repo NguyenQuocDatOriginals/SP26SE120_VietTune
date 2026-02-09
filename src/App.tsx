@@ -22,6 +22,8 @@ import CreateExpertPage from "./pages/admin/CreateExpertPage";
 import AdminGuard from "./components/admin/AdminGuard";
 import ModerationPage from "./pages/ModerationPage";
 import ApprovedRecordingsPage from "./pages/ApprovedRecordingsPage";
+import ResearcherPortalPage from "./pages/researcher/ResearcherPortalPage";
+import ResearcherGuard from "./components/admin/ResearcherGuard";
 import EditRecordingPage from "./pages/EditRecordingPage";
 import NotificationPage from "./pages/NotificationPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -171,6 +173,9 @@ function App() {
           <Route path="moderation" element={<ModerationPage />} />
           <Route path="approved-recordings" element={<ApprovedRecordingsPage />} />
           <Route path="notifications" element={<NotificationPage />} />
+          <Route path="researcher" element={<ResearcherGuard />}>
+            <Route index element={<ResearcherPortalPage />} />
+          </Route>
           <Route path="admin" element={<AdminGuard />}>
             <Route index element={<AdminDashboard />} />
             <Route path="create-expert" element={<CreateExpertPage />} />

@@ -174,7 +174,7 @@ export default function RegisterPage() {
               id="terms"
               type="checkbox"
               required
-              className="h-3.5 w-3.5 bg-white text-primary-600 focus:ring-primary-500 border-2 border-neutral-400 rounded"
+              className="h-3.5 w-3.5 bg-white text-primary-600 focus:outline-none border-2 border-neutral-400 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-neutral-700">
               Tôi đồng ý với{" "}

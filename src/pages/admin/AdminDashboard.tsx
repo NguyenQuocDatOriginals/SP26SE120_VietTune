@@ -35,6 +35,7 @@ interface AggregatedUser {
 const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "CONTRIBUTOR", label: "Người đóng góp" },
   { value: "EXPERT", label: "Chuyên gia" },
+  { value: "RESEARCHER", label: "Nhà nghiên cứu" },
 ];
 
 const ROLE_NAMES_VI: Record<string, string> = {
@@ -105,7 +106,7 @@ function RoleSelectDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>{label}</span>
@@ -224,7 +225,7 @@ function ExpertSelectDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
         <span className={value ? "text-neutral-900 font-medium" : "text-neutral-400"}>{selectedLabel}</span>

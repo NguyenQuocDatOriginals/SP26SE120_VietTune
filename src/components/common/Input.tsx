@@ -24,7 +24,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={clsx(
-            "w-full px-5 py-3 border rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 transition-all duration-200 text-sm",
+            "w-full px-5 py-3 border rounded-full focus:outline-none focus:border-primary-500 transition-all duration-200 text-sm",
             "text-neutral-900 placeholder:text-neutral-500 font-medium",
             error
               ? "border-primary-400 focus:border-primary-500"

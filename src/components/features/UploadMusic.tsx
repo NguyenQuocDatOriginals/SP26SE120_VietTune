@@ -10,6 +10,7 @@ import { UserRole } from "@/types";
 import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 import { getLocalRecordingFull, setLocalRecording } from "@/services/recordingStorage";
 import { recordingRequestService } from "@/services/recordingRequestService";
+import { ETHNICITIES, REGIONS, EVENT_TYPES, INSTRUMENTS } from "@/config/musicMetadata";
 
 // Extended type for local recording storage (supports both legacy and new formats)
 type LocalRecordingStorage = LocalRecording & {
@@ -99,73 +100,6 @@ const LANGUAGES = [
   "Khác",
 ];
 
-const ETHNICITIES = [
-  "Kinh",
-  "Tày",
-  "Thái",
-  "Mường",
-  "Khmer",
-  "H'Mông",
-  "Nùng",
-  "Hoa",
-  "Dao",
-  "Gia Rai",
-  "Ê Đê",
-  "Ba Na",
-  "Xơ Đăng",
-  "Sán Chay",
-  "Cơ Ho",
-  "Chăm",
-  "Sán Dìu",
-  "Hrê",
-  "Mnông",
-  "Ra Glai",
-  "Giáy",
-  "Stră",
-  "Bru-Vân Kiều",
-  "Cơ Tu",
-  "Giẻ Triêng",
-  "Tà Ôi",
-  "Mạ",
-  "Khơ Mú",
-  "Co",
-  "Chơ Ro",
-  "Hà Nhì",
-  "Xinh Mun",
-  "Chu Ru",
-  "Lào",
-  "La Chí",
-  "Kháng",
-  "Phù Lá",
-  "La Hủ",
-  "La Ha",
-  "Pà Thẻn",
-  "Lự",
-  "Ngái",
-  "Chứt",
-  "Lô Lô",
-  "Mảng",
-  "Cờ Lao",
-  "Bố Y",
-  "Cống",
-  "Si La",
-  "Pu Péo",
-  "Rơ Măm",
-  "Brâu",
-  "Ơ Đu",
-  "Khác",
-];
-
-const REGIONS = [
-  "Trung du và miền núi Bắc Bộ",
-  "Đồng bằng Bắc Bộ",
-  "Bắc Trung Bộ",
-  "Nam Trung Bộ",
-  "Cao nguyên Trung Bộ",
-  "Đông Nam Bộ",
-  "Tây Nam Bộ",
-];
-
 const PROVINCES = [
   "TP. Hà Nội",
   "TP. Hải Phòng",
@@ -203,25 +137,6 @@ const PROVINCES = [
   "Vĩnh Long",
 ];
 
-const EVENT_TYPES = [
-  "Đám cưới",
-  "Đám tang",
-  "Lễ hội đình",
-  "Lễ hội chùa",
-  "Tết Nguyên đán",
-  "Hội xuân",
-  "Lễ cầu mùa",
-  "Lễ cúng tổ tiên",
-  "Lễ cấp sắc",
-  "Lễ hội đâm trâu",
-  "Lễ hội cồng chiêng",
-  "Sinh hoạt cộng đồng",
-  "Biểu diễn nghệ thuật",
-  "Ghi âm studio",
-  "Ghi âm thực địa",
-  "Khác",
-];
-
 const PERFORMANCE_TYPES = [
   { key: "instrumental", label: "Chỉ nhạc cụ (Instrumental)" },
   { key: "acappella", label: "Chỉ giọng hát không đệm (Acappella)" },
@@ -229,133 +144,6 @@ const PERFORMANCE_TYPES = [
     key: "vocal_accompaniment",
     label: "Giọng hát có nhạc đệm (Vocal with accompaniment)",
   },
-];
-
-const INSTRUMENTS = [
-  "Alal (Ba Na)",
-  "Aráp (Ba Na)",
-  "Aráp (Ca Dong)",
-  "Aráp (Gia Rai)",
-  "Aráp (Rơ Năm)",
-  "Aráp (Stră)",
-  "Biên khánh (Kinh)",
-  "Bro (Ba Na)",
-  "Bro (Gia Rai)",
-  "Bro (Giẻ Triêng)",
-  "Bro (Xơ Đăng)",
-  "Bẳng bu (Thái)",
-  "Chul (Ba Na)",
-  "Chul (Gia Rai)",
-  "Chênh Kial (Ba Na)",
-  "Cò ke (Mường)",
-  "Cồng, chiêng (Ba Na)",
-  "Cồng, chiêng (Gia Rai)",
-  "Cồng, chiêng (Giẻ Triêng)",
-  "Cồng, chiêng (Hrê)",
-  "Cồng, chiêng (Ê Đê)",
-  "Dàn nhạc ngũ âm (Khmer)",
-  "Goong (Ba Na)",
-  "Goong (Gia Rai)",
-  "Goong (Giẻ Triêng)",
-  "Goong đe (Ba Na)",
-  "Hơgơr (Ê Đê)",
-  "Hơgơr cân (Mnâm)",
-  "Hơgơr cân (Rơ Năm)",
-  "Hơgơr prong (Gia Rai)",
-  "Hơgơr tuôn (Hà Lang)",
-  "Hơgơr tăk (Ba Na)",
-  "Khinh khung (Ba Na)",
-  "Khinh khung (Gia Rai)",
-  "Khèn (H'Mông)",
-  "Khèn (Ta Ôi)",
-  "Khèn (Ê Đê)",
-  "Khên (Vân Kiều)",
-  "Knăh ring (Ba Na)",
-  "Knăh ring (Gia Rai)",
-  "K'lông put (Gia Rai)",
-  "K'ny (Ba Na)",
-  "K'ny (Gia Rai)",
-  "K'ny (Rơ Ngao)",
-  "K'ny (Xơ Đăng)",
-  "Kèn bầu (Chăm)",
-  "Kèn bầu (Kinh)",
-  "Kèn bầu (Thái)",
-  "Kềnh (H'Mông)",
-  "M'linh (Dao)",
-  "M'linh (Mường)",
-  "M'nhum (Gia Rai)",
-  "Mõ (Kinh)",
-  "Phách (Kinh)",
-  "Pí cổng (Thái)",
-  "Pí lè (Thái)",
-  "Pí lè (Tày)",
-  "Pí một lao (Kháng)",
-  "Pí một lao (Khơ Mú)",
-  "Pí một lao (La Ha)",
-  "Pí một lao (Thái)",
-  "Pí pặp (Thái)",
-  "Pí phướng (Thái)",
-  "Pí đôi (Thái)",
-  "Púa (H'Mông)",
-  "Púa (Lô Lô)",
-  "Qeej (H'Mông)",
-  "Rang leh (Ca Dong)",
-  "Rang leh (Stră)",
-  "Rang rai (Ba Na)",
-  "Rang rai (Gia Rai)",
-  "Song lang (Kinh)",
-  "Sáo ngang (Kinh)",
-  "Sênh tiền (Kinh)",
-  "T'rum (Gia Rai)",
-  "Ta in (Hà Nhì)",
-  "Ta lư (Vân Kiều)",
-  "Ta pòl (Ba Na)",
-  "Ta pòl (Brâu)",
-  "Ta pòl (Gia Rai)",
-  "Ta pòl (Rơ Năm)",
-  "Tam thập lục (Kinh)",
-  "Teh ding (Gia Rai)",
-  "Tiêu (Kinh)",
-  "Tol alao (Ca Dong)",
-  "Tông đing (Ba Na)",
-  "Tông đing (Ca Dong)",
-  "Tơ nốt (Ba Na)",
-  "Trống bộc (Kinh)",
-  "Trống cái (Kinh)",
-  "Trống chầu (Kinh)",
-  "Trống cơm (Kinh)",
-  "Trống dẹt (Kinh)",
-  "Trống khẩu (Kinh)",
-  "Trống lắng (Kinh)",
-  "Trống mảnh (Kinh)",
-  "Trống quần (Kinh)",
-  "Trống đế (Kinh)",
-  "Trống đồng (Kinh)",
-  "Tính tẩu (Thái)",
-  "Tính tẩu (Tày)",
-  "Vang (Gia Rai)",
-  "Đinh Duar (Giẻ Triêng)",
-  "Đinh Khén (Xơ Đăng)",
-  "Đinh tuk (Ba Na)",
-  "Đao đao (Khơ Mú)",
-  "Đuk đik (Giẻ Triêng)",
-  "Đàn bầu (Kinh)",
-  "Đàn môi (H'Mông)",
-  "Đàn nguyệt (Kinh)",
-  "Đàn nhị (Chăm)",
-  "Đàn nhị (Dao)",
-  "Đàn nhị (Giáy)",
-  "Đàn nhị (Kinh)",
-  "Đàn nhị (Nùng)",
-  "Đàn nhị (Tày)",
-  "Đàn t'rưng (Ba Na)",
-  "Đàn t'rưng (Gia Rai)",
-  "Đàn tam (Kinh)",
-  "Đàn tranh (Kinh)",
-  "Đàn tứ (Kinh)",
-  "Đàn tỳ bà (Kinh)",
-  "Đàn đá (Kinh)",
-  "Đàn đáy (Kinh)",
 ];
 
 // Mapping genre to typical ethnicity
@@ -807,7 +595,7 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
@@ -845,7 +633,7 @@ function SearchableDropdown({
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:ring-4 focus:ring-primary-500/50 focus:border-transparent text-sm shadow-sm hover:shadow-md transition-all duration-200"
+                    className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 text-sm shadow-sm hover:shadow-md transition-all duration-200"
                     style={{ backgroundColor: "#FFFCF5" }}
                     autoFocus
                   />
@@ -977,7 +765,7 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-full focus-within:ring-4 focus-within:ring-primary-500/50 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-full focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
           }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
@@ -1328,7 +1116,7 @@ function DatePicker({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:border-primary-500 transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           }`}
         style={{ backgroundColor: "#FFFCF5" }}
       >
@@ -1812,7 +1600,7 @@ function TextInput({
   multiline?: boolean;
   rows?: number;
 }) {
-  const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : ""
+  const baseClasses = `w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : ""
     }`;
   const bgStyle = { backgroundColor: "#FFFCF5" };
 
@@ -3316,7 +3104,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                     setArtistUnknown(e.target.checked);
                     if (e.target.checked) setArtist("");
                   }}
-                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
                   style={{ backgroundColor: "#FFFCF5" }}
                   disabled={isFormDisabled}
                 />
@@ -3344,7 +3132,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                     setComposerUnknown(e.target.checked);
                     if (e.target.checked) setComposer("");
                   }}
-                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
                   style={{ backgroundColor: "#FFFCF5" }}
                   disabled={isFormDisabled}
                 />
@@ -3387,7 +3175,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                       setCustomLanguage("");
                     }
                   }}
-                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
                   style={{ backgroundColor: "#FFFCF5" }}
                   disabled={isFormDisabled}
                 />
@@ -3436,7 +3224,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                     setDateEstimated(e.target.checked);
                     if (e.target.checked) setRecordingDate("");
                   }}
-                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
                   style={{ backgroundColor: "#FFFCF5" }}
                   disabled={isFormDisabled}
                 />

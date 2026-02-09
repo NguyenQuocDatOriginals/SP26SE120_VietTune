@@ -40,6 +40,7 @@ export default function LoginPage() {
         expert_b: overrides["expert_b"]?.username || "expertB",
         expert_c: overrides["expert_c"]?.username || "expertC",
         admin: overrides["admin_demo"]?.username || "admin_demo",
+        researcher: overrides["researcher_demo"]?.username || "researcher_demo",
       });
     } catch (err) {
       setDemoNames({
@@ -48,6 +49,7 @@ export default function LoginPage() {
         expert_b: "expertB",
         expert_c: "expertC",
         admin: "admin_demo",
+        researcher: "researcher_demo",
       });
     }
   };
@@ -158,7 +160,7 @@ export default function LoginPage() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-3.5 w-3.5 bg-white text-primary-600 focus:ring-primary-500 border-2 border-neutral-400 rounded"
+                className="h-3.5 w-3.5 bg-white text-primary-600 focus:outline-none border-2 border-neutral-400 rounded"
               />
               <label
                 htmlFor="remember-me"
@@ -292,6 +294,27 @@ export default function LoginPage() {
                 }}
               >
                 {`Admin (${demoNames.admin ?? "admin_demo"})`}
+              </button>
+              <button
+                type="button"
+                className="px-6 py-3 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const res = await authService.loginDemo("researcher");
+                    if (res.success && res.data) {
+                      setUser(res.data.user as unknown as import("@/types").User);
+                      void sessionRemoveItem("fromLogout");
+                      navigate(redirectTo ?? "/");
+                    }
+                  } catch (err) {
+                    notify.error("Lỗi", "Không thể đăng nhập demo");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                {`Researcher (${demoNames.researcher ?? "researcher_demo"})`}
               </button>
             </div>
           </div>

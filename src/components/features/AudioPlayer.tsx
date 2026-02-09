@@ -473,7 +473,7 @@ export default function AudioPlayer({
                   <button
                     onClick={togglePlay}
                     disabled={isLoading}
-                    className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+                    className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none"
                   >
                     {isLoading
                       ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
@@ -800,7 +800,7 @@ export default function AudioPlayer({
             <button
               onClick={togglePlay}
               disabled={isLoading}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none focus:ring-4 focus:ring-primary-500/50"
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none"
             >
               {isLoading
                 ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />

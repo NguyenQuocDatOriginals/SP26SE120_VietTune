@@ -98,7 +98,7 @@ function SearchableDropdown({
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-full focus:outline-none focus:border-primary-500 transition-colors text-left flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                     }`}
                 style={{ backgroundColor: "#FFFCF5" }}
             >
@@ -135,7 +135,7 @@ function SearchableDropdown({
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         placeholder="Tìm kiếm..."
-                                        className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                        className="w-full pl-9 pr-3 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400 rounded-full focus:outline-none focus:border-primary-500 text-sm"
                                         style={{ backgroundColor: "#FFFCF5" }}
                                         autoFocus
                                     />
@@ -1367,7 +1367,7 @@ export default function ModerationPage() {
                                                                 aria-label="Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoComplete || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoComplete', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ</span>
                                                         </div>
@@ -1377,7 +1377,7 @@ export default function ModerationPage() {
                                                                 aria-label="Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.infoAccurate || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'infoAccurate', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Thông tin chính xác: Các thông tin cơ bản phù hợp và không có mâu thuẫn</span>
                                                         </div>
@@ -1387,7 +1387,7 @@ export default function ModerationPage() {
                                                                 aria-label="Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu"
                                                                 checked={verificationForms[showVerificationDialog]?.step1?.formatCorrect || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'formatCorrect', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Định dạng đúng: File media hợp lệ, chất lượng đạt yêu cầu tối thiểu</span>
                                                         </div>
@@ -1400,7 +1400,7 @@ export default function ModerationPage() {
                                                             value={verificationForms[showVerificationDialog]?.step1?.notes || ''}
                                                             onChange={(e) => updateVerificationForm(showVerificationDialog, 1, 'notes', e.target.value)}
                                                             rows={3}
-                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-primary-500"
                                                             placeholder="Ghi chú về các vấn đề cần lưu ý hoặc cần bổ sung..."
                                                         />
                                                     </div>
@@ -1418,7 +1418,7 @@ export default function ModerationPage() {
                                                                 aria-label="Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.culturalValue || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'culturalValue', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Giá trị văn hóa: Bản thu có giá trị văn hóa, lịch sử hoặc nghệ thuật đáng kể</span>
                                                         </div>
@@ -1428,7 +1428,7 @@ export default function ModerationPage() {
                                                                 aria-label="Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.authenticity || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'authenticity', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Tính xác thực: Bản thu là bản gốc, không phải bản sao chép hoặc chỉnh sửa không được phép</span>
                                                         </div>
@@ -1438,7 +1438,7 @@ export default function ModerationPage() {
                                                                 aria-label="Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu"
                                                                 checked={verificationForms[showVerificationDialog]?.step2?.accuracy || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'accuracy', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Độ chính xác: Thông tin về dân tộc, thể loại, phong cách phù hợp với nội dung bản thu</span>
                                                         </div>
@@ -1451,7 +1451,7 @@ export default function ModerationPage() {
                                                             value={verificationForms[showVerificationDialog]?.step2?.expertNotes || ''}
                                                             onChange={(e) => updateVerificationForm(showVerificationDialog, 2, 'expertNotes', e.target.value)}
                                                             rows={4}
-                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-primary-500"
                                                             placeholder="Đánh giá chi tiết về giá trị văn hóa, tính xác thực, và độ chính xác của bản thu..."
                                                         />
                                                     </div>
@@ -1469,7 +1469,7 @@ export default function ModerationPage() {
                                                                 aria-label="Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.crossChecked || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'crossChecked', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Đã đối chiếu: Đã kiểm tra và đối chiếu với các nguồn tài liệu, cơ sở dữ liệu liên quan</span>
                                                         </div>
@@ -1479,7 +1479,7 @@ export default function ModerationPage() {
                                                                 aria-label="Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.sourcesVerified || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'sourcesVerified', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Nguồn đã xác minh: Nguồn gốc, người thu thập, quyền sở hữu đã được xác minh</span>
                                                         </div>
@@ -1489,7 +1489,7 @@ export default function ModerationPage() {
                                                                 aria-label="Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này"
                                                                 checked={verificationForms[showVerificationDialog]?.step3?.finalApproval || false}
                                                                 onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'finalApproval', e.target.checked)}
-                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:ring-primary-500 cursor-pointer"
+                                                                className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none cursor-pointer"
                                                             />
                                                             <span className="text-neutral-700">Xác nhận phê duyệt: Tôi xác nhận đã hoàn thành tất cả các bước kiểm tra và đồng ý phê duyệt bản thu này</span>
                                                         </div>
@@ -1502,7 +1502,7 @@ export default function ModerationPage() {
                                                             value={verificationForms[showVerificationDialog]?.step3?.finalNotes || ''}
                                                             onChange={(e) => updateVerificationForm(showVerificationDialog, 3, 'finalNotes', e.target.value)}
                                                             rows={4}
-                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                            className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-primary-500"
                                                             placeholder="Ghi chú cuối cùng về quá trình kiểm duyệt, các điểm đáng chú ý..."
                                                         />
                                                     </div>
@@ -1636,7 +1636,7 @@ export default function ModerationPage() {
                                         value={rejectNote}
                                         onChange={(e) => setRejectNote(e.target.value)}
                                         rows={4}
-                                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:border-primary-500"
                                         style={{ backgroundColor: "#FFFCF5" }}
                                         placeholder={rejectType === "temporary" ? "Nhập lý do từ chối và ghi chú những điểm cần chỉnh sửa..." : "Nhập lý do từ chối..."}
                                     />

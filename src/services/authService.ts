@@ -277,6 +277,15 @@ export const authService = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
+      researcher: {
+        id: "researcher_demo",
+        username: "researcher_demo",
+        email: "researcher@example.com",
+        fullName: "Nhà nghiên cứu (Demo)",
+        role: UserRole.RESEARCHER,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
     };
 
     let demoUser = mapping[demoKey];

@@ -90,12 +90,27 @@ export default function Header() {
                 >
                   Quản trị hệ thống
                 </Link>
+              ) : user?.role === UserRole.RESEARCHER ? (
+                <Link
+                  to="/researcher"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Cổng nghiên cứu
+                </Link>
               ) : (
                 <Link
                   to="/upload"
                   className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
                 >
                   Đóng góp bản thu
+                </Link>
+              )}
+              {user?.role === UserRole.ADMIN && (
+                <Link
+                  to="/researcher"
+                  className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
+                >
+                  Cổng Nghiên Cứu
                 </Link>
               )}
               {user?.role === "EXPERT" || !user || user?.role === "ADMIN" ? (
@@ -258,6 +273,14 @@ export default function Header() {
                 >
                   Quản trị hệ thống
                 </Link>
+              ) : user?.role === UserRole.RESEARCHER ? (
+                <Link
+                  to="/researcher"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Cổng Nghiên Cứu
+                </Link>
               ) : (
                 <Link
                   to="/upload"
@@ -265,6 +288,15 @@ export default function Header() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Đóng góp
+                </Link>
+              )}
+              {user?.role === UserRole.ADMIN && (
+                <Link
+                  to="/researcher"
+                  className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Cổng Nghiên Cứu
                 </Link>
               )}
               {user?.role === "EXPERT" || !user || user?.role === "ADMIN" ? (

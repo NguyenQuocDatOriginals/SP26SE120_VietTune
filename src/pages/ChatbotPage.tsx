@@ -12,8 +12,20 @@ interface Message {
   timestamp: Date;
 }
 
+/** Tin chào — đồng bộ với tab Hỏi Đáp AI (ResearcherPortalPage). */
 const WELCOME_MESSAGE =
-  "Xin chào! Tôi là VietTune Intelligence. Bạn có thể hỏi tôi về kho bản thu âm nhạc dân gian, dân tộc, nhạc cụ truyền thống, hoặc cách sử dụng trang web. Ví dụ: \"Cách tìm bản thu dân ca?\", \"Giới thiệu về đàn bầu.\"";
+  "Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Bạn muốn tìm hiểu về điều gì?";
+
+/** Câu trả lời mặc định khi không khớp từ khóa — đồng bộ với Hỏi Đáp AI (MOCK_REPLY). */
+const DEFAULT_REPLY =
+  "Dựa trên tài liệu đã được xác minh, tôi có thể cung cấp thông tin chi tiết về chủ đề này. Vui lòng cho tôi chút thời gian để tìm kiếm...";
+
+/** Ví dụ câu hỏi (click điền vào ô nhập) — đồng bộ với tab Hỏi Đáp AI. */
+const EXAMPLE_QUESTIONS = [
+  "Đàn bầu được chế tạo như thế nào?",
+  "So sánh nhạc tang lễ của người Tày và Thái",
+  "Lịch sử phát triển của quan họ Bắc Ninh",
+];
 
 const MOCK_RESPONSES: Record<string, string> = {
   "xin chào": "Xin chào bạn! Tôi có thể giúp gì cho bạn về VietTune và âm nhạc dân gian Việt Nam?",
@@ -33,7 +45,7 @@ function getMockReply(userText: string): string {
     const keyNorm = key.normalize("NFD").replace(/\p{Diacritic}/gu, "");
     if (normalized.includes(keyNorm) || keyNorm.includes(normalized)) return reply;
   }
-  return "Tôi hiện là phiên bản demo, chưa kết nối AI thật. Bạn hãy thử hỏi: \"tìm kiếm\", \"đóng góp\", \"đàn bầu\", \"dân ca\" hoặc \"xin chào\". Tôi sẽ trả lời theo gợi ý có sẵn.";
+  return DEFAULT_REPLY;
 }
 
 export default function ChatbotPage() {
@@ -122,6 +134,23 @@ export default function ChatbotPage() {
             Hội thoại
           </h2>
 
+          {/* Ví dụ câu hỏi — đồng bộ với mẫu Hỏi Đáp AI */}
+          <div className="bg-secondary-50/80 rounded-xl p-4 mb-6 border border-neutral-200/80">
+            <p className="text-sm text-neutral-600 mb-2">Ví dụ câu hỏi:</p>
+            <div className="flex flex-wrap gap-2">
+              {EXAMPLE_QUESTIONS.map((question, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setInput(question)}
+                  className="px-3 py-1.5 bg-white border border-neutral-300 rounded-full text-sm hover:border-primary-500 hover:text-primary-600 transition-colors cursor-pointer"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div
             ref={listRef}
             className="overflow-y-auto mb-6 pr-2"
@@ -165,6 +194,11 @@ export default function ChatbotPage() {
                         )
                       )}
                     </p>
+                    {m.role === "assistant" && (
+                      <div className="mt-2 pt-2 border-t border-neutral-300">
+                        <p className="text-xs text-neutral-500">Nguồn: Cơ sở tri thức đã xác minh</p>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
@@ -193,7 +227,7 @@ export default function ChatbotPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Nhập câu hỏi..."
-              className="flex-1 px-5 py-3 rounded-full border border-neutral-200/80 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all text-neutral-900 placeholder-neutral-400"
+              className="flex-1 px-5 py-3 rounded-full border border-neutral-200/80 focus:border-primary-500 outline-none transition-all text-neutral-900 placeholder-neutral-400"
               style={{ minHeight: "48px" }}
               aria-label="Tin nhắn"
             />

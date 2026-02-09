@@ -166,6 +166,8 @@ export default function ProfilePage() {
     const s = String(r).toLowerCase();
     if (s === "expert" || s.includes("expert")) return "Chuyên gia";
     if (s === "contributor" || s.includes("contrib")) return "Người đóng góp";
+    if (s === "researcher" || s.includes("research")) return "Nhà nghiên cứu";
+    if (s === "admin" || s.includes("admin")) return "Quản trị viên";
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
@@ -322,7 +324,7 @@ export default function ProfilePage() {
                       value={formFullName}
                       onChange={(e) => { setFormFullName(e.target.value); if (touchedFullName) validate(); }}
                       onBlur={() => { setTouchedFullName(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors rounded-full"
+                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-full"
                       style={{ backgroundColor: '#FFFCF5' }}
                     />
                     {touchedFullName && errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
@@ -334,7 +336,7 @@ export default function ProfilePage() {
                       value={formUsername}
                       onChange={(e) => { setFormUsername(e.target.value); if (touchedUsername) validate(); }}
                       onBlur={() => { setTouchedUsername(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors rounded-full"
+                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-full"
                       style={{ backgroundColor: '#FFFCF5' }}
                     />
                     {touchedUsername && errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
@@ -346,7 +348,7 @@ export default function ProfilePage() {
                       value={formEmail}
                       onChange={(e) => { setFormEmail(e.target.value); if (touchedEmail) validate(); }}
                       onBlur={() => { setTouchedEmail(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors rounded-full"
+                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-full"
                       style={{ backgroundColor: '#FFFCF5' }}
                     />
                     {touchedEmail && errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
