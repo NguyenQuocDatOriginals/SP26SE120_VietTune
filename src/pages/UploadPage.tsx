@@ -1,5 +1,5 @@
 import UploadMusic from "@/components/features/UploadMusic";
-import { BookOpen, LogIn } from "lucide-react";
+import { BookOpen, LogIn, FileText, Upload, CheckCircle, Lightbulb } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -57,30 +57,134 @@ export default function UploadPage() {
 
         {/* Guidelines — responsive padding */}
         <div className="border border-neutral-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-          <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-neutral-900 flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-secondary-100/90 rounded-lg shadow-sm">
               <BookOpen className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />
             </div>
             Hướng dẫn đóng góp
           </h2>
-          <ul className="space-y-3 text-neutral-700 font-medium leading-relaxed">
-            <li className="flex items-start gap-3">
-              <span className="text-primary-600 flex-shrink-0">•</span>
-              <span>Đảm bảo bản ghi âm có chất lượng tốt, rõ ràng, ít tiếng ồn</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-primary-600 flex-shrink-0">•</span>
-              <span>Cung cấp thông tin chính xác về nguồn gốc, người biểu diễn</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-primary-600 flex-shrink-0">•</span>
-              <span>Tôn trọng bản quyền và quyền sở hữu trí tuệ của nghệ sĩ</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-primary-600 flex-shrink-0">•</span>
-              <span>Các bản thu được kiểm duyệt trước khi công bố công khai</span>
-            </li>
-          </ul>
+
+          <div className="space-y-4 sm:space-y-5">
+            {/* Card 1: Chuẩn bị tài liệu */}
+            <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
+              <div className="w-1.5 sm:w-2 flex-shrink-0 bg-primary-200/90" aria-hidden />
+              <div className="flex-1 p-4 sm:p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary-100/90 shadow-sm">
+                    <FileText className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-neutral-900">Chuẩn bị tài liệu</h3>
+                </div>
+                <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600 flex-shrink-0">•</span>
+                    <span>Ghi âm hoặc quay video chất lượng tốt nhất có thể</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600 flex-shrink-0">•</span>
+                    <span>Chuẩn bị thông tin về nguồn gốc, nghệ nhân, bối cảnh</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600 flex-shrink-0">•</span>
+                    <span>Nếu có, chụp ảnh nhạc cụ và người biểu diễn</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600 flex-shrink-0">•</span>
+                    <span>Phiên âm lời bài hát (nếu biết chữ viết dân tộc)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Card 2: Tải lên & Điền thông tin */}
+            <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
+              <div className="w-1.5 sm:w-2 flex-shrink-0 bg-sky-200/90" aria-hidden />
+              <div className="flex-1 p-4 sm:p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-sky-100/90 shadow-sm">
+                    <Upload className="h-5 w-5 text-sky-600" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-neutral-900">Tải lên & Điền thông tin</h3>
+                </div>
+                <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-sky-600 flex-shrink-0">•</span>
+                    <span>Làm theo 5 bước hướng dẫn trên hệ thống</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sky-600 flex-shrink-0">•</span>
+                    <span>Điền đầy đủ metadata: dân tộc, vùng miền, nghi lễ,...</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sky-600 flex-shrink-0">•</span>
+                    <span>Tải lên file audio (bắt buộc) và video (nếu có)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sky-600 flex-shrink-0">•</span>
+                    <span>Bổ sung mọi thông tin hữu ích bạn biết</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Card 3: Xét duyệt bởi chuyên gia */}
+            <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
+              <div className="w-1.5 sm:w-2 flex-shrink-0 bg-emerald-200/90" aria-hidden />
+              <div className="flex-1 p-4 sm:p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-emerald-100/90 shadow-sm">
+                    <CheckCircle className="h-5 w-5 text-emerald-600" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-neutral-900">Xét duyệt bởi chuyên gia</h3>
+                </div>
+                <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 flex-shrink-0">•</span>
+                    <span>Chuyên gia dân tộc học sẽ xem xét tài liệu</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 flex-shrink-0">•</span>
+                    <span>Kiểm tra tính xác thực và chất lượng</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 flex-shrink-0">•</span>
+                    <span>Có thể yêu cầu bổ sung thông tin nếu cần</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-600 flex-shrink-0">•</span>
+                    <span>Thời gian xét duyệt: 5-10 ngày làm việc</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Card 4: Lời khuyên hữu ích */}
+            <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
+              <div className="w-1.5 sm:w-2 flex-shrink-0 bg-secondary-200/90" aria-hidden />
+              <div className="flex-1 p-4 sm:p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-secondary-100/90 shadow-sm">
+                    <Lightbulb className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-neutral-900">Lời khuyên hữu ích</h3>
+                </div>
+                <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary-600 flex-shrink-0">•</span>
+                    <span>Ghi âm ở nơi yên tĩnh để giảm tiếng ồn nền</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary-600 flex-shrink-0">•</span>
+                    <span>Phỏng vấn nghệ nhân về câu chuyện, ý nghĩa bài hát</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-secondary-600 flex-shrink-0">•</span>
+                    <span>Ghi chép chi tiết mọi thông tin bạn biết</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
