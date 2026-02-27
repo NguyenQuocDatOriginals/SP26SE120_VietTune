@@ -1,9 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Search, MessageSquare, Network, GitCompare, Play, FileText, Download, Check, Send, Bot, Lightbulb, Info } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Search, MessageSquare, Network, GitCompare, Play, FileText, Check, Send, Bot, Lightbulb, Info, X } from "lucide-react";
 import BackButton from "@/components/common/BackButton";
 import SearchableDropdown from "@/components/common/SearchableDropdown";
-import { INTELLIGENCE_NAME } from "@/config/constants";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import AudioPlayer from "@/components/features/AudioPlayer";
+import VideoPlayer from "@/components/features/VideoPlayer";
+import { INTELLIGENCE_NAME, REGION_NAMES } from "@/config/constants";
 import { ETHNICITIES, REGIONS, EVENT_TYPES, INSTRUMENTS } from "@/config/musicMetadata";
+import { getLocalRecordingMetaList, getLocalRecordingFull } from "@/services/recordingStorage";
+import { migrateVideoDataToVideoData } from "@/utils/helpers";
+import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
+import { isYouTubeUrl } from "@/utils/youtube";
+import { Recording, VerificationStatus } from "@/types";
+import type { LocalRecording } from "@/types";
 
 type TabId = "search" | "qa" | "graph" | "compare";
 
@@ -19,47 +30,6 @@ interface SearchFiltersState {
   ceremony: string;
 }
 
-interface MockResult {
-  id: number;
-  title: string;
-  ethnicGroup: string;
-  region: string;
-  instruments: string[];
-  ceremony: string;
-  verified: boolean;
-}
-
-/** Kết quả mẫu — dữ liệu từ @/config/musicMetadata. */
-const MOCK_RESULTS: MockResult[] = [
-  {
-    id: 1,
-    title: "Hò Mái Nhà - Hát Xoan Phú Thọ",
-    ethnicGroup: ETHNICITIES[0],
-    region: REGIONS[0],
-    instruments: [INSTRUMENTS[93], INSTRUMENTS[172]],
-    ceremony: EVENT_TYPES[2],
-    verified: true,
-  },
-  {
-    id: 2,
-    title: "Khèn Mông - Nhạc Lễ H'Mông",
-    ethnicGroup: ETHNICITIES[5],
-    region: REGIONS[0],
-    instruments: [INSTRUMENTS[122]],
-    ceremony: EVENT_TYPES[6],
-    verified: true,
-  },
-  {
-    id: 3,
-    title: "T'rưng - Âm Nhạc Tây Nguyên",
-    ethnicGroup: ETHNICITIES[9],
-    region: REGIONS[4],
-    instruments: [INSTRUMENTS[198]],
-    ceremony: EVENT_TYPES[7],
-    verified: true,
-  },
-];
-
 const QUICK_QUESTIONS = [
   "Đàn bầu có đặc điểm gì?",
   "So sánh nhạc cưới Tày và Thái",
@@ -73,7 +43,66 @@ const WELCOME_CHAT =
 const MOCK_REPLY =
   "Dựa trên tài liệu được xác minh, tôi có thể cho bạn biết rằng đàn bầu là nhạc cụ độc tấu truyền thống với một dây đàn duy nhất, sử dụng kỹ thuật uốn éo để tạo ra âm thanh đặc trưng. Nhạc cụ này thường xuất hiện trong các buổi biểu diễn ca Huế và nhạc cung đình.";
 
+/** Tokenize for semantic search (NFD, no diacritics). */
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function scoreRecording(r: Recording, tokens: string[]): number {
+  const title = (r.title || "") + " " + (r.titleVietnamese || "");
+  const desc = r.description || "";
+  const ethnicityName =
+    typeof r.ethnicity === "object" && r.ethnicity !== null
+      ? (r.ethnicity.name || "") + " " + (r.ethnicity.nameVietnamese || "")
+      : "";
+  const tags = (r.tags || []).join(" ");
+  const searchable = [title, desc, ethnicityName, tags]
+    .join(" ")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+  let score = 0;
+  for (const t of tokens) {
+    if (searchable.includes(t)) score += 1;
+  }
+  return score;
+}
+
+function applyFilters(list: Recording[], f: SearchFiltersState): Recording[] {
+  return list.filter((r) => {
+    if (f.ethnicGroup) {
+      const name = r.ethnicity?.nameVietnamese ?? r.ethnicity?.name ?? "";
+      if (name !== f.ethnicGroup) return false;
+    }
+    if (f.region) {
+      const regionLabel = r.region ? REGION_NAMES[r.region as keyof typeof REGION_NAMES] : "";
+      if (regionLabel !== f.region) return false;
+    }
+    if (f.instrument) {
+      const has =
+        r.instruments?.some(
+          (i) => (i.nameVietnamese ?? i.name) === f.instrument
+        ) ?? false;
+      if (!has) return false;
+    }
+    if (f.ceremony) {
+      const has = r.tags?.some((t) => t === f.ceremony || t.includes(f.ceremony)) ?? false;
+      if (!has) return false;
+    }
+    return true;
+  });
+}
+
 export default function ResearcherPortalPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.pathname;
+
   const [activeTab, setActiveTab] = useState<TabId>("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<SearchFiltersState>({
@@ -82,6 +111,12 @@ export default function ResearcherPortalPage() {
     region: "",
     ceremony: "",
   });
+  const [approvedRecordings, setApprovedRecordings] = useState<Recording[]>([]);
+  const [searchLoading, setSearchLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [playModalRecording, setPlayModalRecording] = useState<Recording | null>(null);
+  const [playModalLocal, setPlayModalLocal] = useState<LocalRecording | null>(null);
+  const [playModalLoading, setPlayModalLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: WELCOME_CHAT },
   ]);
@@ -89,7 +124,112 @@ export default function ResearcherPortalPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [compareLeft, setCompareLeft] = useState("");
   const [compareRight, setCompareRight] = useState("");
+  const [graphView, setGraphView] = useState<"overview" | "instruments" | "ethnicity">("overview");
   const chatListRef = useRef<HTMLDivElement | null>(null);
+
+  // Knowledge graph: ethnicities, instruments, and edges from approved recordings (nhạc cụ nào của dân tộc nào)
+  const graphData = useMemo(() => {
+    const edgeSet = new Set<string>();
+    const ethSet = new Set<string>();
+    const instSet = new Set<string>();
+    for (const r of approvedRecordings) {
+      const ethName = r.ethnicity?.nameVietnamese ?? r.ethnicity?.name ?? "";
+      if (!ethName) continue;
+      ethSet.add(ethName);
+      for (const inst of r.instruments ?? []) {
+        const iname = inst.nameVietnamese ?? inst.name ?? "";
+        if (!iname) continue;
+        instSet.add(iname);
+        edgeSet.add(`${ethName}\t${iname}`);
+      }
+    }
+    const ethnicities = Array.from(ethSet).sort((a, b) => a.localeCompare(b, "vi"));
+    const instruments = Array.from(instSet).sort((a, b) => a.localeCompare(b, "vi"));
+    const edges = Array.from(edgeSet).map((key) => {
+      const [e, i] = key.split("\t");
+      return { ethnicity: e, instrument: i };
+    });
+    return { ethnicities, instruments, edges };
+  }, [approvedRecordings]);
+
+  // Load expert-approved recordings (contributor contributions approved by expert)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setSearchLoading(true);
+      try {
+        const metaList = await getLocalRecordingMetaList();
+        const migrated = migrateVideoDataToVideoData(metaList);
+        const approved = migrated.filter((r) => r.moderation?.status === "APPROVED");
+        const fullList = await Promise.all(
+          approved.map((r) => getLocalRecordingFull(r.id ?? ""))
+        );
+        const valid = fullList.filter((r): r is NonNullable<typeof r> => r != null);
+        const converted = await Promise.all(valid.map(convertLocalToRecording));
+        if (!cancelled) setApprovedRecordings(converted);
+      } catch {
+        if (!cancelled) setApprovedRecordings([]);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // When Play modal opens, load full local recording to get media src and type
+  useEffect(() => {
+    if (!playModalRecording?.id) {
+      setPlayModalLocal(null);
+      return;
+    }
+    setPlayModalLoading(true);
+    setPlayModalLocal(null);
+    getLocalRecordingFull(playModalRecording.id)
+      .then((full) => {
+        setPlayModalLocal(full ?? null);
+      })
+      .finally(() => setPlayModalLoading(false));
+  }, [playModalRecording?.id]);
+
+  const filteredResults = useMemo(() => {
+    let list = approvedRecordings;
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      const tokens = tokenize(trimmed);
+      const scored = list
+        .map((r) => ({ r, score: scoreRecording(r, tokens) }))
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map((x) => x.r);
+      list = scored;
+    }
+    return applyFilters(list, filters);
+  }, [approvedRecordings, searchQuery, filters]);
+
+  const handleSearchClick = useCallback(() => {
+    setIsSearching(true);
+    const minSearchDelayMs = 450;
+    setTimeout(() => setIsSearching(false), minSearchDelayMs);
+  }, []);
+
+  const handlePlay = useCallback((recording: Recording) => {
+    setPlayModalRecording(recording);
+  }, []);
+
+  const handleClosePlayModal = useCallback(() => {
+    setPlayModalRecording(null);
+    setPlayModalLocal(null);
+  }, []);
+
+  const handleDetail = useCallback(
+    (id: string) => {
+      navigate(`/recordings/${id}`, { state: { from: returnTo } });
+    },
+    [navigate, returnTo]
+  );
 
   useEffect(() => {
     chatListRef.current?.scrollTo({ top: chatListRef.current.scrollHeight, behavior: "smooth" });
@@ -185,16 +325,22 @@ export default function ResearcherPortalPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearchClick();
+                    }}
                     placeholder='Ví dụ: "Tìm bài hát mùa màng dùng đàn bầu ở Tây Nam Bộ"'
                     className="flex-1 min-w-0 px-4 py-3 rounded-xl border-2 border-primary-200/80 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all text-neutral-900 placeholder-neutral-500"
                     aria-label="Tìm kiếm ngữ nghĩa"
                   />
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer"
+                    onClick={handleSearchClick}
+                    disabled={isSearching}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-80 disabled:cursor-wait text-white font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer min-w-[120px]"
+                    aria-busy={isSearching}
                   >
-                    <Search className="w-5 h-5" strokeWidth={2.5} />
-                    Tìm kiếm
+                    <Search className="w-5 h-5 flex-shrink-0" strokeWidth={2.5} />
+                    <span>{isSearching ? "Đang tìm..." : "Tìm kiếm"}</span>
                   </button>
                 </div>
               </div>
@@ -251,93 +397,260 @@ export default function ResearcherPortalPage() {
                 </div>
               </div>
 
-              {/* Kết quả */}
+              {/* Kết quả — chỉ bản thu đã được expert kiểm duyệt */}
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <h2 className="text-lg sm:text-xl font-semibold text-primary-800">
                   Kết quả tìm kiếm
                 </h2>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-neutral-600 font-medium">
-                    Tìm thấy {MOCK_RESULTS.length} bản ghi
-                  </span>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary-500 hover:bg-secondary-600 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" strokeWidth={2.5} />
-                    Xuất dữ liệu
-                  </button>
-                </div>
+                <span className="text-sm text-neutral-600 font-medium">
+                  {searchLoading
+                    ? "Đang tải..."
+                    : isSearching
+                      ? "Đang tìm kiếm bản thu phù hợp..."
+                      : `Tìm thấy ${filteredResults.length} bản ghi đã kiểm duyệt`}
+                </span>
               </div>
 
-              <div className="space-y-4">
-                {MOCK_RESULTS.map((result) => (
-                  <div
-                    key={result.id}
-                    className="rounded-xl border-2 border-primary-200/80 bg-white p-4 sm:p-5 shadow-md hover:shadow-lg transition-all"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-3">
-                          <h3 className="text-lg font-semibold text-primary-800">
-                            {result.title}
-                          </h3>
-                          {result.verified && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                              Đã xác minh
-                            </span>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                          <div>
-                            <strong className="block text-primary-700 font-semibold mb-0.5">
-                              Dân tộc
-                            </strong>
-                            <span className="text-neutral-600">{result.ethnicGroup}</span>
+              {searchLoading ? (
+                <div className="flex justify-center py-12">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : isSearching ? (
+                <div
+                  className="rounded-xl border-2 border-primary-200/80 bg-white p-8 sm:p-12 shadow-md flex flex-col items-center justify-center gap-4"
+                  style={{ backgroundColor: "#FFFCF5" }}
+                  role="status"
+                  aria-live="polite"
+                  aria-label="Đang tìm kiếm bản thu"
+                >
+                  <LoadingSpinner size="lg" />
+                  <p className="text-primary-700 font-medium text-center">
+                    Đang tìm kiếm bản thu phù hợp với tiêu chí của bạn...
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredResults.length === 0 ? (
+                    <p className="text-neutral-600 py-8 text-center">
+                      Không có bản thu nào khớp với bộ lọc hoặc từ khóa. Chỉ hiển thị bản thu đã được chuyên gia kiểm duyệt.
+                    </p>
+                  ) : (
+                    filteredResults.map((result) => (
+                      <div
+                        key={result.id}
+                        className="rounded-xl border-2 border-primary-200/80 bg-white p-4 sm:p-5 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              <h3 className="text-lg font-semibold text-primary-800">
+                                {result.title}
+                              </h3>
+                              {result.verificationStatus === VerificationStatus.VERIFIED && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                  Đã xác minh
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                              <div>
+                                <strong className="block text-primary-700 font-semibold mb-0.5">
+                                  Dân tộc
+                                </strong>
+                                <span className="text-neutral-600">
+                                  {result.ethnicity?.nameVietnamese ?? result.ethnicity?.name ?? "—"}
+                                </span>
+                              </div>
+                              <div>
+                                <strong className="block text-primary-700 font-semibold mb-0.5">
+                                  Vùng miền
+                                </strong>
+                                <span className="text-neutral-600">
+                                  {result.region
+                                    ? REGION_NAMES[result.region as keyof typeof REGION_NAMES]
+                                    : "—"}
+                                </span>
+                              </div>
+                              <div>
+                                <strong className="block text-primary-700 font-semibold mb-0.5">
+                                  Nhạc cụ
+                                </strong>
+                                <span className="text-neutral-600">
+                                  {result.instruments?.length
+                                    ? result.instruments
+                                        .map((i) => i.nameVietnamese ?? i.name)
+                                        .join(", ")
+                                    : "—"}
+                                </span>
+                              </div>
+                              <div>
+                                <strong className="block text-primary-700 font-semibold mb-0.5">
+                                  Nghi lễ
+                                </strong>
+                                <span className="text-neutral-600">
+                                  {result.tags?.find((t) => EVENT_TYPES.includes(t)) ?? result.metadata?.ritualContext ?? "—"}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <strong className="block text-primary-700 font-semibold mb-0.5">
-                              Vùng miền
-                            </strong>
-                            <span className="text-neutral-600">{result.region}</span>
-                          </div>
-                          <div>
-                            <strong className="block text-primary-700 font-semibold mb-0.5">
-                              Nhạc cụ
-                            </strong>
-                            <span className="text-neutral-600">
-                              {result.instruments.join(", ")}
-                            </span>
-                          </div>
-                          <div>
-                            <strong className="block text-primary-700 font-semibold mb-0.5">
-                              Nghi lễ
-                            </strong>
-                            <span className="text-neutral-600">{result.ceremony}</span>
+                          <div className="flex flex-col gap-2 sm:flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handlePlay(result)}
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
+                            >
+                              <Play className="w-4 h-4" strokeWidth={2.5} />
+                              Phát
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDetail(result.id)}
+                              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary-500 hover:bg-secondary-600 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
+                            >
+                              <FileText className="w-4 h-4" strokeWidth={2.5} />
+                              Chi tiết
+                            </button>
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 sm:flex-shrink-0">
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Modal Phát — render qua createPortal vào document.body để overlay phủ toàn trang (navbar + footer) */}
+              {playModalRecording &&
+                createPortal(
+                  <div
+                    className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="play-modal-title"
+                    style={{
+                      animation: "fadeIn 0.3s ease-out",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      position: "fixed",
+                    }}
+                    onClick={handleClosePlayModal}
+                  >
+                    <div
+                      className="relative rounded-2xl border border-neutral-300/80 bg-white shadow-2xl backdrop-blur-sm max-w-2xl w-full max-h-[90vh] overflow-hidden transition-all duration-300 pointer-events-auto transform"
+                      style={{ animation: "slideUp 0.3s ease-out" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+                        <h2 id="play-modal-title" className="text-lg font-semibold text-neutral-900 truncate pr-2">
+                          {playModalRecording.title}
+                        </h2>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
+                          onClick={handleClosePlayModal}
+                          className="p-2 rounded-lg hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
+                          aria-label="Đóng"
                         >
-                          <Play className="w-4 h-4" strokeWidth={2.5} />
-                          Phát
+                          <X className="w-5 h-5" strokeWidth={2.5} />
                         </button>
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary-500 hover:bg-secondary-600 text-white font-semibold text-sm shadow-md transition-all cursor-pointer"
-                        >
-                          <FileText className="w-4 h-4" strokeWidth={2.5} />
-                          Chi tiết
-                        </button>
+                      </div>
+                      <div className="p-4">
+                        {playModalLoading ? (
+                          <div className="flex justify-center py-12">
+                            <LoadingSpinner size="lg" />
+                          </div>
+                        ) : playModalLocal ? (
+                          (() => {
+                            let mediaSrc: string | undefined;
+                            let isVideo = false;
+                            const local = playModalLocal;
+                            if (local.mediaType === "youtube" && local.youtubeUrl?.trim()) {
+                              mediaSrc = local.youtubeUrl.trim();
+                              isVideo = true;
+                            } else if (
+                              local.youtubeUrl &&
+                              typeof local.youtubeUrl === "string" &&
+                              isYouTubeUrl(local.youtubeUrl)
+                            ) {
+                              mediaSrc = local.youtubeUrl.trim();
+                              isVideo = true;
+                            } else if (
+                              local.mediaType === "video" &&
+                              local.videoData &&
+                              typeof local.videoData === "string" &&
+                              local.videoData.trim()
+                            ) {
+                              mediaSrc = local.videoData;
+                              isVideo = true;
+                            } else if (
+                              local.mediaType === "audio" &&
+                              local.audioData &&
+                              typeof local.audioData === "string" &&
+                              local.audioData.trim()
+                            ) {
+                              mediaSrc = local.audioData;
+                              isVideo = false;
+                            } else if (
+                              local.videoData &&
+                              typeof local.videoData === "string" &&
+                              local.videoData.trim()
+                            ) {
+                              mediaSrc = local.videoData;
+                              isVideo = true;
+                            } else if (
+                              local.audioData &&
+                              typeof local.audioData === "string" &&
+                              local.audioData.trim()
+                            ) {
+                              mediaSrc = local.audioData;
+                              isVideo = mediaSrc.startsWith("data:video/");
+                            }
+                            if (!mediaSrc) {
+                              return (
+                                <p className="text-neutral-600 py-4 text-center">
+                                  Không có nguồn phát cho bản thu này.
+                                </p>
+                              );
+                            }
+                            const artistName =
+                              local.basicInfo?.artist ??
+                              playModalRecording.performers?.[0]?.name;
+                            if (isVideo) {
+                              return (
+                                <VideoPlayer
+                                  src={mediaSrc}
+                                  title={playModalRecording.title}
+                                  artist={artistName}
+                                  recording={playModalRecording}
+                                  showContainer={true}
+                                  returnTo={returnTo}
+                                />
+                              );
+                            }
+                            return (
+                              <AudioPlayer
+                                src={mediaSrc}
+                                title={playModalRecording.title}
+                                artist={artistName}
+                                recording={playModalRecording}
+                                showContainer={true}
+                                returnTo={returnTo}
+                              />
+                            );
+                          })()
+                        ) : (
+                          <p className="text-neutral-600 py-4 text-center">
+                            Không tải được bản thu.
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </div>,
+                  document.body
+                )}
             </div>
           )}
 
@@ -476,7 +789,7 @@ export default function ResearcherPortalPage() {
             </div>
           )}
 
-          {/* Tab: Biểu đồ tri thức */}
+          {/* Tab: Biểu đồ tri thức (knowledge graph: dân tộc – nhạc cụ từ bản thu đã kiểm duyệt) */}
           {activeTab === "graph" && (
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
               <div
@@ -490,252 +803,197 @@ export default function ResearcherPortalPage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-xl bg-primary-600 text-white font-semibold text-sm shadow-md cursor-pointer"
+                      onClick={() => setGraphView("overview")}
+                      className={`px-4 py-2 rounded-xl font-semibold text-sm shadow-md cursor-pointer transition-colors ${
+                        graphView === "overview"
+                          ? "bg-primary-600 text-white"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                      }`}
                     >
                       Tổng quan
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-xl bg-neutral-200 text-neutral-700 font-semibold text-sm cursor-pointer hover:bg-neutral-300"
+                      onClick={() => setGraphView("instruments")}
+                      className={`px-4 py-2 rounded-xl font-semibold text-sm shadow-md cursor-pointer transition-colors ${
+                        graphView === "instruments"
+                          ? "bg-primary-600 text-white"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                      }`}
                     >
                       Nhạc cụ
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-xl bg-neutral-200 text-neutral-700 font-semibold text-sm cursor-pointer hover:bg-neutral-300"
+                      onClick={() => setGraphView("ethnicity")}
+                      className={`px-4 py-2 rounded-xl font-semibold text-sm shadow-md cursor-pointer transition-colors ${
+                        graphView === "ethnicity"
+                          ? "bg-primary-600 text-white"
+                          : "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
+                      }`}
                     >
                       Dân tộc
                     </button>
                   </div>
                 </div>
-                <div
-                  className="relative rounded-xl border-2 border-secondary-200/80 overflow-hidden flex items-center justify-center"
-                  style={{
-                    height: "min(600px, 70vh)",
-                    background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)",
-                  }}
-                >
-                  <svg
-                    width="100%"
-                    height="100%"
-                    viewBox="0 0 800 600"
-                    className="max-h-[600px]"
-                    aria-hidden
+
+                {graphView === "overview" && (
+                  <div
+                    className="relative rounded-xl border-2 border-secondary-200/80 overflow-hidden flex items-center justify-center"
+                    style={{
+                      height: "min(600px, 70vh)",
+                      background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)",
+                    }}
                   >
-                    <g transform="translate(400, 300)">
-                      <circle
-                        cx="0"
-                        cy="0"
-                        r="60"
-                        fill="#9B2C2C"
-                        opacity="0.2"
-                      >
-                        <animate
-                          attributeName="r"
-                          values="60;65;60"
-                          dur="2s"
-                          repeatCount="indefinite"
-                        />
-                      </circle>
-                      <circle cx="0" cy="0" r="50" fill="#9B2C2C" />
-                      <text
-                        x="0"
-                        y="-5"
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize="14"
-                        fontWeight="bold"
-                      >
-                        Âm nhạc
-                      </text>
-                      <text
-                        x="0"
-                        y="10"
-                        textAnchor="middle"
-                        fill="white"
-                        fontSize="10"
-                      >
-                        Truyền thống
-                      </text>
-                    </g>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="200"
-                      y2="150"
-                      stroke="#9B2C2C"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="200"
-                      cy="150"
-                      r="45"
-                      fill="#9B2C2C"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="200" y="145" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Dân tộc
-                    </text>
-                    <text x="200" y="160" textAnchor="middle" fill="white" fontSize="10">
-                      {ETHNICITIES.length}
-                    </text>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="600"
-                      y2="150"
-                      stroke="#d97706"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="600"
-                      cy="150"
-                      r="45"
-                      fill="#d97706"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="600" y="145" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Nhạc cụ
-                    </text>
-                    <text x="600" y="160" textAnchor="middle" fill="white" fontSize="10">
-                      200+
-                    </text>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="200"
-                      y2="450"
-                      stroke="#b45309"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="200"
-                      cy="450"
-                      r="45"
-                      fill="#b45309"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="200" y="445" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Nghi lễ
-                    </text>
-                    <text x="200" y="460" textAnchor="middle" fill="white" fontSize="10">
-                      {EVENT_TYPES.length}+
-                    </text>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="600"
-                      y2="450"
-                      stroke="#ca8a04"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="600"
-                      cy="450"
-                      r="45"
-                      fill="#ca8a04"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="600" y="445" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Vùng miền
-                    </text>
-                    <text x="600" y="460" textAnchor="middle" fill="white" fontSize="10">
-                      {REGIONS.length}
-                    </text>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="100"
-                      y2="300"
-                      stroke="#16a34a"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="100"
-                      cy="300"
-                      r="45"
-                      fill="#16a34a"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="100" y="295" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Bài hát
-                    </text>
-                    <text x="100" y="310" textAnchor="middle" fill="white" fontSize="10">
-                      5000+
-                    </text>
-                    <line
-                      x1="400"
-                      y1="300"
-                      x2="700"
-                      y2="300"
-                      stroke="#2563eb"
-                      strokeWidth="2"
-                      opacity="0.3"
-                    />
-                    <circle
-                      cx="700"
-                      cy="300"
-                      r="45"
-                      fill="#2563eb"
-                      opacity="0.9"
-                      className="cursor-pointer"
-                    />
-                    <text x="700" y="295" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
-                      Nghệ nhân
-                    </text>
-                    <text x="700" y="310" textAnchor="middle" fill="white" fontSize="10">
-                      800+
-                    </text>
-                  </svg>
-                  <div className="absolute bottom-4 left-4 rounded-lg bg-white border-2 border-primary-200/80 shadow-md p-3 text-sm">
-                    <p className="font-semibold text-primary-800 mb-1">Hướng dẫn:</p>
-                    <p className="text-neutral-600 text-xs">• Click vào node để xem chi tiết</p>
-                    <p className="text-neutral-600 text-xs">• Hover để xem mối quan hệ</p>
+                    <svg
+                      width="100%"
+                      height="100%"
+                      viewBox="0 0 800 600"
+                      className="max-h-[600px]"
+                      aria-hidden
+                    >
+                      <g transform="translate(400, 300)">
+                        <circle cx="0" cy="0" r="60" fill="#9B2C2C" opacity="0.2">
+                          <animate attributeName="r" values="60;65;60" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="0" cy="0" r="50" fill="#9B2C2C" />
+                        <text x="0" y="-5" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Âm nhạc</text>
+                        <text x="0" y="10" textAnchor="middle" fill="white" fontSize="10">Truyền thống</text>
+                      </g>
+                      <line x1="400" y1="300" x2="200" y2="150" stroke="#9B2C2C" strokeWidth="2" opacity="0.3" />
+                      <circle cx="200" cy="150" r="45" fill="#9B2C2C" opacity="0.9" className="cursor-pointer" />
+                      <text x="200" y="145" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Dân tộc</text>
+                      <text x="200" y="160" textAnchor="middle" fill="white" fontSize="10">{ETHNICITIES.length}</text>
+                      <line x1="400" y1="300" x2="600" y2="150" stroke="#d97706" strokeWidth="2" opacity="0.3" />
+                      <circle cx="600" cy="150" r="45" fill="#d97706" opacity="0.9" className="cursor-pointer" />
+                      <text x="600" y="145" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Nhạc cụ</text>
+                      <text x="600" y="160" textAnchor="middle" fill="white" fontSize="10">200+</text>
+                      <line x1="400" y1="300" x2="200" y2="450" stroke="#b45309" strokeWidth="2" opacity="0.3" />
+                      <circle cx="200" cy="450" r="45" fill="#b45309" opacity="0.9" className="cursor-pointer" />
+                      <text x="200" y="445" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Nghi lễ</text>
+                      <text x="200" y="460" textAnchor="middle" fill="white" fontSize="10">{EVENT_TYPES.length}+</text>
+                      <line x1="400" y1="300" x2="600" y2="450" stroke="#ca8a04" strokeWidth="2" opacity="0.3" />
+                      <circle cx="600" cy="450" r="45" fill="#ca8a04" opacity="0.9" className="cursor-pointer" />
+                      <text x="600" y="445" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Vùng miền</text>
+                      <text x="600" y="460" textAnchor="middle" fill="white" fontSize="10">{REGIONS.length}</text>
+                      <line x1="400" y1="300" x2="100" y2="300" stroke="#16a34a" strokeWidth="2" opacity="0.3" />
+                      <circle cx="100" cy="300" r="45" fill="#16a34a" opacity="0.9" className="cursor-pointer" />
+                      <text x="100" y="295" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Bài hát</text>
+                      <text x="100" y="310" textAnchor="middle" fill="white" fontSize="10">5000+</text>
+                      <line x1="400" y1="300" x2="700" y2="300" stroke="#2563eb" strokeWidth="2" opacity="0.3" />
+                      <circle cx="700" cy="300" r="45" fill="#2563eb" opacity="0.9" className="cursor-pointer" />
+                      <text x="700" y="295" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">Nghệ nhân</text>
+                      <text x="700" y="310" textAnchor="middle" fill="white" fontSize="10">800+</text>
+                    </svg>
+                    <div className="absolute bottom-4 left-4 rounded-lg bg-white border-2 border-primary-200/80 shadow-md p-3 text-sm">
+                      <p className="font-semibold text-primary-800 mb-1">Hướng dẫn:</p>
+                      <p className="text-neutral-600 text-xs">• Chọn <strong>Nhạc cụ</strong> hoặc <strong>Dân tộc</strong> để xem đồ thị nối nhạc cụ với dân tộc tương ứng</p>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {(graphView === "instruments" || graphView === "ethnicity") && (
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    {/* Danh sách: Nhạc cụ hoặc Dân tộc */}
+                    <div className="rounded-xl border-2 border-secondary-200/80 bg-white p-4 shadow-sm max-h-[min(500px,60vh)] overflow-y-auto">
+                      <h3 className="text-sm font-semibold text-primary-800 mb-2 sticky top-0 bg-white py-1">
+                        {graphView === "instruments" ? `Danh sách nhạc cụ (${graphData.instruments.length})` : `Danh sách dân tộc (${graphData.ethnicities.length})`}
+                      </h3>
+                      <ul className="space-y-1 text-sm text-neutral-700">
+                        {(graphView === "instruments" ? graphData.instruments : graphData.ethnicities).map((name, idx) => (
+                          <li key={idx} className="truncate" title={name}>
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                      {((graphView === "instruments" && graphData.instruments.length === 0) || (graphView === "ethnicity" && graphData.ethnicities.length === 0)) && (
+                        <p className="text-neutral-500 text-xs">Chưa có dữ liệu từ bản thu đã kiểm duyệt.</p>
+                      )}
+                    </div>
+                    {/* Đồ thị hai cột: Dân tộc – Nhạc cụ, nối theo cạnh (nhạc cụ của dân tộc nào) */}
+                    <div
+                      className="lg:col-span-3 relative rounded-xl border-2 border-secondary-200/80 overflow-hidden flex items-center justify-center"
+                      style={{
+                        height: "min(500px, 60vh)",
+                        background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)",
+                      }}
+                    >
+                      {graphData.ethnicities.length === 0 || graphData.instruments.length === 0 ? (
+                        <p className="text-neutral-600 text-center px-4">
+                          Chưa đủ dữ liệu để vẽ đồ thị. Cần có bản thu đã kiểm duyệt có cả dân tộc và nhạc cụ.
+                        </p>
+                      ) : (
+                        <svg
+                          width="100%"
+                          height="100%"
+                          viewBox="0 0 800 500"
+                          className="max-h-[500px]"
+                          aria-label="Biểu đồ nhạc cụ và dân tộc"
+                        >
+                          {/* Layout: cột trái x=100 (dân tộc), cột phải x=700 (nhạc cụ). Spread theo chiều dọc. */}
+                          {(() => {
+                            const leftX = 100;
+                            const rightX = 700;
+                            const paddingY = 40;
+                            const nEth = graphData.ethnicities.length;
+                            const nInst = graphData.instruments.length;
+                            const maxN = Math.max(nEth, nInst, 1);
+                            const step = (500 - 2 * paddingY) / maxN;
+                            const ethY = (i: number) => paddingY + (nEth <= 1 ? 250 : (i / (nEth - 1)) * (500 - 2 * paddingY));
+                            const instY = (i: number) => paddingY + (nInst <= 1 ? 250 : (i / (nInst - 1)) * (500 - 2 * paddingY));
+                            const ethIdx = Object.fromEntries(graphData.ethnicities.map((e, i) => [e, i]));
+                            const instIdx = Object.fromEntries(graphData.instruments.map((e, i) => [e, i]));
+                            return (
+                              <>
+                                {/* Cạnh nối dân tộc – nhạc cụ */}
+                                <g stroke="#9B2C2C" strokeWidth="1.5" opacity="0.4">
+                                  {graphData.edges.map(({ ethnicity, instrument }, k) => {
+                                    const ei = ethIdx[ethnicity];
+                                    const ii = instIdx[instrument];
+                                    if (ei == null || ii == null) return null;
+                                    const y1 = ethY(ei);
+                                    const y2 = instY(ii);
+                                    return <line key={k} x1={leftX} y1={y1} x2={rightX} y2={y2} />;
+                                  })}
+                                </g>
+                                {/* Node dân tộc (trái) */}
+                                {graphData.ethnicities.map((name, i) => (
+                                  <g key={`eth-${i}`}>
+                                    <circle cx={leftX} cy={ethY(i)} r="20" fill="#9B2C2C" className="cursor-pointer" />
+                                    <text x={leftX} y={ethY(i) + 28} textAnchor="middle" fill="#374151" fontSize="10">{name.length > 12 ? name.slice(0, 11) + "…" : name}</text>
+                                  </g>
+                                ))}
+                                {/* Node nhạc cụ (phải) */}
+                                {graphData.instruments.map((name, i) => (
+                                  <g key={`inst-${i}`}>
+                                    <circle cx={rightX} cy={instY(i)} r="20" fill="#d97706" className="cursor-pointer" />
+                                    <text x={rightX} y={instY(i) + 28} textAnchor="middle" fill="#374151" fontSize="10">{name.length > 14 ? name.slice(0, 13) + "…" : name}</text>
+                                  </g>
+                                ))}
+                                {/* Chú thích */}
+                                <text x={leftX} y="20" textAnchor="middle" fill="#9B2C2C" fontSize="11" fontWeight="bold">Dân tộc</text>
+                                <text x={rightX} y="20" textAnchor="middle" fill="#b45309" fontSize="11" fontWeight="bold">Nhạc cụ</text>
+                              </>
+                            );
+                          })()}
+                        </svg>
+                      )}
+                      <div className="absolute bottom-2 left-2 right-2 rounded bg-white/90 border border-primary-200/80 shadow p-2 text-xs text-neutral-600 text-center">
+                        Đoạn thẳng nối nhạc cụ với dân tộc tương ứng (từ bản thu đã kiểm duyệt).
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  {
-                    label: "Tổng node",
-                    value: "6,254",
-                    className: "bg-gradient-to-br from-primary-50 to-red-50 border-primary-200/80",
-                    valueColor: "text-primary-800",
-                  },
-                  {
-                    label: "Mối quan hệ",
-                    value: "18,762",
-                    className: "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/80",
-                    valueColor: "text-amber-900",
-                  },
-                  {
-                    label: "Đã xác minh",
-                    value: "94%",
-                    className: "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200/80",
-                    valueColor: "text-emerald-800",
-                  },
-                  {
-                    label: "Cập nhật",
-                    value: "Hôm nay",
-                    className: "bg-gradient-to-br from-sky-50 to-blue-50 border-sky-200/80",
-                    valueColor: "text-sky-800",
-                  },
+                  { label: "Dân tộc (trong đồ thị)", value: String(graphData.ethnicities.length), className: "bg-gradient-to-br from-primary-50 to-red-50 border-primary-200/80", valueColor: "text-primary-800" },
+                  { label: "Nhạc cụ (trong đồ thị)", value: String(graphData.instruments.length), className: "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/80", valueColor: "text-amber-900" },
+                  { label: "Mối quan hệ (cạnh)", value: String(graphData.edges.length), className: "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200/80", valueColor: "text-emerald-800" },
+                  { label: "Nguồn", value: "Bản thu đã kiểm duyệt", className: "bg-gradient-to-br from-sky-50 to-blue-50 border-sky-200/80", valueColor: "text-sky-800" },
                 ].map((stat, idx) => (
-                  <div
-                    key={idx}
-                    className={`rounded-xl border-2 p-4 shadow-sm ${stat.className}`}
-                  >
+                  <div key={idx} className={`rounded-xl border-2 p-4 shadow-sm ${stat.className}`}>
                     <p className="text-sm text-neutral-600 font-medium mb-0.5">{stat.label}</p>
                     <p className={`text-2xl font-bold ${stat.valueColor}`}>{stat.value}</p>
                   </div>
@@ -763,7 +1021,7 @@ export default function ResearcherPortalPage() {
                     <SearchableDropdown
                       value={compareLeft}
                       onChange={setCompareLeft}
-                      options={MOCK_RESULTS.map((r) => r.title)}
+                      options={approvedRecordings.map((r) => r.title)}
                       placeholder="Chọn bản ghi âm..."
                       searchable={false}
                     />
@@ -814,7 +1072,7 @@ export default function ResearcherPortalPage() {
                     <SearchableDropdown
                       value={compareRight}
                       onChange={setCompareRight}
-                      options={MOCK_RESULTS.map((r) => r.title)}
+                      options={approvedRecordings.map((r) => r.title)}
                       placeholder="Chọn bản ghi âm..."
                       searchable={false}
                     />
