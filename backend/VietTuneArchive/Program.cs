@@ -84,25 +84,28 @@ builder.Services.AddCors(o => o.AddPolicy("AllowReactApp", p =>
 
 var app = builder.Build();
 
-//if (app.Environment.IsDevelopment()) 
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
+// 1. Cấu hình Swagger: Đưa lên ĐẦU TIÊN của pipeline
 app.UseSwagger();
-
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "VietTuneArchive API v1");
-
-    // Đặt RoutePrefix bằng rỗng để Swagger hiện ngay khi truy cập vào trang chủ (/)
-    // Thay vì phải gõ thêm /swagger
-    c.RoutePrefix = string.Empty;
+    c.RoutePrefix = string.Empty; // Swagger sẽ là trang chủ
 });
-app.UseHttpsRedirection();
+
+// 2. QUAN TRỌNG: Tắt hoặc giới hạn HttpsRedirection trên Render
+// Render xử lý HTTPS ở tầng Load Balancer, nếu app cố redirect tiếp sẽ gây lỗi "Failed to determine https port"
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+// 3. Thứ tự Middleware chuẩn
 app.UseCors("AllowReactApp");
+
+// Đảm bảo Authentication trước Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
