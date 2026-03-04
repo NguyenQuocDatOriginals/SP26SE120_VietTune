@@ -1,34 +1,31 @@
-﻿# Giai đoạn 1: Build
+﻿# Giai đoạn Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy toàn bộ solution và các file .csproj để restore
-# Sử dụng wildcard (*) để tránh lỗi sai tên thư mục cụ thể
-COPY ["*.sln", "./"]
-COPY ["VietTuneArchive.API/*.csproj", "VietTuneArchive.API/"]
-COPY ["VietTuneArchive.Application/*.csproj", "VietTuneArchive.Application/"]
-COPY ["VietTuneArchive.Domain/*.csproj", "VietTuneArchive.Domain/"]
+# Sửa lại đường dẫn COPY theo tên thư mục vật lý thực tế
+COPY ["VietTuneArchive/VietTuneArchive.API.csproj", "VietTuneArchive/"]
+COPY ["VietTuneArchive.Application/VietTuneArchive.Application.csproj", "VietTuneArchive.Application/"]
+COPY ["VietTuneArchive.Domain/VietTuneArchive.Domain.csproj", "VietTuneArchive.Domain/"]
 
-# Restore các dependencies
-RUN dotnet restore
+# Restore dự án
+RUN dotnet restore "VietTuneArchive/VietTuneArchive.API.csproj"
 
-# Copy toàn bộ code còn lại
+# Copy toàn bộ code
 COPY . .
 
-# Build dự án (Đảm bảo tên thư mục VietTuneArchive.API là đúng 100%)
-WORKDIR "/src/VietTuneArchive.API"
-RUN dotnet build -c Release -o /app/build
+# Chuyển vào thư mục vật lý VietTuneArchive để build
+WORKDIR "/src/VietTuneArchive"
+RUN dotnet build "VietTuneArchive.API.csproj" -c Release -o /app/build
 
 # Publish
 FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "VietTuneArchive.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Giai đoạn 2: Runtime
+# Giai đoạn Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Render yêu cầu chạy trên cổng 8080 (hoặc 10000)
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
