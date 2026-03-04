@@ -1,19 +1,16 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.HttpOverrides; // Thêm dòng này
-using Service.EmailConfirmation;
-using Supabase;
+using Microsoft.AspNetCore.HttpOverrides;
+using Supabase; // Giữ lại nếu bạn vẫn dùng Supabase Storage
 using VietTuneArchive.Application.Common.Email;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Services;
-using VietTuneArchive.Domain.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Cấu hình Forwarded Headers (BẮT BUỘC cho Render/Cloudflare) ---
+// --- 1. Cấu hình Forwarded Headers (Giúp Render nhận diện HTTPS) ---
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -21,33 +18,58 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// ... (Giữ nguyên phần đăng ký Service: DBContext, Supabase, JWT, v.v.) ...
-// Lưu ý: Đảm bảo builder.Configuration["Jwt:Key"] không bị null
+// --- 2. Khởi tạo Gemini / Supabase từ Config ---
+var supabaseUrl = builder.Configuration["Supabase:Url"];
+var supabaseKey = builder.Configuration["Supabase:Key"];
+if (!string.IsNullOrEmpty(supabaseUrl) && !string.IsNullOrEmpty(supabaseKey))
+{
+    builder.Services.AddSingleton(new Client(supabaseUrl, supabaseKey));
+}
+
+// Lấy JWT Key để Auth hoạt động
+var jwtKey = builder.Configuration["Jwt:Key"] ?? "Key_Mac_Dinh_Sieu_Dai_De_Khong_Loi";
+var key = Encoding.ASCII.GetBytes(jwtKey);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Đăng ký các Service xử lý Gemini của bạn ở đây
+builder.Services.AddScoped<IAudioProcessingService, AudioProcessingService>();
+// builder.Services.AddHttpClient(); // Đừng quên nếu Service của bạn dùng HttpClient để gọi Gemini
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// --- THỨ TỰ MIDDLEWARE (Cực kỳ quan trọng) ---
-
-// 1. Phải đặt ForwardedHeaders lên ĐẦU TIÊN
+// --- 3. Thứ tự Middleware chuẩn Render ---
 app.UseForwardedHeaders();
 
-// 2. Swagger phải nằm ngay sau đó để không bị chặn bởi Auth
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "VietTuneArchive API v1");
-    c.RoutePrefix = string.Empty; // Swagger tại trang chủ
+    c.RoutePrefix = string.Empty; // Hiện Swagger ngay trang chủ
 });
 
-// 3. Tắt HttpsRedirection trên Render (Vì Render đã lo HTTPS rồi)
-if (app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// TẮT HttpsRedirection để tránh lỗi vòng lặp trên Render
+// app.UseHttpsRedirection(); 
 
-app.UseCors("AllowReactApp");
+app.UseCors(p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
-// 4. Authentication và Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
