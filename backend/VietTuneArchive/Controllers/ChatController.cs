@@ -23,7 +23,7 @@ namespace VietTuneArchive.API.Controllers
             _model = configuration["Gemini:Model"] ?? "gemini-2.0-flash-lite-preview-09-2025";
 
             // Đọc System Instruction từ file txt
-            var rootPath = Directory.GetCurrentDirectory();
+            var rootPath = AppContext.BaseDirectory;
             var promptPath = Path.Combine(rootPath, "Assets", "MusicBotPrompt.txt");
 
             if (!System.IO.File.Exists(promptPath))
