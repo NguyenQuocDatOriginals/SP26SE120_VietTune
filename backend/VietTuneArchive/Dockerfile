@@ -2,32 +2,33 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy các file .csproj vào đúng thư mục để restore (tối ưu cache Docker)
-COPY ["VietTuneArchive.API/VietTuneArchive.API.csproj", "VietTuneArchive.API/"]
-COPY ["VietTuneArchive.Application/VietTuneArchive.Application.csproj", "VietTuneArchive.Application/"]
-COPY ["VietTuneArchive.Domain/VietTuneArchive.Domain.csproj", "VietTuneArchive.Domain/"]
+# Copy toàn bộ solution và các file .csproj để restore
+# Sử dụng wildcard (*) để tránh lỗi sai tên thư mục cụ thể
+COPY ["*.sln", "./"]
+COPY ["VietTuneArchive.API/*.csproj", "VietTuneArchive.API/"]
+COPY ["VietTuneArchive.Application/*.csproj", "VietTuneArchive.Application/"]
+COPY ["VietTuneArchive.Domain/*.csproj", "VietTuneArchive.Domain/"]
 
-# Thực hiện restore các gói NuGet
-RUN dotnet restore "VietTuneArchive.API/VietTuneArchive.API.csproj"
+# Restore các dependencies
+RUN dotnet restore
 
-# Sau đó mới copy toàn bộ mã nguồn vào
+# Copy toàn bộ code còn lại
 COPY . .
 
-# Build dự án
+# Build dự án (Đảm bảo tên thư mục VietTuneArchive.API là đúng 100%)
 WORKDIR "/src/VietTuneArchive.API"
-RUN dotnet build "VietTuneArchive.API.csproj" -c Release -o /app/build
+RUN dotnet build -c Release -o /app/build
 
-# Publish ra file thực thi
+# Publish
 FROM build AS publish
-RUN dotnet publish "VietTuneArchive.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
-# Giai đoạn 2: Chạy ứng dụng (Runtime)
+# Giai đoạn 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Cấu hình Port: Render mặc định dùng cổng 10000 hoặc 8080
-# Chúng ta sẽ ép ứng dụng chạy ở cổng 8080 (HTTP) thay vì 7264 (HTTPS) vì Render lo phần SSL rồi
+# Render yêu cầu chạy trên cổng 8080 (hoặc 10000)
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
