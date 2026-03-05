@@ -10,6 +10,7 @@ import VideoPlayer from "@/components/features/VideoPlayer";
 import { INTELLIGENCE_NAME, REGION_NAMES } from "@/config/constants";
 import { ETHNICITIES, REGIONS, EVENT_TYPES, INSTRUMENTS } from "@/config/musicMetadata";
 import { getLocalRecordingMetaList, getLocalRecordingFull } from "@/services/recordingStorage";
+import { sendResearcherChatMessage } from "@/services/researcherChatService";
 import { migrateVideoDataToVideoData } from "@/utils/helpers";
 import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
 import { isYouTubeUrl } from "@/utils/youtube";
@@ -40,8 +41,8 @@ const QUICK_QUESTIONS = [
 const WELCOME_CHAT =
   "Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Hãy đặt câu hỏi về nhạc cụ, nghi lễ, hoặc phong cách âm nhạc của các dân tộc.";
 
-const MOCK_REPLY =
-  "Dựa trên tài liệu được xác minh, tôi có thể cho bạn biết rằng đàn bầu là nhạc cụ độc tấu truyền thống với một dây đàn duy nhất, sử dụng kỹ thuật uốn éo để tạo ra âm thanh đặc trưng. Nhạc cụ này thường xuất hiện trong các buổi biểu diễn ca Huế và nhạc cung đình.";
+const CHAT_API_FALLBACK =
+  "Hiện không kết nối được với VietTune Intelligence. Bạn vẫn có thể xem thông tin từ phần Tìm kiếm nâng cao và Biểu đồ tri thức.";
 
 /** Tokenize for semantic search (NFD, no diacritics). */
 function tokenize(text: string): string[] {
@@ -235,35 +236,56 @@ export default function ResearcherPortalPage() {
     chatListRef.current?.scrollTo({ top: chatListRef.current.scrollHeight, behavior: "smooth" });
   }, [chatMessages, isTyping]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(async () => {
     const text = chatInput.trim();
     if (!text) return;
     setChatMessages((prev) => [...prev, { role: "user", content: text }]);
     setChatInput("");
     setIsTyping(true);
-    setTimeout(() => {
-      setChatMessages((prev) => [...prev, { role: "assistant", content: MOCK_REPLY }]);
+    try {
+      const reply = await sendResearcherChatMessage(text);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply ?? CHAT_API_FALLBACK },
+      ]);
+    } catch {
+      setChatMessages((prev) => [...prev, { role: "assistant", content: CHAT_API_FALLBACK }]);
+    } finally {
       setIsTyping(false);
-    }, 600 + Math.min(text.length * 20, 800));
-  };
+    }
+  }, [chatInput]);
 
-  const handleQaKeyDown = (e: React.KeyboardEvent) => {
+  const handleQaKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      try {
+        await handleSendMessage();
+      } catch {
+        // Safety net: handleSendMessage already catches, but avoid floating-promise/unhandled rejections.
+        setChatMessages((prev) => [...prev, { role: "assistant", content: CHAT_API_FALLBACK }]);
+        setIsTyping(false);
+      }
     }
   };
 
-  const askQuestion = (question: string) => {
-    setChatInput(question);
-    setChatMessages((prev) => [...prev, { role: "user", content: question }]);
+  const askQuestion = useCallback(async (question: string) => {
+    const text = question.trim();
+    if (!text) return;
+    setChatMessages((prev) => [...prev, { role: "user", content: text }]);
     setChatInput("");
     setIsTyping(true);
-    setTimeout(() => {
-      setChatMessages((prev) => [...prev, { role: "assistant", content: MOCK_REPLY }]);
+    try {
+      const reply = await sendResearcherChatMessage(text);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply ?? CHAT_API_FALLBACK },
+      ]);
+    } catch {
+      setChatMessages((prev) => [...prev, { role: "assistant", content: CHAT_API_FALLBACK }]);
+    } finally {
       setIsTyping(false);
-    }, 800);
-  };
+    }
+  }, []);
 
   const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
     { id: "search", label: "Tìm kiếm nâng cao", icon: Search },
@@ -728,7 +750,9 @@ export default function ResearcherPortalPage() {
                       />
                       <button
                         type="button"
-                        onClick={handleSendMessage}
+                        onClick={() => {
+                          void handleSendMessage();
+                        }}
                         disabled={!chatInput.trim() || isTyping}
                         className="p-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none text-white transition-colors cursor-pointer"
                         aria-label="Gửi"
@@ -753,7 +777,9 @@ export default function ResearcherPortalPage() {
                         <button
                           key={i}
                           type="button"
-                          onClick={() => askQuestion(q)}
+                          onClick={() => {
+                            void askQuestion(q);
+                          }}
                           className="w-full text-left px-3 py-2.5 rounded-xl bg-primary-50 border border-primary-200/80 text-primary-800 font-medium text-sm hover:bg-primary-100 hover:border-primary-300 transition-all cursor-pointer"
                         >
                           {q}
@@ -937,8 +963,6 @@ export default function ResearcherPortalPage() {
                             const paddingY = 40;
                             const nEth = graphData.ethnicities.length;
                             const nInst = graphData.instruments.length;
-                            const maxN = Math.max(nEth, nInst, 1);
-                            const step = (500 - 2 * paddingY) / maxN;
                             const ethY = (i: number) => paddingY + (nEth <= 1 ? 250 : (i / (nEth - 1)) * (500 - 2 * paddingY));
                             const instY = (i: number) => paddingY + (nInst <= 1 ? 250 : (i / (nInst - 1)) * (500 - 2 * paddingY));
                             const ethIdx = Object.fromEntries(graphData.ethnicities.map((e, i) => [e, i]));

@@ -1,6 +1,11 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 export const APP_NAME = import.meta.env.VITE_APP_NAME || "VietTune";
 
+/** Base URL for Researcher chatbox / QA API (VietTune backend on Render). Falls back to API_BASE_URL if not set. */
+export const VIETTUNE_AI_BASE_URL =
+  (import.meta.env.VITE_VIETTUNE_AI_BASE_URL as string | undefined)?.trim() ||
+  API_BASE_URL;
+
 /** Display name for the AI / Intelligence assistant (replaces "AI VietTune"). */
 export const INTELLIGENCE_NAME = "VietTune Intelligence";
 
