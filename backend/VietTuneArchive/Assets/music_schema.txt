@@ -26,7 +26,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["đàn bầu", "đàn tranh", "đàn đáy", "đàn tính", "khèn lá", "khèn H'Mông", "đing năm", "trống chầu", "phách", "sáo trúc", "đàn nhị", "pinpeat", "đàn kìm", "đàn cò", "instrumental", "unknown"]
+              "enum": ["đàn bầu", "đàn tranh", "đàn đáy", "đàn tính", "khèn lá", "khèn H'Mông", "đing năm", "trống chầu", "phách", "sáo trúc", "đàn nhị", "pinpeat", "đàn kìm", "đàn cò", "instrumental", "cồng chiêng", "unknown"]
             },
             "description": "Danh sách các nhạc cụ"
           },
