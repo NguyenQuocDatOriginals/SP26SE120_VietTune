@@ -16,11 +16,33 @@ export type ChatResponseBody =
   | { message?: string; answer?: string; reply?: string; response?: string; content?: string; text?: string }
   | { data?: { message?: string; answer?: string; reply?: string; response?: string; content?: string; text?: string } };
 
+/** Trích văn bản từ cấu trúc kiểu Gemini/Vertex (candidates[0].content.parts[0].text). */
+function extractFromCandidates(data: unknown): string | null {
+  if (data == null || typeof data !== "object") return null;
+  const obj = data as Record<string, unknown>;
+  const candidates = obj.candidates ?? obj.Candidates;
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+  const first = candidates[0];
+  if (first == null || typeof first !== "object") return null;
+  const content = (first as Record<string, unknown>).content ?? (first as Record<string, unknown>).Content;
+  if (content == null || typeof content !== "object") return null;
+  const parts = (content as Record<string, unknown>).parts ?? (content as Record<string, unknown>).Parts;
+  if (!Array.isArray(parts) || parts.length === 0) return null;
+  const part = parts[0];
+  if (part == null || typeof part !== "object") return null;
+  const text = (part as Record<string, unknown>).text ?? (part as Record<string, unknown>).Text;
+  if (typeof text === "string" && text.trim()) return text.trim();
+  return null;
+}
+
 function extractReply(data: unknown): string | null {
   if (data == null) return null;
   if (typeof data === "string" && data.trim()) return data.trim();
   if (typeof data !== "object") return null;
   const obj = data as Record<string, unknown>;
+  // Ưu tiên cấu trúc candidates/content/parts/text (backend VietTune)
+  const fromCandidates = extractFromCandidates(obj);
+  if (fromCandidates) return fromCandidates;
   const direct =
     obj.message ?? obj.answer ?? obj.reply ?? obj.response ?? obj.content ?? obj.text ?? obj.Message;
   if (typeof direct === "string" && direct.trim()) return direct.trim();
@@ -106,11 +128,24 @@ export async function sendResearcherChatMessage(userMessage: string): Promise<st
 
   for (const body of payloads) {
     try {
-      const res = await client.post<ChatResponseBody>(path, body);
-      const reply = extractReply(res.data);
-      if (reply) return reply;
-      const ct = typeof res.headers?.["content-type"] === "string" ? res.headers["content-type"] : "";
-      return `Server trả ${res.status} nhưng không có nội dung trả lời (endpoint: ${baseURL}${path}${ct ? `, content-type: ${ct}` : ""}).`;
+      // Luôn lấy body dạng text để tránh axios parse sai (backend có thể trả text/plain hoặc JSON)
+      const res = await client.post<string>(path, body, { responseType: "text" });
+      const raw = typeof res.data === "string" ? res.data.trim() : "";
+
+      if (raw) {
+        // Thử parse JSON (backend có thể trả application/json nhưng axios trả raw khi responseType: 'text')
+        if (raw.startsWith("{") || raw.startsWith("[")) {
+          try {
+            const parsed = JSON.parse(raw) as unknown;
+            const reply = extractReply(parsed);
+            if (reply) return reply;
+          } catch {
+            // Không phải JSON hợp lệ → dùng nguyên raw
+          }
+        }
+        return raw;
+      }
+      return "Bot chưa trả lời. Bạn thử đặt câu hỏi khác hoặc thử lại sau.";
     } catch (err) {
       lastError = err;
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
