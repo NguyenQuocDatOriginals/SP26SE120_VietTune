@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace VietTuneArchive.Domain.Context.Migrations
+namespace VietTuneArchive.Domain.Migrations
 {
     /// <inheritdoc />
-    public partial class InitMigration : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,11 +17,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Ceremonies",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Season = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Season = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -32,12 +32,12 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "EthnicGroups",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LanguageFamily = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    PrimaryRegion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    LanguageFamily = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    PrimaryRegion = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -48,10 +48,10 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "MusicalScales",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NotePattern = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    NotePattern = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -62,9 +62,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Provinces",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    RegionCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RegionCode = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -75,9 +75,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Tags",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -88,18 +88,18 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    AvatarUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Role = table.Column<int>(type: "int", nullable: false),
-                    AcademicCredentials = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    ContributionScore = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FullName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    PasswordHash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    AvatarUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Role = table.Column<int>(type: "integer", nullable: false),
+                    AcademicCredentials = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    ContributionScore = table.Column<decimal>(type: "numeric", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -110,8 +110,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "EthnicGroupCeremonies",
                 columns: table => new
                 {
-                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CeremonyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    EthnicGroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CeremonyId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -134,14 +134,14 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Instruments",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TuningSystem = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ConstructionMethod = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    OriginEthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    TuningSystem = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    ConstructionMethod = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    OriginEthnicGroupId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -158,10 +158,10 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "VocalStyles",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    EthnicGroupId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -178,9 +178,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Districts",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProvinceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProvinceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -197,14 +197,14 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EntityType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    EntityId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Action = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    OldValuesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NewValuesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EntityType = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    EntityId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Action = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    OldValuesJson = table.Column<string>(type: "text", nullable: true),
+                    NewValuesJson = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -221,15 +221,15 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "KBEntries",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Slug = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    AuthorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Slug = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -246,10 +246,10 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "QAConversations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -266,11 +266,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Token = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -287,8 +287,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "InstrumentEthnicGroups",
                 columns: table => new
                 {
-                    InstrumentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    InstrumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EthnicGroupId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -311,11 +311,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Communes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DistrictId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Latitude = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    Longitude = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DistrictId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Latitude = table.Column<decimal>(type: "numeric", nullable: true),
+                    Longitude = table.Column<decimal>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -332,10 +332,10 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "KBCitations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EntryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Citation = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Citation = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    Url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -352,12 +352,12 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "KBRevisions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EntryId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EditorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RevisionNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EditorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    RevisionNote = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -380,17 +380,17 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "QAMessages",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ConversationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Role = table.Column<int>(type: "int", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SourceRecordingIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SourceKBEntryIdsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConfidenceScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    FlaggedByExpert = table.Column<bool>(type: "bit", nullable: false),
-                    CorrectedByExpertId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ExpertCorrection = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConversationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Role = table.Column<int>(type: "integer", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    SourceRecordingIdsJson = table.Column<string>(type: "text", nullable: true),
+                    SourceKBEntryIdsJson = table.Column<string>(type: "text", nullable: true),
+                    ConfidenceScore = table.Column<decimal>(type: "numeric", nullable: true),
+                    FlaggedByExpert = table.Column<bool>(type: "boolean", nullable: false),
+                    CorrectedByExpertId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ExpertCorrection = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -412,33 +412,33 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Recordings",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AudioFileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    VideoFileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    AudioFormat = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    DurationSeconds = table.Column<int>(type: "int", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    AudioFileUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    VideoFileUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    AudioFormat = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    DurationSeconds = table.Column<int>(type: "integer", nullable: true),
                     FileSizeBytes = table.Column<long>(type: "bigint", nullable: true),
-                    UploadedById = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CommuneId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CeremonyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    VocalStyleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    MusicalScaleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PerformanceContext = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    LyricsOriginal = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LyricsVietnamese = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PerformerName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    PerformerAge = table.Column<int>(type: "int", nullable: true),
-                    RecordingDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    GpsLatitude = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    GpsLongitude = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    Tempo = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    KeySignature = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UploadedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    CommuneId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EthnicGroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CeremonyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    VocalStyleId = table.Column<Guid>(type: "uuid", nullable: true),
+                    MusicalScaleId = table.Column<Guid>(type: "uuid", nullable: true),
+                    PerformanceContext = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    LyricsOriginal = table.Column<string>(type: "text", nullable: true),
+                    LyricsVietnamese = table.Column<string>(type: "text", nullable: true),
+                    PerformerName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    PerformerAge = table.Column<int>(type: "integer", nullable: true),
+                    RecordingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    GpsLatitude = table.Column<decimal>(type: "numeric", nullable: true),
+                    GpsLongitude = table.Column<decimal>(type: "numeric", nullable: true),
+                    Tempo = table.Column<decimal>(type: "numeric", nullable: true),
+                    KeySignature = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -485,15 +485,15 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Annotations",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ExpertId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ResearchCitation = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    TimestampStart = table.Column<int>(type: "int", nullable: true),
-                    TimestampEnd = table.Column<int>(type: "int", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ExpertId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ResearchCitation = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    TimestampStart = table.Column<int>(type: "integer", nullable: true),
+                    TimestampEnd = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -516,15 +516,15 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "AudioAnalysisResults",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DetectedInstrumentsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DetectedTempo = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    DetectedKey = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    SpectralFeaturesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SuggestedEthnicGroup = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    SuggestedMetadataJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AnalyzedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DetectedInstrumentsJson = table.Column<string>(type: "text", nullable: true),
+                    DetectedTempo = table.Column<decimal>(type: "numeric", nullable: true),
+                    DetectedKey = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    SpectralFeaturesJson = table.Column<string>(type: "text", nullable: true),
+                    SuggestedEthnicGroup = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    SuggestedMetadataJson = table.Column<string>(type: "text", nullable: true),
+                    AnalyzedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -541,11 +541,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "RecordingImages",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Caption = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    SortOrder = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ImageUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    Caption = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    SortOrder = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -562,9 +562,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "RecordingInstruments",
                 columns: table => new
                 {
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    InstrumentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PlayingTechnique = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    InstrumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PlayingTechnique = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -587,8 +587,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "RecordingTags",
                 columns: table => new
                 {
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TagId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TagId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -611,14 +611,14 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Submissions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ContributorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CurrentStage = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SubmittedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContributorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CurrentStage = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Notes = table.Column<string>(type: "text", nullable: true),
+                    SubmittedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -641,11 +641,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "VectorEmbeddings",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RecordingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EmbeddingJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ModelVersion = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RecordingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EmbeddingJson = table.Column<string>(type: "text", nullable: false),
+                    ModelVersion = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -662,13 +662,13 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "Reviews",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ReviewerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Stage = table.Column<int>(type: "int", nullable: false),
-                    Decision = table.Column<int>(type: "int", nullable: false),
-                    Comments = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubmissionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ReviewerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Stage = table.Column<int>(type: "integer", nullable: false),
+                    Decision = table.Column<int>(type: "integer", nullable: false),
+                    Comments = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -691,11 +691,11 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 name: "SubmissionVersions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VersionNumber = table.Column<int>(type: "int", nullable: false),
-                    ChangesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubmissionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    VersionNumber = table.Column<int>(type: "integer", nullable: false),
+                    ChangesJson = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
