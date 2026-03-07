@@ -190,12 +190,12 @@ var app = builder.Build();
 app.UseExceptionHandler("/error");
 app.MapGet("/error", () => Results.Problem("An error occurred", statusCode: StatusCodes.Status500InternalServerError));
 
-if (app.Environment.IsDevelopment())  // ✅ Fix: Chỉ Development
+app.UseSwagger();
+app.UseSwaggerUI();
+
+if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    
-    // ✅ Auto-open browser to Swagger UI
+    // ✅ Auto-open browser to Swagger UI (Only in Development)
     var task = Task.Run(async () =>
     {
         await Task.Delay(1000); // Wait for server to start
