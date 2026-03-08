@@ -22,6 +22,7 @@ namespace VietTuneArchive.Application.Services
             : base(repository, mapper)
         {
             _recordingRepository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _communeRepository = communeRepository;
             _ethnicGroupRepository = ethnicGroupRepository;
             _ceremonyRepository = ceremonyRepository;
@@ -29,11 +30,17 @@ namespace VietTuneArchive.Application.Services
             _instrumentRepository = instrumentRepository;
             _vocalStyleRepository = vocalStyleRepository;
         }
-        public async Task<Result<RecordingDto>> UploadRecordInfo(RecordingDto recordingDto) { 
+        public async Task<Result<RecordingDto>> UploadRecordInfo(RecordingDto recordingDto, Guid recordingId) { 
             try
             {
                 if (recordingDto == null)
                     throw new ArgumentNullException(nameof(recordingDto), "Recording data cannot be null");
+
+                // Check if recording exists
+                var existingRecording = await _recordingRepository.GetByIdAsync(recordingId);
+                if (existingRecording == null)
+                    throw new ArgumentException("Recording not found", nameof(recordingId));
+
                 var communeExists = recordingDto.CommuneId.HasValue && await _communeRepository.GetByIdAsync(recordingDto.CommuneId.Value) != null;
                 if (recordingDto.CommuneId.HasValue && !communeExists)
                     throw new ArgumentException("Invalid commune ID", nameof(recordingDto.CommuneId));
@@ -61,24 +68,54 @@ namespace VietTuneArchive.Application.Services
                     }
                 }
 
-                var recording = _mapper.Map<Recording>(recordingDto);
-                var addedRecording = await _recordingRepository.UpdateAsync(recording);
-                
-                // Update recording instruments if InstrumentIds provided
+                // Update only the properties from DTO, preserving critical fields
+                existingRecording.Title = recordingDto.Title;
+                existingRecording.Description = recordingDto.Description;
+                existingRecording.VideoFileUrl = recordingDto.VideoFileUrl;
+                existingRecording.AudioFormat = recordingDto.AudioFormat;
+                existingRecording.DurationSeconds = recordingDto.DurationSeconds;
+                existingRecording.FileSizeBytes = recordingDto.FileSizeBytes;
+                existingRecording.CommuneId = recordingDto.CommuneId;
+                existingRecording.EthnicGroupId = recordingDto.EthnicGroupId;
+                existingRecording.CeremonyId = recordingDto.CeremonyId;
+                existingRecording.VocalStyleId = recordingDto.VocalStyleId;
+                existingRecording.MusicalScaleId = recordingDto.MusicalScaleId;
+                existingRecording.PerformanceContext = recordingDto.PerformanceContext;
+                existingRecording.LyricsOriginal = recordingDto.LyricsOriginal;
+                existingRecording.LyricsVietnamese = recordingDto.LyricsVietnamese;
+                existingRecording.PerformerName = recordingDto.PerformerName;
+                existingRecording.PerformerAge = recordingDto.PerformerAge;
+                existingRecording.RecordingDate = recordingDto.RecordingDate;
+                existingRecording.GpsLatitude = recordingDto.GpsLatitude;
+                existingRecording.GpsLongitude = recordingDto.GpsLongitude;
+                existingRecording.Tempo = recordingDto.Tempo;
+                existingRecording.KeySignature = recordingDto.KeySignature;
+                existingRecording.UpdatedAt = DateTime.UtcNow;
+
+                // Update instruments
                 if (recordingDto.InstrumentIds != null && recordingDto.InstrumentIds.Any())
                 {
-                    // Create new recording instruments list
+                    // Clear old instruments
+                    existingRecording.RecordingInstruments?.Clear();
+
+                    // Add new instruments
                     var newInstruments = recordingDto.InstrumentIds.Select(instrumentId => new RecordingInstrument
                     {
-                        RecordingId = addedRecording.Id,
+                        RecordingId = recordingId,
                         InstrumentId = instrumentId
                     }).ToList();
 
-                    addedRecording.RecordingInstruments = newInstruments;
-                    await _recordingRepository.UpdateAsync(addedRecording);
+                    existingRecording.RecordingInstruments = newInstruments;
+                }
+                else
+                {
+                    // If no instruments provided, clear them
+                    existingRecording.RecordingInstruments?.Clear();
                 }
 
-                var addedDto = _mapper.Map<RecordingDto>(addedRecording);
+                var updatedRecording = await _recordingRepository.UpdateAsync(existingRecording);
+
+                var addedDto = _mapper.Map<RecordingDto>(updatedRecording);
                 return Result<RecordingDto>.Success(addedDto, "Recording information uploaded successfully");
             }
             catch (Exception ex)

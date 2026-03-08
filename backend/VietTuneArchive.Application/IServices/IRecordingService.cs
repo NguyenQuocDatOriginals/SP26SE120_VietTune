@@ -5,6 +5,6 @@ namespace VietTuneArchive.Application.IServices
 {
     public interface IRecordingService : IGenericService<RecordingDto> 
     {
-        Task<Result<RecordingDto>> UploadRecordInfo (RecordingDto recordingDto);
+        Task<Result<RecordingDto>> UploadRecordInfo (RecordingDto recordingDto, Guid recordingId);
     }
 }

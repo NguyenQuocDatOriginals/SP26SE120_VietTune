@@ -60,7 +60,7 @@ namespace VietTuneArchive.API.Controllers
         [Authorize(Roles = "Admin,Contributor,Expert")]
         public async Task<ActionResult<ServiceResponse<RecordingDto>>> UploadRecordInfo(Guid id, [FromBody] RecordingDto dto)
         {
-            var result = await _service.UploadRecordInfo(dto);
+            var result = await _service.UploadRecordInfo(dto, id);
             if (result.IsSuccess)
             {
                 return Ok(result);
