@@ -13,6 +13,7 @@ namespace VietTuneArchive.Domain.Context
     {
         public DBContext CreateDbContext(string[] args)
         {
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             var path = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, "VietTuneArchive");
             var config = new ConfigurationBuilder()

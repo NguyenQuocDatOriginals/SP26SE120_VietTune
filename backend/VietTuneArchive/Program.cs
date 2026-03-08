@@ -13,6 +13,9 @@ using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Repositories;
 
+// Enable legacy timestamp behavior for Npgsql to avoid UTC exceptions with existing DateTime.Now usages
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 
