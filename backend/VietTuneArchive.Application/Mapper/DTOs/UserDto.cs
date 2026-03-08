@@ -6,38 +6,48 @@ using System.Threading.Tasks;
 
 namespace VietTuneArchive.Application.Mapper.DTOs
 {
-    public class UserDto
+    public class UserDTO
     {
-        public class UserProfileDto
-        {
-            public string Id { get; set; } = default!;
-            public string Email { get; set; } = default!;
-            public string FullName { get; set; } = default!;
-            public string AvatarUrl { get; set; } = default!;
-            public string? Bio { get; set; }
-            public string Role { get; set; } = default!;
-        }
-        public class UserStatsDto
-        {
-            public int TotalPosts { get; set; }
-            public int TotalLikes { get; set; }
-            public int TotalContributions { get; set; }
-            public string Rank { get; set; } = default!;
-        }
+        public Guid UserId { get; set; }
+        public string Email { get; set; }
+        public string FullName { get; set; }
+        public string PhoneNumber { get; set; }
+        public int? RentalLocationId { get; set; }
+        public string Role { get; set; } // 1. Customer, 2. Staff, 3. Admin
+        public bool IsActive { get; set; }
+        public int? Point { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdateAt { get; set; }
+    }
 
-        public class UserContributionsDto
-        {
-            public string UserId { get; set; } = default!;
-            public int TotalContributions { get; set; }
-            public List<ContributionItemDto> Contributions { get; set; } = default!;
-        }
+    public class CreateExpertUserDTO
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string FullName { get; set; }
+    }
 
-        public class ContributionItemDto
-        {
-            public string Id { get; set; } = default!;
-            public string Title { get; set; } = default!;
-            public int Points { get; set; }
-            public string Date { get; set; } = default!;
-        }
+    public class UpdateUserDTO
+    {
+        public Guid UserId { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public string FullName { get; set; }
+    }
+    public class UpdateNameDTO
+    {
+        public Guid UserId { get; set; }
+        public string FullName { get; set; }
+    }
+    public class UpdatePasswordDTO
+    {
+        public Guid UserId { get; set; }
+        public string oldPassword { get; set; }
+        public string newPassword { get; set; }
+    }
+    public class UpdateUserActiveStatusDTO
+    {
+        public Guid UserId { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using VietTuneArchive.Domain.Entities.Enum;
 
 namespace VietTuneArchive.Domain.Entities
 {
@@ -10,22 +11,18 @@ namespace VietTuneArchive.Domain.Entities
         [Key]
         public Guid Id { get; set; }
 
-        [Required]
         [MaxLength(500)]
-        public string Title { get; set; }
-
+        public string? Title { get; set; }
         public string? Description { get; set; }
 
-        [Required]
         [MaxLength(500)]
         public string AudioFileUrl { get; set; }
 
         [MaxLength(500)]
         public string? VideoFileUrl { get; set; }
 
-        [Required]
         [MaxLength(10)]
-        public string AudioFormat { get; set; } // FLAC-WAV-MP3
+        public string? AudioFormat { get; set; } // FLAC-WAV-MP3
 
         public int? DurationSeconds { get; set; }
 
@@ -42,8 +39,7 @@ namespace VietTuneArchive.Domain.Entities
         [ForeignKey("CommuneId")]
         public Commune? Commune { get; set; }
 
-        [Required]
-        public Guid EthnicGroupId { get; set; }
+        public Guid? EthnicGroupId { get; set; }
 
         [ForeignKey("EthnicGroupId")]
         public EthnicGroup? EthnicGroup { get; set; }
@@ -87,9 +83,8 @@ namespace VietTuneArchive.Domain.Entities
         public string? KeySignature { get; set; }
 
         [Required]
-        public int Status { get; set; } // 0-Draft 1-Submitted 2-InReview 3-Approved 4-Rejected
+        public SubmissionStatus Status { get; set; }
 
-        [Required]
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }

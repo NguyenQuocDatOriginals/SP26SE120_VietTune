@@ -92,9 +92,14 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     FullName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ConfirmEmailToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    ResetPasswordToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResetPasswordTokenExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     AvatarUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Role = table.Column<int>(type: "int", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AcademicCredentials = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     ContributionScore = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
@@ -413,16 +418,16 @@ namespace VietTuneArchive.Domain.Context.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AudioFileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     VideoFileUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    AudioFormat = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    AudioFormat = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     DurationSeconds = table.Column<int>(type: "int", nullable: true),
                     FileSizeBytes = table.Column<long>(type: "bigint", nullable: true),
                     UploadedById = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CommuneId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EthnicGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CeremonyId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     VocalStyleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     MusicalScaleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -823,6 +828,21 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     { new Guid("00000000-0000-0000-0006-000000000013"), "Region", "Nhạc Bắc Bộ" },
                     { new Guid("00000000-0000-0000-0006-000000000014"), "Genre", "Hát ru con ngủ" },
                     { new Guid("00000000-0000-0000-0006-000000000015"), "Rarity", "Nhạc nguyên thủy" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "AcademicCredentials", "AvatarUrl", "ConfirmEmailToken", "ContributionScore", "CreatedAt", "Email", "FullName", "IsActive", "IsEmailConfirmed", "Password", "PasswordHash", "Phone", "ResetPasswordToken", "ResetPasswordTokenExpiry", "Role", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { new Guid("00000000-0000-0000-0007-000000000001"), "IT Manager, VietTuneArchive Project Lead", null, null, 1000m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "admin@gmail.com", "System Administrator", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84901234567", null, null, "Admin", null },
+                    { new Guid("00000000-0000-0000-0007-000000000002"), "Music Enthusiast, Traditional Music Collector", null, null, 250m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "contributor1@gmail.com", "Nguyễn Thị Thu Hương", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84912345678", null, null, "Contributor", null },
+                    { new Guid("00000000-0000-0000-0007-000000000003"), "Audio Engineer, Recording Specialist", null, null, 180m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "contributor2@gmail.com", "Trần Văn Tùng", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84923456789", null, null, "Contributor", null },
+                    { new Guid("00000000-0000-0000-0007-000000000004"), "PhD Ethnomusicology, Senior Researcher at Vietnam Institute of Music", null, null, 450m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "researcher1@gmail.com", "Dr. Phạm Quốc Bảo", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84934567890", null, null, "Researcher", null },
+                    { new Guid("00000000-0000-0000-0007-000000000005"), "Assoc. Prof. Ethnology, Hanoi National University of Education", null, null, 380m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "researcher2@gmail.com", "Assoc. Prof. Vũ Thị Hương Ly", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84945678901", null, null, "Researcher", null },
+                    { new Guid("00000000-0000-0000-0007-000000000006"), "Master Traditional Musician, National Treasure of Vietnam, 40+ years experience", null, null, 850m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "expert1@gmail.com", "Maestro Nguyễn Tuấn Hùng", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84956789012", null, null, "Expert", null },
+                    { new Guid("00000000-0000-0000-0007-000000000007"), "PhD Traditional Arts, Director of Vietnam Heritage Music Center", null, null, 720m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "expert2@gmail.com", "Dr. Đặng Thái Sơn", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84967890123", null, null, "Expert", null },
+                    { new Guid("00000000-0000-0000-0007-000000000008"), "Prof. Musicology, Dean of Traditional Music Faculty - Hanoi Academy of Music", null, null, 950m, new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "expert3@gmail.com", "Prof. Lê Văn Hoàng", true, true, "1", "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu", "+84978901234", null, null, "Expert", null }
                 });
 
             migrationBuilder.InsertData(

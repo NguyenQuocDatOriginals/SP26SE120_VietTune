@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using VietTuneArchive.Domain.Entities.Enum;
 
 namespace VietTuneArchive.Domain.Entities
 {
@@ -26,7 +27,7 @@ namespace VietTuneArchive.Domain.Entities
         public int CurrentStage { get; set; } // 0-Screening 1-Verification 2-Approval
 
         [Required]
-        public int Status { get; set; } // 0-Pending 1-InReview 2-Approved 3-Rejected 4-NeedsRevision
+        public SubmissionStatus Status { get; set; }
 
         public string? Notes { get; set; }
 

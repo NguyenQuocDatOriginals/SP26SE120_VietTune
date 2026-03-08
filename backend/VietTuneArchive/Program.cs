@@ -129,6 +129,12 @@ builder.Services.AddScoped<IKBCitationRepository, KBCitationRepository>();
 builder.Services.AddScoped<IQAConversationRepository, QAConversationRepository>();
 builder.Services.AddScoped<IQAMessageRepository, QAMessageRepository>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 // ✅ SERVICES - Geographic
 builder.Services.AddScoped<IProvinceService, ProvinceService>();
 builder.Services.AddScoped<IDistrictService, DistrictService>();

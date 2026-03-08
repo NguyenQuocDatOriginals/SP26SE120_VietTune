@@ -10,6 +10,7 @@ namespace VietTuneArchive.Domain.Entities.Enum
     {
         Pending,
         Approved,
-        Rejected
+        Rejected,
+        UpdateRequested
     }
 }

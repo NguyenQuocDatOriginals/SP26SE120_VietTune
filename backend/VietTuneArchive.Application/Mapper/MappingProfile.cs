@@ -22,7 +22,7 @@ namespace VietTuneArchive.Application.Mapper
             CreateMap<Tag, TagDto>().ReverseMap();
 
             // ============= USER & AUTH =============
-            CreateMap<User, UserDto>().ReverseMap();
+            CreateMap<User, UserDTO>().ReverseMap();
             CreateMap<RefreshToken, RefreshTokenDto>().ReverseMap();
             CreateMap<AuditLog, AuditLogDto>().ReverseMap();
 

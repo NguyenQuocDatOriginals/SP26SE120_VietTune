@@ -303,15 +303,15 @@ namespace VietTuneArchive.Domain.Context
             modelBuilder.Entity<Recording>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Title).IsRequired().HasMaxLength(500);
-                entity.Property(e => e.AudioFileUrl).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.Title).HasMaxLength(500);
+                entity.Property(e => e.AudioFileUrl).HasMaxLength(500);
                 entity.Property(e => e.VideoFileUrl).HasMaxLength(500);
-                entity.Property(e => e.AudioFormat).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.AudioFormat).HasMaxLength(10);
                 entity.Property(e => e.DurationSeconds);
                 entity.Property(e => e.FileSizeBytes);
                 entity.Property(e => e.UploadedById).IsRequired();
                 entity.Property(e => e.CommuneId);
-                entity.Property(e => e.EthnicGroupId).IsRequired();
+                entity.Property(e => e.EthnicGroupId);
                 entity.Property(e => e.CeremonyId);
                 entity.Property(e => e.VocalStyleId);
                 entity.Property(e => e.MusicalScaleId);
@@ -321,7 +321,7 @@ namespace VietTuneArchive.Domain.Context
                 entity.Property(e => e.Tempo);
                 entity.Property(e => e.KeySignature).HasMaxLength(20);
                 entity.Property(e => e.Status).IsRequired();
-                entity.Property(e => e.CreatedAt).IsRequired();
+                entity.Property(e => e.CreatedAt);
                 entity.Property(e => e.UpdatedAt);
 
                 entity.HasMany(e => e.RecordingImages)

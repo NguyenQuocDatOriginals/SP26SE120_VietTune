@@ -169,6 +169,20 @@ namespace VietTuneArchive.Domain.Context
             SeedTags(modelBuilder);
             SeedEthnicGroupCeremonies(modelBuilder);
             SeedInstrumentEthnicGroups(modelBuilder);
+            SeedUsers(modelBuilder);
+        }
+
+        // ====== Pre-defined Guids for Users ======
+        public static class UserIds
+        {
+            public static readonly Guid AdminUser = new("00000000-0000-0000-0007-000000000001");
+            public static readonly Guid Contributor1 = new("00000000-0000-0000-0007-000000000002");
+            public static readonly Guid Contributor2 = new("00000000-0000-0000-0007-000000000003");
+            public static readonly Guid Researcher1 = new("00000000-0000-0000-0007-000000000004");
+            public static readonly Guid Researcher2 = new("00000000-0000-0000-0007-000000000005");
+            public static readonly Guid Expert1 = new("00000000-0000-0000-0007-000000000006");
+            public static readonly Guid Expert2 = new("00000000-0000-0000-0007-000000000007");
+            public static readonly Guid Expert3 = new("00000000-0000-0000-0007-000000000008");
         }
 
         // ============================================================
@@ -454,6 +468,154 @@ namespace VietTuneArchive.Domain.Context
                 // Đàn K'ní - Gia Rai, Ba Na
                 new InstrumentEthnicGroup { InstrumentId = InstrumentIds.DanKni, EthnicGroupId = EthnicGroupIds.GiaRai },
                 new InstrumentEthnicGroup { InstrumentId = InstrumentIds.DanKni, EthnicGroupId = EthnicGroupIds.BaNa }
+            );
+        }
+
+        // ============================================================
+        // USERS - 1 Admin, 2 Contributors, 2 Researchers, 3 Experts
+        // ============================================================
+        private static void SeedUsers(ModelBuilder modelBuilder)
+        {
+            // Hashed password cho "password123" (dùng BCrypt hoặc tương tự)
+            // Trong thực tế, password phải được hash bằng BCrypt trước
+            var hashedPassword = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu"; // password123 hashed
+
+            modelBuilder.Entity<User>().HasData(
+                // Admin
+                new User
+                {
+                    Id = UserIds.AdminUser,
+                    FullName = "System Administrator",
+                    Email = "admin@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84901234567",
+                    Role = "Admin", // Admin
+                    AcademicCredentials = "IT Manager, VietTuneArchive Project Lead",
+                    ContributionScore = 1000,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Contributor 1
+                new User
+                {
+                    Id = UserIds.Contributor1,
+                    FullName = "Nguyễn Thị Thu Hương",
+                    Email = "contributor1@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84912345678",
+                    Role = "Contributor", // Contributor
+                    AcademicCredentials = "Music Enthusiast, Traditional Music Collector",
+                    ContributionScore = 250,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Contributor 2
+                new User
+                {
+                    Id = UserIds.Contributor2,
+                    FullName = "Trần Văn Tùng",
+                    Email = "contributor2@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84923456789",
+                    Role = "Contributor", // Contributor
+                    AcademicCredentials = "Audio Engineer, Recording Specialist",
+                    ContributionScore = 180,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Researcher 1
+                new User
+                {
+                    Id = UserIds.Researcher1,
+                    FullName = "Dr. Phạm Quốc Bảo",
+                    Email = "researcher1@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84934567890",
+                    Role = "Researcher", // Researcher
+                    AcademicCredentials = "PhD Ethnomusicology, Senior Researcher at Vietnam Institute of Music",
+                    ContributionScore = 450,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Researcher 2
+                new User
+                {
+                    Id = UserIds.Researcher2,
+                    FullName = "Assoc. Prof. Vũ Thị Hương Ly",
+                    Email = "researcher2@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84945678901",
+                    Role = "Researcher", // Researcher
+                    AcademicCredentials = "Assoc. Prof. Ethnology, Hanoi National University of Education",
+                    ContributionScore = 380,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Expert 1
+                new User
+                {
+                    Id = UserIds.Expert1,
+                    FullName = "Maestro Nguyễn Tuấn Hùng",
+                    Email = "expert1@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84956789012",
+                    Role = "Expert", // Expert
+                    AcademicCredentials = "Master Traditional Musician, National Treasure of Vietnam, 40+ years experience",
+                    ContributionScore = 850,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Expert 2
+                new User
+                {
+                    Id = UserIds.Expert2,
+                    FullName = "Dr. Đặng Thái Sơn",
+                    Email = "expert2@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84967890123",
+                    Role = "Expert", // Expert
+                    AcademicCredentials = "PhD Traditional Arts, Director of Vietnam Heritage Music Center",
+                    ContributionScore = 720,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                },
+
+                // Expert 3
+                new User
+                {
+                    Id = UserIds.Expert3,
+                    FullName = "Prof. Lê Văn Hoàng",
+                    Email = "expert3@gmail.com",
+                    PasswordHash = hashedPassword,
+                    Password = "1",
+                    Phone = "+84978901234",
+                    Role = "Expert", // Expert
+                    AcademicCredentials = "Prof. Musicology, Dean of Traditional Music Faculty - Hanoi Academy of Music",
+                    ContributionScore = 950,
+                    IsActive = true,
+                    IsEmailConfirmed = true,
+                    CreatedAt = new DateTime(2026, 1, 1)
+                }
             );
         }
     }

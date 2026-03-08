@@ -1518,7 +1518,6 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("AudioFormat")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
@@ -1537,7 +1536,7 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     b.Property<int?>("DurationSeconds")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("EthnicGroupId")
+                    b.Property<Guid?>("EthnicGroupId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<long?>("FileSizeBytes")
@@ -1583,7 +1582,6 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -1926,6 +1924,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("ConfirmEmailToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("ContributionScore")
                         .HasColumnType("decimal(18,2)");
 
@@ -1945,6 +1946,14 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1954,8 +1963,15 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
+                    b.Property<string>("ResetPasswordToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordTokenExpiry")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1966,6 +1982,128 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000001"),
+                            AcademicCredentials = "IT Manager, VietTuneArchive Project Lead",
+                            ContributionScore = 1000m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@gmail.com",
+                            FullName = "System Administrator",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84901234567",
+                            Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000002"),
+                            AcademicCredentials = "Music Enthusiast, Traditional Music Collector",
+                            ContributionScore = 250m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "contributor1@gmail.com",
+                            FullName = "Nguyễn Thị Thu Hương",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84912345678",
+                            Role = "Contributor"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000003"),
+                            AcademicCredentials = "Audio Engineer, Recording Specialist",
+                            ContributionScore = 180m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "contributor2@gmail.com",
+                            FullName = "Trần Văn Tùng",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84923456789",
+                            Role = "Contributor"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000004"),
+                            AcademicCredentials = "PhD Ethnomusicology, Senior Researcher at Vietnam Institute of Music",
+                            ContributionScore = 450m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "researcher1@gmail.com",
+                            FullName = "Dr. Phạm Quốc Bảo",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84934567890",
+                            Role = "Researcher"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000005"),
+                            AcademicCredentials = "Assoc. Prof. Ethnology, Hanoi National University of Education",
+                            ContributionScore = 380m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "researcher2@gmail.com",
+                            FullName = "Assoc. Prof. Vũ Thị Hương Ly",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84945678901",
+                            Role = "Researcher"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000006"),
+                            AcademicCredentials = "Master Traditional Musician, National Treasure of Vietnam, 40+ years experience",
+                            ContributionScore = 850m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "expert1@gmail.com",
+                            FullName = "Maestro Nguyễn Tuấn Hùng",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84956789012",
+                            Role = "Expert"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000007"),
+                            AcademicCredentials = "PhD Traditional Arts, Director of Vietnam Heritage Music Center",
+                            ContributionScore = 720m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "expert2@gmail.com",
+                            FullName = "Dr. Đặng Thái Sơn",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84967890123",
+                            Role = "Expert"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0007-000000000008"),
+                            AcademicCredentials = "Prof. Musicology, Dean of Traditional Music Faculty - Hanoi Academy of Music",
+                            ContributionScore = 950m,
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "expert3@gmail.com",
+                            FullName = "Prof. Lê Văn Hoàng",
+                            IsActive = true,
+                            IsEmailConfirmed = true,
+                            Password = "1",
+                            PasswordHash = "$2a$12$ESO37RsCeR9TfAF3ct4R2.oN1s3QuRqVvdVPkhT60VoIa3LVJAbiu",
+                            Phone = "+84978901234",
+                            Role = "Expert"
+                        });
                 });
 
             modelBuilder.Entity("VietTuneArchive.Domain.Entities.VectorEmbedding", b =>
@@ -2301,8 +2439,7 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     b.HasOne("VietTuneArchive.Domain.Entities.EthnicGroup", "EthnicGroup")
                         .WithMany("Recordings")
                         .HasForeignKey("EthnicGroupId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("VietTuneArchive.Domain.Entities.MusicalScale", "MusicalScale")
                         .WithMany("Recordings")

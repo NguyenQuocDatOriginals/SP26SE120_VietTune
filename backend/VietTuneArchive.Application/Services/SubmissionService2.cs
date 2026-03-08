@@ -1,8 +1,10 @@
 using AutoMapper;
+using VietTuneArchive.Application.Common;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
 using VietTuneArchive.Domain.Entities;
+using VietTuneArchive.Domain.Entities.Enum;
 using VietTuneArchive.Domain.IRepositories;
 
 namespace VietTuneArchive.Application.Services
@@ -10,13 +12,55 @@ namespace VietTuneArchive.Application.Services
     public class SubmissionService2 : GenericService<Submission, SubmissionDto>, ISubmissionService2
     {
         private readonly IGenericRepository<Submission> _submissionRepository;
-
-        public SubmissionService2(IGenericRepository<Submission> repository, IMapper mapper)
+        private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
+        private readonly IRecordingRepository _recordingRepository;
+        public SubmissionService2(IGenericRepository<Submission> repository, IMapper mapper, IUserRepository userRepository, IRecordingRepository recordingRepository)
             : base(repository, mapper)
         {
             _submissionRepository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+            _recordingRepository = recordingRepository ?? throw new ArgumentNullException(nameof(recordingRepository));
         }
+        public async Task<Result<SubmissionDto>> CreateAsync(SubmissionDto dto)
+        {
+            try
+            {
+                if (dto == null)
+                    throw new ArgumentNullException(nameof(dto), "Submission data cannot be null");
+                var user = await _userRepository.GetByIdAsync(dto.UploadedById);
+                if (user == null)
+                    throw new ArgumentException("Invalid user ID", nameof(dto.UploadedById));
+                var recording = new Recording
+                {
+                    Id = Guid.NewGuid(),
+                    AudioFileUrl = dto.AudioFileUrl,
+                    UploadedById = dto.UploadedById,
+                    Status = SubmissionStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _recordingRepository.AddAsync(recording);
 
+                var submission = new Submission
+                {
+                    Id = Guid.NewGuid(),
+                    RecordingId = recording.Id,
+                    Recording = recording,
+                    CurrentStage = 0,
+                    Status = SubmissionStatus.Pending,
+                    SubmittedAt = DateTime.UtcNow,
+                    ContributorId = dto.UploadedById
+                };
+                await _submissionRepository.AddAsync(submission);
+                var createdDto = _mapper.Map<SubmissionDto>(submission);
+                return Result<SubmissionDto>.Success(createdDto, "Submission created successfully");
+            }
+            catch (Exception ex)
+            {
+                return Result<SubmissionDto>.Failure($"Failed to create submission: {ex.Message}");
+            }
+        }
         /// <summary>
         /// Get submissions by contributor
         /// </summary>
@@ -77,32 +121,6 @@ namespace VietTuneArchive.Application.Services
             }
         }
 
-        /// <summary>
-        /// Get submissions by status
-        /// </summary>
-        public async Task<ServiceResponse<List<SubmissionDto>>> GetByStatusAsync(int status)
-        {
-            try
-            {
-                var submissions = await _submissionRepository.GetAsync(s => s.Status == status);
-                var dtos = _mapper.Map<List<SubmissionDto>>(submissions);
-                return new ServiceResponse<List<SubmissionDto>>
-                {
-                    Success = true,
-                    Data = dtos,
-                    Message = $"Found {dtos.Count} submissions"
-                };
-            }
-            catch (Exception ex)
-            {
-                return new ServiceResponse<List<SubmissionDto>>
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Errors = new List<string> { ex.Message }
-                };
-            }
-        }
 
         /// <summary>
         /// Get submissions by stage

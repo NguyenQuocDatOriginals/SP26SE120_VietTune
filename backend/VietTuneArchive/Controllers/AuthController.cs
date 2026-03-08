@@ -1,7 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.Response;
+using VietTuneArchive.Domain.Entities;
+using VietTuneArchive.Domain.Entities.Model;
+using VietTuneArchive.Domain.IRepositories;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest;
 using ForgotPasswordRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.ForgotPasswordRequest;
 using LoginRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.LoginRequest;
@@ -14,98 +22,139 @@ namespace VietTuneArchive.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        // POST: /api/v1/auth/register
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public ActionResult<AuthResponse> Register([FromBody] RegisterRequest request)
+        private readonly IConfiguration _config;
+        private readonly IAuthService _authService;
+        private readonly IUserRepository _userRepository;
+        public AuthController(IConfiguration config, IAuthService authService, IUserRepository userRepository)
         {
-            // TODO: Thực hiện tạo tài khoản, lưu DB, sinh token...
-            var response = new AuthResponse
-            {
-                Success = true,
-                Message = "Register success",
-                AccessToken = "fake-access-token",
-                RefreshToken = "fake-refresh-token"
-            };
-
-            return Ok(response);
+            _config = config;
+            _authService = authService;
+            _userRepository = userRepository;
         }
-
-        // POST: /api/v1/auth/login
         [HttpPost("login")]
-        [AllowAnonymous]
-        public ActionResult<AuthResponse> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            // TODO: Validate user + password, sinh token
-            var response = new AuthResponse
+            try
             {
-                Success = true,
-                Message = "Login success",
-                AccessToken = "fake-access-token",
-                RefreshToken = "fake-refresh-token"
+                var user = await _authService.Authenticate(model.Email, model.Password);
+
+                if (user == null)
+                    return Unauthorized(new { message = "Email hoặc mật khẩu không chính xác." });
+
+                var token = GenerateJSONWebToken(user);
+                return Ok(new
+                {
+                    Token = token,
+                    UserId = user.Id,
+                    Role = user.Role,
+                    FullName = user.FullName,
+                    PhoneNumber = user.Phone,
+                    isActive = user.IsActive
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        {
+            var user = new User
+            {
+                Email = model.Email,
+                Password = model.Password,
+                FullName = model.FullName,
+                Phone = model.PhoneNumber,
+            };
+            await _authService.Register(user, model.Password);
+
+            var response = new
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                PhoneNumber = user.Phone,
+                CreatedAt = user.CreatedAt,
+                Message = "Đăng ký thành công!"
             };
 
             return Ok(response);
         }
 
-        // POST: /api/v1/auth/refresh-token
-        [HttpPost("refresh-token")]
-        [AllowAnonymous]
-        public ActionResult<TokenResponse> RefreshToken([FromBody] RefreshTokenRequest request)
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(string token)
         {
-            // TODO: Validate refresh token, cấp access token mới
-            var response = new TokenResponse
-            {
-                AccessToken = "new-fake-access-token",
-                RefreshToken = "new-fake-refresh-token"
-            };
+            var user = await _userRepository.GetByConfirmationTokenAsync(token);
 
-            return Ok(response);
+            if (user == null)
+            {
+                return BadRequest("Token không hợp lệ.");
+            }
+
+            user.IsEmailConfirmed = true;
+            user.ConfirmEmailToken = null;
+            user.IsActive = true;
+
+            await _userRepository.UpdateAsync(user);
+
+            return Ok("Email đã được xác nhận thành công.");
         }
 
-        // POST: /api/v1/auth/logout
-        [HttpPost("logout")]
-        //[Authorize]
-        public ActionResult<BaseResponse> Logout()
-        {
-            // TODO: Revoke token hiện tại (ghi vào blacklist, v.v.)
-            var response = new BaseResponse
-            {
-                Success = true,
-                Message = "Logout success"
-            };
-
-            return Ok(response);
-        }
-
-        // POST: /api/v1/auth/forgot-password
         [HttpPost("forgot-password")]
-        [AllowAnonymous]
-        public ActionResult<BaseResponse> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordModel model)
         {
-            // TODO: Gửi email chứa link reset password
-            var response = new BaseResponse
-            {
-                Success = true,
-                Message = "Reset password email sent"
-            };
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return BadRequest("Email không được để trống.");
 
-            return Ok(response);
+            await _authService.ForgotPasswordAsync(model.Email);
+
+            return Ok("Mã reset đã được gửi. Kiểm tra hộp thư của bạn.");
         }
 
-        // POST: /api/v1/auth/reset-password
         [HttpPost("reset-password")]
-        [AllowAnonymous]
-        public ActionResult<BaseResponse> ResetPassword([FromBody] ResetPasswordRequest request)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
-            // TODO: Xác thực token reset, đặt lại mật khẩu
-            var response = new BaseResponse
-            {
-                Success = true,
-                Message = "Password reset success"
-            };
+            var success = await _authService.ResetPasswordAsync(model.Email, model.OTP, model.NewPassword);
 
-            return Ok(response);
+            if (!success)
+                return BadRequest("Mã OTP không hợp lệ hoặc đã hết hạn.");
+
+            return Ok("Mật khẩu đã được reset thành công. Bạn có thể đăng nhập ngay.");
+        }
+
+        private string GenerateJSONWebToken(User userInfo)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(_config["Jwt:Issuer"]
+                    , _config["Jwt:Audience"]
+                    , new Claim[]
+                    {
+                    new(ClaimTypes.Name, userInfo.FullName),
+                    //new(ClaimTypes.Email, userInfo.Email),
+                    new(ClaimTypes.Role, userInfo.Role.ToString()),
+                    },
+                    expires: DateTime.Now.AddMinutes(1200),
+                    signingCredentials: credentials
+                );
+
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return tokenString;
+        }
+        public class ForgotPasswordModel
+        {
+            public string Email { get; set; } = string.Empty;
+        }
+
+        public class ResetPasswordModel
+        {
+            public string Email { get; set; } = string.Empty;
+            public string OTP { get; set; } = string.Empty;
+            public string NewPassword { get; set; } = string.Empty;
         }
     }
 }

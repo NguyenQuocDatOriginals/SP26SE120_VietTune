@@ -20,6 +20,13 @@ namespace VietTuneArchive.Domain.Entities
         [Required]
         [MaxLength(500)]
         public string PasswordHash { get; set; }
+        [Required]
+        [MaxLength(500)]
+        public string Password { get; set; }
+        public string? ConfirmEmailToken { get; set; }
+        public bool IsEmailConfirmed { get; set; } = false;
+        public string? ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordTokenExpiry { get; set; }
 
         [MaxLength(20)]
         public string? Phone { get; set; }
@@ -28,7 +35,7 @@ namespace VietTuneArchive.Domain.Entities
         public string? AvatarUrl { get; set; }
 
         [Required]
-        public int Role { get; set; } // 0-Contributor 1-Expert 2-Admin 3-Researcher
+        public string Role { get; set; } // 1-Contributor 2-Researcher 3-Expert 4-Admin
 
         [MaxLength(1000)]
         public string? AcademicCredentials { get; set; }

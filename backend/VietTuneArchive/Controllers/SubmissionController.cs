@@ -9,6 +9,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class SubmissionController : ControllerBase
     {
         private readonly ISubmissionService2 _submissionService;
@@ -19,14 +20,16 @@ namespace VietTuneArchive.API.Controllers
             _submissionService = submissionService;
         }
 
-        // POST: /api/submissions
-        [HttpPost]
-        public async Task<ActionResult<ServiceResponse<SubmissionDto>>> CreateSubmission([FromBody] SubmissionDto dto)
+        [HttpPost("create-submission")]
+        [Authorize(Roles = "Admin,Contributor,Expert")]
+        public async Task<IActionResult> CreateSubmission([FromBody] SubmissionDto dto)
         {
             var result = await _submissionService.CreateAsync(dto);
-            return result.Success 
-                ? CreatedAtAction(nameof(GetById), new { id = result.Data?.Id }, result)
-                : BadRequest(result);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
 
         // GET: /api/submissions/my
@@ -75,13 +78,6 @@ namespace VietTuneArchive.API.Controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
-        // GET: /api/submissions/status/{status}
-        [HttpGet("status/{status}")]
-        public async Task<ActionResult<ServiceResponse<List<SubmissionDto>>>> GetByStatus(int status)
-        {
-            var result = await _submissionService.GetByStatusAsync(status);
-            return result.Success ? Ok(result) : NotFound(result);
-        }
 
         // GET: /api/submissions/stage/{stage}
         [HttpGet("stage/{stage}")]

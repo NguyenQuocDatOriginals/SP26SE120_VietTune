@@ -26,7 +26,7 @@ namespace VietTuneArchive.Application.Common.Email
                 throw new ArgumentException("Địa chỉ email không hợp lệ.", nameof(email));
             }
             // Tạo nội dung email với mã xác nhận (token) thay vì đường link
-            var emailSubject = "[EVRental] Mã xác nhận email của bạn";
+            var emailSubject = "[VietTuneArchive] Mã xác nhận email của bạn!";
             var emailBody = $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
     <h2 style='color: #0066cc;'>Xác minh địa chỉ email</h2>
@@ -37,7 +37,7 @@ namespace VietTuneArchive.Application.Common.Email
     </div>
     <p>Vui lòng nhập mã này vào trang xác nhận để hoàn tất quá trình.</p>
     <p>Mã có hiệu lực trong 15 phút.</p>
-    <p>Trân trọng,<br/>Đội ngũ hỗ trợ EVRental!</p>
+    <p>Trân trọng,<br/>Đội ngũ hỗ trợ VietTuneArchive!</p>
 </div>";
 
             using var smtpClient = new SmtpClient(_smtpSettings.Server)
@@ -73,7 +73,7 @@ namespace VietTuneArchive.Application.Common.Email
                 throw new ArgumentException("Địa chỉ email không hợp lệ.", nameof(email));
             }
 
-            var emailSubject = "Mã reset mật khẩu của bạn";
+            var emailSubject = "[VietTuneArchive] Mã reset mật khẩu của bạn";
             var emailBody = $@"
 <div style='font-family: Arial, sans-serif; line-height: 1.6;'>
     <h2 style='color: #0066cc;'>Reset mật khẩu</h2>
@@ -84,7 +84,7 @@ namespace VietTuneArchive.Application.Common.Email
     </div>
     <p>Vui lòng nhập mã này vào form reset để đặt mật khẩu mới. Mã hết hạn sau 15 phút.</p>
     <p>Nếu bạn không yêu cầu, hãy bỏ qua email này.</p>
-    <p>Trân trọng,<br/>Đội ngũ hỗ trợ!</p>
+    <p>Trân trọng,<br/>Đội ngũ hỗ trợ VietTuneArchive!</p>
 </div>";
 
             using var smtpClient = new SmtpClient(_smtpSettings.Server)
