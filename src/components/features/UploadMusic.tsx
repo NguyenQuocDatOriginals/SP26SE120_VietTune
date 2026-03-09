@@ -7,9 +7,8 @@ import UploadProgressDialog from "@/components/common/UploadProgressDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { LocalRecording } from "@/types";
 import { UserRole } from "@/types";
-import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
-import { getLocalRecordingFull, setLocalRecording } from "@/services/recordingStorage";
-import { recordingRequestService } from "@/services/recordingRequestService";
+import { sessionGetItem } from "@/services/storageService";
+import { getLocalRecordingFull } from "@/services/recordingStorage";
 import { suggestMetadata } from "@/services/metadataSuggestService";
 import { getAddressFromCoordinates } from "@/services/geocodeService";
 import { referenceDataService, type EthnicGroupItem, type CeremonyItem, type ProvinceItem, type DistrictItem, type CommuneItem, type VocalStyleItem, type MusicalScaleItem } from "@/services/referenceDataService";
@@ -26,9 +25,6 @@ type LocalRecordingStorage = LocalRecording & {
 };
 
 // Type for saving (storage may persist file metadata)
-type LocalRecordingForSave = LocalRecordingStorage & {
-  file?: { name?: string; size?: number; type?: string; duration?: number; bitrate?: number; sampleRate?: number };
-};
 
 // ===== CONSTANTS =====
 const SUPPORTED_AUDIO_FORMATS = [
@@ -103,43 +99,6 @@ const LANGUAGES = [
   "Tiếng Cơ Tu",
   "Tiếng Bru-Vân Kiều",
   "Khác",
-];
-
-const PROVINCES = [
-  "TP. Hà Nội",
-  "TP. Hải Phòng",
-  "TP. Huế",
-  "TP. Đà Nẵng",
-  "TP. Hồ Chí Minh",
-  "TP. Cần Thơ",
-  "An Giang",
-  "Bắc Ninh",
-  "Cà Mau",
-  "Cao Bằng",
-  "Điện Biên",
-  "Đắk Lắk",
-  "Đồng Nai",
-  "Đồng Tháp",
-  "Gia Lai",
-  "Hà Tĩnh",
-  "Hưng Yên",
-  "Khánh Hòa",
-  "Lai Châu",
-  "Lâm Đồng",
-  "Lạng Sơn",
-  "Lào Cai",
-  "Nghệ An",
-  "Ninh Bình",
-  "Phú Thọ",
-  "Quảng Ngãi",
-  "Quảng Ninh",
-  "Quảng Trị",
-  "Sơn La",
-  "Tây Ninh",
-  "Thái Nguyên",
-  "Thanh Hóa",
-  "Tuyên Quang",
-  "Vĩnh Long",
 ];
 
 const PERFORMANCE_TYPES = [
@@ -2631,7 +2590,6 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
       // Ensure duration and size are correctly processed
       const durationSeconds = audioInfo?.duration || 0;
-      const fileSizeBytes = audioInfo?.size || file?.size || 0;
       const audioFormat = audioInfo?.type || file?.type || "";
 
       // 3. Construct API Payload
