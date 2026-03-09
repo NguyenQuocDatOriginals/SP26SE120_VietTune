@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Bell, User, LogOut, Menu, X, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types";
 import { APP_NAME, INTELLIGENCE_NAME } from "@/config/constants";
 import logo from "@/components/image/VietTune logo.png";
@@ -9,7 +9,7 @@ import { sessionSetItem } from "@/services/storageService";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   // Account dropdown refs/state

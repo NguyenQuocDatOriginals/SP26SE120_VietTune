@@ -5,6 +5,7 @@ import App from './App.tsx'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { initErrorReporting } from '@/services/errorReporting'
 import { hydrate as hydrateStorage } from '@/services/storageService'
+import { AuthProvider } from '@/contexts/AuthContext'
 import './index.css'
 
 async function bootstrap() {
@@ -14,7 +15,9 @@ async function bootstrap() {
     <React.StrictMode>
       <ErrorBoundary region="root">
         <BrowserRouter>
-          <App />
+          <AuthProvider>
+            <App />
+          </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>
     </React.StrictMode>,

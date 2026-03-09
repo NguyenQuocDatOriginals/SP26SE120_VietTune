@@ -114,7 +114,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       }
     } catch (error) {
-      set({ user: null, isAuthenticated: false });
+      // Do NOT clear user state on fetch failure — the token may still be valid
+      // (e.g. backend temporarily unavailable, network issue). Keep the stored user
+      // so the user isn't surprise-logged-out on every reload when the API is down.
+      const storedUser = authService.getStoredUser();
+      if (storedUser) {
+        set({ user: storedUser, isAuthenticated: true });
+      } else {
+        set({ user: null, isAuthenticated: false });
+      }
     } finally {
       set({ isLoading: false });
     }

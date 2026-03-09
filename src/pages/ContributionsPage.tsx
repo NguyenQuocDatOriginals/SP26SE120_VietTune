@@ -1,425 +1,86 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import { ModerationStatus, Region, RecordingType, RecordingQuality, VerificationStatus, UserRole, User, RecordingMetadata, Recording } from "@/types";
-import { migrateVideoDataToVideoData, formatDateTime, getModerationStatusLabel } from "@/utils/helpers";
-import { buildTagsFromLocal } from "@/utils/recordingTags";
-import type { LocalRecording } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types";
 import BackButton from "@/components/common/BackButton";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog";
-import { Edit, LogIn, Trash2, FileEdit } from "lucide-react";
-import { recordingRequestService } from "@/services/recordingRequestService";
-import AudioPlayer from "@/components/features/AudioPlayer";
-import VideoPlayer from "@/components/features/VideoPlayer";
-import { isYouTubeUrl } from "@/utils/youtube";
-import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 import { notify } from "@/stores/notificationStore";
+import { LogIn, ChevronLeft, ChevronRight, Eye, Clock, FileAudio, AlertCircle, X, Music, User, Calendar, MapPin, Loader2, Trash2 } from "lucide-react";
+import { submissionService, type Submission } from "@/services/submissionService";
 
-// Extended type for local recording storage (supports both legacy and new formats)
-type LocalRecordingStorage = LocalRecording & {
-  uploadedAt?: string; // Legacy field
-  moderation?: LocalRecording['moderation'] & {
-    rejectionNote?: string;
-    contributorEditLocked?: boolean;
-  };
+// Status labels
+const STATUS_LABELS: Record<number, { label: string; color: string }> = {
+  0: { label: "Chờ xử lý", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  1: { label: "Đang xử lý", color: "bg-blue-100 text-blue-800 border-blue-300" },
+  2: { label: "Đã duyệt", color: "bg-green-100 text-green-800 border-green-300" },
+  3: { label: "Từ chối", color: "bg-red-100 text-red-800 border-red-300" },
 };
 
-// Extended Recording type that may include original local data
-type RecordingWithLocalData = Recording & {
-  _originalLocalData?: LocalRecording & {
-    culturalContext?: {
-      region?: string;
-    };
-  };
+const STAGE_LABELS: Record<number, string> = {
+  0: "Khởi tạo",
+  1: "Chờ kiểm duyệt sơ bộ",
+  2: "Chờ kiểm duyệt chuyên sâu",
+  3: "Hoàn thành",
 };
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return "—";
+  try {
+    return new Date(dateString).toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return dateString;
+  }
+}
 
 export default function ContributionsPage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [contributions, setContributions] = useState<LocalRecording[]>([]);
-  const [withdrawConfirmId, setWithdrawConfirmId] = useState<string | null>(null);
-  const [deleteRecordingConfirm, setDeleteRecordingConfirm] = useState<LocalRecording | null>(null);
-  const [editRequestConfirm, setEditRequestConfirm] = useState<LocalRecording | null>(null);
-  const [editApprovedIds, setEditApprovedIds] = useState<Set<string>>(new Set());
-  const [editPendingIds, setEditPendingIds] = useState<Set<string>>(new Set());
-  const [deleteApprovedIds, setDeleteApprovedIds] = useState<Set<string>>(new Set());
-  const [deletePendingIds, setDeletePendingIds] = useState<Set<string>>(new Set());
-  const [pendingEditSubmissionIds, setPendingEditSubmissionIds] = useState<Set<string>>(new Set());
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const pageSize = 10;
 
-  const load = useCallback(async () => {
+  // Detail modal
+  const [detailSubmission, setDetailSubmission] = useState<Submission | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Delete confirmation
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const loadSubmissions = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setError(null);
     try {
-      const metaList = await getLocalRecordingMetaList();
-      const migrated = migrateVideoDataToVideoData(metaList);
-      if (!user) {
-        setContributions([]);
-        return;
+      const res = await submissionService.getMySubmissions(user.id, page, pageSize);
+      if (res?.isSuccess && Array.isArray(res.data)) {
+        setSubmissions(res.data);
+        setHasMore(res.data.length === pageSize);
+      } else {
+        setSubmissions([]);
+        setHasMore(false);
       }
-      const myMeta = migrated.filter((r) => String(r.uploader?.id ?? "") === String(user.id ?? ""));
-      const fullList = await Promise.all(myMeta.map((r) => getLocalRecordingFull(r.id ?? "")));
-      setContributions(fullList.filter((r): r is LocalRecording => r != null));
-    } catch (err) {
-      console.error(err);
-      setContributions([]);
+    } catch (err: any) {
+      console.error("Failed to load submissions:", err);
+      setError("Không thể tải danh sách đóng góp. Vui lòng thử lại.");
+      setSubmissions([]);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user?.id, page]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
-  }, [load]);
-
-  useEffect(() => {
-    if (!user) return;
-    const check = async () => {
-      const approved = new Set<string>();
-      for (const c of contributions) {
-        if (c.id && c.moderation?.status === ModerationStatus.APPROVED) {
-          const ok = await recordingRequestService.isEditApprovedForRecording(c.id);
-          if (ok) approved.add(c.id);
-        }
-      }
-      setEditApprovedIds(approved);
-      const pending = await recordingRequestService.getPendingEditRecordingIdsForContributor(user.id ?? "");
-      setEditPendingIds(new Set(pending));
-      const deleteApproved = await recordingRequestService.getDeleteApprovedRecordingIdsForContributor(user.id ?? "");
-      setDeleteApprovedIds(new Set(deleteApproved));
-      const deletePending = await recordingRequestService.getPendingDeleteRecordingIdsForContributor(user.id ?? "");
-      setDeletePendingIds(new Set(deletePending));
-      const editSubmissions = await recordingRequestService.getPendingEditSubmissionRecordingIdsForContributor(user.id ?? "");
-      setPendingEditSubmissionIds(new Set(editSubmissions));
-    };
-    void check();
-  }, [user, contributions]);
-
-
-  const withdraw = async (id?: string) => {
-    if (!id) return;
-    try {
-      await removeLocalRecording(id);
-      void load();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const renderRecordingItem = (it: LocalRecording) => {
-    // VideoPlayer CHỈ nhận videoData hoặc YouTubeURL, AudioPlayer CHỈ nhận audioData
-    let mediaSrc: string | undefined;
-    let isVideo = false;
-
-    // Kiểm tra YouTube URL trước (cho VideoPlayer)
-    if (it.mediaType === "youtube" && it.youtubeUrl && it.youtubeUrl.trim()) {
-      mediaSrc = it.youtubeUrl.trim();
-      isVideo = true;
-    } else if (it.youtubeUrl && typeof it.youtubeUrl === 'string' && it.youtubeUrl.trim() && isYouTubeUrl(it.youtubeUrl)) {
-      mediaSrc = it.youtubeUrl.trim();
-      isVideo = true;
-    }
-    // Nếu là video, CHỈ dùng videoData (không fallback về audioData)
-    else if (it.mediaType === "video") {
-      if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
-        mediaSrc = it.videoData;
-        isVideo = true;
-      }
-    }
-    // Nếu là audio, CHỈ dùng audioData
-    else if (it.mediaType === "audio") {
-      if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
-        mediaSrc = it.audioData;
-        isVideo = false;
-      }
-    }
-    // Nếu mediaType chưa được set, thử phát hiện từ dữ liệu có sẵn
-    else {
-      // Ưu tiên videoData nếu có
-      if (it.videoData && typeof it.videoData === 'string' && it.videoData.trim().length > 0) {
-        mediaSrc = it.videoData;
-        isVideo = true;
-      }
-      // Sau đó thử audioData
-      else if (it.audioData && typeof it.audioData === 'string' && it.audioData.trim().length > 0) {
-        mediaSrc = it.audioData;
-        // Kiểm tra xem có phải video không bằng cách xem data URL
-        if (mediaSrc.startsWith('data:video/')) {
-          isVideo = true;
-        } else {
-          isVideo = false;
-        }
-      }
-    }
-
-    return (
-      <div key={it.id} className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex-1">
-            <div className="text-neutral-800 font-semibold text-lg mb-2">
-              {it.basicInfo?.title || it.title || 'Không có tiêu đề'}
-            </div>
-            {it.basicInfo?.artist && (
-              <div className="text-sm text-neutral-600 mb-1">
-                Nghệ sĩ: {it.basicInfo.artist}
-              </div>
-            )}
-            <div className="text-sm text-neutral-500 mb-1">
-              Thời điểm tải lên: {formatDateTime(it.uploadedDate || (it as LocalRecordingStorage).uploadedAt)}
-            </div>
-            <div className="text-sm mt-2">
-              Trạng thái: <span className="font-medium">{getModerationStatusLabel(it.moderation?.status)}</span>
-              {it.moderation?.status === ModerationStatus.IN_REVIEW && it.moderation?.claimedByName && (
-                <span className="text-neutral-500"> — Đang được kiểm duyệt bởi {it.moderation.claimedByName}</span>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="ml-4 flex items-center gap-2 flex-shrink-0">
-            {it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED && (
-              <>
-                <button
-                  onClick={() => navigate(`/recordings/${it.id}/edit`)}
-                  className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                >
-                  <Edit className="h-4 w-4" strokeWidth={2.5} />
-                  Chỉnh sửa bản thu
-                </button>
-                <button
-                  disabled
-                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                  Yêu cầu xóa bản thu
-                </button>
-              </>
-            )}
-            {it.moderation?.status === ModerationStatus.PENDING_REVIEW && it.resubmittedForModeration && (
-              <>
-                <button
-                  disabled
-                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
-                >
-                  <FileEdit className="h-4 w-4" strokeWidth={2.5} />
-                  Yêu cầu chỉnh sửa bản thu
-                </button>
-                <button
-                  disabled
-                  className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                  Yêu cầu xóa bản thu
-                </button>
-              </>
-            )}
-            {it.moderation?.status === ModerationStatus.REJECTED && (it.moderation as LocalRecordingStorage['moderation'])?.contributorEditLocked && (
-              <button
-                onClick={() => !(deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")) && setDeleteRecordingConfirm(it)}
-                disabled={deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")
-                    ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                    : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                  }`}
-              >
-                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                Yêu cầu xóa bản thu
-              </button>
-            )}
-            {((it.moderation?.status === ModerationStatus.PENDING_REVIEW && !it.resubmittedForModeration) || (it.moderation?.status === ModerationStatus.REJECTED && !(it.moderation as LocalRecordingStorage['moderation'])?.contributorEditLocked)) && (
-              <button
-                onClick={() => setWithdrawConfirmId(it.id ?? null)}
-                className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white text-sm whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                Hủy đóng góp
-              </button>
-            )}
-            {it.moderation?.status === ModerationStatus.APPROVED && (
-              <>
-                {editApprovedIds.has(it.id ?? "") ? (
-                  pendingEditSubmissionIds.has(it.id ?? "") ? (
-                    <button
-                      disabled
-                      className="px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed"
-                    >
-                      <Edit className="h-4 w-4" strokeWidth={2.5} />
-                      Chờ duyệt chỉnh sửa
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => navigate(`/recordings/${it.id}/edit`)}
-                      className="px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                    >
-                      <Edit className="h-4 w-4" strokeWidth={2.5} />
-                      Chỉnh sửa bản thu
-                    </button>
-                  )
-                ) : (
-                  <button
-                    onClick={() => !(editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")) && setEditRequestConfirm(it)}
-                    disabled={editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")}
-                    className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 font-medium ${editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")
-                        ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                        : "bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 hover:scale-105 active:scale-95 cursor-pointer"
-                      }`}
-                  >
-                    <FileEdit className="h-4 w-4" strokeWidth={2.5} />
-                    Yêu cầu chỉnh sửa bản thu
-                  </button>
-                )}
-                {(() => {
-                  const rid = it.id ?? "";
-                  const deleteDisabled =
-                    deletePendingIds.has(rid) || editPendingIds.has(rid) || editApprovedIds.has(rid);
-                  return (
-                    <button
-                      onClick={() => !deleteDisabled && setDeleteRecordingConfirm(it)}
-                      disabled={deleteDisabled}
-                      className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${deleteDisabled
-                          ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                          : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                        }`}
-                    >
-                      <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                      {deleteApprovedIds.has(rid) ? "Xóa bản thu" : "Yêu cầu xóa bản thu"}
-                    </button>
-                  );
-                })()}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Lý do từ chối — full width, cùng chiều rộng với Media Player */}
-        {(it.moderation?.status === ModerationStatus.TEMPORARILY_REJECTED || it.moderation?.status === ModerationStatus.REJECTED) && it.moderation?.rejectionNote && (
-          <div className="w-full mt-4 rounded-2xl border border-neutral-200/80 p-4 shadow-sm" style={{ backgroundColor: "#FFFCF5" }}>
-            <p className="text-sm text-neutral-800 font-medium">Lý do từ chối từ Chuyên gia:</p>
-            <p className="text-sm text-neutral-700 mt-1">{it.moderation.rejectionNote}</p>
-          </div>
-        )}
-
-        {/* Media Player */}
-        {mediaSrc && (
-          <div className="mt-4">
-            {isVideo ? (
-              <VideoPlayer
-                src={mediaSrc}
-                title={it.basicInfo?.title || it.title}
-                artist={it.basicInfo?.artist}
-                recording={{
-                  id: it.id ?? "",
-                  title: it.title ?? it.basicInfo?.title ?? "Không có tiêu đề",
-                  titleVietnamese: it.titleVietnamese ?? "",
-                  description: it.description ?? "",
-                  ethnicity: it.ethnicity ?? { id: "", name: "", nameVietnamese: "", region: Region.RED_RIVER_DELTA, recordingCount: 0 },
-                  region: it.region ?? Region.RED_RIVER_DELTA,
-                  recordingType: it.recordingType ?? RecordingType.OTHER,
-                  duration: it.duration ?? 0,
-                  audioUrl: it.audioUrl ?? it.audioData ?? "",
-                  waveformUrl: it.waveformUrl ?? "",
-                  coverImage: it.coverImage ?? "",
-                  instruments: it.instruments ?? [],
-                  performers: it.performers ?? [],
-                  recordedDate: it.recordedDate ?? "",
-                  uploadedDate: it.uploadedDate ?? "",
-                  uploader: ((): User => {
-                    if (typeof it.uploader === "object" && it.uploader !== null) {
-                      const u = it.uploader as Partial<User>;
-                      return {
-                        id: u.id ?? "",
-                        username: u.username ?? "",
-                        email: u.email ?? "",
-                        fullName: u.fullName ?? u.username ?? "",
-                        role: u.role ?? UserRole.USER,
-                        createdAt: u.createdAt ?? "",
-                        updatedAt: u.updatedAt ?? "",
-                      };
-                    }
-                    return {
-                      id: "",
-                      username: "",
-                      email: "",
-                      fullName: "",
-                      role: UserRole.USER,
-                      createdAt: "",
-                      updatedAt: "",
-                    };
-                  })(),
-                  tags: buildTagsFromLocal(it),
-                  metadata: {
-                    ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
-                    recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
-                  },
-                  verificationStatus: it.verificationStatus ?? VerificationStatus.PENDING,
-                  verifiedBy: it.verifiedBy ?? undefined,
-                  viewCount: it.viewCount ?? 0,
-                  likeCount: it.likeCount ?? 0,
-                  downloadCount: it.downloadCount ?? 0,
-                  _originalLocalData: it,
-                } as RecordingWithLocalData}
-                showContainer={true}
-              />
-            ) : (
-              <AudioPlayer
-                src={mediaSrc}
-                title={it.basicInfo?.title || it.title}
-                artist={it.basicInfo?.artist}
-                recording={{
-                  id: it.id ?? "",
-                  title: it.title ?? it.basicInfo?.title ?? "Không có tiêu đề",
-                  titleVietnamese: it.titleVietnamese ?? "",
-                  description: it.description ?? "",
-                  ethnicity: it.ethnicity ?? { id: "", name: "", nameVietnamese: "", region: Region.RED_RIVER_DELTA, recordingCount: 0 },
-                  region: it.region ?? Region.RED_RIVER_DELTA,
-                  recordingType: it.recordingType ?? RecordingType.OTHER,
-                  duration: it.duration ?? 0,
-                  audioUrl: it.audioUrl ?? it.audioData ?? "",
-                  waveformUrl: it.waveformUrl ?? "",
-                  coverImage: it.coverImage ?? "",
-                  instruments: it.instruments ?? [],
-                  performers: it.performers ?? [],
-                  recordedDate: it.recordedDate ?? "",
-                  uploadedDate: it.uploadedDate ?? "",
-                  uploader: ((): User => {
-                    if (typeof it.uploader === "object" && it.uploader !== null) {
-                      const u = it.uploader as Partial<User>;
-                      return {
-                        id: u.id ?? "",
-                        username: u.username ?? "",
-                        email: u.email ?? "",
-                        fullName: u.fullName ?? u.username ?? "",
-                        role: u.role ?? UserRole.USER,
-                        createdAt: u.createdAt ?? "",
-                        updatedAt: u.updatedAt ?? "",
-                      };
-                    }
-                    return {
-                      id: "",
-                      username: "",
-                      email: "",
-                      fullName: "",
-                      role: UserRole.USER,
-                      createdAt: "",
-                      updatedAt: "",
-                    };
-                  })(),
-                  tags: buildTagsFromLocal(it),
-                  metadata: {
-                    ...((it.metadata ?? {}) as Partial<RecordingMetadata>),
-                    recordingQuality: (it.metadata?.recordingQuality ?? RecordingQuality.FIELD_RECORDING)
-                  },
-                  verificationStatus: it.verificationStatus ?? VerificationStatus.PENDING,
-                  verifiedBy: it.verifiedBy ?? undefined,
-                  viewCount: it.viewCount ?? 0,
-                  likeCount: it.likeCount ?? 0,
-                  downloadCount: it.downloadCount ?? 0,
-                  _originalLocalData: it,
-                } as RecordingWithLocalData}
-                showContainer={true}
-              />
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   // Redirect if user is Expert
   useEffect(() => {
@@ -428,112 +89,154 @@ export default function ContributionsPage() {
     }
   }, [user, navigate]);
 
-  if (user?.role === UserRole.EXPERT) {
-    return null;
-  }
+  if (user?.role === UserRole.EXPERT) return null;
 
   const isNotContributor = !user || user.role !== UserRole.CONTRIBUTOR;
 
-  const handleDeleteRecordingConfirm = async () => {
-    if (!deleteRecordingConfirm || !user) return;
-    const id = deleteRecordingConfirm.id ?? "";
-    const isApprovedDelete = deleteApprovedIds.has(id);
+  const openDetail = async (submissionId: string) => {
+    setDetailLoading(true);
+    setDetailSubmission(null);
     try {
-      if (isApprovedDelete) {
-        await removeLocalRecording(id);
-        await recordingRequestService.revokeDeleteApproval(id, user.id ?? "");
-        setDeleteApprovedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-        setDeleteRecordingConfirm(null);
-        void load();
-        notify.success("Thành công", "Bản thu đã được xóa khỏi hệ thống.");
-      } else {
-        await recordingRequestService.requestDeleteRecording(
-          id,
-          deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề",
-          user.id,
-          user.fullName || user.username
-        );
-        setDeletePendingIds((prev) => new Set([...prev, id]));
-        setDeleteRecordingConfirm(null);
-        notify.success("Thành công", "Yêu cầu xóa bản thu đã được gửi đến Quản trị viên.");
+      const res = await submissionService.getSubmissionById(submissionId);
+      if (res?.isSuccess && res.data) {
+        setDetailSubmission(res.data);
       }
     } catch (err) {
-      console.error(err);
-      notify.error("Lỗi", isApprovedDelete ? "Không thể xóa bản thu. Vui lòng thử lại." : "Không thể gửi yêu cầu xóa bản thu. Vui lòng thử lại.");
+      console.error("Failed to load submission detail:", err);
+    } finally {
+      setDetailLoading(false);
     }
   };
 
-  const handleEditRequestConfirm = async () => {
-    if (!editRequestConfirm || !user) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
     try {
-      await recordingRequestService.requestEditRecording(
-        editRequestConfirm.id ?? "",
-        editRequestConfirm.basicInfo?.title || editRequestConfirm.title || "Không có tiêu đề",
-        user.id,
-        user.fullName || user.username
-      );
-      setEditRequestConfirm(null);
-      const pending = await recordingRequestService.getPendingEditRecordingIdsForContributor(user.id ?? "");
-      setEditPendingIds(new Set(pending));
-      notify.success("Thành công", "Yêu cầu chỉnh sửa bản thu đã được gửi đến Quản trị viên.");
+      // api.delete returns res.data which will be null/undefined on 204 No Content.
+      // Treat null/undefined (or isSuccess=true) as success — if the call doesn't throw, it worked.
+      await submissionService.deleteSubmission(deleteId);
+      setSubmissions((prev) => prev.filter((s) => s.id !== deleteId));
+      notify.success("Thành công", "Bản đóng góp đã được xóa.");
     } catch (err) {
-      console.error(err);
-      notify.error("Lỗi", "Không thể gửi yêu cầu chỉnh sửa bản thu. Vui lòng thử lại.");
+      console.error("Delete error:", err);
+      notify.error("Lỗi", "Không thể xóa bản đóng góp này. Vui lòng thử lại sau.");
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
+  };
+
+  const renderStatusBadge = (status: number) => {
+    const info = STATUS_LABELS[status] || { label: `Trạng thái ${status}`, color: "bg-neutral-100 text-neutral-700 border-neutral-300" };
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${info.color}`}>
+        {info.label}
+      </span>
+    );
+  };
+
+  const renderSubmissionCard = (sub: Submission) => {
+    const title = sub.recording?.title || "Chưa có tiêu đề";
+    const performer = sub.recording?.performerName || "Chưa rõ nghệ sĩ";
+    const dateStr = formatDate(sub.submittedAt);
+    const stage = STAGE_LABELS[sub.currentStage] || `Giai đoạn ${sub.currentStage}`;
+
+    return (
+      <div
+        key={sub.id}
+        className="group rounded-2xl border border-neutral-200/80 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer"
+        style={{ backgroundColor: "#FFFCF5" }}
+        onClick={() => openDetail(sub.id)}
+      >
+        <div className="p-5 sm:p-6">
+          {/* Top row: title + status */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold text-neutral-900 truncate group-hover:text-primary-700 transition-colors">
+                {title}
+              </h3>
+              <p className="text-sm text-neutral-600 font-medium mt-0.5 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 flex-shrink-0" />
+                {performer}
+              </p>
+            </div>
+            {renderStatusBadge(sub.status)}
+          </div>
+
+          {/* Info row */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-neutral-600">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5" />
+              {dateStr}
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <FileAudio className="w-3.5 h-3.5" />
+              {stage}
+            </span>
+            {sub.recording?.performanceContext && (
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <Music className="w-3.5 h-3.5" />
+                {sub.recording.performanceContext}
+              </span>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 mt-4">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(sub.id);
+              }}
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={2.5} />
+              Xóa
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDetail(sub.id);
+              }}
+            >
+              <Eye className="w-4 h-4" />
+              Xem chi tiết
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderDetailField = (label: string, value: string | number | null | undefined, icon?: React.ReactNode) => {
+    if (value === null || value === undefined || value === "" || value === 0 && label.toLowerCase().includes("tempo")) return null;
+    return (
+      <div className="grid grid-cols-[1.5rem_1fr] items-start gap-x-3 py-2.5 border-b border-neutral-100 last:border-0">
+        {/* Icon column — always reserved so content aligns */}
+        <span className="text-primary-600 mt-0.5 flex-shrink-0 flex justify-center">
+          {icon ?? <span className="w-4 h-4 block" />}
+        </span>
+        <div className="min-w-0">
+          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{label}</span>
+          <p className="text-sm text-neutral-900 font-medium mt-0.5 break-words">{String(value)}</p>
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="min-h-screen">
-      <ConfirmationDialog
-        isOpen={withdrawConfirmId != null}
-        onClose={() => setWithdrawConfirmId(null)}
-        onConfirm={() => {
-          if (withdrawConfirmId) {
-            withdraw(withdrawConfirmId);
-            setWithdrawConfirmId(null);
-          }
-        }}
-        title="Xác nhận hủy đóng góp"
-        message="Bạn có chắc muốn hủy đóng góp này?"
-        description="Bản thu sẽ bị xóa khỏi danh sách đóng góp của bạn. Hành động này không thể hoàn tác."
-        confirmText="Hủy đóng góp"
-        cancelText="Không"
-        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
-      />
-      <ConfirmationDialog
-        isOpen={!!deleteRecordingConfirm}
-        onClose={() => setDeleteRecordingConfirm(null)}
-        onConfirm={handleDeleteRecordingConfirm}
-        title={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Xác nhận xóa bản thu" : "Xác nhận yêu cầu xóa bản thu"}
-        message={deleteRecordingConfirm ? (deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? `Bạn có chắc muốn xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}" khỏi hệ thống?` : `Bạn có chắc muốn gửi yêu cầu xóa bản thu "${deleteRecordingConfirm.basicInfo?.title || deleteRecordingConfirm.title || "Không có tiêu đề"}"?`) : ""}
-        description={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Bản thu sẽ bị xóa hoàn toàn khỏi hệ thống. Hành động này không thể hoàn tác." : "Yêu cầu sẽ được gửi đến Quản trị viên, sau đó chuyển đến Chuyên gia để xóa hoàn toàn bản thu khỏi hệ thống."}
-        confirmText={deleteRecordingConfirm && deleteApprovedIds.has(deleteRecordingConfirm.id ?? "") ? "Xóa bản thu" : "Gửi yêu cầu xóa bản thu"}
-        cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
-      />
-      <ConfirmationDialog
-        isOpen={!!editRequestConfirm}
-        onClose={() => setEditRequestConfirm(null)}
-        onConfirm={handleEditRequestConfirm}
-        title="Xác nhận yêu cầu chỉnh sửa bản thu"
-        message={editRequestConfirm ? `Bạn có chắc muốn gửi yêu cầu chỉnh sửa bản thu "${editRequestConfirm.basicInfo?.title || editRequestConfirm.title || "Không có tiêu đề"}"?` : ""}
-        description="Yêu cầu sẽ được gửi đến Quản trị viên. Sau khi được duyệt, bạn có thể chỉnh sửa bản thu và gửi Chuyên gia kiểm duyệt lại."
-        confirmText="Gửi yêu cầu chỉnh sửa bản thu"
-        cancelText="Hủy"
-        confirmButtonStyle="bg-primary-600 text-white hover:bg-primary-500"
-      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header — responsive */}
+        {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">Đóng góp của bạn</h1>
           <BackButton />
         </div>
 
-        {/* Notice for non-Contributor users (same UX as UploadPage) */}
+        {/* Notice for non-Contributor users */}
         {isNotContributor && (
           <div className="mb-8 border border-primary-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFF1F3' }}>
             <h2 className="text-2xl font-semibold mb-4 text-primary-700">Bạn cần có tài khoản Người đóng góp để xem trang đóng góp</h2>
@@ -552,23 +255,170 @@ export default function ContributionsPage() {
           </div>
         )}
 
-        {/* Main content (dimmed and disabled for non-Contributor) */}
+        {/* Main content */}
         <div
-          className={`rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl ${isNotContributor ? "opacity-50 pointer-events-none select-none" : ""}`}
+          className={`rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 sm:p-8 transition-all duration-300 hover:shadow-xl ${isNotContributor ? "opacity-50 pointer-events-none select-none" : ""}`}
           style={{ backgroundColor: '#FFFCF5' }}
         >
-          {contributions.length === 0 ? (
-            <>
+          {/* Error state */}
+          {error && (
+            <div className="flex items-center gap-3 p-4 bg-red-50/90 border border-red-300/80 rounded-2xl shadow-sm mb-6">
+              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" strokeWidth={2.5} />
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Loading */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+              <p className="text-neutral-600 font-medium">Đang tải danh sách đóng góp...</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && !error && submissions.length === 0 && (
+            <div className="text-center py-12">
+              <FileAudio className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có đóng góp</h2>
               <p className="text-neutral-700 font-medium">Bạn chưa có đóng góp nào.</p>
-            </>
-          ) : (
-            <div className="space-y-8">
-              {contributions.filter(c => c.id).map((c) => renderRecordingItem(c))}
+            </div>
+          )}
+
+          {/* Submission list */}
+          {!loading && !error && submissions.length > 0 && (
+            <div className="space-y-4">
+              {submissions.map((sub) => renderSubmissionCard(sub))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && !error && (submissions.length > 0 || page > 1) && (
+            <div className="flex items-center justify-center gap-4 mt-8 pt-6 border-t border-neutral-200/80">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Trước
+              </button>
+              <span className="text-sm font-semibold text-neutral-700">Trang {page}</span>
+              <button
+                type="button"
+                disabled={!hasMore}
+                onClick={() => setPage((p) => p + 1)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-300 text-neutral-700 font-medium hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Sau
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {(detailSubmission || detailLoading) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => { setDetailSubmission(null); setDetailLoading(false); }}
+          style={{ animation: 'fadeIn 0.3s ease-out' }}
+        >
+          <div
+            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            style={{ backgroundColor: '#FFF2D6', animation: 'slideUp 0.3s ease-out' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-neutral-200/80 bg-gradient-to-br from-primary-600 to-primary-700">
+              <h2 className="text-xl font-bold text-white">Chi tiết đóng góp</h2>
+              <button
+                onClick={() => { setDetailSubmission(null); setDetailLoading(false); }}
+                className="p-1.5 rounded-full hover:bg-primary-500/50 transition-colors duration-200 text-white cursor-pointer"
+              >
+                <X className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto p-5 sm:p-6">
+              {detailLoading && (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+                  <p className="text-neutral-600 font-medium">Đang tải chi tiết...</p>
+                </div>
+              )}
+
+              {detailSubmission && (
+                <div className="space-y-4">
+                  {/* Status banner */}
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    {renderStatusBadge(detailSubmission.status)}
+                    <span className="text-sm text-neutral-600 font-medium">
+                      {STAGE_LABELS[detailSubmission.currentStage] || `Giai đoạn ${detailSubmission.currentStage}`}
+                    </span>
+                  </div>
+
+                  {/* Submission info card */}
+                  <div className="rounded-xl border border-neutral-200/80 p-4 space-y-1" style={{ backgroundColor: '#FFFCF5' }}>
+                    <h3 className="text-base font-semibold text-neutral-800 mb-2">Thông tin submission</h3>
+                    {renderDetailField("Ngày gửi", formatDate(detailSubmission.submittedAt), <Calendar className="w-4 h-4" />)}
+                    {renderDetailField("Cập nhật lần cuối", formatDate(detailSubmission.updatedAt), <Clock className="w-4 h-4" />)}
+                    {renderDetailField("Ghi chú", detailSubmission.notes)}
+                  </div>
+
+                  {/* Recording metadata card */}
+                  <div className="rounded-xl border border-neutral-200/80 p-4 space-y-1" style={{ backgroundColor: '#FFFCF5' }}>
+                    <h3 className="text-base font-semibold text-neutral-800 mb-2">Metadata bản thu</h3>
+                    {renderDetailField("Tiêu đề", detailSubmission.recording?.title, <Music className="w-4 h-4" />)}
+                    {renderDetailField("Nghệ sĩ", detailSubmission.recording?.performerName, <User className="w-4 h-4" />)}
+                    {renderDetailField("Mô tả", detailSubmission.recording?.description)}
+                    {renderDetailField("Bối cảnh biểu diễn", detailSubmission.recording?.performanceContext)}
+                    {renderDetailField("Định dạng", detailSubmission.recording?.audioFormat, <FileAudio className="w-4 h-4" />)}
+                    {renderDetailField("Thời lượng (giây)", detailSubmission.recording?.durationSeconds)}
+                    {renderDetailField("Kích thước (bytes)", detailSubmission.recording?.fileSizeBytes)}
+                    {renderDetailField("Ngày ghi âm", formatDate(detailSubmission.recording?.recordingDate || null), <Calendar className="w-4 h-4" />)}
+                    {renderDetailField("Lời gốc", detailSubmission.recording?.lyricsOriginal)}
+                    {renderDetailField("Lời tiếng Việt", detailSubmission.recording?.lyricsVietnamese)}
+                    {renderDetailField("Tempo", detailSubmission.recording?.tempo)}
+                    {renderDetailField("Khóa nhạc", detailSubmission.recording?.keySignature)}
+                    {(detailSubmission.recording?.gpsLatitude != null && detailSubmission.recording?.gpsLongitude != null && (detailSubmission.recording.gpsLatitude !== 0 || detailSubmission.recording.gpsLongitude !== 0)) && (
+                      renderDetailField("Tọa độ GPS", `${detailSubmission.recording.gpsLatitude}, ${detailSubmission.recording.gpsLongitude}`, <MapPin className="w-4 h-4" />)
+                    )}
+                  </div>
+
+                  {/* ID references - removed as per request */}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-center p-5 border-t border-neutral-200/80 bg-neutral-50/50">
+              <button
+                onClick={() => { setDetailSubmission(null); setDetailLoading(false); }}
+                className="px-6 py-2.5 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa đóng góp"
+        message="Bạn có chắc chắn muốn xóa bản đóng góp này?"
+        description="Hành động này sẽ xóa vĩnh viễn dữ liệu submission khỏi hệ thống và không thể khôi phục."
+        confirmText={isDeleting ? "Đang xóa..." : "Xóa vĩnh viễn"}
+        cancelText="Hủy"
+        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
+      />
     </div>
   );
 }

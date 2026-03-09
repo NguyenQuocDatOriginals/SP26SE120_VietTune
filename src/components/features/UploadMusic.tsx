@@ -2392,6 +2392,33 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setUploadWizardStep((s) => Math.min(4, s + 1));
   };
 
+  const canNavigateToStep = (targetStep: number): boolean => {
+    if (isFormDisabled) return false;
+    if (targetStep <= uploadWizardStep) return true; // Can always go back
+
+    // To go to step 2: must have file and recordingId
+    if (targetStep >= 2) {
+      if (!file && !(isEditMode && !!existingMediaSrc)) return false;
+      if (!isEditMode && !createdRecordingId) return false;
+    }
+
+    // To go to step 3: step 2 must be valid
+    if (targetStep >= 3) {
+      if (!title.trim()) return false;
+      if (!artistUnknown && !artist.trim()) return false;
+      if (!composerUnknown && !composer.trim()) return false;
+      if (!genre) return false;
+    }
+
+    // To go to step 4: step 3 must be valid
+    if (targetStep >= 4) {
+      if (!performanceType) return false;
+      if (requiresInstruments && instruments.length === 0) return false;
+    }
+
+    return true;
+  };
+
   // Shape used when loading from storage (storage may have extra fields not in LocalRecording type)
   type LoadedRecording = LocalRecordingStorage & {
     basicInfo?: { composer?: string; language?: string; dateEstimated?: boolean; dateNote?: string; recordingLocation?: string };
@@ -2802,21 +2829,27 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                 { step: 2, label: "Metadata", icon: Info },
                 { step: 3, label: "GPS & Gợi ý AI", icon: MapPin },
                 { step: 4, label: "Xem lại & Gửi", icon: Check },
-              ].map(({ step, label, icon: Icon }) => (
-                <button
-                  key={step}
-                  type="button"
-                  onClick={() => setUploadWizardStep(step)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border transition-all cursor-pointer ${uploadWizardStep === step
-                    ? "bg-primary-600 text-white border-primary-600"
-                    : "bg-white border-neutral-200/80 text-neutral-700 hover:border-primary-300"
-                    }`}
-                >
-                  <Icon className="w-4 h-4" strokeWidth={2.5} />
-                  <span>Bước {step}:</span>
-                  <span>{label}</span>
-                </button>
-              ))}
+              ].map(({ step, label, icon: Icon }) => {
+                const isNavigable = canNavigateToStep(step);
+                return (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => isNavigable && setUploadWizardStep(step)}
+                    disabled={!isNavigable}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${uploadWizardStep === step
+                      ? "bg-primary-600 text-white border-primary-600 shadow-md"
+                      : isNavigable
+                        ? "bg-white border-neutral-200/80 text-neutral-700 hover:border-primary-300 hover:bg-primary-50/50 cursor-pointer"
+                        : "bg-neutral-50 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-60"
+                      }`}
+                  >
+                    <Icon className="w-4 h-4" strokeWidth={2.5} />
+                    <span>Bước {step}:</span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
