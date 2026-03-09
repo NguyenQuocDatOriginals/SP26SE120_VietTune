@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { ModerationStatus } from "@/types";
+import { ModerationStatus, UserRole } from "@/types";
 import type { LocalRecording } from "@/types";
 import { getLocalRecordingFull } from "@/services/recordingStorage";
 import UploadMusic from "@/components/features/UploadMusic";
@@ -34,8 +34,8 @@ export default function EditRecordingPage() {
           return;
         }
         const r = full as LocalRecording;
-        const isContributor = user?.role === "CONTRIBUTOR";
-        const isExpert = user?.role === "EXPERT";
+        const isContributor = user?.role === UserRole.CONTRIBUTOR;
+        const isExpert = user?.role === UserRole.EXPERT;
         const isOwner = r.uploader && (r.uploader as { id?: string }).id === user?.id;
         const status = r.moderation && typeof r.moderation === "object" && "status" in r.moderation
           ? (r.moderation as { status?: string }).status

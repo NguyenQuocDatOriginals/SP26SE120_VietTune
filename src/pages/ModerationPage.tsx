@@ -577,7 +577,7 @@ export default function ModerationPage() {
         return () => document.removeEventListener('keydown', handleEscape);
     }, [showVerificationDialog, showRejectDialog, showUnclaimDialog, showApproveConfirmDialog, showRejectConfirmDialog, showRejectNoteWarningDialog, showDeleteConfirmId]);
 
-    if (!user || user.role !== "EXPERT") {
+    if (!user || user.role !== UserRole.EXPERT) {
         return (
             <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang kiểm duyệt bản thu." />
         );
@@ -954,8 +954,8 @@ export default function ModerationPage() {
                                 type="button"
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${activeTab === tab.id
-                                        ? "bg-primary-600 text-white border-primary-600 shadow-md"
-                                        : "text-neutral-700 bg-white border-neutral-200/80 hover:border-primary-300 hover:bg-primary-50/80"
+                                    ? "bg-primary-600 text-white border-primary-600 shadow-md"
+                                    : "text-neutral-700 bg-white border-neutral-200/80 hover:border-primary-300 hover:bg-primary-50/80"
                                     }`}
                                 aria-current={activeTab === tab.id ? "page" : undefined}
                             >
@@ -999,8 +999,8 @@ export default function ModerationPage() {
                                                     type="button"
                                                     onClick={() => setStatusFilter(f.key)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${statusFilter === f.key
-                                                            ? "bg-primary-600 text-white"
-                                                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                                                        ? "bg-primary-600 text-white"
+                                                        : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                                                         }`}
                                                 >
                                                     {f.label}

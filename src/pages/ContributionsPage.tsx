@@ -214,11 +214,10 @@ export default function ContributionsPage() {
               <button
                 onClick={() => !(deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")) && setDeleteRecordingConfirm(it)}
                 disabled={deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${
-                  deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")
+                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${deletePendingIds.has(it.id ?? "") || editPendingIds.has(it.id ?? "")
                     ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                     : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                }`}
+                  }`}
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2.5} />
                 Yêu cầu xóa bản thu
@@ -256,11 +255,10 @@ export default function ContributionsPage() {
                   <button
                     onClick={() => !(editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")) && setEditRequestConfirm(it)}
                     disabled={editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")}
-                    className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 font-medium ${
-                      editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")
+                    className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 font-medium ${editPendingIds.has(it.id ?? "") || deletePendingIds.has(it.id ?? "")
                         ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                         : "bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 hover:scale-105 active:scale-95 cursor-pointer"
-                    }`}
+                      }`}
                   >
                     <FileEdit className="h-4 w-4" strokeWidth={2.5} />
                     Yêu cầu chỉnh sửa bản thu
@@ -274,11 +272,10 @@ export default function ContributionsPage() {
                     <button
                       onClick={() => !deleteDisabled && setDeleteRecordingConfirm(it)}
                       disabled={deleteDisabled}
-                      className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${
-                        deleteDisabled
+                      className={`px-4 py-2 rounded-full text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 ${deleteDisabled
                           ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
                           : "bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       <Trash2 className="h-4 w-4" strokeWidth={2.5} />
                       {deleteApprovedIds.has(rid) ? "Xóa bản thu" : "Yêu cầu xóa bản thu"}
@@ -426,16 +423,16 @@ export default function ContributionsPage() {
 
   // Redirect if user is Expert
   useEffect(() => {
-    if (user?.role === "EXPERT") {
+    if (user?.role === UserRole.EXPERT) {
       navigate("/profile");
     }
   }, [user, navigate]);
 
-  if (user?.role === "EXPERT") {
+  if (user?.role === UserRole.EXPERT) {
     return null;
   }
 
-  const isNotContributor = !user || user.role !== "CONTRIBUTOR";
+  const isNotContributor = !user || user.role !== UserRole.CONTRIBUTOR;
 
   const handleDeleteRecordingConfirm = async () => {
     if (!deleteRecordingConfirm || !user) return;

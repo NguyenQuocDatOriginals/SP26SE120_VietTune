@@ -8,17 +8,19 @@ export interface User {
   avatar?: string;
   bio?: string;
   expertise?: string[];
+  phoneNumber?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export enum UserRole {
-  ADMIN = "ADMIN",
-  MODERATOR = "MODERATOR",
-  RESEARCHER = "RESEARCHER",
-  CONTRIBUTOR = "CONTRIBUTOR",
-  EXPERT = "EXPERT",
-  USER = "USER",
+  ADMIN = "Admin",
+  MODERATOR = "Moderator",
+  RESEARCHER = "Researcher",
+  CONTRIBUTOR = "Contributor",
+  EXPERT = "Expert",
+  USER = "User",
 }
 
 export enum ModerationStatus {
@@ -213,7 +215,7 @@ export interface UploadRecordingForm {
 }
 
 export interface LoginForm {
-  usernameOrEmail: string;
+  email: string;
   password: string;
 }
 

@@ -74,7 +74,7 @@ export default function LoginPage() {
         void sessionRemoveItem("fromLogout");
         const defaultPath =
           response.data.user?.role === UserRole.RESEARCHER ? "/researcher" :
-          response.data.user?.role === UserRole.EXPERT ? "/moderation" : "/";
+            response.data.user?.role === UserRole.EXPERT ? "/moderation" : "/";
         navigate(redirectTo ?? defaultPath);
       }
     } catch (error: unknown) {
@@ -136,11 +136,16 @@ export default function LoginPage() {
 
           <div className="space-y-3">
             <Input
-              label="Tên người dùng hoặc Email"
-              {...register("usernameOrEmail", {
-                required: "Tên người dùng hoặc Email là bắt buộc",
+              label="Email"
+              type="email"
+              {...register("email", {
+                required: "Email là bắt buộc",
+                pattern: {
+                  value: /^\S+@\S+\.\S+$/,
+                  message: "Địa chỉ email không hợp lệ",
+                },
               })}
-              error={errors.usernameOrEmail?.message}
+              error={errors.email?.message}
             />
 
             <Input
@@ -149,8 +154,8 @@ export default function LoginPage() {
               {...register("password", {
                 required: "Mật khẩu là bắt buộc",
                 minLength: {
-                  value: 6,
-                  message: "Mật khẩu phải có ít nhất 6 ký tự",
+                  value: 1,
+                  message: "Mật khẩu phải có ít nhất 1 ký tự",
                 },
               })}
               error={errors.password?.message}

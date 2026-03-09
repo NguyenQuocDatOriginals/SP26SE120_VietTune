@@ -14,14 +14,14 @@ import ForbiddenPage from "@/pages/ForbiddenPage";
 import { getLocalRecordingMetaList, getLocalRecordingFull, removeLocalRecording } from "@/services/recordingStorage";
 import { recordingRequestService } from "@/services/recordingRequestService";
 import {
-  Recording,
-  Region,
-  RecordingType,
-  User,
-  UserRole,
-  RecordingMetadata,
-  RecordingQuality,
-  VerificationStatus,
+    Recording,
+    Region,
+    RecordingType,
+    User,
+    UserRole,
+    RecordingMetadata,
+    RecordingQuality,
+    VerificationStatus,
 } from "@/types";
 import type { DeleteRecordingRequest, EditSubmissionForReview } from "@/types";
 import type { LocalRecording } from "@/types";
@@ -144,7 +144,7 @@ export default function ApprovedRecordingsPage() {
         }
     };
 
-    if (!user || user.role !== "EXPERT") {
+    if (!user || user.role !== UserRole.EXPERT) {
         return (
             <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang này." />
         );

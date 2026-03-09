@@ -76,7 +76,7 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-3 xl:gap-4 flex-1 mx-4">
-              {user?.role === "ADMIN" ? (
+              {user?.role === UserRole.ADMIN ? (
                 <Link
                   to="/admin"
                   className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
@@ -91,7 +91,7 @@ export default function Header() {
                   Đóng góp bản thu
                 </Link>
               )}
-              {user?.role === "EXPERT" || !user || user?.role === "ADMIN" || user?.role === UserRole.RESEARCHER ? (
+              {user?.role === UserRole.EXPERT || !user || user?.role === UserRole.ADMIN || user?.role === UserRole.RESEARCHER ? (
                 <Link
                   to="/instruments"
                   className="text-white text-sm font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors whitespace-nowrap px-2 py-1"
@@ -165,7 +165,7 @@ export default function Header() {
                       className="flex items-center gap-1.5 text-sm px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer min-w-[140px] justify-center"
                     >
                       <User className="h-4 w-4" strokeWidth={2.5} />
-                      <span className="text-xs font-medium">{user?.username}</span>
+                      <span className="text-xs font-medium">{user?.username || user?.fullName || "Người dùng"}</span>
                     </button>
 
                     {/* Menu anchored to header (non-portal so it moves with header and never shifts) */}
@@ -235,7 +235,7 @@ export default function Header() {
           {/* Mobile menu */}
           {isMobileMenuOpen && (
             <div className="lg:hidden pt-4 mt-4 space-y-2 border-t border-white/20">
-              {user?.role === "ADMIN" ? (
+              {user?.role === UserRole.ADMIN ? (
                 <Link
                   to="/admin"
                   className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
@@ -252,7 +252,7 @@ export default function Header() {
                   Đóng góp
                 </Link>
               )}
-              {user?.role === "EXPERT" || !user || user?.role === "ADMIN" || user?.role === UserRole.RESEARCHER ? (
+              {user?.role === UserRole.EXPERT || !user || user?.role === UserRole.ADMIN || user?.role === UserRole.RESEARCHER ? (
                 <Link
                   to="/instruments"
                   className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
@@ -336,7 +336,7 @@ export default function Header() {
                       Thông báo
                     </Link>
                   )}
-                  {user?.role === "ADMIN" && (
+                  {user?.role === UserRole.ADMIN && (
                     <Link
                       to="/admin"
                       className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"

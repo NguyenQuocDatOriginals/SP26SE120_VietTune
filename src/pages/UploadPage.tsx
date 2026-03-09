@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import BackButton from "@/components/common/BackButton";
+import { UserRole } from "@/types";
 
 const guideButtonClass =
   "inline-flex items-center justify-center gap-2 h-11 px-6 py-0 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none";
@@ -18,7 +19,7 @@ export default function UploadPage() {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
-  const isNotContributor = !user || user.role !== "CONTRIBUTOR";
+  const isNotContributor = !user || user.role !== UserRole.CONTRIBUTOR;
 
   return (
     <div className="min-h-screen min-w-0">

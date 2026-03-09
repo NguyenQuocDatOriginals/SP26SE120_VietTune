@@ -33,18 +33,18 @@ interface AggregatedUser {
 }
 
 const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: "CONTRIBUTOR", label: "Người đóng góp" },
-  { value: "EXPERT", label: "Chuyên gia" },
-  { value: "RESEARCHER", label: "Nhà nghiên cứu" },
+  { value: UserRole.CONTRIBUTOR, label: "Người đóng góp" },
+  { value: UserRole.EXPERT, label: "Chuyên gia" },
+  { value: UserRole.RESEARCHER, label: "Nhà nghiên cứu" },
 ];
 
 const ROLE_NAMES_VI: Record<string, string> = {
-  ADMIN: "Quản trị viên",
+  [UserRole.ADMIN]: "Quản trị viên",
   MODERATOR: "Điều hành viên",
-  RESEARCHER: "Nhà nghiên cứu",
-  CONTRIBUTOR: "Người đóng góp",
-  EXPERT: "Chuyên gia",
-  USER: "Người dùng",
+  [UserRole.RESEARCHER]: "Nhà nghiên cứu",
+  [UserRole.CONTRIBUTOR]: "Người đóng góp",
+  [UserRole.EXPERT]: "Chuyên gia",
+  [UserRole.USER]: "Người dùng",
 };
 
 const DELETE_ACTION = "__DELETE__" as const;
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
       o[userId].role = newRole;
       void setItem("users_overrides", JSON.stringify(o));
       setUsersOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], role: newRole } }));
-      notify.success("Thành công", `Đã gán vai trò "${USER_ROLE_NAMES[newRole as keyof typeof USER_ROLE_NAMES] ?? newRole}" cho người dùng.`);
+      notify.success("Thành công", `Đã gán vai trò "${ROLE_NAMES_VI[newRole] ?? newRole}" cho người dùng.`);
     } catch (e) {
       notify.error("Lỗi", "Không thể cập nhật vai trò.");
     }

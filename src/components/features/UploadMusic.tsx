@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { ModerationStatus } from "@/types";
+
 import { ChevronDown, Upload, Music, MapPin, FileAudio, Info, Shield, Check, Search, Plus, AlertCircle, Video, X, Navigation, Sparkles } from "lucide-react";
 import { createPortal } from "react-dom";
 import UploadProgressDialog from "@/components/common/UploadProgressDialog";
@@ -1831,7 +1831,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
   const { user: currentUser } = useAuthStore();
   // Upload: only CONTRIBUTOR. Edit (isApprovedEdit): CONTRIBUTOR or EXPERT — same UI/UX and logic for both.
-  const isFormDisabled = !currentUser || (isApprovedEdit ? (currentUser.role !== "CONTRIBUTOR" && currentUser.role !== "EXPERT") : currentUser.role !== "CONTRIBUTOR");
+  const isFormDisabled = !currentUser || (isApprovedEdit ? (currentUser.role !== UserRole.CONTRIBUTOR && currentUser.role !== UserRole.EXPERT) : currentUser.role !== UserRole.CONTRIBUTOR);
 
   const [eventType, setEventType] = useState("");
   const [customEventType, setCustomEventType] = useState("");
@@ -3414,7 +3414,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
                 <div className="md:col-span-2">
                   <FormField label="Loại hình biểu diễn" required>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {PERFORMANCE_TYPES.map((pt) => (
                         <button
                           key={pt.key}
@@ -3425,7 +3425,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
                               setInstruments([]);
                             }
                           }}
-                          className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all border border-neutral-200 ${performanceType === pt.key
+                          className={`w-full px-4 py-3 rounded-full text-sm font-medium transition-all border border-neutral-200 ${performanceType === pt.key
                             ? "bg-primary-600 text-white shadow-md"
                             : "text-neutral-700 hover:border-primary-400"
                             }`}

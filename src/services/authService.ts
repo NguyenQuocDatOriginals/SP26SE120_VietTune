@@ -13,12 +13,11 @@ export const authService = {
   login: async (credentials: LoginForm) => {
     interface LoginResponse {
       token: string;
-      id: string;
-      username: string;
-      email: string;
-      fullName: string;
+      userId: string;
       role: string;
-      avatarUrl?: string;
+      fullName: string;
+      phoneNumber: string;
+      isActive: boolean;
     }
     try {
       const response = await api.post<LoginResponse | { data: LoginResponse }>(
@@ -31,14 +30,15 @@ export const authService = {
       if (authData && authData.token) {
         await setItem("access_token", authData.token);
         const user = {
-          id: authData.id,
-          username: authData.username,
-          email: authData.email,
+          id: authData.userId,
+          username: credentials.email,
+          email: credentials.email,
           fullName: authData.fullName,
           role: authData.role as UserRole,
-          avatar: authData.avatarUrl,
-          createdAt: "",
-          updatedAt: "",
+          phoneNumber: authData.phoneNumber,
+          isActive: authData.isActive,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         await setItem("user", JSON.stringify(user));
         return {
