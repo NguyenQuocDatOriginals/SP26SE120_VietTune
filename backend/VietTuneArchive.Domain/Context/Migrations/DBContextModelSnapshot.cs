@@ -2676,6 +2676,9 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal?>("Tempo")
                         .HasColumnType("decimal(18,2)");
 
@@ -2866,7 +2869,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
 
                     b.HasIndex("ContributorId");
 
-                    b.HasIndex("RecordingId");
+                    b.HasIndex("RecordingId")
+                        .IsUnique();
 
                     b.ToTable("Submissions");
                 });
@@ -3656,8 +3660,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
                         .IsRequired();
 
                     b.HasOne("VietTuneArchive.Domain.Entities.Recording", "Recording")
-                        .WithMany("Submissions")
-                        .HasForeignKey("RecordingId")
+                        .WithOne("Submission")
+                        .HasForeignKey("VietTuneArchive.Domain.Entities.Submission", "RecordingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -3769,7 +3773,7 @@ namespace VietTuneArchive.Domain.Context.Migrations
 
                     b.Navigation("RecordingTags");
 
-                    b.Navigation("Submissions");
+                    b.Navigation("Submission");
 
                     b.Navigation("VectorEmbeddings");
                 });

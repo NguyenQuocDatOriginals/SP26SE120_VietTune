@@ -443,7 +443,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
                     KeySignature = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1317,7 +1318,8 @@ namespace VietTuneArchive.Domain.Context.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Submissions_RecordingId",
                 table: "Submissions",
-                column: "RecordingId");
+                column: "RecordingId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubmissionVersions_SubmissionId",
