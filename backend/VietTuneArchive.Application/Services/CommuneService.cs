@@ -1,4 +1,5 @@
 using AutoMapper;
+using VietTuneArchive.Application.Common;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
@@ -20,30 +21,19 @@ namespace VietTuneArchive.Application.Services
         /// <summary>
         /// Get all communes by district id
         /// </summary>
-        public async Task<ServiceResponse<List<CommuneDto>>> GetByDistrictIdAsync(Guid districtId)
+        public async Task<Result<IEnumerable<CommuneDto>>> GetByDistrictIdAsync(Guid districtId)
         {
             try
             {
                 if (districtId == Guid.Empty)
-                    throw new ArgumentException("District id cannot be empty", nameof(districtId));
-
+                    return Result<IEnumerable<CommuneDto>>.Failure("District id cannot be empty");
                 var communes = await _communeRepository.GetAsync(c => c.DistrictId == districtId);
                 var dtos = _mapper.Map<List<CommuneDto>>(communes);
-                return new ServiceResponse<List<CommuneDto>>
-                {
-                    Success = true,
-                    Data = dtos,
-                    Message = $"Found {dtos.Count} communes"
-                };
+                return Result<IEnumerable<CommuneDto>>.Success(dtos, $"Found {dtos.Count} communes");
             }
             catch (Exception ex)
             {
-                return new ServiceResponse<List<CommuneDto>>
-                {
-                    Success = false,
-                    Message = ex.Message,
-                    Errors = new List<string> { ex.Message }
-                };
+                return Result<IEnumerable<CommuneDto>>.Failure(ex.Message);
             }
         }
 

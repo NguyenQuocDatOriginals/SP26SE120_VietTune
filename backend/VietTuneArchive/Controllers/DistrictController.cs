@@ -16,6 +16,17 @@ namespace VietTuneArchive.API.Controllers
             _service = service;
         }
 
+        [HttpGet("get-by-province/{provinceId}")]
+        public async Task<IActionResult> GetByProvinceId(Guid provinceId)
+        {
+            var result = await _service.GetByProvinceIdAsync(provinceId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
         [HttpGet]
         public async Task<ActionResult<PagedResponse<DistrictDto>>> GetAll(
             [FromQuery] int page = 1,

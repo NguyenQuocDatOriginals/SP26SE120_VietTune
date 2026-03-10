@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
+using VietTuneArchive.Application.Services;
+using VietTuneArchive.Domain.Entities.Enum;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -14,6 +16,17 @@ namespace VietTuneArchive.API.Controllers
         public CommuneController(ICommuneService service)
         {
             _service = service;
+        }
+
+        [HttpGet("get-by-district/{districtId}")]
+        public async Task<IActionResult> GetByDistrictId(Guid districtId)
+        {
+            var result = await _service.GetByDistrictIdAsync(districtId);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
         }
 
         [HttpGet]
