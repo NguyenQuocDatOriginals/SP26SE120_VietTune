@@ -14,9 +14,6 @@ using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 var connectionString = builder.Configuration.GetConnectionString("Database");
 builder.Services.AddDbContext<DBContext>(options => options.UseSqlServer(connectionString));
 
@@ -66,7 +63,7 @@ builder.Services.AddSwaggerGen(c =>
         });
         
         // ✅ Fix: Handle circular references
-        c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+        //c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
     }
     catch (Exception ex)
     {
@@ -194,36 +191,20 @@ builder.Services.AddCors(o =>
 });
 
 var app = builder.Build();
-
-// ✅ Error handling middleware
 app.UseExceptionHandler("/error");
 app.MapGet("/error", () => Results.Problem("An error occurred", statusCode: StatusCodes.Status500InternalServerError));
 
-if (app.Environment.IsDevelopment())  // ✅ Fix: Chỉ Development
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
-    
-    // ✅ Auto-open browser to Swagger UI
-    var task = Task.Run(async () =>
+    app.UseSwaggerUI(c =>
     {
-        await Task.Delay(1000); // Wait for server to start
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "http://localhost:8080/swagger/index.html",
-                UseShellExecute = true
-            });
-        }
-        catch { /* Browser might not be available in some environments */ }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "VietTuneArchive v1");
+        c.RoutePrefix = "swagger";
     });
 }
-else
-{
-    app.UseHttpsRedirection();
-}
 
+app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
