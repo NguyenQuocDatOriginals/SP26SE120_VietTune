@@ -8,7 +8,7 @@
 //    Sóng âm thanh + vòng tròn đồng tâm
 //    Nền: nâu sẫm (#2c1810)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-export function SoundWaves(props) {
+export function SoundWaves(props: { opacity?: number }) {
   const waves = Array.from({ length: 8 }, (_, i) => {
     const y = 80 + i * 70;
     const amp = 15 + (i % 3) * 5;

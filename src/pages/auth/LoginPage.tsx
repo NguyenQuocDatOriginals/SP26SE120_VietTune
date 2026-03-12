@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
 import Input from "@/components/common/Input";
-import { LoginForm, User, UserRole } from "@/types";
+import { LoginForm, UserRole } from "@/types";
 import { notify } from "@/stores/notificationStore";
 import logo from "@/components/image/VietTune logo.png";
-import { getItem, sessionGetItem, sessionRemoveItem } from "@/services/storageService";
+import { sessionGetItem, sessionRemoveItem } from "@/services/storageService";
 import { ZitherStrings } from "@/components/image/pattern/BackgroundPatterns";
 
 /** Safe internal path for post-login redirect (no open redirect). */
@@ -25,38 +25,6 @@ export default function LoginPage() {
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const fromLogout = typeof window !== "undefined" && sessionGetItem("fromLogout") === "1";
-
-  // Show overridden demo usernames if present in IndexedDB
-  const [demoNames, setDemoNames] = useState<Record<string, string>>({});
-
-  const loadDemoNames = () => {
-    try {
-      const oRaw = getItem("users_overrides");
-      const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
-      setDemoNames({
-        contributor: overrides["contrib_demo"]?.username || "contributor_demo",
-        expert_a: overrides["expert_a"]?.username || "expertA",
-        expert_b: overrides["expert_b"]?.username || "expertB",
-        expert_c: overrides["expert_c"]?.username || "expertC",
-        admin: overrides["admin_demo"]?.username || "admin_demo",
-        researcher: overrides["researcher_demo"]?.username || "researcher_demo",
-      });
-    } catch (err) {
-      setDemoNames({
-        contributor: "contributor_demo",
-        expert_a: "expertA",
-        expert_b: "expertB",
-        expert_c: "expertC",
-        admin: "admin_demo",
-        researcher: "researcher_demo",
-      });
-    }
-  };
-
-  // Load on mount
-  useEffect(() => {
-    loadDemoNames();
-  }, []);
 
   const {
     register,
