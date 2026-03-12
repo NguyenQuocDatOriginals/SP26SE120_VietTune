@@ -36,7 +36,7 @@ export const recordingService = {
 
   // Update recording (backend: PUT /api/Recording/{id})
   updateRecording: async (id: string, data: Partial<Recording>) => {
-    return api.put<ApiResponse<Recording>>(`/Recording/${id}`, data);
+    return api.put<ApiResponse<Recording>>(`/Recording/${id}/upload`, data);
   },
 
   // Create submission (backend: POST /api/Submission/create-submission)
