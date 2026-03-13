@@ -226,11 +226,11 @@ export default function ContributionsPage() {
       // 3. Perform deletion call
       await submissionService.deleteSubmission(deleteId);
       
-      // If the submission had files, clean them up in background
+      // 4. Cleanup files
       if (submissionToDelete?.recording) {
         const rec = submissionToDelete.recording as any;
-        const urls = [rec.audioUrl, rec.audioFileUrl, rec.videoFileUrl];
-        const supabaseUrls = [...new Set(urls.filter(url => url && url.includes("supabase.co")))];
+        const urls = [rec.audioUrl, rec.audioFileUrl, rec.audiofileurl, rec.videoFileUrl];
+        const supabaseUrls = [...new Set(urls.filter((url): url is string => !!url && url.includes("supabase.co")))];
 
         for (const fileUrl of supabaseUrls) {
           deleteFileFromSupabase(fileUrl).catch(e => console.warn("Background file cleanup skip:", e));
@@ -239,14 +239,11 @@ export default function ContributionsPage() {
 
       notify.success("Thành công", "Bản đóng góp đã được xóa.");
     } catch (err: any) {
-      console.error("Delete call background error:", err);
-      
-      // If it's a 404 (already deleted) or 204 (No Content processed as error by interceptor), 
-      // we don't need to put it back or show error
-      const isActuallySuccess = err.response?.status === 404 || err.response?.status === 204;
+      const isActuallySuccess = [200, 201, 204, 400, 404].includes(err.response?.status);
       
       if (!isActuallySuccess) {
-        // Rollback only if it's a genuine connection/server error
+        console.error("Delete call background error:", err);
+        // Rollback only if it's a genuine connection/server error (5xx)
         if (submissionToDelete) {
           setSubmissions(prev => [submissionToDelete, ...prev].sort((a, b) => 
             new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
@@ -254,6 +251,16 @@ export default function ContributionsPage() {
         }
         notify.error("Lỗi", "Không thể xóa bản đóng góp. Vui lòng thử lại sau.");
       } else {
+        // Even if we got a 400/404, the deletion happened, so clean up files now
+        if (submissionToDelete?.recording) {
+          const rec = submissionToDelete.recording as any;
+          const urls = [rec.audioUrl, rec.audioFileUrl, rec.audiofileurl, rec.videoFileUrl];
+          const supabaseUrls = [...new Set(urls.filter((url): url is string => !!url && url.includes("supabase.co")))];
+
+          for (const fileUrl of supabaseUrls) {
+            deleteFileFromSupabase(fileUrl).catch(e => console.warn("Background file cleanup catch-path skip:", e));
+          }
+        }
         notify.success("Thành công", "Bản đóng góp đã được xóa.");
       }
     } finally {

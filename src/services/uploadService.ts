@@ -50,25 +50,74 @@ export const uploadFileToSupabase = async (
  */
 export const deleteFileFromSupabase = async (
   publicUrl: string,
-  bucketName: string = import.meta.env.VITE_SUPABASE_BUCKET || "audio"
+  _defaultBucketName: string = "VietTuneArchive"
 ): Promise<void> => {
   try {
-    if (!publicUrl) return;
-
-    // Extract file name from URL
-    // URL format: https://.../storage/v1/object/public/bucketName/fileName
-    const parts = publicUrl.split('/');
-    const fileName = parts.pop();
-    if (!fileName) return;
-
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .remove([fileName]);
-
-    if (error) {
-      console.error("Supabase delete error:", error.message);
+    if (!publicUrl) {
+      console.warn("[Supabase Delete] No URL provided");
+      return;
     }
+
+    // 1. Parse URL to get bucket and path
+    // Example: https://.../storage/v1/object/public/BucketName/folder/file.mp3
+    const parts = publicUrl.split('/');
+    const publicIndex = parts.indexOf('public');
+    const filenameFromUrl = parts[parts.length - 1];
+    
+    let bucketName = _defaultBucketName;
+    let filePath = filenameFromUrl;
+
+    if (publicIndex !== -1 && parts.length > publicIndex + 2) {
+      bucketName = parts[publicIndex + 1];
+      filePath = parts.slice(publicIndex + 2).join('/');
+    }
+
+    console.info(`[Supabase Delete] Attempting deletion...
+      URL: ${publicUrl}
+      Bucket: ${bucketName}
+      Path: ${filePath}`);
+    
+    // Attempt 1: Standard path (no leading slash)
+    const { data: d1, error: e1 } = await supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
+
+    if (e1) {
+      console.error(`[Supabase Delete] Attempt 1 Error (${filePath}):`, e1.message);
+    } else if (d1 && d1.length > 0) {
+      console.log(`[Supabase Delete] Success (Attempt 1):`, d1);
+      return; 
+    } else {
+      console.warn(`[Supabase Delete] Attempt 1 returned empty data (not found or permission denied)`);
+    }
+
+    // Attempt 2: Path with leading slash (some older versions or specific setups)
+    const altPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+    console.info(`[Supabase Delete] Attempt 2 with leading slash: ${altPath}`);
+    const { data: d2, error: e2 } = await supabase.storage
+      .from(bucketName)
+      .remove([altPath]);
+
+    if (!e2 && d2 && d2.length > 0) {
+      console.log(`[Supabase Delete] Success (Attempt 2):`, d2);
+      return;
+    }
+
+    // Attempt 3: Just the filename in the default bucket (Final fallback)
+    if (filePath !== filenameFromUrl || bucketName !== _defaultBucketName) {
+      console.info(`[Supabase Delete] Attempt 3 (Fallback) using filename in default bucket: ${filenameFromUrl}`);
+      const { data: d3, error: e3 } = await supabase.storage
+        .from(_defaultBucketName)
+        .remove([filenameFromUrl]);
+
+      if (!e3 && d3 && d3.length > 0) {
+        console.log(`[Supabase Delete] Success (Attempt 3):`, d3);
+        return;
+      }
+    }
+
+    console.error(`[Supabase Delete] All attempts failed for ${publicUrl}. Check if the file exists and if the ANON key has DELETE permissions for bucket '${bucketName}'.`);
   } catch (error) {
-    console.error("Error deleting file from Supabase:", error);
+    console.error("[Supabase Delete] unexpected crash:", error);
   }
 };
