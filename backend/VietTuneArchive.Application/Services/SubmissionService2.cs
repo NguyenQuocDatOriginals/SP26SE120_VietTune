@@ -413,14 +413,26 @@ namespace VietTuneArchive.Application.Services
             {
                 if (submissionId == Guid.Empty)
                     throw new ArgumentException("Submission id cannot be empty", nameof(submissionId));
-                var submission = await _submissionRepo.GetByIdAsync(submissionId);
+                
+                var submission = await _submissionRepo.GetSubmissionByIdAsync(submissionId);
                 if (submission == null)
                     return Result<bool>.Failure("Submission not found");
-                var recording = await _recordingRepository.GetByIdAsync(submission.RecordingId.Value);
-                if (recording == null)
-                    return Result<bool>.Failure("Recording not found");
-                await _recordingRepository.DeleteAsync(recording);
-                await _submissionRepo.DeleteAsync(submission);
+                
+                if (submission.Status == SubmissionStatus.Approved)
+                    return Result<bool>.Failure("Cannot delete an approved submission");
+
+                // Delete recording if exists
+                if (submission.RecordingId.HasValue)
+                {
+                    var recording = await _recordingRepository.GetByIdAsync(submission.RecordingId.Value);
+                    if (recording != null)
+                    {
+                        await _recordingRepository.DeleteAsync(recording.Id);
+                    }
+                }
+                
+                // Delete submission
+                await _submissionRepository.DeleteAsync(submissionId);
                 return Result<bool>.Success(true, "Submission deleted successfully");
             }
             catch (Exception ex)
