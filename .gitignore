@@ -5,12 +5,18 @@ node_modules/
 
 # Testing
 /coverage
+/playwright-report/
+/test-results/
+/blob-report/
+/tests/
+playwright.config.ts
 
 # Production
 /dist
 /build
 
 # Misc
+swagger.txt
 .DS_Store
 .env
 .env.local
@@ -35,9 +41,13 @@ lerna-debug.log*
 *.njsproj
 *.sw?
 
-# Cursor IDE
+# Cursor IDE (toàn bộ thư mục local, không commit)
 .cursor/
-.agent/
+# .agent/ — KHÔNG đưa vào .gitignore để Cursor index workflows (slash commands ổn định).
+# Muốn không track .agent/ cục bộ: thêm `.agent/` vào .git/info/exclude
+
+# Docs chỉ dùng cục bộ
+docs/AGENT-KIT.md
 
 # Java/Spring Boot (backend)
 backend/target/
