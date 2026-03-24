@@ -15,8 +15,8 @@ using VietTuneArchive.Domain.Repositories;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
-builder.Services.AddDbContext<DBContext>(options => options.UseNpgsql(connectionString));
-//builder.Services.AddDbContext<DBContext>(options => options.UseSqlServer(connectionString));
+//builder.Services.AddDbContext<DBContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<DBContext>(options => options.UseSqlServer(connectionString));
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -174,6 +174,8 @@ builder.Services.AddScoped<IQAMessageService, QAMessageService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IEnumProviderService, EnumProviderService>();
 // AutoMapper
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
