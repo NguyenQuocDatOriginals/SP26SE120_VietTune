@@ -20,7 +20,42 @@ namespace VietTuneArchive.Application.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _conversationRepository = conversationRepository ?? throw new ArgumentNullException(nameof(conversationRepository));
         }
-
+        public async Task<Result<bool>> UnflagMessageAsync(Guid messageId)
+        {
+            try
+            {
+                if (messageId == Guid.Empty)
+                    throw new ArgumentException("Message id cannot be empty", nameof(messageId));
+                var message = await _messageRepository.GetByIdAsync(messageId);
+                if (message == null)
+                    throw new ArgumentException("Message not found", nameof(messageId));
+                message.FlaggedByExpert = false;
+                await _messageRepository.UpdateAsync(message);
+                return Result<bool>.Success(true, "Message flagged successfully");
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(ex.Message);
+            }
+        }
+        public async Task<Result<bool>> FlagMessageAsync (Guid messageId)
+        {
+            try
+            {
+                if (messageId == Guid.Empty)
+                    throw new ArgumentException("Message id cannot be empty", nameof(messageId));
+                var message = await _messageRepository.GetByIdAsync(messageId);
+                if (message == null)
+                    throw new ArgumentException("Message not found", nameof(messageId));
+                message.FlaggedByExpert = true;
+                await _messageRepository.UpdateAsync(message);
+                return Result<bool>.Success(true, "Message flagged successfully");
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(ex.Message);
+            }
+        }
         /// <summary>
         /// Get messages in a conversation
         /// </summary>

@@ -112,8 +112,7 @@ namespace VietTuneArchive.Application.Services
             var existingUser = await _userRepository.GetByEmailAsync(user.Email);
             if (existingUser != null)
             {
-                var msg = new AuthDTO { Message = "Email đã được sử dụng." };
-                return Result<AuthDTO>.Success(msg);
+                return Result<AuthDTO>.Failure("Email đã được sử dụng.");
             }
 
             user.Role = string.IsNullOrWhiteSpace(user.Role) ? "Researcher" : user.Role;

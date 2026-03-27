@@ -22,7 +22,28 @@ namespace VietTuneArchive.API.Controllers
             var result = await _service.GetByConversationAsync(conversationId);
             return Ok(result);
         }
-
+        [HttpPut("flagged")]
+        public async Task<IActionResult> UpdateFlaggedStatus(
+            [FromQuery] Guid id)
+        {
+            var result = await _service.FlagMessageAsync(id);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+        [HttpPut("unflagged")]
+        public async Task<IActionResult> UpdateUnflaggedStatus(
+    [FromQuery] Guid id)
+        {
+            var result = await _service.UnflagMessageAsync(id);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
         [HttpGet]
         public async Task<ActionResult<PagedResponse<QAMessageDto>>> GetAll(
             [FromQuery] int page = 1,
