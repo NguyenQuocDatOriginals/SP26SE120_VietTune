@@ -40,6 +40,7 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
 
 const ROLE_NAMES_VI: Record<string, string> = {
   [UserRole.ADMIN]: "Quản trị viên",
+  ADMIN: "Quản trị viên",
   MODERATOR: "Điều hành viên",
   [UserRole.RESEARCHER]: "Nhà nghiên cứu",
   [UserRole.CONTRIBUTOR]: "Người đóng góp",
@@ -50,6 +51,7 @@ const ROLE_NAMES_VI: Record<string, string> = {
 function getRoleNameVi(role: string): string {
   const normalized = role.trim();
   const lowerRoleAlias: Record<string, string> = {
+    admin: "Quản trị viên",
     administrator: "Quản trị viên",
     researcher: "Nhà nghiên cứu",
     contributor: "Người đóng góp",
