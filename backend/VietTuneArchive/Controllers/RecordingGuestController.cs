@@ -8,6 +8,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class RecordingGuestController : ControllerBase
     {
         private readonly IRecordingService _service;
