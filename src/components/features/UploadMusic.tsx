@@ -2468,8 +2468,19 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
         notify.success("Phân tích AI thành công", "Đã tự động điền các thông tin gợi ý.");
         if (aiRes.title) setTitle(aiRes.title);
         if (aiRes.composer) {
-          setComposer(aiRes.composer);
-          setComposerUnknown(false);
+          const lowerComposer = aiRes.composer.toLowerCase();
+          if (
+            lowerComposer.includes("dân gian") ||
+            lowerComposer.includes("không rõ") ||
+            lowerComposer.includes("khuyết danh") ||
+            lowerComposer === "unknown"
+          ) {
+            setComposerUnknown(true);
+            setComposer("");
+          } else {
+            setComposer(aiRes.composer);
+            setComposerUnknown(false);
+          }
         }
         let isInstrumental = false;
         if (aiRes.language) {
