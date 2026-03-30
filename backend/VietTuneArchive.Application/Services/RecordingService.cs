@@ -19,13 +19,18 @@ namespace VietTuneArchive.Application.Services
         private readonly IMusicalScaleRepository _musicalScaleRepository;
         private readonly IInstrumentRepository _instrumentRepository;
         private readonly IVocalStyleRepository _vocalStyleRepository;
+        private readonly IVocalStyleRepository _vocalStyleRepository;
         private readonly ISubmissionRepository _submissionRepository;
-        public RecordingService(IRecordingRepository repository, IMapper mapper, ICommuneRepository communeRepository, IEthnicGroupRepository ethnicGroupRepository, ICeremonyRepository ceremonyRepository, IMusicalScaleRepository musicalScaleRepository, IInstrumentRepository instrumentRepository, IVocalStyleRepository vocalStyleRepository, ISubmissionRepository submissionRepository)
+        private readonly INotificationService _notificationService;
+        private readonly IUserRepository _userRepository;
+        public RecordingService(IRecordingRepository repository, IMapper mapper, ICommuneRepository communeRepository, IEthnicGroupRepository ethnicGroupRepository, ICeremonyRepository ceremonyRepository, IMusicalScaleRepository musicalScaleRepository, IInstrumentRepository instrumentRepository, IVocalStyleRepository vocalStyleRepository, ISubmissionRepository submissionRepository, INotificationService notificationService, IUserRepository userRepository)
             : base(repository, mapper)
         {
             _recordingRepository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _submissionRepository = submissionRepository ?? throw new ArgumentNullException(nameof(submissionRepository));
+            _notificationService = notificationService;
+            _userRepository = userRepository;
             _communeRepository = communeRepository;
             _ethnicGroupRepository = ethnicGroupRepository;
             _ceremonyRepository = ceremonyRepository;
@@ -118,6 +123,23 @@ namespace VietTuneArchive.Application.Services
                 }
 
                 var updatedRecording = await _recordingRepository.UpdateAsync(existingRecording);
+
+                // Gửi thông báo cho toàn bộ Expert khi status là Pending (1)
+                if (existingRecording.Status == SubmissionStatus.Pending)
+                {
+                    var experts = (await _userRepository.GetAllAsync()).Where(u => u.Role == "Expert");
+                    foreach (var expert in experts)
+                    {
+                        await _notificationService.SendNotificationAsync(
+                            expert.Id,
+                            "Bản ghi mới cần duyệt",
+                            $"Bản ghi '{existingRecording.Title}' vừa được tải lên và đang chờ duyệt.",
+                            "NewRecordingPending",
+                            "Recording",
+                            existingRecording.Id
+                        );
+                    }
+                }
 
                 var addedDto = _mapper.Map<RecordingDto>(updatedRecording);
                 return Result<RecordingDto>.Success(addedDto, "Recording information uploaded successfully");

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -68,7 +68,10 @@ namespace VietTuneArchive.API.Controllers
                 Password = model.Password,
                 FullName = model.FullName,
                 Phone = model.PhoneNumber,
-                Role = "Contributor"
+                Role = "Contributor",
+                ContributionScore = 0,
+                IsActive = false,
+                CreatedAt = DateTime.UtcNow
             };
             var result = await _authService.Register(user, model.Password);
 
@@ -88,7 +91,10 @@ namespace VietTuneArchive.API.Controllers
                 Password = model.Password,
                 FullName = model.FullName,
                 Phone = model.PhoneNumber,
-                Role = "Researcher"
+                Role = "Researcher",
+                ContributionScore = 0,
+                IsActive = false,
+                CreatedAt = DateTime.UtcNow
             };
             var result = await _authService.Register(user, model.Password);
 

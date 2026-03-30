@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +12,7 @@ using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Repositories;
+using VietTuneArchive.Hubs;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
@@ -173,6 +174,7 @@ builder.Services.AddScoped<IQAMessageService, QAMessageService>();
 // ✅ SERVICES - User & Audit
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 
 builder.Services.AddMemoryCache();
@@ -186,12 +188,16 @@ builder.Services.Configure<GmailApiSettings>(builder.Configuration.GetSection("G
 builder.Services.AddTransient<EmailService>();
 builder.Services.AddHttpClient<EmailService>();
 
+// SignalR Service
+builder.Services.AddSignalR();
+
 builder.Services.AddCors(o => 
 {
     o.AddPolicy("AllowReactApp", p =>
-        p.AllowAnyOrigin()
+        p.WithOrigins("http://localhost:3000", "http://localhost:5173") // Thay đổi domain của React app tương ứng
          .AllowAnyHeader()
-         .AllowAnyMethod());
+         .AllowAnyMethod()
+         .AllowCredentials());
 });
 
 var app = builder.Build();
@@ -213,5 +219,6 @@ app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

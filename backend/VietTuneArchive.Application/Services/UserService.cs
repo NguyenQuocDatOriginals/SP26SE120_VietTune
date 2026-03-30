@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +61,8 @@ namespace VietTuneArchive.Application.Services
                 ResetPasswordTokenExpiry = null,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                IsActive = true
+                IsActive = true,
+                ContributionScore = 0
             };
             await _userRepository.AddAsync(user);
             return Result<CreateExpertUserDTO>.Success(expertUserDTO, "Tạo tài khoản Expert thành công.");
@@ -89,9 +90,9 @@ namespace VietTuneArchive.Application.Services
             {
                 return Result<UpdateNameDTO>.Failure("Người dùng không tồn tại! Kiểm tra lại Id.");
             }
-            if (!getUser.Role.Equals("Customer"))
+            if (!getUser.Role.Equals("Contributor"))
             {
-                return Result<UpdateNameDTO>.Failure("Chỉ có thể cập nhật tên cho khách hàng.");
+                return Result<UpdateNameDTO>.Failure("Chỉ có thể cập nhật tên cho người đóng góp.");
             }
             getUser.FullName = updateUserDTO.FullName;
             await _userRepository.UpdateAsync(getUser);
