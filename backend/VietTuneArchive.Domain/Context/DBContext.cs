@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using VietTuneArchive.Domain.Entities;
 
 namespace VietTuneArchive.Domain.Context
@@ -12,6 +12,8 @@ namespace VietTuneArchive.Domain.Context
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<UserConnection> UserConnections { get; set; }
 
         // DbSets - Geographic Entities
         public DbSet<Province> Provinces { get; set; }
@@ -131,6 +133,47 @@ namespace VietTuneArchive.Domain.Context
                     .WithOne(al => al.User)
                     .HasForeignKey(al => al.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
+
+                // One-to-many: User -> Notifications
+                entity.HasMany(e => e.Notifications)
+                    .WithOne(n => n.User)
+                    .HasForeignKey(n => n.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // One-to-many: User -> UserConnections
+                entity.HasMany(e => e.UserConnections)
+                    .WithOne(uc => uc.User)
+                    .HasForeignKey(uc => uc.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ============= NOTIFICATIONS & CONNECTIONS =============
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired();
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(300);
+                entity.Property(e => e.Message).IsRequired();
+                entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.RelatedEntityType).HasMaxLength(100);
+                entity.Property(e => e.IsRead).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).IsRequired();
+
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => new { e.UserId, e.IsRead });
+                entity.HasIndex(e => e.CreatedAt).IsDescending();
+            });
+
+            modelBuilder.Entity<UserConnection>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired();
+                entity.Property(e => e.ConnectionId).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.UserAgent).HasMaxLength(500);
+                entity.Property(e => e.ConnectedAt).IsRequired();
+
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.ConnectionId).IsUnique();
             });
 
             modelBuilder.Entity<RefreshToken>(entity =>

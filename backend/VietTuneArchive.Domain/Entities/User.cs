@@ -62,5 +62,7 @@ namespace VietTuneArchive.Domain.Entities
         public ICollection<KBEntry>? KBEntries { get; set; }
         public ICollection<KBRevision>? KBRevisions { get; set; }
         public ICollection<AuditLog>? AuditLogs { get; set; }
+        public ICollection<Notification>? Notifications { get; set; }
+        public ICollection<UserConnection>? UserConnections { get; set; }
     }
 }
