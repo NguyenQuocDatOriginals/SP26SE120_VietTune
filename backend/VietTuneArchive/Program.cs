@@ -194,7 +194,7 @@ builder.Services.AddSignalR();
 builder.Services.AddCors(o => 
 {
     o.AddPolicy("AllowReactApp", p =>
-        p.WithOrigins("http://localhost:3000", "http://localhost:5173") // Thay đổi domain của React app tương ứng
+        p.WithOrigins("http://localhost:3000", "http://localhost:5173", "https://viettunearchiveapi-fufkgcayeydnhdeq.japanwest-01.azurewebsites.net")
          .AllowAnyHeader()
          .AllowAnyMethod()
          .AllowCredentials());
