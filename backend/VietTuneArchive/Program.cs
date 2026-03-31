@@ -161,6 +161,8 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAnnotationService, AnnotationService>();
 builder.Services.AddScoped<IVectorEmbeddingService, VectorEmbeddingService>();
 builder.Services.AddScoped<IAudioProcessingService, AudioProcessingService>();
+builder.Services.AddSingleton<IInstrumentDetectionService, InstrumentDetectionService>();
+
 
 // ✅ SERVICES - Knowledge Base
 builder.Services.AddScoped<IKBEntryService, KBEntryService>();
