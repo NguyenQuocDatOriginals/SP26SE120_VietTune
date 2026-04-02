@@ -5,9 +5,10 @@ using VietTuneArchive.Application.Mapper.DTOs;
 
 namespace VietTuneArchive.Application.IServices
 {
-    public interface IInstrumentDetectionService : IDisposable
+    public interface IInstrumentDetectionService
     {
-        Task<MultiInstrumentDetectionResponse> DetectMultipleInstrumentsAsync(Stream audioStream, string fileName);
-        string[] SupportedInstruments { get; }
+        Task<PythonAnalyzeResponse> DetectInstrumentsAsync(Stream audioStream, string fileName, bool includeTimeline = false);
+        Task<string[]> GetSupportedInstrumentsAsync();
     }
 }
+
