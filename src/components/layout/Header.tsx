@@ -1,15 +1,26 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Bell, User, LogOut, Menu, X, MessageCircle, CheckCircle, Edit3, Trash2 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types";
-import type { AppNotification } from "@/types";
-import { APP_NAME, INTELLIGENCE_NAME } from "@/config/constants";
-import logo from "@/components/image/VietTune logo.png";
-import { sessionSetItem } from "@/services/storageService";
-import { recordingRequestService } from "@/services/recordingRequestService";
-import { formatDateTime } from "@/utils/helpers";
-import { getLayoutFeatureItems } from "@/utils/layoutFeatureItems";
+import {
+  Bell,
+  User,
+  LogOut,
+  Menu,
+  X,
+  MessageCircle,
+  CheckCircle,
+  Edit3,
+  Trash2,
+} from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import logo from '@/components/image/VietTune logo.png';
+import { APP_NAME, INTELLIGENCE_NAME } from '@/config/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import { recordingRequestService } from '@/services/recordingRequestService';
+import { sessionSetItem } from '@/services/storageService';
+import { UserRole } from '@/types';
+import type { AppNotification } from '@/types';
+import { formatDateTime } from '@/utils/helpers';
+import { getLayoutFeatureItems } from '@/utils/layoutFeatureItems';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,9 +51,9 @@ export default function Header() {
 
   const handleLogout = () => {
     // Set fromLogout before navigate so LoginPage sees it on mount and hides "Trở về".
-    sessionSetItem("fromLogout", "1");
+    sessionSetItem('fromLogout', '1');
     // Navigate without redirect
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
     queueMicrotask(() => logout());
   };
 
@@ -58,16 +69,16 @@ export default function Header() {
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setIsMenuOpen(false);
         setIsNotiOpen(false);
       }
     };
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, []);
 
@@ -90,11 +101,19 @@ export default function Header() {
           <div className="flex items-center justify-between gap-3 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-5 xl:gap-8">
             {/* Logo */}
             <div className="flex shrink-0 items-center justify-self-start">
-              <Link to="/" className="group flex items-center space-x-2 text-white transition-colors hover:text-secondary-300">
+              <Link
+                to="/"
+                className="group flex items-center space-x-2 text-white transition-colors hover:text-secondary-300"
+              >
                 <img
                   src={logo}
                   alt="VietTune Logo"
                   className="h-9 w-9 object-contain rounded-lg"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  width={36}
+                  height={36}
                 />
                 <span className="text-xl font-bold text-white transition-colors group-hover:text-secondary-300">
                   {APP_NAME}
@@ -143,75 +162,113 @@ export default function Header() {
               >
                 <MessageCircle className="h-5 w-5" strokeWidth={2.5} />
               </Link>
-              {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT || user?.role === UserRole.ADMIN) && user?.isActive && (
-                <div className="relative flex shrink-0 items-center">
-                  <button
-                    ref={(el) => (notiButtonRef.current = el)}
-                    type="button"
-                    onClick={() => setIsNotiOpen(!isNotiOpen)}
-                    className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white transition-colors duration-200 hover:bg-white/10 hover:text-secondary-300 active:text-secondary-400"
-                    aria-label="Thông báo"
-                  >
-                    <Bell className="h-5 w-5" strokeWidth={2.5} />
-                    {notifications.some(n => !n.read) && (
-                      <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-primary-800 bg-red-500" />
-                    )}
-                  </button>
-                  {isNotiOpen && (
-                    <div
-                      ref={(el) => (notiMenuRef.current = el)}
-                      className="absolute right-0 mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-[#FFFCF5] z-[70] w-80 sm:w-96 transition-all duration-300 flex flex-col"
-                      style={{ top: '100%' }}
+              {(user?.role === UserRole.CONTRIBUTOR ||
+                user?.role === UserRole.EXPERT ||
+                user?.role === UserRole.ADMIN) &&
+                user?.isActive && (
+                  <div className="relative flex shrink-0 items-center">
+                    <button
+                      ref={(el) => (notiButtonRef.current = el)}
+                      type="button"
+                      onClick={() => setIsNotiOpen(!isNotiOpen)}
+                      className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white transition-colors duration-200 hover:bg-white/10 hover:text-secondary-300 active:text-secondary-400"
+                      aria-label="Thông báo"
                     >
-                      <div className="px-5 py-3 border-b border-neutral-200 flex justify-between items-center bg-white shadow-sm z-10">
-                        <span className="font-semibold text-neutral-900">Thông báo mới</span>
-                      </div>
-                      <div className="max-h-[60vh] overflow-y-auto">
-                        {notifications.length > 0 ? (
-                          <ul className="divide-y divide-neutral-100">
-                            {notifications.slice(0, 8).map((n) => (
-                              <li
-                                key={n.id}
-                                className={`p-4 hover:bg-neutral-50 transition-colors ${!n.read ? 'bg-primary-50/50' : 'bg-white'}`}
-                              >
-                                <div className="flex gap-3">
-                                  <div className="mt-0.5 flex-shrink-0">
-                                    {n.type === "recording_deleted" ? <Trash2 className="h-5 w-5 text-red-600" strokeWidth={2.5} /> :
-                                      n.type === "recording_edited" ? <Edit3 className="h-5 w-5 text-primary-600" strokeWidth={2.5} /> :
-                                        n.type === "edit_submission_approved" || n.type === "expert_account_deletion_approved" ? <CheckCircle className="h-5 w-5 text-green-600" strokeWidth={2.5} /> :
-                                          n.type === "delete_request_rejected" ? <X className="h-5 w-5 text-neutral-600" strokeWidth={2.5} /> :
-                                            <Bell className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                                    }
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-1 mb-1">
-                                      <p className="text-sm font-semibold text-neutral-900 truncate" title={n.title}>{n.title}</p>
-                                      {!n.read && <span className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1.5" title="Chưa đọc" />}
-                                    </div>
-                                    <p className="text-xs text-neutral-600 line-clamp-2" title={n.body}>{n.body}</p>
-                                    <p className="text-[11px] text-neutral-400 mt-1">{formatDateTime(n.createdAt)}</p>
-                                  </div>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="p-6 text-center text-neutral-500 text-sm">
-                            Chưa có thông báo nào.
-                          </div>
-                        )}
-                      </div>
-                      <Link
-                        to="/notifications"
-                        onClick={() => setIsNotiOpen(false)}
-                        className="block px-5 py-3 text-center text-sm font-medium text-primary-600 bg-neutral-50 hover:bg-primary-50 transition-colors border-t border-neutral-200 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
+                      <Bell className="h-5 w-5" strokeWidth={2.5} />
+                      {notifications.some((n) => !n.read) && (
+                        <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-primary-800 bg-red-500" />
+                      )}
+                    </button>
+                    {isNotiOpen && (
+                      <div
+                        ref={(el) => (notiMenuRef.current = el)}
+                        className="absolute right-0 mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-[#FFFCF5] z-[70] w-80 sm:w-96 transition-all duration-300 flex flex-col"
+                        style={{ top: '100%' }}
                       >
-                        Xem tất cả thông báo
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
+                        <div className="px-5 py-3 border-b border-neutral-200 flex justify-between items-center bg-white shadow-sm z-10">
+                          <span className="font-semibold text-neutral-900">Thông báo mới</span>
+                        </div>
+                        <div className="max-h-[60vh] overflow-y-auto">
+                          {notifications.length > 0 ? (
+                            <ul className="divide-y divide-neutral-100">
+                              {notifications.slice(0, 8).map((n) => (
+                                <li
+                                  key={n.id}
+                                  className={`p-4 hover:bg-neutral-50 transition-colors ${!n.read ? 'bg-primary-50/50' : 'bg-white'}`}
+                                >
+                                  <div className="flex gap-3">
+                                    <div className="mt-0.5 flex-shrink-0">
+                                      {n.type === 'recording_deleted' ? (
+                                        <Trash2
+                                          className="h-5 w-5 text-red-600"
+                                          strokeWidth={2.5}
+                                        />
+                                      ) : n.type === 'recording_edited' ? (
+                                        <Edit3
+                                          className="h-5 w-5 text-primary-600"
+                                          strokeWidth={2.5}
+                                        />
+                                      ) : n.type === 'edit_submission_approved' ||
+                                        n.type === 'expert_account_deletion_approved' ? (
+                                        <CheckCircle
+                                          className="h-5 w-5 text-green-600"
+                                          strokeWidth={2.5}
+                                        />
+                                      ) : n.type === 'delete_request_rejected' ? (
+                                        <X className="h-5 w-5 text-neutral-600" strokeWidth={2.5} />
+                                      ) : (
+                                        <Bell
+                                          className="h-5 w-5 text-primary-600"
+                                          strokeWidth={2.5}
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-1 mb-1">
+                                        <p
+                                          className="text-sm font-semibold text-neutral-900 truncate"
+                                          title={n.title}
+                                        >
+                                          {n.title}
+                                        </p>
+                                        {!n.read && (
+                                          <span
+                                            className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-1.5"
+                                            title="Chưa đọc"
+                                          />
+                                        )}
+                                      </div>
+                                      <p
+                                        className="text-xs text-neutral-600 line-clamp-2"
+                                        title={n.body}
+                                      >
+                                        {n.body}
+                                      </p>
+                                      <p className="text-[11px] text-neutral-400 mt-1">
+                                        {formatDateTime(n.createdAt)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="p-6 text-center text-neutral-500 text-sm">
+                              Chưa có thông báo nào.
+                            </div>
+                          )}
+                        </div>
+                        <Link
+                          to="/notifications"
+                          onClick={() => setIsNotiOpen(false)}
+                          className="block px-5 py-3 text-center text-sm font-medium text-primary-600 bg-neutral-50 hover:bg-primary-50 transition-colors border-t border-neutral-200 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
+                        >
+                          Xem tất cả thông báo
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {isAuthenticated ? (
                 <>
@@ -228,7 +285,7 @@ export default function Header() {
                     >
                       <User className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />
                       <span className="min-w-0 truncate text-xs font-medium leading-none sm:text-sm">
-                        {user?.username || user?.fullName || "Người dùng"}
+                        {user?.username || user?.fullName || 'Người dùng'}
                       </span>
                     </button>
 
@@ -252,7 +309,10 @@ export default function Header() {
                             Hồ sơ
                           </Link>
                           <button
-                            onClick={() => { setIsMenuOpen(false); handleLogout(); }}
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              handleLogout();
+                            }}
                             className="w-full text-left px-5 py-3 text-sm text-primary-600 hover:bg-primary-100/90 hover:text-primary-700 transition-all duration-200 flex items-center cursor-pointer"
                           >
                             <LogOut className="h-4 w-4 mr-2" strokeWidth={2.5} />
@@ -288,7 +348,7 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="cursor-pointer p-1.5 text-white transition-colors duration-200 hover:text-secondary-300 active:text-secondary-400"
                 aria-expanded={isMobileMenuOpen}
-                aria-label={isMobileMenuOpen ? "Đóng menu" : "Mở menu"}
+                aria-label={isMobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
               >
                 {isMobileMenuOpen ? (
                   <X className="h-6 w-6" strokeWidth={2.5} />
@@ -360,7 +420,7 @@ export default function Header() {
                   Đóng góp của bạn
                 </Link>
               )}
-               {user?.role === UserRole.RESEARCHER && user?.isActive && (
+              {user?.role === UserRole.RESEARCHER && user?.isActive && (
                 <Link
                   to="/researcher"
                   className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
@@ -399,7 +459,9 @@ export default function Header() {
                   >
                     Hồ sơ
                   </Link>
-                  {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT || user?.role === UserRole.ADMIN) && (
+                  {(user?.role === UserRole.CONTRIBUTOR ||
+                    user?.role === UserRole.EXPERT ||
+                    user?.role === UserRole.ADMIN) && (
                     <Link
                       to="/notifications"
                       className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"

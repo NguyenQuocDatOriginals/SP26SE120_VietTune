@@ -1,6 +1,6 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/constants";
-import { getItem } from "@/services/storageService";
+import { api } from '@/services/api';
+import type { ServiceApiClient } from '@/services/serviceApiClient';
+import { logServiceError } from '@/services/serviceLogger';
 
 export interface QAConversationRequest {
   id: string;
@@ -9,33 +9,34 @@ export interface QAConversationRequest {
   createdAt: string;
 }
 
-const getHeaders = () => {
-  const token = getItem("access_token");
+export function createQAConversationService(client: ServiceApiClient) {
   return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    createQAConversation: async (data: QAConversationRequest): Promise<void> => {
+      try {
+        await client.post('/QAConversation', data);
+      } catch (err) {
+        logServiceError('Lỗi khi tạo conversation', err);
+        throw err;
+      }
+    },
+    fetchUserConversations: async (userId: string): Promise<QAConversationRequest[]> => {
+      try {
+        const res = await client.get<{ data?: QAConversationRequest[] } | QAConversationRequest[]>(
+          '/QAConversation/get-by-user',
+          {
+            params: { userId },
+          },
+        );
+        if (Array.isArray(res)) return res;
+        return res?.data || [];
+      } catch (err) {
+        logServiceError('Lỗi khi lấy lịch sử hội thoại', err);
+        return [];
+      }
+    },
   };
-};
+}
 
-export const createQAConversation = async (data: QAConversationRequest): Promise<void> => {
-  try {
-    await axios.post(`${API_BASE_URL}/QAConversation`, data, {
-      headers: getHeaders(),
-    });
-  } catch (err) {
-    console.error("Lỗi khi tạo conversation:", err);
-    throw err;
-  }
-};
-
-export const fetchUserConversations = async (userId: string): Promise<QAConversationRequest[]> => {
-  try {
-    const res = await axios.get(`${API_BASE_URL}/QAConversation/get-by-user`, {
-      params: { userId },
-      headers: getHeaders(),
-    });
-    return res.data?.data || [];
-  } catch (err) {
-    console.error("Lỗi khi lấy lịch sử hội thoại:", err);
-    return [];
-  }
-};
+const qaConversationService = createQAConversationService(api);
+export const createQAConversation = qaConversationService.createQAConversation;
+export const fetchUserConversations = qaConversationService.fetchUserConversations;

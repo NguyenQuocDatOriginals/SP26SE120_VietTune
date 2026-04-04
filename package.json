@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:analyze": "cross-env BUNDLE_ANALYZE=true tsc && vite build --mode analyze",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check:toast": "node scripts/check-toast-conventions.mjs",
     "test:unit": "vitest run",
@@ -24,7 +25,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:prod": "cross-env PW_ENV=production playwright test",
     "test:e2e:prod:headed": "cross-env PW_ENV=production playwright test --headed",
-    "test:e2e:prod:url": "cross-env PW_ENV=production PW_BASE_URL=https://viettune.vn playwright test"
+    "test:e2e:prod:url": "cross-env PW_ENV=production PW_BASE_URL=https://viettune.vn playwright test",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/"
   },
   "dependencies": {
     "@sentry/react": "^10.38.0",
@@ -46,6 +49,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
+    "@testing-library/react": "^16.3.0",
     "@types/d3-force": "^3.0.10",
     "@types/node": "^25.0.3",
     "@types/react": "^18.2.47",
@@ -57,9 +61,13 @@
     "cross-env": "^10.1.0",
     "dotenv": "^17.3.1",
     "eslint": "^8.56.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "jsdom": "^27.0.1",
     "postcss": "^8.4.33",
+    "prettier": "^3.6.2",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.11",

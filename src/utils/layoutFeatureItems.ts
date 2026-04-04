@@ -1,13 +1,8 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Compass,
-  Upload,
-  UserPlus,
-  ShieldCheck,
-  FileCheck,
-} from "lucide-react";
-import type { User } from "@/types";
-import { UserRole } from "@/types";
+import type { LucideIcon } from 'lucide-react';
+import { Compass, Upload, UserPlus, ShieldCheck, FileCheck } from 'lucide-react';
+
+import type { User } from '@/types';
+import { UserRole } from '@/types';
 
 export type LayoutFeatureItem = {
   icon: LucideIcon;
@@ -26,19 +21,18 @@ export function getLayoutFeatureItems(user: User | null): LayoutFeatureItem[] {
     return [
       {
         icon: Compass,
-        title: "Khám phá âm nhạc dân tộc",
-        description:
-          "Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước",
-        to: "/explore",
+        title: 'Khám phá âm nhạc dân tộc',
+        description: 'Duyệt qua kho tàng âm nhạc truyền thống phong phú từ khắp mọi miền đất nước',
+        to: '/explore',
       },
       ...(isAdmin
         ? [
             {
               icon: UserPlus,
-              title: "Cấp tài khoản Chuyên gia",
+              title: 'Cấp tài khoản Chuyên gia',
               description:
-                "Tạo tài khoản Chuyên gia mới để kiểm duyệt và xác minh bản thu âm nhạc truyền thống",
-              to: "/admin/create-expert",
+                'Tạo tài khoản Chuyên gia mới để kiểm duyệt và xác minh bản thu âm nhạc truyền thống',
+              to: '/admin/create-expert',
             },
           ]
         : []),
@@ -46,19 +40,18 @@ export function getLayoutFeatureItems(user: User | null): LayoutFeatureItem[] {
         ? [
             {
               icon: ShieldCheck,
-              title: "Quản trị hệ thống",
-              description:
-                "Quản lý người dùng, phân tích bộ sưu tập và kiểm duyệt nội dung",
-              to: "/admin",
+              title: 'Quản trị hệ thống',
+              description: 'Quản lý người dùng, phân tích bộ sưu tập và kiểm duyệt nội dung',
+              to: '/admin',
             },
           ]
         : [
             {
               icon: Upload,
-              title: "Đóng góp bản thu",
+              title: 'Đóng góp bản thu',
               description:
-                "Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa",
-              to: "/upload",
+                'Chia sẻ bản thu âm nhạc truyền thống của bạn để cùng gìn giữ di sản văn hóa',
+              to: '/upload',
             },
           ]),
     ];
@@ -67,17 +60,16 @@ export function getLayoutFeatureItems(user: User | null): LayoutFeatureItem[] {
   return [
     {
       icon: ShieldCheck,
-      title: "Kiểm duyệt bản thu",
+      title: 'Kiểm duyệt bản thu',
       description:
-        "Xem xét và phê duyệt các bản thu âm nhạc truyền thống được đóng góp bởi cộng đồng",
-      to: "/moderation",
+        'Xem xét và phê duyệt các bản thu âm nhạc truyền thống được đóng góp bởi cộng đồng',
+      to: '/moderation',
     },
     {
       icon: FileCheck,
-      title: "Quản lý bản thu đã được kiểm duyệt",
-      description:
-        "Quản lý và theo dõi các bản thu đã được phê duyệt trong hệ thống",
-      to: "/approved-recordings",
+      title: 'Quản lý bản thu đã được kiểm duyệt',
+      description: 'Quản lý và theo dõi các bản thu đã được phê duyệt trong hệ thống',
+      to: '/approved-recordings',
     },
   ];
 }

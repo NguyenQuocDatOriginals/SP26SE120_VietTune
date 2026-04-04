@@ -1,12 +1,9 @@
-import toast, { type ToastOptions } from "react-hot-toast";
-import axios from "axios";
-import {
-  MESSAGE_CATALOG,
-  resolveCatalogMessage,
-  type MessageKey,
-} from "./messageCatalog";
-import { interpolate } from "./interpolate";
-import { getNormalizedApiError } from "./normalizeApiError";
+import axios from 'axios';
+import toast, { type ToastOptions } from 'react-hot-toast';
+
+import { interpolate } from './interpolate';
+import { MESSAGE_CATALOG, resolveCatalogMessage, type MessageKey } from './messageCatalog';
+import { getNormalizedApiError } from './normalizeApiError';
 
 function isMessageKey(s: string): s is MessageKey {
   return Object.prototype.hasOwnProperty.call(MESSAGE_CATALOG, s);
@@ -30,20 +27,20 @@ function baseOptions(overrides?: ToastOptions): ToastOptions {
 
 /** Map HTTP status to catalog key for generic API failures. */
 function statusToMessageKey(status: number | undefined): MessageKey {
-  if (status == null) return "common.network";
-  if (status === 400) return "common.http_400";
-  if (status === 401) return "common.http_401";
-  if (status === 403) return "common.http_403";
-  if (status === 404) return "common.http_404";
-  if (status === 422) return "common.http_422";
-  if (status >= 500) return "common.http_500";
-  return "common.unknown";
+  if (status == null) return 'common.network';
+  if (status === 400) return 'common.http_400';
+  if (status === 401) return 'common.http_401';
+  if (status === 403) return 'common.http_403';
+  if (status === 404) return 'common.http_404';
+  if (status === 422) return 'common.http_422';
+  if (status >= 500) return 'common.http_500';
+  return 'common.unknown';
 }
 
 function codeToMessageKey(code: string): MessageKey {
-  if (code === "NETWORK") return "common.network";
-  if (code === "TIMEOUT") return "common.timeout";
-  return "common.unknown";
+  if (code === 'NETWORK') return 'common.network';
+  if (code === 'TIMEOUT') return 'common.timeout';
+  return 'common.unknown';
 }
 
 /**
@@ -74,7 +71,7 @@ export const uiToast = {
   ): string {
     return toast(resolveText(messageOrKey, vars), {
       ...baseOptions(options),
-      icon: "ℹ️",
+      icon: 'ℹ️',
     });
   },
 
@@ -85,7 +82,7 @@ export const uiToast = {
   ): string {
     return toast(resolveText(messageOrKey, vars), {
       ...baseOptions(options),
-      icon: "⚠️",
+      icon: '⚠️',
     });
   },
 
@@ -115,16 +112,14 @@ export const uiToast = {
    */
   fromApiError(
     err: unknown,
-    fallbackKey: MessageKey = "common.unknown",
+    fallbackKey: MessageKey = 'common.unknown',
     options?: ToastOptions,
   ): string {
     if (axios.isAxiosError(err)) {
       const n = getNormalizedApiError(err) ?? null;
       if (n) {
         const key =
-          n.httpStatus != null
-            ? statusToMessageKey(n.httpStatus)
-            : codeToMessageKey(n.code);
+          n.httpStatus != null ? statusToMessageKey(n.httpStatus) : codeToMessageKey(n.code);
         return toast.error(resolveCatalogMessage(key), baseOptions(options));
       }
     }

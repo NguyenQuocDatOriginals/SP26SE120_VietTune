@@ -1,6 +1,3 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useMediaFocusStore } from "@/stores/mediaFocusStore";
 import {
   Play,
   Pause,
@@ -14,11 +11,15 @@ import {
   Repeat,
   Maximize,
   Minimize,
-} from "lucide-react";
-import type { Recording } from "@/types";
-import { RECORDING_TYPE_NAMES } from "@/config/constants";
-import { getRegionDisplayName } from "@/utils/recordingTags";
-import type { LocalRecording } from "@/types";
+} from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { RECORDING_TYPE_NAMES } from '@/config/constants';
+import { useMediaFocusStore } from '@/stores/mediaFocusStore';
+import type { Recording } from '@/types';
+import type { LocalRecording } from '@/types';
+import { getRegionDisplayName } from '@/utils/recordingTags';
 
 /** Throttle interval for time updates (ms) - reduces re-renders during playback */
 const TIME_UPDATE_THROTTLE_MS = 200;
@@ -51,11 +52,11 @@ export default function VideoPlayer({
   title,
   artist,
   compact = false,
-  className = "",
+  className = '',
   recording,
   showContainer = false,
   showMetadataTags = true,
-  returnTo
+  returnTo,
 }: Props) {
   // All hooks and variables must be declared before any return
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -92,11 +93,14 @@ export default function VideoPlayer({
   const navigate = useNavigate();
   const location = useLocation();
   // Check if src is a video data URL or video file
-  const isVideo = src && typeof src === 'string' && (src.startsWith('data:video/') || src.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
+  const isVideo =
+    src &&
+    typeof src === 'string' &&
+    (src.startsWith('data:video/') || src.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
 
   // Resolve data:video/ URLs to Blob URL for smoother playback (offloads decoding from main thread)
   useEffect(() => {
-    if (!src || typeof src !== "string" || !src.startsWith("data:video/")) {
+    if (!src || typeof src !== 'string' || !src.startsWith('data:video/')) {
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;
@@ -130,8 +134,8 @@ export default function VideoPlayer({
   }, [src]);
 
   // Use blob URL when ready for data:video/ to avoid main-thread decode; otherwise use src
-  const isDataVideo = Boolean(src && typeof src === "string" && src.startsWith("data:video/"));
-  const effectiveVideoSrc = isDataVideo ? resolvedVideoSrc : (isVideo ? src : undefined);
+  const isDataVideo = Boolean(src && typeof src === 'string' && src.startsWith('data:video/'));
+  const effectiveVideoSrc = isDataVideo ? resolvedVideoSrc : isVideo ? src : undefined;
   const videoSrcReady = isVideo && (isDataVideo ? resolvedVideoSrc != null : true);
 
   // Handle click to navigate to detail page (excluding buttons and progress bar)
@@ -143,7 +147,7 @@ export default function VideoPlayer({
     if (isButton || isProgressBar || isVolumeControl || !recording?.id) return;
 
     const path = `/recordings/${recording.id}`;
-    const pathNorm = location.pathname.replace(/\/$/, "") || "/";
+    const pathNorm = location.pathname.replace(/\/$/, '') || '/';
     if (pathNorm === path) return;
 
     type NavState = { from?: string; preloadedRecording?: Recording };
@@ -198,13 +202,19 @@ export default function VideoPlayer({
   const onVideoAreaMouseEnter = () => {
     if (!playing) return;
     clearHideCursorTimer();
-    hideCursorTimeoutRef.current = window.setTimeout(() => setCursorHidden(true), CURSOR_HIDE_DELAY_MS);
+    hideCursorTimeoutRef.current = window.setTimeout(
+      () => setCursorHidden(true),
+      CURSOR_HIDE_DELAY_MS,
+    );
   };
   const onVideoAreaMouseMove = () => {
     clearHideCursorTimer();
     setCursorHidden(false);
     if (playing) {
-      hideCursorTimeoutRef.current = window.setTimeout(() => setCursorHidden(true), CURSOR_HIDE_DELAY_MS);
+      hideCursorTimeoutRef.current = window.setTimeout(
+        () => setCursorHidden(true),
+        CURSOR_HIDE_DELAY_MS,
+      );
     }
   };
   const onVideoAreaMouseLeave = () => {
@@ -238,13 +248,13 @@ export default function VideoPlayer({
       setIsFullscreen(fsEl === playerRootRef.current);
     };
 
-    document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("webkitfullscreenchange", onFsChange as EventListener);
-    document.addEventListener("MSFullscreenChange", onFsChange as EventListener);
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange as EventListener);
+    document.addEventListener('MSFullscreenChange', onFsChange as EventListener);
     return () => {
-      document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("webkitfullscreenchange", onFsChange as EventListener);
-      document.removeEventListener("MSFullscreenChange", onFsChange as EventListener);
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange as EventListener);
+      document.removeEventListener('MSFullscreenChange', onFsChange as EventListener);
     };
   }, []);
 
@@ -330,14 +340,14 @@ export default function VideoPlayer({
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
 
-    media.addEventListener("timeupdate", onTime);
-    media.addEventListener("play", onPlay);
-    media.addEventListener("pause", onPause);
-    media.addEventListener("loadedmetadata", onMeta);
-    media.addEventListener("volumechange", onVolume);
-    media.addEventListener("ended", onEnded);
-    media.addEventListener("canplay", onCanPlay);
-    media.addEventListener("waiting", onWaiting);
+    media.addEventListener('timeupdate', onTime);
+    media.addEventListener('play', onPlay);
+    media.addEventListener('pause', onPause);
+    media.addEventListener('loadedmetadata', onMeta);
+    media.addEventListener('volumechange', onVolume);
+    media.addEventListener('ended', onEnded);
+    media.addEventListener('canplay', onCanPlay);
+    media.addEventListener('waiting', onWaiting);
 
     setVolume(media.volume);
     setDuration(isNaN(media.duration) ? 0 : media.duration || 0);
@@ -348,14 +358,14 @@ export default function VideoPlayer({
     }
 
     return () => {
-      media.removeEventListener("timeupdate", onTime);
-      media.removeEventListener("play", onPlay);
-      media.removeEventListener("pause", onPause);
-      media.removeEventListener("loadedmetadata", onMeta);
-      media.removeEventListener("volumechange", onVolume);
-      media.removeEventListener("ended", onEnded);
-      media.removeEventListener("canplay", onCanPlay);
-      media.removeEventListener("waiting", onWaiting);
+      media.removeEventListener('timeupdate', onTime);
+      media.removeEventListener('play', onPlay);
+      media.removeEventListener('pause', onPause);
+      media.removeEventListener('loadedmetadata', onMeta);
+      media.removeEventListener('volumechange', onVolume);
+      media.removeEventListener('ended', onEnded);
+      media.removeEventListener('canplay', onCanPlay);
+      media.removeEventListener('waiting', onWaiting);
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -367,7 +377,6 @@ export default function VideoPlayer({
     };
   }, [src, isDragging, videoSrcReady, myId]);
 
-
   const play = async () => {
     const media = videoRef.current;
     if (!media) return;
@@ -376,7 +385,7 @@ export default function VideoPlayer({
       await media.play();
       setPlaying(true);
     } catch (e) {
-      console.warn("Play failed:", e);
+      console.warn('Play failed:', e);
       setActiveMediaId(null);
     }
   };
@@ -423,10 +432,10 @@ export default function VideoPlayer({
   };
 
   const formatTime = (t: number) => {
-    if (!t || isNaN(t)) return "00:00";
+    if (!t || isNaN(t)) return '00:00';
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60);
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   // Use dragTime when dragging, otherwise use currentTime for smooth updates
@@ -490,16 +499,22 @@ export default function VideoPlayer({
       } catch {
         // ignore
       }
-    } else if (videoRef.current && "webkitEnterFullscreen" in videoRef.current && typeof (videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen === "function") {
+    } else if (
+      videoRef.current &&
+      'webkitEnterFullscreen' in videoRef.current &&
+      typeof (videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void })
+        .webkitEnterFullscreen === 'function'
+    ) {
       // iOS Safari fallback for <video>
       try {
-        (videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen();
+        (
+          videoRef.current as HTMLVideoElement & { webkitEnterFullscreen: () => void }
+        ).webkitEnterFullscreen();
       } catch {
         // ignore
       }
     }
   };
-
 
   // Container version with metadata
   if (showContainer && recording) {
@@ -512,20 +527,29 @@ export default function VideoPlayer({
         >
           <div
             ref={playerRootRef}
-            className={`relative ${isFullscreen ? "flex flex-col items-center justify-center h-full w-full min-h-0" : ""}`}
+            className={`relative ${isFullscreen ? 'flex flex-col items-center justify-center h-full w-full min-h-0' : ''}`}
             onMouseMove={showControlsTemporarily}
           >
             {/* Video Player (Full Version) - wrapper với overflow-hidden để góc bo tròn không bị nhô vuông */}
             <div
-              className={`w-full rounded-md overflow-hidden ${isFullscreen ? "flex-1 min-h-0 flex items-center justify-center" : ""} ${playing && cursorHidden ? "cursor-none" : ""}`}
-              style={{ contain: "layout paint" }}
+              className={`w-full rounded-md overflow-hidden ${isFullscreen ? 'flex-1 min-h-0 flex items-center justify-center' : ''} ${playing && cursorHidden ? 'cursor-none' : ''}`}
+              style={{ contain: 'layout paint' }}
               onMouseEnter={onVideoAreaMouseEnter}
               onMouseMove={onVideoAreaMouseMove}
               onMouseLeave={onVideoAreaMouseLeave}
             >
               {isVideo ? (
                 videoSrcReady ? (
-                  <video ref={videoRef} src={effectiveVideoSrc ?? undefined} preload="auto" playsInline className={isFullscreen ? "max-w-full max-h-full object-contain" : "w-full block"} controls={false} />
+                  <video
+                    ref={videoRef}
+                    src={effectiveVideoSrc ?? undefined}
+                    preload="auto"
+                    playsInline
+                    className={
+                      isFullscreen ? 'max-w-full max-h-full object-contain' : 'w-full block'
+                    }
+                    controls={false}
+                  />
                 ) : (
                   <div className="w-full aspect-video bg-neutral-200" aria-busy="true" />
                 )
@@ -537,23 +561,26 @@ export default function VideoPlayer({
             </div>
 
             {!videoSrcReady && isVideo && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200" aria-label="Đang tải video">
+              <div
+                className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200"
+                aria-label="Đang tải video"
+              >
                 <div className="w-8 h-8 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
               </div>
             )}
 
             <div
-              className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl pt-7 px-7 pb-10 ${controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
+              className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl pt-7 px-7 pb-10 ${controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
             >
               {/* Title & Artist */}
               {(title || artist) && (
                 <div className="mb-5">
                   {title && (
-                    <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">{title}</h4>
+                    <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">
+                      {title}
+                    </h4>
                   )}
-                  {artist && (
-                    <p className="text-sm font-medium truncate text-white">{artist}</p>
-                  )}
+                  {artist && <p className="text-sm font-medium truncate text-white">{artist}</p>}
                 </div>
               )}
 
@@ -607,7 +634,7 @@ export default function VideoPlayer({
                       className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
                       style={{
                         width: `${progressPercent}%`,
-                        transition: isDragging ? 'none' : 'width 0.1s linear'
+                        transition: isDragging ? 'none' : 'width 0.1s linear',
                       }}
                     />
                     <div
@@ -615,7 +642,9 @@ export default function VideoPlayer({
                       style={{
                         left: `calc(${progressPercent}% - 7px)`,
                         opacity: isDragging ? 1 : 0,
-                        transition: isDragging ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'
+                        transition: isDragging
+                          ? 'opacity 0s, transform 0.2s'
+                          : 'opacity 0.2s, transform 0.2s',
                       }}
                     />
                   </div>
@@ -638,11 +667,12 @@ export default function VideoPlayer({
                   <button
                     type="button"
                     onClick={toggleLoop}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isLooping
-                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/40'
-                      : 'bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
-                      }`}
-                    title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${
+                      isLooping
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/40'
+                        : 'bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+                    }`}
+                    title={isLooping ? 'Tắt lặp lại' : 'Bật lặp lại'}
                   >
                     <Repeat className="w-4.5 h-4.5" strokeWidth={2.5} />
                   </button>
@@ -668,7 +698,10 @@ export default function VideoPlayer({
                       const rect = e.currentTarget.getBoundingClientRect();
 
                       const updateVolume = (clientX: number) => {
-                        const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                        const percent = Math.max(
+                          0,
+                          Math.min(1, (clientX - rect.left) / rect.width),
+                        );
                         volumeDragValueRef.current = percent;
                         setDragVolume(percent);
 
@@ -708,7 +741,7 @@ export default function VideoPlayer({
                         className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
                         style={{
                           width: `${(isMuted ? 0 : displayVolume) * 100}%`,
-                          transition: isDraggingVolume ? 'none' : 'width 0.1s linear'
+                          transition: isDraggingVolume ? 'none' : 'width 0.1s linear',
                         }}
                       />
                       {/* Thumb */}
@@ -717,12 +750,13 @@ export default function VideoPlayer({
                         style={{
                           left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
                           opacity: isDraggingVolume ? 1 : 0,
-                          transition: isDraggingVolume ? 'opacity 0s, transform 0.2s' : 'opacity 0.2s, transform 0.2s'
+                          transition: isDraggingVolume
+                            ? 'opacity 0s, transform 0.2s'
+                            : 'opacity 0.2s, transform 0.2s',
                         }}
                       />
                     </div>
                   </div>
-
                 </div>
 
                 {/* Center: Play Controls: Lùi, Play/Pause, Tiến */}
@@ -734,7 +768,12 @@ export default function VideoPlayer({
                     title="Lùi 5 giây"
                   >
                     <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+                    <span
+                      className="absolute text-[10px] font-bold text-neutral-800"
+                      style={{ marginTop: '1px' }}
+                    >
+                      5
+                    </span>
                   </button>
 
                   <button
@@ -743,12 +782,13 @@ export default function VideoPlayer({
                     disabled={isLoading}
                     className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none"
                   >
-                    {isLoading
-                      ? <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
-                      : playing
-                        ? <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
-                        : <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
-                    }
+                    {isLoading ? (
+                      <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : playing ? (
+                      <Pause className="w-7 h-7 text-white" strokeWidth={2.5} />
+                    ) : (
+                      <Play className="w-7 h-7 text-white ml-0.5" strokeWidth={2.5} />
+                    )}
                   </button>
 
                   <button
@@ -758,7 +798,12 @@ export default function VideoPlayer({
                     title="Tiến 5 giây"
                   >
                     <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-                    <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: '1px' }}>5</span>
+                    <span
+                      className="absolute text-[10px] font-bold text-neutral-800"
+                      style={{ marginTop: '1px' }}
+                    >
+                      5
+                    </span>
                   </button>
                 </div>
 
@@ -770,8 +815,8 @@ export default function VideoPlayer({
                       e.stopPropagation();
                       void toggleFullscreen();
                     }}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
-                    title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
+                    title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
                     disabled={!isVideo}
                   >
                     {isFullscreen ? (
@@ -788,40 +833,53 @@ export default function VideoPlayer({
           {/* Metadata Tags */}
           {showMetadataTags && (
             <div className="flex flex-wrap items-center gap-2.5 mt-5 pt-5 border-t border-neutral-200/60">
-            {recording?.ethnicity &&
-              typeof recording.ethnicity === "object" &&
-              recording.ethnicity.name &&
-              recording.ethnicity.name !== "Không xác định" &&
-              recording.ethnicity.name.toLowerCase() !== "unknown" &&
-              recording.ethnicity.name.trim() !== "" && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  {recording.ethnicity.nameVietnamese || recording.ethnicity.name}
-                </span>
+              {recording?.ethnicity &&
+                typeof recording.ethnicity === 'object' &&
+                recording.ethnicity.name &&
+                recording.ethnicity.name !== 'Không xác định' &&
+                recording.ethnicity.name.toLowerCase() !== 'unknown' &&
+                recording.ethnicity.name.trim() !== '' && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    {recording.ethnicity.nameVietnamese || recording.ethnicity.name}
+                  </span>
+                )}
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+                <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {getRegionDisplayName(
+                  recording?.region,
+                  (recording as RecordingWithLocalData)?._originalLocalData,
+                )}
+              </span>
+              {recording?.recordingType &&
+                RECORDING_TYPE_NAMES[recording.recordingType] &&
+                RECORDING_TYPE_NAMES[recording.recordingType] !== 'Khác' && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <Music className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    {RECORDING_TYPE_NAMES[recording.recordingType]}
+                  </span>
+                )}
+              {recording?.tags?.map((tag, idx) =>
+                tag && tag.trim() !== '' ? (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                  >
+                    {tag.toLowerCase().includes('dân ca') && (
+                      <Music className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    )}
+                    {tag}
+                  </span>
+                ) : null,
               )}
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-              <MapPin className="h-3.5 w-3.5" strokeWidth={2.5} />
-              {getRegionDisplayName(recording?.region, (recording as RecordingWithLocalData)?._originalLocalData)}
-            </span>
-            {recording?.recordingType && RECORDING_TYPE_NAMES[recording.recordingType] && RECORDING_TYPE_NAMES[recording.recordingType] !== "Khác" && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-                <Music className="h-3.5 w-3.5" strokeWidth={2.5} />
-                {RECORDING_TYPE_NAMES[recording.recordingType]}
-              </span>
-            )}
-            {recording?.tags?.map((tag, idx) =>
-              tag && tag.trim() !== "" ? (
-                <span key={idx} className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-                  {tag.toLowerCase().includes("dân ca") && <Music className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                  {tag}
+              {recording?.instruments?.map((instrument) => (
+                <span
+                  key={instrument.id}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  {instrument.nameVietnamese || instrument.name}
                 </span>
-              ) : null
-            )}
-            {recording?.instruments?.map((instrument) => (
-              <span key={instrument.id} className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-neutral-100/90 text-neutral-700 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-                {instrument.nameVietnamese || instrument.name}
-              </span>
-            ))}
+              ))}
             </div>
           )}
         </div>
@@ -835,7 +893,7 @@ export default function VideoPlayer({
       <div className={`${className} w-full cursor-pointer`} onClick={handleContainerClick}>
         {isVideo ? (
           <div
-            className={`w-full h-20 rounded-md overflow-hidden ${playing && cursorHidden ? "cursor-none" : ""}`}
+            className={`w-full h-20 rounded-md overflow-hidden ${playing && cursorHidden ? 'cursor-none' : ''}`}
             onMouseEnter={onVideoAreaMouseEnter}
             onMouseMove={onVideoAreaMouseMove}
             onMouseLeave={onVideoAreaMouseLeave}
@@ -870,7 +928,7 @@ export default function VideoPlayer({
             }}
             disabled={!isVideo || isLoading}
             className="w-10 h-10 rounded-full flex items-center justify-center bg-primary-600 hover:bg-primary-500 transition-colors disabled:opacity-50 flex-shrink-0 shadow-md hover:shadow-lg"
-            aria-label={playing ? "Tạm dừng" : "Phát"}
+            aria-label={playing ? 'Tạm dừng' : 'Phát'}
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -914,14 +972,14 @@ export default function VideoPlayer({
                     if (dragTime !== null) seekTo(dragTime);
                     setIsDragging(false);
                     setDragTime(null);
-                    document.removeEventListener("mousemove", onMouseMove);
-                    document.removeEventListener("mouseup", onMouseUp);
-                    document.removeEventListener("mouseleave", onMouseUp);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.removeEventListener('mouseleave', onMouseUp);
                   };
 
-                  document.addEventListener("mousemove", onMouseMove, { passive: false });
-                  document.addEventListener("mouseup", onMouseUp);
-                  document.addEventListener("mouseleave", onMouseUp);
+                  document.addEventListener('mousemove', onMouseMove, { passive: false });
+                  document.addEventListener('mouseup', onMouseUp);
+                  document.addEventListener('mouseleave', onMouseUp);
                 }}
               >
                 <div className="relative w-full h-2 bg-neutral-200/80 rounded-full cursor-pointer transition-all duration-200 hover:h-2.5">
@@ -929,7 +987,7 @@ export default function VideoPlayer({
                     className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm"
                     style={{
                       width: `${progressPercent}%`,
-                      transition: isDragging ? "none" : "width 0.1s linear",
+                      transition: isDragging ? 'none' : 'width 0.1s linear',
                     }}
                   />
                   <div
@@ -937,7 +995,7 @@ export default function VideoPlayer({
                     style={{
                       left: `calc(${progressPercent}% - 7px)`,
                       opacity: isDragging ? 1 : 0,
-                      transition: isDragging ? "opacity 0s" : "opacity 0.2s",
+                      transition: isDragging ? 'opacity 0s' : 'opacity 0.2s',
                     }}
                   />
                 </div>
@@ -955,14 +1013,14 @@ export default function VideoPlayer({
   return (
     <div
       ref={playerRootRef}
-      className={`${className} w-full relative cursor-pointer ${isFullscreen ? "flex flex-col items-center justify-center h-full w-full min-h-0" : ""}`}
+      className={`${className} w-full relative cursor-pointer ${isFullscreen ? 'flex flex-col items-center justify-center h-full w-full min-h-0' : ''}`}
       onMouseMove={showControlsTemporarily}
       onClick={handleContainerClick}
     >
       {isVideo ? (
         <div
-          className={`w-full rounded-md overflow-hidden ${isFullscreen ? "flex-1 min-h-0 flex items-center justify-center" : ""} ${playing && cursorHidden ? "cursor-none" : ""}`}
-          style={{ contain: "layout paint" }}
+          className={`w-full rounded-md overflow-hidden ${isFullscreen ? 'flex-1 min-h-0 flex items-center justify-center' : ''} ${playing && cursorHidden ? 'cursor-none' : ''}`}
+          style={{ contain: 'layout paint' }}
           onMouseEnter={onVideoAreaMouseEnter}
           onMouseMove={onVideoAreaMouseMove}
           onMouseLeave={onVideoAreaMouseLeave}
@@ -973,7 +1031,7 @@ export default function VideoPlayer({
               src={effectiveVideoSrc ?? undefined}
               preload="auto"
               playsInline
-              className={isFullscreen ? "max-w-full max-h-full object-contain" : "w-full block"}
+              className={isFullscreen ? 'max-w-full max-h-full object-contain' : 'w-full block'}
               controls={false}
             />
           ) : (
@@ -987,18 +1045,25 @@ export default function VideoPlayer({
       )}
 
       {!videoSrcReady && isVideo && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200" aria-label="Đang tải video">
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center bg-neutral-200"
+          aria-label="Đang tải video"
+        >
           <div className="w-10 h-10 border-2 border-primary-600/30 border-t-primary-600 rounded-full animate-spin" />
         </div>
       )}
 
       <div
-        className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl p-6 ${controlsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
+        className={`absolute left-4 right-4 bottom-4 z-20 backdrop-blur-xl bg-black/50 border border-white/30 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl p-6 ${controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
       >
         {/* Title & Artist */}
         {(title || artist) && (
           <div className="mb-5">
-            {title && <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">{title}</h4>}
+            {title && (
+              <h4 className="font-semibold text-lg mb-1 truncate leading-tight text-white">
+                {title}
+              </h4>
+            )}
             {artist && <p className="text-sm font-medium truncate text-white">{artist}</p>}
           </div>
         )}
@@ -1039,14 +1104,14 @@ export default function VideoPlayer({
                   }
                   setIsDragging(false);
                   setDragTime(null);
-                  document.removeEventListener("mousemove", onMouseMove);
-                  document.removeEventListener("mouseup", onMouseUp);
-                  document.removeEventListener("mouseleave", onMouseUp);
+                  document.removeEventListener('mousemove', onMouseMove);
+                  document.removeEventListener('mouseup', onMouseUp);
+                  document.removeEventListener('mouseleave', onMouseUp);
                 };
 
-                document.addEventListener("mousemove", onMouseMove, { passive: false });
-                document.addEventListener("mouseup", onMouseUp);
-                document.addEventListener("mouseleave", onMouseUp);
+                document.addEventListener('mousemove', onMouseMove, { passive: false });
+                document.addEventListener('mouseup', onMouseUp);
+                document.addEventListener('mouseleave', onMouseUp);
               }}
             >
               <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/progress transition-all duration-200 hover:h-2.5 will-change-[height]">
@@ -1054,7 +1119,7 @@ export default function VideoPlayer({
                   className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
                   style={{
                     width: `${progressPercent}%`,
-                    transition: isDragging ? "none" : "width 0.1s linear",
+                    transition: isDragging ? 'none' : 'width 0.1s linear',
                   }}
                 />
                 <div
@@ -1062,7 +1127,9 @@ export default function VideoPlayer({
                   style={{
                     left: `calc(${progressPercent}% - 7px)`,
                     opacity: isDragging ? 1 : 0,
-                    transition: isDragging ? "opacity 0s, transform 0.2s" : "opacity 0.2s, transform 0.2s",
+                    transition: isDragging
+                      ? 'opacity 0s, transform 0.2s'
+                      : 'opacity 0.2s, transform 0.2s',
                   }}
                 />
               </div>
@@ -1073,7 +1140,9 @@ export default function VideoPlayer({
 
           {isVideo && (
             <div className="flex justify-between mt-2.5">
-              <span className="text-xs font-medium tabular-nums text-white">{formatTime(displayTime)}</span>
+              <span className="text-xs font-medium tabular-nums text-white">
+                {formatTime(displayTime)}
+              </span>
               <span className="text-xs font-medium tabular-nums text-white">
                 -{formatTime(Math.max(0, duration - displayTime))}
               </span>
@@ -1088,10 +1157,12 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleLoop}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${isLooping
-                ? "bg-primary-600 text-white shadow-lg shadow-primary-600/40"
-                : "bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300"} ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
-              title={isLooping ? "Tắt lặp lại" : "Bật lặp lại"}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${
+                isLooping
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/40'
+                  : 'bg-neutral-200/80 text-neutral-600 hover:text-neutral-800 hover:bg-neutral-300'
+              } ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
+              title={isLooping ? 'Tắt lặp lại' : 'Bật lặp lại'}
               disabled={!isVideo}
             >
               <Repeat className="w-4.5 h-4.5" strokeWidth={2.5} />
@@ -1099,7 +1170,7 @@ export default function VideoPlayer({
             <button
               type="button"
               onClick={toggleMute}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
               disabled={!isVideo}
             >
               {isMuted || volume === 0 ? (
@@ -1109,57 +1180,64 @@ export default function VideoPlayer({
               )}
             </button>
             <div
-              className={`w-20 hidden sm:block relative volume-control-container ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
+              className={`w-20 hidden sm:block relative volume-control-container ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
               onClick={stopPropagation}
-              onMouseDown={!isVideo ? undefined : (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setIsDraggingVolume(true);
-                volumeDragValueRef.current = null;
-                const rect = e.currentTarget.getBoundingClientRect();
+              onMouseDown={
+                !isVideo
+                  ? undefined
+                  : (e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setIsDraggingVolume(true);
+                      volumeDragValueRef.current = null;
+                      const rect = e.currentTarget.getBoundingClientRect();
 
-                const updateVolume = (clientX: number) => {
-                  const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                  volumeDragValueRef.current = percent;
-                  setDragVolume(percent);
+                      const updateVolume = (clientX: number) => {
+                        const percent = Math.max(
+                          0,
+                          Math.min(1, (clientX - rect.left) / rect.width),
+                        );
+                        volumeDragValueRef.current = percent;
+                        setDragVolume(percent);
 
-                  // Use requestAnimationFrame for smooth visual updates
-                  if (volumeAnimationFrameRef.current === null) {
-                    volumeAnimationFrameRef.current = requestAnimationFrame(() => {
-                      volumeAnimationFrameRef.current = null;
-                    });
-                  }
-                };
+                        // Use requestAnimationFrame for smooth visual updates
+                        if (volumeAnimationFrameRef.current === null) {
+                          volumeAnimationFrameRef.current = requestAnimationFrame(() => {
+                            volumeAnimationFrameRef.current = null;
+                          });
+                        }
+                      };
 
-                updateVolume(e.clientX);
+                      updateVolume(e.clientX);
 
-                const onMouseMove = (moveEvent: MouseEvent) => {
-                  moveEvent.preventDefault();
-                  updateVolume(moveEvent.clientX);
-                };
+                      const onMouseMove = (moveEvent: MouseEvent) => {
+                        moveEvent.preventDefault();
+                        updateVolume(moveEvent.clientX);
+                      };
 
-                const onMouseUp = () => {
-                  const v = volumeDragValueRef.current;
-                  if (v !== null) handleVolume(v);
-                  volumeDragValueRef.current = null;
-                  setIsDraggingVolume(false);
-                  setDragVolume(null);
-                  document.removeEventListener("mousemove", onMouseMove);
-                  document.removeEventListener("mouseup", onMouseUp);
-                  document.removeEventListener("mouseleave", onMouseUp);
-                };
+                      const onMouseUp = () => {
+                        const v = volumeDragValueRef.current;
+                        if (v !== null) handleVolume(v);
+                        volumeDragValueRef.current = null;
+                        setIsDraggingVolume(false);
+                        setDragVolume(null);
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        document.removeEventListener('mouseleave', onMouseUp);
+                      };
 
-                document.addEventListener("mousemove", onMouseMove, { passive: false });
-                document.addEventListener("mouseup", onMouseUp);
-                document.addEventListener("mouseleave", onMouseUp);
-              }}
+                      document.addEventListener('mousemove', onMouseMove, { passive: false });
+                      document.addEventListener('mouseup', onMouseUp);
+                      document.addEventListener('mouseleave', onMouseUp);
+                    }
+              }
             >
               <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/volume transition-all duration-200 hover:h-2.5 will-change-[height]">
                 <div
                   className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
                   style={{
                     width: `${(isMuted ? 0 : displayVolume) * 100}%`,
-                    transition: isDraggingVolume ? "none" : "width 0.1s linear",
+                    transition: isDraggingVolume ? 'none' : 'width 0.1s linear',
                   }}
                 />
                 {/* Thumb */}
@@ -1168,7 +1246,9 @@ export default function VideoPlayer({
                   style={{
                     left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
                     opacity: isDraggingVolume ? 1 : 0,
-                    transition: isDraggingVolume ? "opacity 0s, transform 0.2s" : "opacity 0.2s, transform 0.2s",
+                    transition: isDraggingVolume
+                      ? 'opacity 0s, transform 0.2s'
+                      : 'opacity 0.2s, transform 0.2s',
                   }}
                 />
               </div>
@@ -1179,20 +1259,25 @@ export default function VideoPlayer({
           <div className="flex items-center gap-3">
             <button
               onClick={() => isVideo && seekBy(-5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
               title="Lùi 5 giây"
               disabled={!isVideo}
             >
               <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: "1px" }}>5</span>
+              <span
+                className="absolute text-[10px] font-bold text-neutral-800"
+                style={{ marginTop: '1px' }}
+              >
+                5
+              </span>
             </button>
 
             <button
-            type="button"
-            onClick={togglePlay}
+              type="button"
+              onClick={togglePlay}
               disabled={!isVideo || isLoading}
               className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-50 shadow-xl hover:shadow-2xl shadow-primary-600/40 cursor-pointer focus:outline-none"
-              aria-label={playing ? "Tạm dừng" : "Phát"}
+              aria-label={playing ? 'Tạm dừng' : 'Phát'}
             >
               {isLoading ? (
                 <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin" />
@@ -1205,12 +1290,17 @@ export default function VideoPlayer({
 
             <button
               onClick={() => isVideo && seekBy(5)}
-              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-neutral-700 hover:text-neutral-900 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 relative shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
               title="Tiến 5 giây"
               disabled={!isVideo}
             >
               <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-              <span className="absolute text-[10px] font-bold text-neutral-800" style={{ marginTop: "1px" }}>5</span>
+              <span
+                className="absolute text-[10px] font-bold text-neutral-800"
+                style={{ marginTop: '1px' }}
+              >
+                5
+              </span>
             </button>
           </div>
 
@@ -1221,8 +1311,8 @@ export default function VideoPlayer({
                 e.stopPropagation();
                 void toggleFullscreen();
               }}
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? "opacity-50 pointer-events-none" : ""}`}
-              title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-neutral-600 hover:text-neutral-800 bg-neutral-200/80 hover:bg-neutral-300 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 cursor-pointer ${!isVideo ? 'opacity-50 pointer-events-none' : ''}`}
+              title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
               disabled={!isVideo}
             >
               {isFullscreen ? (

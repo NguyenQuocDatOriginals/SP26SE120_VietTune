@@ -3,16 +3,16 @@
  * (see docs/PLAN-expert-workflow.md, docs/PLAN-expert-role-apis.md).
  */
 export const EXPERT_API_PHASE2 =
-  String(import.meta.env.VITE_EXPERT_API_PHASE2 || "").toLowerCase() === "true";
+  String(import.meta.env.VITE_EXPERT_API_PHASE2 || '').toLowerCase() === 'true';
 
-export type ExpertQueueSource = "by-status" | "admin";
+export type ExpertQueueSource = 'by-status' | 'admin';
 
 /** `by-status`: GET /Submission/get-by-status. `admin`: GET /Admin/submissions (needs role). */
 export const EXPERT_QUEUE_SOURCE: ExpertQueueSource =
-  String(import.meta.env.VITE_EXPERT_QUEUE_SOURCE || "by-status").toLowerCase() === "admin"
-    ? "admin"
-    : "by-status";
+  String(import.meta.env.VITE_EXPERT_QUEUE_SOURCE || 'by-status').toLowerCase() === 'admin'
+    ? 'admin'
+    : 'by-status';
 
 /** Dev helper: force mock queue instead of calling backend queue APIs. */
 export const EXPERT_QUEUE_USE_MOCK =
-  String(import.meta.env.VITE_EXPERT_QUEUE_USE_MOCK || "").toLowerCase() === "true";
+  String(import.meta.env.VITE_EXPERT_QUEUE_USE_MOCK || '').toLowerCase() === 'true';

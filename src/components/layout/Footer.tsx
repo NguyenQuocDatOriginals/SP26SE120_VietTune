@@ -1,23 +1,31 @@
-import { Link } from "react-router-dom";
-import { Mail, Facebook, Youtube } from "lucide-react";
-import { APP_NAME } from "@/config/constants";
-import logo from "@/components/image/VietTune logo.png";
-import { uiToast, notifyLine } from "@/uiToast";
-import { useAuthStore } from "@/stores/authStore";
-import { UserRole } from "@/types";
+import { Mail, Facebook, Youtube } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+import logo from '@/components/image/VietTune logo.png';
+import { APP_NAME } from '@/config/constants';
+import { useAuthStore } from '@/stores/authStore';
+import { UserRole } from '@/types';
+import { uiToast, notifyLine } from '@/uiToast';
 
 export default function Footer() {
   const { user } = useAuthStore();
   const isExpert = user?.role === UserRole.EXPERT;
   const handleCopyEmail = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const email = "contact@viettune.com";
+    const email = 'contact@viettune.com';
 
-    navigator.clipboard.writeText(email).then(() => {
-      uiToast.success(notifyLine("Thành công", "Đã sao chép địa chỉ email thành công!"), undefined, { duration: 2000 });
-    }).catch(() => {
-      uiToast.error(notifyLine("Lỗi", "Không thể copy email. Vui lòng thử lại!"));
-    });
+    navigator.clipboard
+      .writeText(email)
+      .then(() => {
+        uiToast.success(
+          notifyLine('Thành công', 'Đã sao chép địa chỉ email thành công!'),
+          undefined,
+          { duration: 2000 },
+        );
+      })
+      .catch(() => {
+        uiToast.error(notifyLine('Lỗi', 'Không thể copy email. Vui lòng thử lại!'));
+      });
   };
   return (
     <footer className="pb-4 px-4">
@@ -25,12 +33,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_1fr_1fr_1fr] gap-8 sm:gap-12 lg:gap-16 gap-y-10">
           {/* About */}
           <div className="min-w-0">
-            <Link to="/" className="group flex items-center space-x-3 mb-4 w-fit text-white transition-colors hover:text-secondary-300">
-              <img
-                src={logo}
-                alt="VietTune Logo"
-                className="h-10 w-10 object-contain rounded-xl"
-              />
+            <Link
+              to="/"
+              className="group flex items-center space-x-3 mb-4 w-fit text-white transition-colors hover:text-secondary-300"
+            >
+              <img src={logo} alt="VietTune Logo" className="h-10 w-10 object-contain rounded-xl" />
               <span className="text-xl font-bold text-white transition-colors group-hover:text-secondary-300">
                 {APP_NAME}
               </span>
@@ -45,16 +52,14 @@ export default function Footer() {
           {/* Quick Links */}
           <div className="flex flex-col items-center lg:ml-8">
             <div className="text-left w-full max-w-[200px]">
-              <h3 className="font-bold text-lg mb-4 text-white">
-                Liên kết nhanh
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-white">Liên kết nhanh</h3>
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link
-                    to={isExpert ? "/moderation" : "/upload"}
+                    to={isExpert ? '/moderation' : '/upload'}
                     className="text-white/90 font-medium hover:text-secondary-300 active:text-secondary-400 transition-colors"
                   >
-                    {isExpert ? "Kiểm duyệt bản thu" : "Đóng góp bản thu"}
+                    {isExpert ? 'Kiểm duyệt bản thu' : 'Đóng góp bản thu'}
                   </Link>
                 </li>
                 <li>
@@ -88,9 +93,7 @@ export default function Footer() {
           {/* Resources */}
           <div className="flex flex-col items-center lg:ml-8">
             <div className="text-left w-full max-w-[200px]">
-              <h3 className="font-bold text-lg mb-4 text-white">
-                Về VietTune
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-white">Về VietTune</h3>
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link
@@ -115,9 +118,7 @@ export default function Footer() {
           {/* Contact */}
           <div className="flex flex-col items-center lg:ml-20">
             <div className="text-left w-full max-w-[200px]">
-              <h3 className="font-bold text-lg mb-4 text-white">
-                Kết nối
-              </h3>
+              <h3 className="font-bold text-lg mb-4 text-white">Kết nối</h3>
               <div className="flex space-x-4 mb-6">
                 <a
                   href="https://facebook.com"
@@ -148,9 +149,7 @@ export default function Footer() {
                 </a>
               </div>
               <div className="space-y-2">
-                <p className="text-white text-sm font-medium">
-                  Email:
-                </p>
+                <p className="text-white text-sm font-medium">Email:</p>
                 <a
                   href="mailto:contact@viettune.com"
                   onClick={handleCopyEmail}
@@ -166,8 +165,7 @@ export default function Footer() {
 
         <div className="border-t border-white/20 mt-10 pt-8 text-center">
           <p className="text-white/90 text-sm font-medium">
-            Bản quyền © {new Date().getFullYear()} {APP_NAME}. Tất cả quyền được
-            bảo lưu.
+            Bản quyền © {new Date().getFullYear()} {APP_NAME}. Tất cả quyền được bảo lưu.
           </p>
         </div>
       </div>

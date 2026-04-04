@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
-import BackButton from "@/components/common/BackButton";
+import { Link } from 'react-router-dom';
+
+import BackButton from '@/components/common/BackButton';
 
 interface ForbiddenPageProps {
   /** Optional custom message (default: generic 403 message). */
@@ -11,11 +12,9 @@ export default function ForbiddenPage({ message }: ForbiddenPageProps) {
     <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50">
       <div className="text-center">
         <h1 className="text-9xl font-bold text-primary-600">403</h1>
-        <h2 className="text-3xl font-semibold text-neutral-900 mb-4">
-          Truy cập bị từ chối
-        </h2>
+        <h2 className="text-3xl font-semibold text-neutral-900 mb-4">Truy cập bị từ chối</h2>
         <p className="text-neutral-600 font-medium mb-8">
-          {message ?? "Bạn không có quyền truy cập trang này."}
+          {message ?? 'Bạn không có quyền truy cập trang này.'}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <BackButton />

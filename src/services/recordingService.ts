@@ -1,6 +1,9 @@
-import axios from "axios";
+import axios from 'axios';
+
 import { api } from './api';
-import { API_BASE_URL } from "@/config/constants";
+
+import { API_BASE_URL } from '@/config/constants';
+import type { RecordingDto } from '@/services/recordingDto';
 import {
   Recording,
   SearchFilters,
@@ -13,18 +16,17 @@ import {
   UserRole,
   InstrumentCategory,
 } from '@/types';
-import type { RecordingDto } from '@/services/recordingDto';
 
 const guestApiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
+  return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
 }
@@ -32,23 +34,21 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function pickString(obj: Record<string, unknown>, keys: string[]): string {
   for (const key of keys) {
     const raw = obj[key];
-    if (typeof raw === "string" && raw.trim()) return raw.trim();
+    if (typeof raw === 'string' && raw.trim()) return raw.trim();
   }
-  return "";
+  return '';
 }
 
 function pickStringArray(obj: Record<string, unknown>, keys: string[]): string[] {
   for (const key of keys) {
     const raw = obj[key];
     if (Array.isArray(raw)) {
-      const arr = raw
-        .map((x) => (typeof x === "string" ? x.trim() : ""))
-        .filter(Boolean);
+      const arr = raw.map((x) => (typeof x === 'string' ? x.trim() : '')).filter(Boolean);
       if (arr.length > 0) return arr;
     }
-    if (typeof raw === "string" && raw.trim()) {
+    if (typeof raw === 'string' && raw.trim()) {
       const arr = raw
-        .split(",")
+        .split(',')
         .map((x) => x.trim())
         .filter(Boolean);
       if (arr.length > 0) return arr;
@@ -72,30 +72,49 @@ function normalizeObjectKeys(input: unknown): unknown {
 function mapGuestRowToRecording(row: unknown, index: number): Recording {
   const normalized = asRecord(normalizeObjectKeys(row)) ?? {};
   const id =
-    pickString(normalized, ["id", "recordingId", "submissionId"]) ||
-    `guest-recording-${index}`;
-  const title = pickString(normalized, ["title", "titleVietnamese", "name"]) || "Không có tiêu đề";
-  const audioUrl = pickString(normalized, ["audioUrl", "audioFileUrl", "audioData", "mediaUrl", "url"]);
-  const uploadedDate = pickString(normalized, ["uploadedDate", "createdAt", "uploadedAt"]) || new Date(0).toISOString();
-  const regionRaw = pickString(normalized, ["region", "regionCode"]);
+    pickString(normalized, ['id', 'recordingId', 'submissionId']) || `guest-recording-${index}`;
+  const title = pickString(normalized, ['title', 'titleVietnamese', 'name']) || 'Không có tiêu đề';
+  const audioUrl = pickString(normalized, [
+    'audioUrl',
+    'audioFileUrl',
+    'audioData',
+    'mediaUrl',
+    'url',
+  ]);
+  const uploadedDate =
+    pickString(normalized, ['uploadedDate', 'createdAt', 'uploadedAt']) ||
+    new Date(0).toISOString();
+  const regionRaw = pickString(normalized, ['region', 'regionCode']);
   const regionValues = Object.values(Region);
-  const region = regionValues.includes(regionRaw as Region) ? (regionRaw as Region) : Region.RED_RIVER_DELTA;
+  const region = regionValues.includes(regionRaw as Region)
+    ? (regionRaw as Region)
+    : Region.RED_RIVER_DELTA;
 
-  const topLevelInstruments = pickStringArray(normalized, ["instrumentNames", "instruments", "instrumentTags"]);
+  const topLevelInstruments = pickStringArray(normalized, [
+    'instrumentNames',
+    'instruments',
+    'instrumentTags',
+  ]);
   const culturalContext = asRecord(normalized.culturalContext);
-  const contextInstruments = culturalContext ? pickStringArray(culturalContext, ["instruments"]) : [];
-  const mergedInstrumentNames = Array.from(new Set([...topLevelInstruments, ...contextInstruments]));
-  const rawTags = pickStringArray(normalized, ["tags", "tagNames", "metadataTags", "keywords"]);
+  const contextInstruments = culturalContext
+    ? pickStringArray(culturalContext, ['instruments'])
+    : [];
+  const mergedInstrumentNames = Array.from(
+    new Set([...topLevelInstruments, ...contextInstruments]),
+  );
+  const rawTags = pickStringArray(normalized, ['tags', 'tagNames', 'metadataTags', 'keywords']);
 
   return {
     id,
     title,
-    titleVietnamese: pickString(normalized, ["titleVietnamese"]),
-    description: pickString(normalized, ["description"]),
+    titleVietnamese: pickString(normalized, ['titleVietnamese']),
+    description: pickString(normalized, ['description']),
     ethnicity: {
-      id: pickString(normalized, ["ethnicityId"]) || "guest-ethnicity",
-      name: pickString(normalized, ["ethnicityName", "ethnicity"]) || "Không xác định",
-      nameVietnamese: pickString(normalized, ["ethnicityNameVietnamese", "ethnicityName", "ethnicity"]) || "Không xác định",
+      id: pickString(normalized, ['ethnicityId']) || 'guest-ethnicity',
+      name: pickString(normalized, ['ethnicityName', 'ethnicity']) || 'Không xác định',
+      nameVietnamese:
+        pickString(normalized, ['ethnicityNameVietnamese', 'ethnicityName', 'ethnicity']) ||
+        'Không xác định',
       region,
       recordingCount: 0,
     },
@@ -103,8 +122,8 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
     recordingType: RecordingType.OTHER,
     duration: Number(normalized.duration ?? 0) || 0,
     audioUrl,
-    waveformUrl: pickString(normalized, ["waveformUrl"]),
-    coverImage: pickString(normalized, ["coverImage", "thumbnailUrl"]),
+    waveformUrl: pickString(normalized, ['waveformUrl']),
+    coverImage: pickString(normalized, ['coverImage', 'thumbnailUrl']),
     instruments: mergedInstrumentNames.map((name, idx) => ({
       id: `guest-inst-${idx}-${name}`,
       name,
@@ -114,13 +133,13 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
       recordingCount: 0,
     })),
     performers: [],
-    recordedDate: pickString(normalized, ["recordedDate", "recordingDate"]),
+    recordedDate: pickString(normalized, ['recordedDate', 'recordingDate']),
     uploadedDate,
     uploader: {
-      id: pickString(normalized, ["uploaderId", "uploadedById"]) || "guest-uploader",
-      username: pickString(normalized, ["uploaderName", "uploadedByName"]) || "guest",
-      email: "",
-      fullName: pickString(normalized, ["uploaderName", "uploadedByName"]) || "Guest",
+      id: pickString(normalized, ['uploaderId', 'uploadedById']) || 'guest-uploader',
+      username: pickString(normalized, ['uploaderName', 'uploadedByName']) || 'guest',
+      email: '',
+      fullName: pickString(normalized, ['uploaderName', 'uploadedByName']) || 'Guest',
       role: UserRole.USER,
       createdAt: uploadedDate,
       updatedAt: uploadedDate,
@@ -128,7 +147,7 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
     tags: rawTags,
     metadata: {
       recordingQuality: RecordingQuality.FIELD_RECORDING,
-      lyrics: pickString(normalized, ["lyrics"]),
+      lyrics: pickString(normalized, ['lyrics']),
     },
     verificationStatus: VerificationStatus.VERIFIED,
     viewCount: Number(normalized.viewCount ?? 0) || 0,
@@ -159,24 +178,29 @@ function pickGuestRows(input: unknown): Recording[] {
   return [];
 }
 
-function toGuestPaginatedResponse(input: unknown, page: number, pageSize: number): PaginatedResponse<Recording> {
+function toGuestPaginatedResponse(
+  input: unknown,
+  page: number,
+  pageSize: number,
+): PaginatedResponse<Recording> {
   const root = asRecord(input) ?? {};
   const rows = pickGuestRows(input);
   const pageRaw = root.page ?? asRecord(root.data)?.page;
   const pageSizeRaw = root.pageSize ?? asRecord(root.data)?.pageSize;
-  const totalRaw = root.total ?? root.totalCount ?? asRecord(root.data)?.total ?? asRecord(root.data)?.totalCount;
-  const total = typeof totalRaw === "number" ? totalRaw : rows.length;
+  const totalRaw =
+    root.total ?? root.totalCount ?? asRecord(root.data)?.total ?? asRecord(root.data)?.totalCount;
+  const total = typeof totalRaw === 'number' ? totalRaw : rows.length;
   const totalPagesRaw = root.totalPages ?? asRecord(root.data)?.totalPages;
   const totalPages =
-    typeof totalPagesRaw === "number"
+    typeof totalPagesRaw === 'number'
       ? totalPagesRaw
       : Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
   return {
     items: rows,
     total,
     totalPages,
-    page: typeof pageRaw === "number" ? pageRaw : page,
-    pageSize: typeof pageSizeRaw === "number" ? pageSizeRaw : pageSize,
+    page: typeof pageRaw === 'number' ? pageRaw : page,
+    pageSize: typeof pageSizeRaw === 'number' ? pageSizeRaw : pageSize,
   };
 }
 
@@ -196,7 +220,11 @@ export const recordingService = {
    * Guest-only catalog (no Authorization header): GET /api/RecordingGuest
    * Uses raw axios client to avoid global auth interceptor/token injection.
    */
-  getGuestRecordings: async (page: number = 1, pageSize: number = 20, opts?: { signal?: AbortSignal }) => {
+  getGuestRecordings: async (
+    page: number = 1,
+    pageSize: number = 20,
+    opts?: { signal?: AbortSignal },
+  ) => {
     const qs = `?page=${page}&pageSize=${pageSize}`;
     const reqOpts = { signal: opts?.signal };
     try {
@@ -217,7 +245,7 @@ export const recordingService = {
   searchRecordingsByFilter: async (query: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(query)) {
-      if (v === undefined || v === "") continue;
+      if (v === undefined || v === '') continue;
       params.set(k, String(v));
     }
     return api.get<unknown>(`/Recording/search-by-filter?${params.toString()}`);
@@ -258,7 +286,11 @@ export const recordingService = {
   },
 
   // Create submission (backend: POST /api/Submission/create-submission)
-  createSubmission: async (data: { audioFileUrl?: string; videoFileUrl?: string; uploadedById: string }) => {
+  createSubmission: async (data: {
+    audioFileUrl?: string;
+    videoFileUrl?: string;
+    uploadedById: string;
+  }) => {
     return api.post<{
       isSuccess: boolean;
       message: string;

@@ -13,7 +13,8 @@
  *  - /api/Instrument                  → instruments
  */
 
-import { api } from "@/services/api";
+import { api } from '@/services/api';
+import { logServiceWarn } from '@/services/serviceLogger';
 
 // ---------- Types ----------
 
@@ -96,14 +97,14 @@ const DEFAULT_REF_PAGE_SIZE = 250;
 const REF_PAGE_FETCH_CONCURRENCY = 8;
 
 async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): Promise<T[]> {
-  const separator = url.includes("?") ? "&" : "?";
+  const separator = url.includes('?') ? '&' : '?';
   const urlFor = (page: number) => `${url}${separator}page=${page}&pageSize=${pageSize}`;
 
   let first;
   try {
     first = await api.get<PaginatedApiResponse<T>>(urlFor(1));
   } catch (err) {
-    console.warn(`Failed to fetch ${url} page 1:`, err);
+    logServiceWarn(`Failed to fetch ${url} page 1`, err);
     return [];
   }
 
@@ -111,7 +112,7 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
   const all: T[] = [...firstItems];
   if (firstItems.length === 0) return all;
 
-  const total = typeof first?.total === "number" ? first.total : undefined;
+  const total = typeof first?.total === 'number' ? first.total : undefined;
   if (total !== undefined && all.length >= total) return all;
 
   if (total === undefined) {
@@ -126,7 +127,7 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
         if (items.length === 0) break;
         page++;
       } catch (err) {
-        console.warn(`Failed to fetch ${url} page ${page}:`, err);
+        logServiceWarn(`Failed to fetch ${url} page ${page}`, err);
         break;
       }
     }
@@ -140,12 +141,14 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
   for (let i = 0; i < rest.length; i += REF_PAGE_FETCH_CONCURRENCY) {
     const chunk = rest.slice(i, i + REF_PAGE_FETCH_CONCURRENCY);
     try {
-      const batch = await Promise.all(chunk.map((p) => api.get<PaginatedApiResponse<T>>(urlFor(p))));
+      const batch = await Promise.all(
+        chunk.map((p) => api.get<PaginatedApiResponse<T>>(urlFor(p))),
+      );
       for (const res of batch) {
         all.push(...(res?.data ?? []));
       }
     } catch (err) {
-      console.warn(`Failed to fetch ${url} parallel pages`, err);
+      logServiceWarn(`Failed to fetch ${url} parallel pages`, err);
       break;
     }
   }
@@ -171,37 +174,47 @@ async function cachedFetch<T>(key: string, url: string): Promise<T[]> {
 
 export const referenceDataService = {
   /** Fetch all ethnic groups (dân tộc) */
-  getEthnicGroups: () => cachedFetch<EthnicGroupItem>("ethnicGroups", "/ReferenceData/ethnic-groups"),
+  getEthnicGroups: () =>
+    cachedFetch<EthnicGroupItem>('ethnicGroups', '/ReferenceData/ethnic-groups'),
 
   /** Fetch all provinces (tỉnh thành) */
-  getProvinces: () => cachedFetch<ProvinceItem>("provinces", "/ReferenceData/provinces"),
+  getProvinces: () => cachedFetch<ProvinceItem>('provinces', '/ReferenceData/provinces'),
 
   /** Fetch all districts (quận huyện) */
-  getDistricts: () => cachedFetch<DistrictItem>("districts", "/District"),
+  getDistricts: () => cachedFetch<DistrictItem>('districts', '/District'),
 
   /** Fetch districts by province Id */
-  getDistrictsByProvince: (provinceId: string) => cachedFetch<DistrictItem>(`districts_prov_${provinceId}`, `/District/get-by-province/${provinceId}`),
+  getDistrictsByProvince: (provinceId: string) =>
+    cachedFetch<DistrictItem>(
+      `districts_prov_${provinceId}`,
+      `/District/get-by-province/${provinceId}`,
+    ),
 
   /** Fetch all communes (phường xã) */
-  getCommunes: () => cachedFetch<CommuneItem>("communes", "/Commune"),
+  getCommunes: () => cachedFetch<CommuneItem>('communes', '/Commune'),
 
   /** Fetch communes by district Id */
-  getCommunesByDistrict: (districtId: string) => cachedFetch<CommuneItem>(`communes_dist_${districtId}`, `/Commune/get-by-district/${districtId}`),
+  getCommunesByDistrict: (districtId: string) =>
+    cachedFetch<CommuneItem>(
+      `communes_dist_${districtId}`,
+      `/Commune/get-by-district/${districtId}`,
+    ),
 
   /** Fetch all ceremonies / event types (nghi lễ / loại sự kiện) */
-  getCeremonies: () => cachedFetch<CeremonyItem>("ceremonies", "/ReferenceData/ceremonies"),
+  getCeremonies: () => cachedFetch<CeremonyItem>('ceremonies', '/ReferenceData/ceremonies'),
 
   /** Fetch all vocal styles */
-  getVocalStyles: () => cachedFetch<VocalStyleItem>("vocalStyles", "/ReferenceData/vocal-styles"),
+  getVocalStyles: () => cachedFetch<VocalStyleItem>('vocalStyles', '/ReferenceData/vocal-styles'),
 
   /** Fetch all musical scales */
-  getMusicalScales: () => cachedFetch<MusicalScaleItem>("musicalScales", "/ReferenceData/musical-scales"),
+  getMusicalScales: () =>
+    cachedFetch<MusicalScaleItem>('musicalScales', '/ReferenceData/musical-scales'),
 
   /** Fetch all tags */
-  getTags: () => cachedFetch<TagItem>("tags", "/ReferenceData/tags"),
+  getTags: () => cachedFetch<TagItem>('tags', '/ReferenceData/tags'),
 
   /** Fetch all instruments (nhạc cụ) */
-  getInstruments: () => cachedFetch<InstrumentItem>("instruments", "/Instrument"),
+  getInstruments: () => cachedFetch<InstrumentItem>('instruments', '/Instrument'),
 
   /** Clear cache (e.g. after admin edits reference data) */
   clearCache: () => {

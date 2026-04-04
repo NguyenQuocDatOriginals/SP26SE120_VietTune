@@ -1,5 +1,6 @@
-import { api } from "./api";
-import { Recording } from "@/types";
+import { api } from './api';
+
+import { Recording } from '@/types';
 
 export interface SemanticSearchResult {
   recording: Recording;
@@ -19,7 +20,7 @@ export interface SemanticSearchRequestParams {
 export const searchSemantic = async (
   params: SemanticSearchRequestParams,
 ): Promise<SemanticSearchResult[]> => {
-  return api.get<SemanticSearchResult[]>("/api/search/semantic", {
+  return api.get<SemanticSearchResult[]>('/api/search/semantic', {
     params: {
       q: params.q,
       topK: params.topK ?? 10,

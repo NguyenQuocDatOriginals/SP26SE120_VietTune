@@ -1,5 +1,5 @@
-import type { LocalRecording } from "@/types";
-import { ModerationStatus } from "@/types";
+import type { LocalRecording } from '@/types';
+import { ModerationStatus } from '@/types';
 
 export interface SubmissionLookupMaps {
   ethnicById?: Record<string, string>;
@@ -17,7 +17,9 @@ export interface SubmissionLookupMaps {
 }
 
 function normalizeId(v: unknown): string {
-  return String(v ?? "").trim().toLowerCase();
+  return String(v ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 /** Địa lý cấp tỉnh → nhãn vùng/miền; không dùng tên phường/xã/huyện cho “Vùng miền”. */
@@ -29,13 +31,13 @@ function macroRegionLabelFromGeo(
 ): string | undefined {
   if (!lookups?.macroRegionByProvinceId) return undefined;
   const byProv = lookups.macroRegionByProvinceId;
-  let pid = provinceId ? normalizeId(provinceId) : "";
+  let pid = provinceId ? normalizeId(provinceId) : '';
   if (!pid && districtId && lookups.provinceIdByDistrictId) {
-    pid = lookups.provinceIdByDistrictId[normalizeId(districtId)] ?? "";
+    pid = lookups.provinceIdByDistrictId[normalizeId(districtId)] ?? '';
   }
   if (!pid && communeId && lookups.districtIdByCommuneId && lookups.provinceIdByDistrictId) {
-    const did = lookups.districtIdByCommuneId[normalizeId(communeId)] ?? "";
-    if (did) pid = lookups.provinceIdByDistrictId[did] ?? "";
+    const did = lookups.districtIdByCommuneId[normalizeId(communeId)] ?? '';
+    if (did) pid = lookups.provinceIdByDistrictId[did] ?? '';
   }
   if (!pid) return undefined;
   const label = byProv[pid];
@@ -56,41 +58,41 @@ const SUBMISSION_STATUS_INT: Record<number, ModerationStatus> = {
 
 export function mapApiSubmissionStatusToModeration(raw: unknown): ModerationStatus | string {
   if (raw === null || raw === undefined) return ModerationStatus.PENDING_REVIEW;
-  if (typeof raw === "string") {
+  if (typeof raw === 'string') {
     const v = raw.trim();
     if (/^\d+$/.test(v)) {
       const n = Number(v);
       const mapped = SUBMISSION_STATUS_INT[n];
       return mapped ?? ModerationStatus.PENDING_REVIEW;
     }
-    const normalized = v.toLowerCase().replace(/[\s-]+/g, "_");
-    if (normalized === "pending" || normalized === "pending_review") {
+    const normalized = v.toLowerCase().replace(/[\s-]+/g, '_');
+    if (normalized === 'pending' || normalized === 'pending_review') {
       return ModerationStatus.PENDING_REVIEW;
     }
-    if (normalized === "in_review" || normalized === "reviewing") {
+    if (normalized === 'in_review' || normalized === 'reviewing') {
       return ModerationStatus.IN_REVIEW;
     }
-    if (normalized === "approved" || normalized === "accept") {
+    if (normalized === 'approved' || normalized === 'accept') {
       return ModerationStatus.APPROVED;
     }
     if (
-      normalized === "rejected" ||
-      normalized === "reject" ||
-      normalized === "permanently_rejected"
+      normalized === 'rejected' ||
+      normalized === 'reject' ||
+      normalized === 'permanently_rejected'
     ) {
       return ModerationStatus.REJECTED;
     }
     if (
-      normalized === "temporarily_rejected" ||
-      normalized === "temp_rejected" ||
-      normalized === "revision_required"
+      normalized === 'temporarily_rejected' ||
+      normalized === 'temp_rejected' ||
+      normalized === 'revision_required'
     ) {
       return ModerationStatus.TEMPORARILY_REJECTED;
     }
     if ((Object.values(ModerationStatus) as string[]).includes(v)) return v as ModerationStatus;
     return v;
   }
-  if (typeof raw === "number" && Number.isFinite(raw)) {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
     const mapped = SUBMISSION_STATUS_INT[raw];
     return mapped ?? ModerationStatus.PENDING_REVIEW;
   }
@@ -122,18 +124,16 @@ export function mapSubmissionToLocalRecording(
   x: Record<string, unknown>,
   lookups?: SubmissionLookupMaps,
 ): LocalRecording {
-  const rec = (x.recording && typeof x.recording === "object"
-    ? (x.recording as Record<string, unknown>)
-    : null);
+  const rec =
+    x.recording && typeof x.recording === 'object'
+      ? (x.recording as Record<string, unknown>)
+      : null;
 
-  const submissionId = String(x.id ?? "");
-  const recordingEntityId =
-    rec?.id != null && String(rec.id).trim() ? String(rec.id).trim() : "";
+  const submissionId = String(x.id ?? '');
+  const recordingEntityId = rec?.id != null && String(rec.id).trim() ? String(rec.id).trim() : '';
   const id = recordingEntityId || submissionId;
   const title =
-    (rec?.title as string | undefined) ||
-    (x.title as string | undefined) ||
-    "Không có tiêu đề";
+    (rec?.title as string | undefined) || (x.title as string | undefined) || 'Không có tiêu đề';
   const audioFileUrl =
     (rec?.audioFileUrl as string | undefined) ??
     (x.audioFileUrl as string | undefined) ??
@@ -158,23 +158,21 @@ export function mapSubmissionToLocalRecording(
       ? reviewerId
       : undefined;
 
-  const instrumentIds =
-    Array.isArray(rec?.instrumentIds) ? (rec?.instrumentIds as unknown[]) : [];
+  const instrumentIds = Array.isArray(rec?.instrumentIds) ? (rec?.instrumentIds as unknown[]) : [];
   const instrumentObjects = Array.isArray(rec?.instruments)
     ? (rec?.instruments as Array<Record<string, unknown>>)
     : [];
   const mappedInstrumentNames = instrumentIds
-    .map((v) => String(v || "").trim())
+    .map((v) => String(v || '').trim())
     .filter(Boolean)
     .map((idVal) => lookups?.instrumentById?.[normalizeId(idVal)] || `ID:${idVal}`);
   const embeddedInstrumentNames = instrumentObjects
-    .map((it) => String(it?.name ?? it?.nameVietnamese ?? "").trim())
+    .map((it) => String(it?.name ?? it?.nameVietnamese ?? '').trim())
     .filter(Boolean);
   const instrumentNames =
     mappedInstrumentNames.length > 0 ? mappedInstrumentNames : embeddedInstrumentNames;
 
-  const communeId =
-    (rec?.communeId as string | undefined) || (x.communeId as string | undefined);
+  const communeId = (rec?.communeId as string | undefined) || (x.communeId as string | undefined);
   const districtId =
     (rec?.districtId as string | undefined) || (x.districtId as string | undefined);
   const provinceId =
@@ -186,8 +184,7 @@ export function mapSubmissionToLocalRecording(
     (rec?.ethnicGroupName as string | undefined) ||
     ((rec?.ethnicGroup as Record<string, unknown> | undefined)?.name as string | undefined) ||
     (rec?.ethnicGroupId
-      ? lookups?.ethnicById?.[normalizeId(rec.ethnicGroupId)] ||
-        `ID:${String(rec.ethnicGroupId)}`
+      ? lookups?.ethnicById?.[normalizeId(rec.ethnicGroupId)] || `ID:${String(rec.ethnicGroupId)}`
       : undefined);
 
   const eventTypeFromApi =
@@ -195,21 +192,22 @@ export function mapSubmissionToLocalRecording(
     (rec?.ceremonyName as string | undefined) ||
     ((rec?.ceremony as Record<string, unknown> | undefined)?.name as string | undefined) ||
     (rec?.ceremonyId
-      ? lookups?.ceremonyById?.[normalizeId(rec.ceremonyId)] ||
-        `ID:${String(rec.ceremonyId)}`
+      ? lookups?.ceremonyById?.[normalizeId(rec.ceremonyId)] || `ID:${String(rec.ceremonyId)}`
       : undefined);
 
   const explicitRegion =
-    (typeof rec?.region === "string" && rec.region.trim() ? rec.region.trim() : undefined) ||
-    (typeof x.region === "string" && x.region.trim() ? x.region.trim() : undefined);
+    (typeof rec?.region === 'string' && rec.region.trim() ? rec.region.trim() : undefined) ||
+    (typeof x.region === 'string' && x.region.trim() ? x.region.trim() : undefined);
   const regionMacroLabel =
-    macroRegionLabelFromGeo(lookups, provinceId, districtId, communeId) || explicitRegion || undefined;
+    macroRegionLabelFromGeo(lookups, provinceId, districtId, communeId) ||
+    explicitRegion ||
+    undefined;
 
-  return {
+  const mapped: LocalRecording = {
     id,
     ...(submissionId ? { submissionId } : {}),
     title,
-    mediaType: audioFileUrl ? "audio" : videoFileUrl ? "video" : undefined,
+    mediaType: audioFileUrl ? 'audio' : videoFileUrl ? 'video' : undefined,
     audioUrl: audioFileUrl,
     videoData: videoFileUrl,
     moderation: {
@@ -230,7 +228,7 @@ export function mapSubmissionToLocalRecording(
         (rec?.uploadedById as string | undefined) ||
         (x.uploadedById as string | undefined) ||
         (x.contributorId as string | undefined) ||
-        "",
+        '',
       username: (x.submittedBy as string | undefined) || undefined,
     },
     culturalContext: {
@@ -245,14 +243,15 @@ export function mapSubmissionToLocalRecording(
       instruments: instrumentNames,
       performanceType: (rec?.performanceContext as string | undefined) || undefined,
     },
-    ...((typeof rec?.durationSeconds === "number" && Number.isFinite(rec.durationSeconds))
+    ...(typeof rec?.durationSeconds === 'number' && Number.isFinite(rec.durationSeconds)
       ? { duration: Math.floor(rec.durationSeconds as number) }
       : {}),
-    ...((rec?.description && String(rec.description).trim())
+    ...(rec?.description && String(rec.description).trim()
       ? { description: String(rec.description).trim() }
       : {}),
-    ...((rec?.recordingDate && String(rec.recordingDate).trim())
+    ...(rec?.recordingDate && String(rec.recordingDate).trim()
       ? { recordedDate: String(rec.recordingDate).trim() }
       : {}),
-  } as unknown as LocalRecording;
+  };
+  return mapped;
 }

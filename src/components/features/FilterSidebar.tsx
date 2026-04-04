@@ -1,11 +1,12 @@
-import type { ReactNode } from "react";
-import { memo, useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
-import type { ExploreFilterOptions } from "@/constants/exploreFilterOptions";
-import type { ExploreFacetDraft } from "@/utils/exploreFacetDraft";
-import { cn } from "@/utils/helpers";
-import type { RecordingType } from "@/types";
-import { Region } from "@/types";
+import { ChevronDown, Search } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { memo, useMemo, useState } from 'react';
+
+import type { ExploreFilterOptions } from '@/constants/exploreFilterOptions';
+import type { ExploreFacetDraft } from '@/features/explore/utils/exploreFacetDraft';
+import type { RecordingType } from '@/types';
+import { Region } from '@/types';
+import { cn } from '@/utils/helpers';
 
 export type FilterSidebarProps = {
   options: ExploreFilterOptions;
@@ -32,7 +33,7 @@ function SearchableCheckboxList({
   emptyMessage,
   isChecked,
   onToggle,
-  labelRowClassName = "py-1",
+  labelRowClassName = 'py-1',
   labelTextClassName,
 }: {
   items: LabeledFilterItem[];
@@ -46,7 +47,7 @@ function SearchableCheckboxList({
   /** Ví dụ leading-snug cho nhãn dài */
   labelTextClassName?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
@@ -77,7 +78,7 @@ function SearchableCheckboxList({
           <label
             key={item.id}
             className={cn(
-              "flex cursor-pointer items-start gap-2 rounded-lg px-1 text-sm text-neutral-800 hover:bg-secondary-50/90",
+              'flex cursor-pointer items-start gap-2 rounded-lg px-1 text-sm text-neutral-800 hover:bg-secondary-50/90',
               labelRowClassName,
             )}
           >
@@ -109,14 +110,11 @@ function AccordionSection({
   children: ReactNode;
 }) {
   return (
-    <details
-      className="group border-b border-secondary-200/70 last:border-b-0"
-      open={defaultOpen}
-    >
+    <details className="group border-b border-secondary-200/70 last:border-b-0" open={defaultOpen}>
       <summary
         className={cn(
-          "flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-secondary-50/95 to-[#FFFCF5] py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:from-secondary-100/90 hover:to-secondary-50/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2",
-          "[&::-webkit-details-marker]:hidden",
+          'flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-secondary-50/95 to-[#FFFCF5] py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:from-secondary-100/90 hover:to-secondary-50/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2',
+          '[&::-webkit-details-marker]:hidden',
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -151,8 +149,8 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <div
         className={cn(
-          "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1",
-          "[scrollbar-gutter:stable]",
+          'min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1',
+          '[scrollbar-gutter:stable]',
         )}
       >
         <AccordionSection title="Dân tộc" defaultOpen badge={ethnicityCount}>
@@ -211,13 +209,15 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
             labelRowClassName="py-0.5"
             labelTextClassName="leading-snug"
             isChecked={(i) => selected.instrumentTags.includes(i.label)}
-            onToggle={(i) => set({ instrumentTags: toggleString(selected.instrumentTags, i.label) })}
+            onToggle={(i) =>
+              set({ instrumentTags: toggleString(selected.instrumentTags, i.label) })
+            }
           />
         </AccordionSection>
 
         <AccordionSection title="Khu vực" badge={regionActive}>
           <select
-            value={selected.region ?? ""}
+            value={selected.region ?? ''}
             onChange={(e) => {
               const v = e.target.value;
               if (!v) {

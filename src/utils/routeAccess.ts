@@ -1,15 +1,12 @@
-import { User, UserRole } from "@/types";
+import { User, UserRole } from '@/types';
 
-export type GuardDecisionReason =
-  | "unauthenticated"
-  | "unauthorized"
-  | "inactive";
+export type GuardDecisionReason = 'unauthenticated' | 'unauthorized' | 'inactive';
 
 export type GuardDecision =
-  | { status: "allow" }
-  | { status: "defer" }
+  | { status: 'allow' }
+  | { status: 'defer' }
   | {
-      status: "redirect";
+      status: 'redirect';
       redirectTo: string;
       reason: GuardDecisionReason;
     };
@@ -23,15 +20,15 @@ export interface RouteGuardPolicy {
 
 export const ADMIN_ROUTE_POLICY: RouteGuardPolicy = {
   allowedRoles: [UserRole.ADMIN],
-  unauthorizedRedirectTo: "/403",
-  inactiveRedirectTo: "/",
+  unauthorizedRedirectTo: '/403',
+  inactiveRedirectTo: '/',
   requireActive: true,
 };
 
 export const RESEARCHER_ROUTE_POLICY: RouteGuardPolicy = {
   allowedRoles: [UserRole.RESEARCHER, UserRole.ADMIN],
-  unauthorizedRedirectTo: "/403",
-  inactiveRedirectTo: "/",
+  unauthorizedRedirectTo: '/403',
+  inactiveRedirectTo: '/',
   requireActive: true,
 };
 
@@ -40,15 +37,15 @@ export function buildLoginRedirectPath(pathname: string): string {
 }
 
 export function isSafeInternalPath(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//");
+  return path.startsWith('/') && !path.startsWith('//');
 }
 
 export function resolveSafeRedirectTarget(
   currentPathname: string,
-  candidateTarget: string
+  candidateTarget: string,
 ): string {
-  if (!isSafeInternalPath(candidateTarget)) return "/";
-  if (candidateTarget === currentPathname) return "/";
+  if (!isSafeInternalPath(candidateTarget)) return '/';
+  if (candidateTarget === currentPathname) return '/';
   return candidateTarget;
 }
 
@@ -56,40 +53,37 @@ export function evaluateGuardAccess(
   user: User | null,
   pathname: string,
   policy: RouteGuardPolicy,
-  options?: { isAuthLoading?: boolean }
+  options?: { isAuthLoading?: boolean },
 ): GuardDecision {
   if (options?.isAuthLoading) {
-    return { status: "defer" };
+    return { status: 'defer' };
   }
 
   if (!user) {
     return {
-      status: "redirect",
+      status: 'redirect',
       redirectTo: buildLoginRedirectPath(pathname),
-      reason: "unauthenticated",
+      reason: 'unauthenticated',
     };
   }
 
   if (policy.requireActive !== false && !user.isActive) {
     return {
-      status: "redirect",
+      status: 'redirect',
       redirectTo: resolveSafeRedirectTarget(pathname, policy.inactiveRedirectTo),
-      reason: "inactive",
+      reason: 'inactive',
     };
   }
 
   if (!policy.allowedRoles.includes(user.role)) {
     return {
-      status: "redirect",
-      redirectTo: resolveSafeRedirectTarget(
-        pathname,
-        policy.unauthorizedRedirectTo
-      ),
-      reason: "unauthorized",
+      status: 'redirect',
+      redirectTo: resolveSafeRedirectTarget(pathname, policy.unauthorizedRedirectTo),
+      reason: 'unauthorized',
     };
   }
 
-  return { status: "allow" };
+  return { status: 'allow' };
 }
 
 export function isResearcherPendingApproval(user: User | null): boolean {
@@ -99,13 +93,13 @@ export function isResearcherPendingApproval(user: User | null): boolean {
 export function getDefaultPostLoginPath(user: User): string {
   switch (user.role) {
     case UserRole.ADMIN:
-      return "/admin";
+      return '/admin';
     case UserRole.RESEARCHER:
-      return "/researcher";
+      return '/researcher';
     case UserRole.EXPERT:
-      return "/moderation";
+      return '/moderation';
     default:
-      return "/";
+      return '/';
   }
 }
 
@@ -116,23 +110,20 @@ export function getDefaultPostLoginPath(user: User): string {
 function isRedirectAllowedForRole(path: string, role: UserRole): boolean {
   const p = path.toLowerCase();
   // Admin-only routes
-  if (p.startsWith("/admin")) return role === UserRole.ADMIN;
+  if (p.startsWith('/admin')) return role === UserRole.ADMIN;
   // Expert-only routes
-  if (p.startsWith("/moderation") || p.startsWith("/approved-recordings")) {
+  if (p.startsWith('/moderation') || p.startsWith('/approved-recordings')) {
     return role === UserRole.EXPERT || role === UserRole.ADMIN;
   }
   // Researcher-only routes
-  if (p.startsWith("/researcher")) {
+  if (p.startsWith('/researcher')) {
     return role === UserRole.RESEARCHER || role === UserRole.ADMIN;
   }
   // All other internal paths are allowed (public + contributor)
   return true;
 }
 
-export function resolvePostLoginPath(
-  user: User,
-  requestedRedirect: string | null
-): string {
+export function resolvePostLoginPath(user: User, requestedRedirect: string | null): string {
   if (
     requestedRedirect &&
     isSafeInternalPath(requestedRedirect) &&
@@ -144,13 +135,13 @@ export function resolvePostLoginPath(
 }
 
 export function logGuardDecision(
-  guardName: "AdminGuard" | "ResearcherGuard",
+  guardName: 'AdminGuard' | 'ResearcherGuard',
   pathname: string,
-  decision: GuardDecision
+  decision: GuardDecision,
 ): void {
   if (!import.meta.env.DEV) return;
   const detail =
-    decision.status === "redirect"
+    decision.status === 'redirect'
       ? { reason: decision.reason, redirectTo: decision.redirectTo }
       : {};
   console.debug(`[route-guard] ${guardName}`, {

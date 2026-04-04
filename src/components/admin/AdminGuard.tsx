@@ -1,15 +1,12 @@
-import { useEffect, useMemo } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import ErrorBoundary from "@/components/common/ErrorBoundary";
-import Card from "@/components/common/Card";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
-import Button from "@/components/common/Button";
-import {
-  ADMIN_ROUTE_POLICY,
-  evaluateGuardAccess,
-  logGuardDecision,
-} from "@/utils/routeAccess";
+import { useEffect, useMemo } from 'react';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { useAuthStore } from '@/stores/authStore';
+import { ADMIN_ROUTE_POLICY, evaluateGuardAccess, logGuardDecision } from '@/utils/routeAccess';
 export default function AdminGuard() {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -19,30 +16,23 @@ export default function AdminGuard() {
       evaluateGuardAccess(user, location.pathname, ADMIN_ROUTE_POLICY, {
         isAuthLoading: isLoading,
       }),
-    [isLoading, location.pathname, user]
+    [isLoading, location.pathname, user],
   );
-  const isAdmin = decision.status === "allow";
+  const isAdmin = decision.status === 'allow';
   const decisionStatus = decision.status;
-  const decisionReason = decision.status === "redirect" ? decision.reason : null;
-  const redirectTo = decision.status === "redirect" ? decision.redirectTo : null;
+  const decisionReason = decision.status === 'redirect' ? decision.reason : null;
+  const redirectTo = decision.status === 'redirect' ? decision.redirectTo : null;
 
   useEffect(() => {
-    logGuardDecision("AdminGuard", location.pathname, decision);
+    logGuardDecision('AdminGuard', location.pathname, decision);
     if (redirectTo) {
       navigate(redirectTo, { replace: true });
     }
-  }, [
-    decision,
-    decisionReason,
-    decisionStatus,
-    location.pathname,
-    navigate,
-    redirectTo,
-  ]);
+  }, [decision, decisionReason, decisionStatus, location.pathname, navigate, redirectTo]);
 
   if (
-    decision.status === "defer" ||
-    (decision.status === "redirect" && decision.reason === "unauthenticated")
+    decision.status === 'defer' ||
+    (decision.status === 'redirect' && decision.reason === 'unauthenticated')
   ) {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] flex items-center justify-center px-4">
@@ -61,7 +51,7 @@ export default function AdminGuard() {
     );
   }
 
-  if (decision.status === "redirect" && decision.reason === "unauthorized") {
+  if (decision.status === 'redirect' && decision.reason === 'unauthorized') {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] flex items-center justify-center px-4">
         <Card variant="bordered" className="w-full max-w-md text-center">
@@ -79,7 +69,7 @@ export default function AdminGuard() {
     );
   }
 
-  if (decision.status === "redirect" && decision.reason === "inactive") {
+  if (decision.status === 'redirect' && decision.reason === 'inactive') {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] flex items-center justify-center px-4">
         <Card variant="bordered" className="w-full max-w-md text-center">
@@ -95,7 +85,7 @@ export default function AdminGuard() {
               <Button variant="outline" onClick={() => navigate(-1)}>
                 Quay lại
               </Button>
-              <Button variant="primary" onClick={() => navigate("/", { replace: true })}>
+              <Button variant="primary" onClick={() => navigate('/', { replace: true })}>
                 Về trang chủ
               </Button>
             </div>

@@ -1,7 +1,8 @@
-import { create } from "zustand";
-import { User } from "@/types";
-import { authService } from "@/services/authService";
-import { getItem, setItem, removeItem } from "@/services/storageService";
+import { create } from 'zustand';
+
+import { authService } from '@/services/authService';
+import { getItem, setItem, removeItem } from '@/services/storageService';
+import { User } from '@/types';
 
 interface AuthState {
   user: User | null;
@@ -34,8 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Login failed";
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -53,20 +53,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     const persist = async () => {
       try {
         if (user) {
-          await setItem("user", JSON.stringify(user));
+          await setItem('user', JSON.stringify(user));
 
           // Ensure overrides store includes this user so future demo/logins retain edits
           try {
-            const oRaw = getItem("users_overrides");
-            const overrides = oRaw
-              ? (JSON.parse(oRaw) as Record<string, User>)
-              : {};
+            const oRaw = getItem('users_overrides');
+            const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
             if (user.id) {
               overrides[user.id] = user;
-              await setItem("users_overrides", JSON.stringify(overrides));
+              await setItem('users_overrides', JSON.stringify(overrides));
             }
           } catch (err) {
-            console.warn("Failed to update users_overrides", err);
+            console.warn('Failed to update users_overrides', err);
           }
 
           // Do NOT load localRecordings here — it can be huge and cause OOM on login.
@@ -77,18 +75,16 @@ export const useAuthStore = create<AuthState>((set) => ({
             if (authService.isAuthenticated()) {
               authService
                 .processPendingProfileUpdates()
-                .catch((e) =>
-                  console.warn("processPendingProfileUpdates failed", e),
-                );
+                .catch((e) => console.warn('processPendingProfileUpdates failed', e));
             }
           } catch (err) {
-            console.warn("Failed to trigger pending profile processing", err);
+            console.warn('Failed to trigger pending profile processing', err);
           }
         } else {
-          await removeItem("user");
+          await removeItem('user');
         }
       } catch (err) {
-        console.warn("Failed to persist user", err);
+        console.warn('Failed to persist user', err);
       }
     };
     void persist();
@@ -106,11 +102,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
           authService
             .processPendingProfileUpdates()
-            .catch((e) =>
-              console.warn("processPendingProfileUpdates failed", e),
-            );
+            .catch((e) => console.warn('processPendingProfileUpdates failed', e));
         } catch (err) {
-          console.warn("Failed to trigger pending profile processing", err);
+          console.warn('Failed to trigger pending profile processing', err);
         }
       }
     } catch (error) {

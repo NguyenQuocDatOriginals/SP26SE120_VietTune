@@ -1,51 +1,54 @@
-import { useParams, useLocation } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
-import { Recording } from "@/types";
-import { recordingService } from "@/services/recordingService";
-import { submissionService } from "@/services/submissionService";
-import { buildSubmissionLookupMaps } from "@/services/expertModerationApi";
-import { mapSubmissionToLocalRecording } from "@/services/submissionApiMapper";
-import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
-import { fetchVerifiedSubmissionsAsRecordings } from "@/services/researcherArchiveService";
-import { Heart, Download, Share2, Eye, User } from "lucide-react";
-import Badge from "@/components/common/Badge";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
-import Button from "@/components/common/Button";
-import BackButton from "@/components/common/BackButton";
-import { RECORDING_TYPE_NAMES } from "@/config/constants";
+import { Heart, Download, Share2, Eye, User } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 
-
-import { formatDateTime, formatDate, formatDuration } from "@/utils/helpers";
-import AudioPlayer from "@/components/features/AudioPlayer";
-import VideoPlayer from "@/components/features/VideoPlayer";
-import { isYouTubeUrl } from "@/utils/youtube";
-import { getRegionDisplayName } from "@/utils/recordingTags";
+import BackButton from '@/components/common/BackButton';
+import Badge from '@/components/common/Badge';
+import Button from '@/components/common/Button';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import AudioPlayer from '@/components/features/AudioPlayer';
+import VideoPlayer from '@/components/features/VideoPlayer';
+import { RECORDING_TYPE_NAMES } from '@/config/constants';
+import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
+import { recordingService } from '@/services/recordingService';
+import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
+import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
+import { submissionService } from '@/services/submissionService';
+import { Recording } from '@/types';
+import { formatDateTime, formatDate, formatDuration } from '@/utils/helpers';
+import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
+import { getRegionDisplayName } from '@/utils/recordingTags';
+import { isYouTubeUrl } from '@/utils/youtube';
 
 type LocationState = { from?: string; preloadedRecording?: Recording };
 
+function isRecordingCandidate(value: unknown): value is Recording {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return typeof row.id === 'string' && typeof row.title === 'string';
+}
+
 function pickRecordingFromApiBody(body: unknown): Recording | null {
-  if (!body || typeof body !== "object") return null;
+  if (!body || typeof body !== 'object') return null;
   const b = body as Record<string, unknown>;
   const nested = b.data ?? b.Data;
-  if (nested && typeof nested === "object" && !Array.isArray(nested) && "id" in nested && "title" in nested) {
-    return nested as unknown as Recording;
-  }
-  if ("id" in b && "title" in b) return b as unknown as Recording;
+  if (isRecordingCandidate(nested)) return nested;
+  if (isRecordingCandidate(b)) return b;
   return null;
 }
 
 function pickSubmissionDetailRow(res: unknown): Record<string, unknown> | null {
-  if (!res || typeof res !== "object") return null;
+  if (!res || typeof res !== 'object') return null;
   const r = res as Record<string, unknown>;
   const failed = r.isSuccess === false || r.IsSuccess === false;
   if (failed) return null;
   const d = r.data ?? r.Data;
-  if (d && typeof d === "object" && !Array.isArray(d)) return d as Record<string, unknown>;
+  if (d && typeof d === 'object' && !Array.isArray(d)) return d as Record<string, unknown>;
   return null;
 }
 
 function extractRecordingListFromApiResponse(res: unknown): Recording[] {
-  if (!res || typeof res !== "object") return [];
+  if (!res || typeof res !== 'object') return [];
   const r = res as Record<string, unknown>;
   if (Array.isArray(r.items)) return r.items as Recording[];
   if (Array.isArray(r.data)) return r.data as Recording[];
@@ -55,29 +58,33 @@ function extractRecordingListFromApiResponse(res: unknown): Recording[] {
 }
 
 const SURFACE_CARD =
-  "rounded-xl border border-neutral-200/80 bg-[#FFFCF5] p-4 sm:p-5 shadow-sm transition-shadow duration-200 hover:shadow-md";
+  'rounded-xl border border-neutral-200/80 bg-[#FFFCF5] p-4 sm:p-5 shadow-sm transition-shadow duration-200 hover:shadow-md';
 
-type TopicChip = { key: string; label: string; variant: "primary" | "secondary" };
+type TopicChip = { key: string; label: string; variant: 'primary' | 'secondary' };
 
 /** Single canonical chip row: ethnicity, region, type, freeform tags (instruments stay in sidebar only). */
 function buildTopicChips(recording: Recording): TopicChip[] {
   const seen = new Set<string>();
   const out: TopicChip[] = [];
-  const add = (key: string, raw: string | undefined, variant: TopicChip["variant"] = "secondary") => {
+  const add = (
+    key: string,
+    raw: string | undefined,
+    variant: TopicChip['variant'] = 'secondary',
+  ) => {
     const t = raw?.trim();
-    if (!t || t === "Không xác định" || t.toLowerCase() === "unknown") return;
+    if (!t || t === 'Không xác định' || t.toLowerCase() === 'unknown') return;
     const k = t.toLowerCase();
     if (seen.has(k)) return;
     seen.add(k);
     out.push({ key, label: t, variant });
   };
 
-  if (recording.ethnicity && typeof recording.ethnicity === "object") {
-    add("ethnicity", recording.ethnicity.nameVietnamese || recording.ethnicity.name);
+  if (recording.ethnicity && typeof recording.ethnicity === 'object') {
+    add('ethnicity', recording.ethnicity.nameVietnamese || recording.ethnicity.name);
   }
-  add("region", getRegionDisplayName(recording.region, undefined));
+  add('region', getRegionDisplayName(recording.region, undefined));
   const rt = RECORDING_TYPE_NAMES[recording.recordingType];
-  if (rt && rt !== "Khác") add("type", rt, "primary");
+  if (rt && rt !== 'Khác') add('type', rt, 'primary');
   recording.tags?.forEach((tag, idx) => add(`tag-${idx}`, tag));
   return out;
 }
@@ -86,7 +93,7 @@ function isRecordingVideoUrl(url: string): boolean {
   return (
     isYouTubeUrl(url) ||
     /\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)(\?|$)/i.test(url) ||
-    url.startsWith("data:video/")
+    url.startsWith('data:video/')
   );
 }
 
@@ -124,7 +131,7 @@ export default function RecordingDetailPage() {
             return;
           }
         } catch (err) {
-          console.warn("GET /Recording/{id} failed, trying submission / list fallbacks", err);
+          console.warn('GET /Recording/{id} failed, trying submission / list fallbacks', err);
         }
 
         try {
@@ -171,10 +178,7 @@ export default function RecordingDetailPage() {
     };
   }, [id, preloadedRecording]);
 
-  const topicChips = useMemo(
-    () => (recording ? buildTopicChips(recording) : []),
-    [recording]
-  );
+  const topicChips = useMemo(() => (recording ? buildTopicChips(recording) : []), [recording]);
 
   if (loading) {
     return (
@@ -189,9 +193,7 @@ export default function RecordingDetailPage() {
       <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-neutral-900">
-              Không tìm thấy bản thu
-            </h1>
+            <h1 className="text-2xl font-bold text-neutral-900">Không tìm thấy bản thu</h1>
             <BackButton to={returnTo} />
           </div>
         </div>
@@ -307,12 +309,11 @@ export default function RecordingDetailPage() {
             )}
 
             {/* Metadata */}
-            {recording.metadata && (
-              recording.metadata.tuningSystem ||
-              recording.metadata.modalStructure ||
-              recording.metadata.ritualContext ||
-              recording.metadata.culturalSignificance
-            ) && (
+            {recording.metadata &&
+              (recording.metadata.tuningSystem ||
+                recording.metadata.modalStructure ||
+                recording.metadata.ritualContext ||
+                recording.metadata.culturalSignificance) && (
                 <div className={SURFACE_CARD}>
                   <h2 className="text-base font-semibold mb-3 text-neutral-900">
                     Thông tin chuyên môn
@@ -320,9 +321,7 @@ export default function RecordingDetailPage() {
                   <dl className="space-y-3">
                     {recording.metadata.tuningSystem && (
                       <div>
-                        <dt className="font-medium text-neutral-900">
-                          Hệ thống điệu thức
-                        </dt>
+                        <dt className="font-medium text-neutral-900">Hệ thống điệu thức</dt>
                         <dd className="text-neutral-700 font-medium">
                           {recording.metadata.tuningSystem}
                         </dd>
@@ -330,9 +329,7 @@ export default function RecordingDetailPage() {
                     )}
                     {recording.metadata.modalStructure && (
                       <div>
-                        <dt className="font-medium text-neutral-900">
-                          Cấu trúc giai điệu
-                        </dt>
+                        <dt className="font-medium text-neutral-900">Cấu trúc giai điệu</dt>
                         <dd className="text-neutral-700 font-medium">
                           {recording.metadata.modalStructure}
                         </dd>
@@ -340,9 +337,7 @@ export default function RecordingDetailPage() {
                     )}
                     {recording.metadata.ritualContext && (
                       <div>
-                        <dt className="font-medium text-neutral-900">
-                          Ngữ cảnh nghi lễ
-                        </dt>
+                        <dt className="font-medium text-neutral-900">Ngữ cảnh nghi lễ</dt>
                         <dd className="text-neutral-700 font-medium">
                           {recording.metadata.ritualContext}
                         </dd>
@@ -350,9 +345,7 @@ export default function RecordingDetailPage() {
                     )}
                     {recording.metadata.culturalSignificance && (
                       <div>
-                        <dt className="font-medium text-neutral-900">
-                          Ý nghĩa văn hóa
-                        </dt>
+                        <dt className="font-medium text-neutral-900">Ý nghĩa văn hóa</dt>
                         <dd className="text-neutral-700 font-medium">
                           {recording.metadata.culturalSignificance}
                         </dd>
@@ -365,9 +358,7 @@ export default function RecordingDetailPage() {
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
               <div className={SURFACE_CARD}>
-                <h2 className="text-base font-semibold mb-3 text-neutral-900">
-                  Lời bài hát
-                </h2>
+                <h2 className="text-base font-semibold mb-3 text-neutral-900">Lời bài hát</h2>
                 <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4">
                   {recording.metadata.lyrics}
                 </p>
@@ -394,7 +385,7 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Dân tộc</dt>
                   <dd className="font-medium text-neutral-900">
-                    {recording.ethnicity?.nameVietnamese ?? recording.ethnicity?.name ?? "—"}
+                    {recording.ethnicity?.nameVietnamese ?? recording.ethnicity?.name ?? '—'}
                   </dd>
                 </div>
                 <div>
@@ -456,10 +447,7 @@ export default function RecordingDetailPage() {
                 </h3>
                 <ul className="space-y-2">
                   {recording.performers.map((performer) => (
-                    <li
-                      key={performer.id}
-                      className="flex items-center text-neutral-700"
-                    >
+                    <li key={performer.id} className="flex items-center text-neutral-700">
                       <User className="h-4 w-4 mr-2 text-primary-600" strokeWidth={2.5} />
                       <span>{performer.name}</span>
                       {performer.title && (
@@ -483,12 +471,8 @@ export default function RecordingDetailPage() {
                   <User className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-neutral-900">
-                    {recording.uploader.fullName}
-                  </p>
-                  <p className="text-sm text-neutral-500">
-                    @{recording.uploader.username}
-                  </p>
+                  <p className="font-medium text-neutral-900">{recording.uploader.fullName}</p>
+                  <p className="text-sm text-neutral-500">@{recording.uploader.username}</p>
                 </div>
               </div>
             </div>

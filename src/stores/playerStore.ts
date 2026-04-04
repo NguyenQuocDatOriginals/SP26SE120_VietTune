@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { Recording } from '@/types';
 
 interface PlayerState {
@@ -51,19 +52,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setPlaylist: (playlist, startIndex = 0) => {
     const index = Math.max(0, Math.min(startIndex, playlist.length - 1));
-    set({ 
-      playlist, 
+    set({
+      playlist,
       currentIndex: index,
-      currentRecording: playlist[index] || null 
+      currentRecording: playlist[index] || null,
     });
   },
 
   playNext: () => {
     const { playlist, currentIndex } = get();
     if (playlist.length === 0) return;
-    
+
     const nextIndex = (currentIndex + 1) % playlist.length;
-    set({ 
+    set({
       currentIndex: nextIndex,
       currentRecording: playlist[nextIndex],
       currentTime: 0,
@@ -74,9 +75,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playPrevious: () => {
     const { playlist, currentIndex } = get();
     if (playlist.length === 0) return;
-    
+
     const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-    set({ 
+    set({
       currentIndex: prevIndex,
       currentRecording: playlist[prevIndex],
       currentTime: 0,
@@ -85,8 +86,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   clearPlaylist: () => {
-    set({ 
-      playlist: [], 
+    set({
+      playlist: [],
       currentIndex: -1,
       isPlaying: false,
     });

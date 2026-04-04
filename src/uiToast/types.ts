@@ -7,4 +7,4 @@ export type NormalizedApiError = {
   rawMessage: string | null;
 };
 
-export const NORMALIZED_API_ERROR_KEY = "__viettuneNormalizedApiError" as const;
+export const NORMALIZED_API_ERROR_KEY = '__viettuneNormalizedApiError' as const;
