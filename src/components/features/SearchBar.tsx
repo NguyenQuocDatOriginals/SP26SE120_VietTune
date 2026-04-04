@@ -1,208 +1,322 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Search, MapPin, Music, Filter, Plus, AlertCircle } from "lucide-react";
-import { createPortal } from "react-dom";
-import { SearchFilters, Region, RecordingType, VerificationStatus } from "@/types";
+import { ChevronDown, Search, MapPin, Music, Filter, Plus, AlertCircle } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+
+import { SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
 
 // ===== CONSTANTS =====
 const GENRES = [
-  "Dân ca", "Hát xẩm", "Ca trù", "Chầu văn", "Quan họ", "Hát then",
-  "Cải lương", "Tuồng", "Chèo", "Nhã nhạc", "Ca Huế", "Đờn ca tài tử",
-  "Hát bội", "Hò", "Lý", "Vọng cổ", "Hát ru", "Hát ví", "Hát giặm", "Bài chòi", "Khác",
+  'Dân ca',
+  'Hát xẩm',
+  'Ca trù',
+  'Chầu văn',
+  'Quan họ',
+  'Hát then',
+  'Cải lương',
+  'Tuồng',
+  'Chèo',
+  'Nhã nhạc',
+  'Ca Huế',
+  'Đờn ca tài tử',
+  'Hát bội',
+  'Hò',
+  'Lý',
+  'Vọng cổ',
+  'Hát ru',
+  'Hát ví',
+  'Hát giặm',
+  'Bài chòi',
+  'Khác',
 ];
 
 const ETHNICITIES = [
-  "Kinh", "Tày", "Thái", "Mường", "Khmer", "H'Mông", "Nùng", "Hoa", "Dao", "Gia Rai",
-  "Ê Đê", "Ba Na", "Xơ Đăng", "Sán Chay", "Cơ Ho", "Chăm", "Sán Dìu", "Hrê", "Mnông", "Ra Glai",
-  "Giáy", "Stră", "Bru-Vân Kiều", "Cơ Tu", "Giẻ Triêng", "Tà Ôi", "Mạ", "Khơ Mú", "Co", "Chơ Ro",
-  "Hà Nhì", "Xinh Mun", "Chu Ru", "Lào", "La Chí", "Kháng", "Phù Lá", "La Hủ", "La Ha", "Pà Thẻn",
-  "Lự", "Ngái", "Chứt", "Lô Lô", "Mảng", "Cờ Lao", "Bố Y", "Cống", "Si La", "Pu Péo",
-  "Rơ Măm", "Brâu", "Ơ Đu", "Khác",
+  'Kinh',
+  'Tày',
+  'Thái',
+  'Mường',
+  'Khmer',
+  "H'Mông",
+  'Nùng',
+  'Hoa',
+  'Dao',
+  'Gia Rai',
+  'Ê Đê',
+  'Ba Na',
+  'Xơ Đăng',
+  'Sán Chay',
+  'Cơ Ho',
+  'Chăm',
+  'Sán Dìu',
+  'Hrê',
+  'Mnông',
+  'Ra Glai',
+  'Giáy',
+  'Stră',
+  'Bru-Vân Kiều',
+  'Cơ Tu',
+  'Giẻ Triêng',
+  'Tà Ôi',
+  'Mạ',
+  'Khơ Mú',
+  'Co',
+  'Chơ Ro',
+  'Hà Nhì',
+  'Xinh Mun',
+  'Chu Ru',
+  'Lào',
+  'La Chí',
+  'Kháng',
+  'Phù Lá',
+  'La Hủ',
+  'La Ha',
+  'Pà Thẻn',
+  'Lự',
+  'Ngái',
+  'Chứt',
+  'Lô Lô',
+  'Mảng',
+  'Cờ Lao',
+  'Bố Y',
+  'Cống',
+  'Si La',
+  'Pu Péo',
+  'Rơ Măm',
+  'Brâu',
+  'Ơ Đu',
+  'Khác',
 ];
 
 const REGIONS = [
-  "Trung du và miền núi Bắc Bộ", "Đồng bằng Bắc Bộ", "Bắc Trung Bộ",
-  "Nam Trung Bộ", "Cao nguyên Trung Bộ", "Đông Nam Bộ", "Tây Nam Bộ",
+  'Trung du và miền núi Bắc Bộ',
+  'Đồng bằng Bắc Bộ',
+  'Bắc Trung Bộ',
+  'Nam Trung Bộ',
+  'Cao nguyên Trung Bộ',
+  'Đông Nam Bộ',
+  'Tây Nam Bộ',
 ];
 
 const PROVINCES = [
-  "TP. Hà Nội", "TP. Hải Phòng", "TP. Huế", "TP. Đà Nẵng", "TP. Hồ Chí Minh", "TP. Cần Thơ",
-  "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Điện Biên", "Đắk Lắk", "Đồng Nai", "Đồng Tháp",
-  "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hòa", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai",
-  "Nghệ An", "Ninh Bình", "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
-  "Thái Nguyên", "Thanh Hóa", "Tuyên Quang", "Vĩnh Long",
+  'TP. Hà Nội',
+  'TP. Hải Phòng',
+  'TP. Huế',
+  'TP. Đà Nẵng',
+  'TP. Hồ Chí Minh',
+  'TP. Cần Thơ',
+  'An Giang',
+  'Bắc Ninh',
+  'Cà Mau',
+  'Cao Bằng',
+  'Điện Biên',
+  'Đắk Lắk',
+  'Đồng Nai',
+  'Đồng Tháp',
+  'Gia Lai',
+  'Hà Tĩnh',
+  'Hưng Yên',
+  'Khánh Hòa',
+  'Lai Châu',
+  'Lâm Đồng',
+  'Lạng Sơn',
+  'Lào Cai',
+  'Nghệ An',
+  'Ninh Bình',
+  'Phú Thọ',
+  'Quảng Ngãi',
+  'Quảng Ninh',
+  'Quảng Trị',
+  'Sơn La',
+  'Tây Ninh',
+  'Thái Nguyên',
+  'Thanh Hóa',
+  'Tuyên Quang',
+  'Vĩnh Long',
 ];
 
 const EVENT_TYPES = [
-  "Đám cưới", "Đám tang", "Lễ hội đình", "Lễ hội chùa", "Tết Nguyên đán", "Hội xuân",
-  "Lễ cầu mùa", "Lễ cúng tổ tiên", "Lễ cấp sắc", "Lễ hội đâm trâu", "Lễ hội cồng chiêng",
-  "Sinh hoạt cộng đồng", "Biểu diễn nghệ thuật", "Ghi âm studio", "Ghi âm thực địa", "Khác",
+  'Đám cưới',
+  'Đám tang',
+  'Lễ hội đình',
+  'Lễ hội chùa',
+  'Tết Nguyên đán',
+  'Hội xuân',
+  'Lễ cầu mùa',
+  'Lễ cúng tổ tiên',
+  'Lễ cấp sắc',
+  'Lễ hội đâm trâu',
+  'Lễ hội cồng chiêng',
+  'Sinh hoạt cộng đồng',
+  'Biểu diễn nghệ thuật',
+  'Ghi âm studio',
+  'Ghi âm thực địa',
+  'Khác',
 ];
 
 // Align with UploadMusic.tsx PERFORMANCE_TYPES for consistent filter/upload values
 const PERFORMANCE_TYPES = [
-  { key: "instrumental", label: "Chỉ nhạc cụ (Instrumental)" },
-  { key: "acappella", label: "Chỉ giọng hát không đệm (Acappella)" },
-  { key: "vocal_accompaniment", label: "Hát có nhạc đệm (Vocal with accompaniment)" },
+  { key: 'instrumental', label: 'Chỉ nhạc cụ (Instrumental)' },
+  { key: 'acappella', label: 'Chỉ giọng hát không đệm (Acappella)' },
+  { key: 'vocal_accompaniment', label: 'Hát có nhạc đệm (Vocal with accompaniment)' },
 ];
 
 const VERIFICATION_STATUS = [
-  { key: "VERIFIED", label: "Đã xác minh" },
-  { key: "PENDING", label: "Đang chờ" },
-  { key: "UNDER_REVIEW", label: "Đang kiểm duyệt" },
+  { key: 'VERIFIED', label: 'Đã xác minh' },
+  { key: 'PENDING', label: 'Đang chờ' },
+  { key: 'UNDER_REVIEW', label: 'Đang kiểm duyệt' },
 ];
 
 const INSTRUMENTS = [
-  "Alal (Ba Na)",
-  "Aráp (Ba Na)",
-  "Aráp (Ca Dong)",
-  "Aráp (Gia Rai)",
-  "Aráp (Rơ Năm)",
-  "Aráp (Stră)",
-  "Biên khánh (Kinh)",
-  "Bro (Ba Na)",
-  "Bro (Gia Rai)",
-  "Bro (Giẻ Triêng)",
-  "Bro (Xơ Đăng)",
-  "Bẳng bu (Thái)",
-  "Chul (Ba Na)",
-  "Chul (Gia Rai)",
-  "Chênh Kial (Ba Na)",
-  "Cò ke (Mường)",
-  "Cồng, chiêng (Ba Na)",
-  "Cồng, chiêng (Gia Rai)",
-  "Cồng, chiêng (Giẻ Triêng)",
-  "Cồng, chiêng (Hrê)",
-  "Cồng, chiêng (Ê Đê)",
-  "Dàn nhạc ngũ âm (Khmer)",
-  "Goong (Ba Na)",
-  "Goong (Gia Rai)",
-  "Goong (Giẻ Triêng)",
-  "Goong đe (Ba Na)",
-  "Hơgơr (Ê Đê)",
-  "Hơgơr cân (Mnâm)",
-  "Hơgơr cân (Rơ Năm)",
-  "Hơgơr prong (Gia Rai)",
-  "Hơgơr tuôn (Hà Lang)",
-  "Hơgơr tăk (Ba Na)",
-  "Khinh khung (Ba Na)",
-  "Khinh khung (Gia Rai)",
+  'Alal (Ba Na)',
+  'Aráp (Ba Na)',
+  'Aráp (Ca Dong)',
+  'Aráp (Gia Rai)',
+  'Aráp (Rơ Năm)',
+  'Aráp (Stră)',
+  'Biên khánh (Kinh)',
+  'Bro (Ba Na)',
+  'Bro (Gia Rai)',
+  'Bro (Giẻ Triêng)',
+  'Bro (Xơ Đăng)',
+  'Bẳng bu (Thái)',
+  'Chul (Ba Na)',
+  'Chul (Gia Rai)',
+  'Chênh Kial (Ba Na)',
+  'Cò ke (Mường)',
+  'Cồng, chiêng (Ba Na)',
+  'Cồng, chiêng (Gia Rai)',
+  'Cồng, chiêng (Giẻ Triêng)',
+  'Cồng, chiêng (Hrê)',
+  'Cồng, chiêng (Ê Đê)',
+  'Dàn nhạc ngũ âm (Khmer)',
+  'Goong (Ba Na)',
+  'Goong (Gia Rai)',
+  'Goong (Giẻ Triêng)',
+  'Goong đe (Ba Na)',
+  'Hơgơr (Ê Đê)',
+  'Hơgơr cân (Mnâm)',
+  'Hơgơr cân (Rơ Năm)',
+  'Hơgơr prong (Gia Rai)',
+  'Hơgơr tuôn (Hà Lang)',
+  'Hơgơr tăk (Ba Na)',
+  'Khinh khung (Ba Na)',
+  'Khinh khung (Gia Rai)',
   "Khèn (H'Mông)",
-  "Khèn (Ta Ôi)",
-  "Khèn (Ê Đê)",
-  "Khên (Vân Kiều)",
-  "Knăh ring (Ba Na)",
-  "Knăh ring (Gia Rai)",
+  'Khèn (Ta Ôi)',
+  'Khèn (Ê Đê)',
+  'Khên (Vân Kiều)',
+  'Knăh ring (Ba Na)',
+  'Knăh ring (Gia Rai)',
   "K'lông put (Gia Rai)",
   "K'ny (Ba Na)",
   "K'ny (Gia Rai)",
   "K'ny (Rơ Ngao)",
   "K'ny (Xơ Đăng)",
-  "Kèn bầu (Chăm)",
-  "Kèn bầu (Kinh)",
-  "Kèn bầu (Thái)",
+  'Kèn bầu (Chăm)',
+  'Kèn bầu (Kinh)',
+  'Kèn bầu (Thái)',
   "Kềnh (H'Mông)",
   "M'linh (Dao)",
   "M'linh (Mường)",
   "M'nhum (Gia Rai)",
-  "Mõ (Kinh)",
-  "Phách (Kinh)",
-  "Pí cổng (Thái)",
-  "Pí lè (Thái)",
-  "Pí lè (Tày)",
-  "Pí một lao (Kháng)",
-  "Pí một lao (Khơ Mú)",
-  "Pí một lao (La Ha)",
-  "Pí một lao (Thái)",
-  "Pí pặp (Thái)",
-  "Pí phướng (Thái)",
-  "Pí đôi (Thái)",
+  'Mõ (Kinh)',
+  'Phách (Kinh)',
+  'Pí cổng (Thái)',
+  'Pí lè (Thái)',
+  'Pí lè (Tày)',
+  'Pí một lao (Kháng)',
+  'Pí một lao (Khơ Mú)',
+  'Pí một lao (La Ha)',
+  'Pí một lao (Thái)',
+  'Pí pặp (Thái)',
+  'Pí phướng (Thái)',
+  'Pí đôi (Thái)',
   "Púa (H'Mông)",
-  "Púa (Lô Lô)",
+  'Púa (Lô Lô)',
   "Qeej (H'Mông)",
-  "Rang leh (Ca Dong)",
-  "Rang leh (Stră)",
-  "Rang rai (Ba Na)",
-  "Rang rai (Gia Rai)",
-  "Song lang (Kinh)",
-  "Sáo ngang (Kinh)",
-  "Sênh tiền (Kinh)",
+  'Rang leh (Ca Dong)',
+  'Rang leh (Stră)',
+  'Rang rai (Ba Na)',
+  'Rang rai (Gia Rai)',
+  'Song lang (Kinh)',
+  'Sáo ngang (Kinh)',
+  'Sênh tiền (Kinh)',
   "T'rum (Gia Rai)",
-  "Ta in (Hà Nhì)",
-  "Ta lư (Vân Kiều)",
-  "Ta pòl (Ba Na)",
-  "Ta pòl (Brâu)",
-  "Ta pòl (Gia Rai)",
-  "Ta pòl (Rơ Năm)",
-  "Tam thập lục (Kinh)",
-  "Teh ding (Gia Rai)",
-  "Tiêu (Kinh)",
-  "Tol alao (Ca Dong)",
-  "Tông đing (Ba Na)",
-  "Tông đing (Ca Dong)",
-  "Tơ nốt (Ba Na)",
-  "Trống bộc (Kinh)",
-  "Trống cái (Kinh)",
-  "Trống chầu (Kinh)",
-  "Trống cơm (Kinh)",
-  "Trống dẹt (Kinh)",
-  "Trống khẩu (Kinh)",
-  "Trống lắng (Kinh)",
-  "Trống mảnh (Kinh)",
-  "Trống quần (Kinh)",
-  "Trống đế (Kinh)",
-  "Trống đồng (Kinh)",
-  "Tính tẩu (Thái)",
-  "Tính tẩu (Tày)",
-  "Vang (Gia Rai)",
-  "Đinh Duar (Giẻ Triêng)",
-  "Đinh Khén (Xơ Đăng)",
-  "Đinh tuk (Ba Na)",
-  "Đao đao (Khơ Mú)",
-  "Đuk đik (Giẻ Triêng)",
-  "Đàn bầu (Kinh)",
+  'Ta in (Hà Nhì)',
+  'Ta lư (Vân Kiều)',
+  'Ta pòl (Ba Na)',
+  'Ta pòl (Brâu)',
+  'Ta pòl (Gia Rai)',
+  'Ta pòl (Rơ Năm)',
+  'Tam thập lục (Kinh)',
+  'Teh ding (Gia Rai)',
+  'Tiêu (Kinh)',
+  'Tol alao (Ca Dong)',
+  'Tông đing (Ba Na)',
+  'Tông đing (Ca Dong)',
+  'Tơ nốt (Ba Na)',
+  'Trống bộc (Kinh)',
+  'Trống cái (Kinh)',
+  'Trống chầu (Kinh)',
+  'Trống cơm (Kinh)',
+  'Trống dẹt (Kinh)',
+  'Trống khẩu (Kinh)',
+  'Trống lắng (Kinh)',
+  'Trống mảnh (Kinh)',
+  'Trống quần (Kinh)',
+  'Trống đế (Kinh)',
+  'Trống đồng (Kinh)',
+  'Tính tẩu (Thái)',
+  'Tính tẩu (Tày)',
+  'Vang (Gia Rai)',
+  'Đinh Duar (Giẻ Triêng)',
+  'Đinh Khén (Xơ Đăng)',
+  'Đinh tuk (Ba Na)',
+  'Đao đao (Khơ Mú)',
+  'Đuk đik (Giẻ Triêng)',
+  'Đàn bầu (Kinh)',
   "Đàn môi (H'Mông)",
-  "Đàn nguyệt (Kinh)",
-  "Đàn nhị (Chăm)",
-  "Đàn nhị (Dao)",
-  "Đàn nhị (Giáy)",
-  "Đàn nhị (Kinh)",
-  "Đàn nhị (Nùng)",
-  "Đàn nhị (Tày)",
+  'Đàn nguyệt (Kinh)',
+  'Đàn nhị (Chăm)',
+  'Đàn nhị (Dao)',
+  'Đàn nhị (Giáy)',
+  'Đàn nhị (Kinh)',
+  'Đàn nhị (Nùng)',
+  'Đàn nhị (Tày)',
   "Đàn t'rưng (Ba Na)",
   "Đàn t'rưng (Gia Rai)",
-  "Đàn tam (Kinh)",
-  "Đàn tranh (Kinh)",
-  "Đàn tứ (Kinh)",
-  "Đàn tỳ bà (Kinh)",
-  "Đàn đá (Kinh)",
-  "Đàn đáy (Kinh)",
+  'Đàn tam (Kinh)',
+  'Đàn tranh (Kinh)',
+  'Đàn tứ (Kinh)',
+  'Đàn tỳ bà (Kinh)',
+  'Đàn đá (Kinh)',
+  'Đàn đáy (Kinh)',
 ];
 
 const YEAR_RANGES = [
-  { key: "before_1950", label: "Trước 1950" },
-  { key: "1950_1975", label: "1950 - 1975" },
-  { key: "1975_2000", label: "1975 - 2000" },
-  { key: "2000_2010", label: "2000 - 2010" },
-  { key: "2010_2020", label: "2010 - 2020" },
-  { key: "after_2020", label: "Sau 2020" },
+  { key: 'before_1950', label: 'Trước 1950' },
+  { key: '1950_1975', label: '1950 - 1975' },
+  { key: '1975_2000', label: '1975 - 2000' },
+  { key: '2000_2010', label: '2000 - 2010' },
+  { key: '2010_2020', label: '2010 - 2020' },
+  { key: 'after_2020', label: 'Sau 2020' },
 ];
 
 // Mapping genre to typical ethnicity
 const GENRE_ETHNICITY_MAP: Record<string, string[]> = {
-  "Ca trù": ["Kinh"],
-  "Quan họ": ["Kinh"],
-  "Chầu văn": ["Kinh"],
-  "Nhã nhạc": ["Kinh"],
-  "Ca Huế": ["Kinh"],
-  "Đờn ca tài tử": ["Kinh"],
-  "Hát bội": ["Kinh"],
-  "Cải lương": ["Kinh"],
-  "Tuồng": ["Kinh"],
-  "Chèo": ["Kinh"],
-  "Hát xẩm": ["Kinh"],
-  "Hát then": ["Tày", "Nùng"],
-  "Khèn": ["H'Mông"],
-  "Cồng chiêng": ["Ba Na", "Gia Rai", "Ê Đê", "Xơ Đăng", "Giẻ Triêng"],
+  'Ca trù': ['Kinh'],
+  'Quan họ': ['Kinh'],
+  'Chầu văn': ['Kinh'],
+  'Nhã nhạc': ['Kinh'],
+  'Ca Huế': ['Kinh'],
+  'Đờn ca tài tử': ['Kinh'],
+  'Hát bội': ['Kinh'],
+  'Cải lương': ['Kinh'],
+  Tuồng: ['Kinh'],
+  Chèo: ['Kinh'],
+  'Hát xẩm': ['Kinh'],
+  'Hát then': ['Tày', 'Nùng'],
+  Khèn: ["H'Mông"],
+  'Cồng chiêng': ['Ba Na', 'Gia Rai', 'Ê Đê', 'Xơ Đăng', 'Giẻ Triêng'],
 };
 
 // Check if click is on scrollbar
@@ -220,7 +334,7 @@ function SearchableDropdown({
   value,
   onChange,
   options,
-  placeholder = "-- Chọn --",
+  placeholder = '-- Chọn --',
   searchable = true,
   disabled = false,
 }: {
@@ -232,7 +346,7 @@ function SearchableDropdown({
   disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -240,26 +354,22 @@ function SearchableDropdown({
 
   const filteredOptions = useMemo(() => {
     if (!search) return options;
-    return options.filter((opt) =>
-      opt.toLowerCase().includes(search.toLowerCase())
-    );
+    return options.filter((opt) => opt.toLowerCase().includes(search.toLowerCase()));
   }, [options, search]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
-      const clickedOutsideDropdown =
-        dropdownRef.current && !dropdownRef.current.contains(target);
-      const clickedOutsideMenu =
-        menuRef.current && !menuRef.current.contains(target);
+      const clickedOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(target);
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
       if (clickedOutsideDropdown && (menuRef.current ? clickedOutsideMenu : true)) {
         setIsOpen(false);
-        setSearch("");
+        setSearch('');
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -267,11 +377,11 @@ function SearchableDropdown({
       if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true);
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect, true);
     return () => {
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect, true);
     };
   }, [isOpen]);
 
@@ -282,16 +392,18 @@ function SearchableDropdown({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-xl focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-          }`}
+        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-xl focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        }`}
         style={{ backgroundColor: '#FFFCF5' }}
       >
-        <span className={value ? "text-neutral-900 font-medium" : "text-neutral-500"}>
+        <span className={value ? 'text-neutral-900 font-medium' : 'text-neutral-500'}>
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-            }`}
+          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
           strokeWidth={2.5}
         />
       </button>
@@ -304,7 +416,7 @@ function SearchableDropdown({
             className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: '#FFFCF5',
-              position: "absolute",
+              position: 'absolute',
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
               width: menuRect.width,
@@ -330,8 +442,8 @@ function SearchableDropdown({
             <div
               className="max-h-60 overflow-y-auto"
               style={{
-                scrollbarWidth: "thin",
-                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#9B2C2C rgba(255, 255, 255, 0.3)',
               }}
             >
               {filteredOptions.length === 0 ? (
@@ -346,12 +458,13 @@ function SearchableDropdown({
                     onClick={() => {
                       onChange(option);
                       setIsOpen(false);
-                      setSearch("");
+                      setSearch('');
                     }}
-                    className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === option
-                      ? "bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium"
-                      : "text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700"
-                      }`}
+                    className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${
+                      value === option
+                        ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium'
+                        : 'text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700'
+                    }`}
                   >
                     {option}
                   </button>
@@ -359,7 +472,7 @@ function SearchableDropdown({
               )}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -369,7 +482,7 @@ function MultiSelectTags({
   values,
   onChange,
   options,
-  placeholder = "Chọn...",
+  placeholder = 'Chọn...',
   disabled = false,
 }: {
   values: string[];
@@ -379,7 +492,7 @@ function MultiSelectTags({
   disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLDivElement>(null);
@@ -388,10 +501,10 @@ function MultiSelectTags({
   // Helper: remove Vietnamese accents for insensitive search
   function removeVietnameseTones(str: string) {
     return str
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .replace(/đ/g, "d")
-      .replace(/Đ/g, "D");
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
   }
 
   const filteredOptions = useMemo(() => {
@@ -410,15 +523,14 @@ function MultiSelectTags({
       const target = event.target as Node;
       const clickedOutsideContainer =
         containerRef.current && !containerRef.current.contains(target);
-      const clickedOutsideMenu =
-        menuRef.current && !menuRef.current.contains(target);
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
       if (clickedOutsideContainer && (menuRef.current ? clickedOutsideMenu : true)) {
         setIsOpen(false);
-        setSearch("");
+        setSearch('');
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -426,17 +538,17 @@ function MultiSelectTags({
       if (inputRef.current) setMenuRect(inputRef.current.getBoundingClientRect());
     };
     if (isOpen) updateRect();
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true);
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect, true);
     return () => {
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect, true);
     };
   }, [isOpen]);
 
   const addTag = (tag: string) => {
     onChange([...values, tag]);
-    setSearch("");
+    setSearch('');
   };
 
   const removeTag = (tag: string) => {
@@ -448,8 +560,9 @@ function MultiSelectTags({
       <div
         ref={inputRef}
         onClick={() => !disabled && setIsOpen(true)}
-        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-xl focus-within:border-primary-500 transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-text"
-          }`}
+        className={`min-h-[48px] px-4 py-2.5 border border-neutral-400 rounded-xl focus-within:border-primary-500 transition-all ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-text'
+        }`}
         style={{ backgroundColor: '#FFFCF5' }}
       >
         <div className="flex flex-wrap gap-1.5">
@@ -462,17 +575,28 @@ function MultiSelectTags({
               {!disabled && (
                 <button
                   type="button"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     removeTag(tag);
                   }}
                   className="ml-1 focus:outline-none hover:text-red-200"
                   aria-label={`Xóa ${tag}`}
                   tabIndex={0}
-                  style={{ lineHeight: 0, padding: 0, background: "none", border: "none" }}
+                  style={{ lineHeight: 0, padding: 0, background: 'none', border: 'none' }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 3l6 6M9 3l-6 6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </button>
               )}
@@ -484,10 +608,10 @@ function MultiSelectTags({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setIsOpen(true)}
-              placeholder={values.length === 0 ? placeholder : ""}
+              placeholder={values.length === 0 ? placeholder : ''}
               className="flex-1 min-w-[120px] bg-transparent text-neutral-900 placeholder-neutral-500 text-sm focus:outline-none py-1"
-              onKeyDown={e => {
-                if (e.key === "Backspace" && search === "" && values.length > 0) {
+              onKeyDown={(e) => {
+                if (e.key === 'Backspace' && search === '' && values.length > 0) {
                   removeTag(values[values.length - 1]);
                   e.preventDefault();
                 }
@@ -506,7 +630,7 @@ function MultiSelectTags({
             className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
             style={{
               backgroundColor: '#FFFCF5',
-              position: "absolute",
+              position: 'absolute',
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
               width: menuRect.width,
@@ -516,13 +640,13 @@ function MultiSelectTags({
             <div
               className="max-h-60 overflow-y-auto"
               style={{
-                scrollbarWidth: "thin",
-                scrollbarColor: "#9B2C2C rgba(255, 255, 255, 0.3)",
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#9B2C2C rgba(255, 255, 255, 0.3)',
               }}
             >
               {filteredOptions.length === 0 ? (
                 <div className="px-5 py-3 text-neutral-400 text-sm text-center">
-                  {search ? "Không tìm thấy kết quả" : "Đã chọn tất cả"}
+                  {search ? 'Không tìm thấy kết quả' : 'Đã chọn tất cả'}
                 </div>
               ) : (
                 filteredOptions.slice(0, 50).map((option) => (
@@ -539,7 +663,7 @@ function MultiSelectTags({
               )}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
@@ -556,9 +680,7 @@ function FormField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-neutral-800">
-        {label}
-      </label>
+      <label className="block text-sm font-medium text-neutral-800">{label}</label>
       {children}
       {hint && <p className="text-xs text-neutral-800/60">{hint}</p>}
     </div>
@@ -581,7 +703,10 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-neutral-200/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+    <div
+      className="border border-neutral-200/80 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+      style={{ backgroundColor: '#FFFCF5' }}
+    >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -600,8 +725,9 @@ function CollapsibleSection({
           </div>
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-            }`}
+          className={`h-5 w-5 text-neutral-600 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
           strokeWidth={2.5}
         />
       </button>
@@ -618,26 +744,26 @@ interface SearchBarProps {
 
 // Map Region enum to Vietnamese label (same order as REGIONS)
 const REGION_TO_LABEL: Record<Region, string> = {
-  [Region.NORTHERN_MOUNTAINS]: "Trung du và miền núi Bắc Bộ",
-  [Region.RED_RIVER_DELTA]: "Đồng bằng Bắc Bộ",
-  [Region.NORTH_CENTRAL]: "Bắc Trung Bộ",
-  [Region.SOUTH_CENTRAL_COAST]: "Nam Trung Bộ",
-  [Region.CENTRAL_HIGHLANDS]: "Cao nguyên Trung Bộ",
-  [Region.SOUTHEAST]: "Đông Nam Bộ",
-  [Region.MEKONG_DELTA]: "Tây Nam Bộ",
+  [Region.NORTHERN_MOUNTAINS]: 'Trung du và miền núi Bắc Bộ',
+  [Region.RED_RIVER_DELTA]: 'Đồng bằng Bắc Bộ',
+  [Region.NORTH_CENTRAL]: 'Bắc Trung Bộ',
+  [Region.SOUTH_CENTRAL_COAST]: 'Nam Trung Bộ',
+  [Region.CENTRAL_HIGHLANDS]: 'Cao nguyên Trung Bộ',
+  [Region.SOUTHEAST]: 'Đông Nam Bộ',
+  [Region.MEKONG_DELTA]: 'Tây Nam Bộ',
 };
 
 export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarProps) {
-  const [query, setQuery] = useState(initialFilters.query || "");
+  const [query, setQuery] = useState(initialFilters.query || '');
   const [genres, setGenres] = useState<string[]>([]);
-  const [ethnicity, setEthnicity] = useState("");
-  const [region, setRegion] = useState("");
-  const [province, setProvince] = useState("");
-  const [eventType, setEventType] = useState("");
-  const [performanceType, setPerformanceType] = useState("");
+  const [ethnicity, setEthnicity] = useState('');
+  const [region, setRegion] = useState('');
+  const [province, setProvince] = useState('');
+  const [eventType, setEventType] = useState('');
+  const [performanceType, setPerformanceType] = useState('');
   const [instruments, setInstruments] = useState<string[]>([]);
-  const [yearRange, setYearRange] = useState("");
-  const [verificationStatus, setVerificationStatus] = useState("");
+  const [yearRange, setYearRange] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState('');
 
   // Hydrate form from initialFilters (e.g. URL params or parent state) so filter search can be restored
   useEffect(() => {
@@ -651,8 +777,9 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       const rt = initialFilters.recordingTypes[0];
       const pt = PERFORMANCE_TYPES.find(
         (p) =>
-          (rt === RecordingType.INSTRUMENTAL && p.key === "instrumental") ||
-          (rt === RecordingType.VOCAL && (p.key === "acappella" || p.key === "vocal_accompaniment"))
+          (rt === RecordingType.INSTRUMENTAL && p.key === 'instrumental') ||
+          (rt === RecordingType.VOCAL &&
+            (p.key === 'acappella' || p.key === 'vocal_accompaniment')),
       );
       if (pt) setPerformanceType(pt.label);
     }
@@ -665,18 +792,18 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
       const to = initialFilters.dateTo;
       const yr = YEAR_RANGES.find((y) => {
         switch (y.key) {
-          case "before_1950":
-            return to === "1949-12-31";
-          case "1950_1975":
-            return from === "1950-01-01" && to === "1975-12-31";
-          case "1975_2000":
-            return from === "1975-01-01" && to === "2000-12-31";
-          case "2000_2010":
-            return from === "2000-01-01" && to === "2010-12-31";
-          case "2010_2020":
-            return from === "2010-01-01" && to === "2020-12-31";
-          case "after_2020":
-            return from === "2021-01-01";
+          case 'before_1950':
+            return to === '1949-12-31';
+          case '1950_1975':
+            return from === '1950-01-01' && to === '1975-12-31';
+          case '1975_2000':
+            return from === '1975-01-01' && to === '2000-12-31';
+          case '2000_2010':
+            return from === '2000-01-01' && to === '2010-12-31';
+          case '2010_2020':
+            return from === '2010-01-01' && to === '2020-12-31';
+          case 'after_2020':
+            return from === '2021-01-01';
           default:
             return false;
         }
@@ -700,11 +827,11 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
   // Check for genre-ethnicity mismatch
   const genreEthnicityWarning = useMemo(() => {
-    if (genres.length === 1 && ethnicity && ethnicity !== "Tất cả dân tộc") {
+    if (genres.length === 1 && ethnicity && ethnicity !== 'Tất cả dân tộc') {
       const genre = genres[0];
       const expectedEthnicities = GENRE_ETHNICITY_MAP[genre];
       if (expectedEthnicities && !expectedEthnicities.includes(ethnicity)) {
-        return `Lưu ý: Thể loại "${genre}" thường là đặc trưng của người ${expectedEthnicities.join(", ")}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
+        return `Lưu ý: Thể loại "${genre}" thường là đặc trưng của người ${expectedEthnicities.join(', ')}. Tuy nhiên, giao lưu văn hóa giữa các dân tộc là điều bình thường.`;
       }
     }
     return null;
@@ -713,16 +840,26 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (genres.length > 0) count++;
-    if (ethnicity && !ethnicity.startsWith("Tất cả")) count++;
-    if (region && !region.startsWith("Tất cả")) count++;
-    if (province && !province.startsWith("Tất cả")) count++;
-    if (eventType && !eventType.startsWith("Tất cả")) count++;
-    if (performanceType && !performanceType.startsWith("Tất cả")) count++;
+    if (ethnicity && !ethnicity.startsWith('Tất cả')) count++;
+    if (region && !region.startsWith('Tất cả')) count++;
+    if (province && !province.startsWith('Tất cả')) count++;
+    if (eventType && !eventType.startsWith('Tất cả')) count++;
+    if (performanceType && !performanceType.startsWith('Tất cả')) count++;
     if (instruments.length > 0) count++;
-    if (yearRange && !yearRange.startsWith("Tất cả")) count++;
-    if (verificationStatus && !verificationStatus.startsWith("Tất cả")) count++;
+    if (yearRange && !yearRange.startsWith('Tất cả')) count++;
+    if (verificationStatus && !verificationStatus.startsWith('Tất cả')) count++;
     return count;
-  }, [genres, ethnicity, region, province, eventType, performanceType, instruments, yearRange, verificationStatus]);
+  }, [
+    genres,
+    ethnicity,
+    region,
+    province,
+    eventType,
+    performanceType,
+    instruments,
+    yearRange,
+    verificationStatus,
+  ]);
 
   const handleSearch = () => {
     const filters: SearchFilters = {
@@ -730,11 +867,11 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     };
 
     // Map performanceType label to RecordingType enum (labels aligned with UploadMusic)
-    if (performanceType && !performanceType.startsWith("Tất cả")) {
+    if (performanceType && !performanceType.startsWith('Tất cả')) {
       const perfMap: Record<string, RecordingType> = {
-        "Chỉ nhạc cụ (Instrumental)": RecordingType.INSTRUMENTAL,
-        "Chỉ giọng hát không đệm (Acappella)": RecordingType.VOCAL,
-        "Giọng hát có nhạc đệm (Vocal with accompaniment)": RecordingType.VOCAL,
+        'Chỉ nhạc cụ (Instrumental)': RecordingType.INSTRUMENTAL,
+        'Chỉ giọng hát không đệm (Acappella)': RecordingType.VOCAL,
+        'Giọng hát có nhạc đệm (Vocal with accompaniment)': RecordingType.VOCAL,
       };
       const mapped = perfMap[performanceType];
       if (mapped) filters.recordingTypes = [mapped];
@@ -744,58 +881,58 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     const tags: string[] = [];
     if (genres.length > 0) tags.push(...genres);
     if (instruments.length > 0) tags.push(...instruments);
-    if (eventType && !eventType.startsWith("Tất cả")) tags.push(eventType);
-    if (province && !province.startsWith("Tất cả")) tags.push(province);
-    if (ethnicity && !ethnicity.startsWith("Tất cả")) tags.push(ethnicity);
+    if (eventType && !eventType.startsWith('Tất cả')) tags.push(eventType);
+    if (province && !province.startsWith('Tất cả')) tags.push(province);
+    if (ethnicity && !ethnicity.startsWith('Tất cả')) tags.push(ethnicity);
     if (tags.length > 0) filters.tags = tags;
 
     // Map region label back to Region enum
     const regionMap: Record<string, Region> = {
-      "Trung du và miền núi Bắc Bộ": Region.NORTHERN_MOUNTAINS,
-      "Đồng bằng Bắc Bộ": Region.RED_RIVER_DELTA,
-      "Bắc Trung Bộ": Region.NORTH_CENTRAL,
-      "Nam Trung Bộ": Region.SOUTH_CENTRAL_COAST,
-      "Cao nguyên Trung Bộ": Region.CENTRAL_HIGHLANDS,
-      "Đông Nam Bộ": Region.SOUTHEAST,
-      "Tây Nam Bộ": Region.MEKONG_DELTA,
+      'Trung du và miền núi Bắc Bộ': Region.NORTHERN_MOUNTAINS,
+      'Đồng bằng Bắc Bộ': Region.RED_RIVER_DELTA,
+      'Bắc Trung Bộ': Region.NORTH_CENTRAL,
+      'Nam Trung Bộ': Region.SOUTH_CENTRAL_COAST,
+      'Cao nguyên Trung Bộ': Region.CENTRAL_HIGHLANDS,
+      'Đông Nam Bộ': Region.SOUTHEAST,
+      'Tây Nam Bộ': Region.MEKONG_DELTA,
     };
-    if (region && !region.startsWith("Tất cả")) {
+    if (region && !region.startsWith('Tất cả')) {
       const mapped = regionMap[region];
       if (mapped) filters.regions = [mapped];
     }
 
     // Map verification status label back to enum key
-    if (verificationStatus && !verificationStatus.startsWith("Tất cả")) {
+    if (verificationStatus && !verificationStatus.startsWith('Tất cả')) {
       const vs = VERIFICATION_STATUS.find((s) => s.label === verificationStatus);
       if (vs) filters.verificationStatus = [vs.key as VerificationStatus];
     }
 
     // Map year range label to dateFrom/dateTo
-    if (yearRange && !yearRange.startsWith("Tất cả")) {
-      const yr = YEAR_RANGES.find(y => y.label === yearRange);
+    if (yearRange && !yearRange.startsWith('Tất cả')) {
+      const yr = YEAR_RANGES.find((y) => y.label === yearRange);
       if (yr) {
         switch (yr.key) {
-          case "before_1950":
-            filters.dateTo = "1949-12-31";
+          case 'before_1950':
+            filters.dateTo = '1949-12-31';
             break;
-          case "1950_1975":
-            filters.dateFrom = "1950-01-01";
-            filters.dateTo = "1975-12-31";
+          case '1950_1975':
+            filters.dateFrom = '1950-01-01';
+            filters.dateTo = '1975-12-31';
             break;
-          case "1975_2000":
-            filters.dateFrom = "1975-01-01";
-            filters.dateTo = "2000-12-31";
+          case '1975_2000':
+            filters.dateFrom = '1975-01-01';
+            filters.dateTo = '2000-12-31';
             break;
-          case "2000_2010":
-            filters.dateFrom = "2000-01-01";
-            filters.dateTo = "2010-12-31";
+          case '2000_2010':
+            filters.dateFrom = '2000-01-01';
+            filters.dateTo = '2010-12-31';
             break;
-          case "2010_2020":
-            filters.dateFrom = "2010-01-01";
-            filters.dateTo = "2020-12-31";
+          case '2010_2020':
+            filters.dateFrom = '2010-01-01';
+            filters.dateTo = '2020-12-31';
             break;
-          case "after_2020":
-            filters.dateFrom = "2021-01-01";
+          case 'after_2020':
+            filters.dateFrom = '2021-01-01';
             break;
         }
       }
@@ -805,21 +942,21 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   };
 
   const handleClearAll = () => {
-    setQuery("");
+    setQuery('');
     setGenres([]);
-    setEthnicity("");
-    setRegion("");
-    setProvince("");
-    setEventType("");
-    setPerformanceType("");
+    setEthnicity('');
+    setRegion('');
+    setProvince('');
+    setEventType('');
+    setPerformanceType('');
     setInstruments([]);
-    setYearRange("");
-    setVerificationStatus("");
+    setYearRange('');
+    setVerificationStatus('');
     onSearch({});
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleSearch();
     }
   };
@@ -827,7 +964,10 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
   return (
     <div className="w-full space-y-6">
       {/* Main Search Input — same style as SemanticSearchPage main card */}
-      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+      <div
+        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+        style={{ backgroundColor: '#FFFCF5' }}
+      >
         <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
           <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
             <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
@@ -840,9 +980,12 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
         <div
           className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-xl focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4"
-          style={{ backgroundColor: "#FFFCF5" }}
+          style={{ backgroundColor: '#FFFCF5' }}
         >
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500" strokeWidth={2} />
+          <Search
+            className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500"
+            strokeWidth={2}
+          />
           <input
             type="text"
             value={query}
@@ -863,16 +1006,15 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         </div>
 
         {activeFilterCount > 0 ? (
-          <p className="text-sm text-neutral-500">
-            {activeFilterCount} bộ lọc đang được áp dụng
-          </p>
-        ) : (
-          null
-        )}
+          <p className="text-sm text-neutral-500">{activeFilterCount} bộ lọc đang được áp dụng</p>
+        ) : null}
       </div>
 
       {/* Basic Filters — same card style as SemanticSearchPage */}
-      <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+      <div
+        className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+        style={{ backgroundColor: '#FFFCF5' }}
+      >
         <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
           <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
             <Music className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
@@ -886,8 +1028,13 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         {/* Genre-Ethnicity Warning */}
         {genreEthnicityWarning && (
           <div className="mb-6 flex items-start gap-3 p-4 bg-yellow-50/90 border border-yellow-300/80 rounded-2xl shadow-sm backdrop-blur-sm">
-            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
-            <p className="text-yellow-700 font-medium text-sm leading-relaxed">{genreEthnicityWarning}</p>
+            <AlertCircle
+              className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5"
+              strokeWidth={2.5}
+            />
+            <p className="text-yellow-700 font-medium text-sm leading-relaxed">
+              {genreEthnicityWarning}
+            </p>
           </div>
         )}
 
@@ -905,7 +1052,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={ethnicity}
               onChange={setEthnicity}
-              options={["Tất cả dân tộc", ...ETHNICITIES]}
+              options={['Tất cả dân tộc', ...ETHNICITIES]}
               placeholder="Tất cả dân tộc"
             />
           </FormField>
@@ -914,7 +1061,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={region}
               onChange={setRegion}
-              options={["Tất cả khu vực", ...REGIONS]}
+              options={['Tất cả khu vực', ...REGIONS]}
               placeholder="Tất cả khu vực"
               searchable={false}
             />
@@ -924,7 +1071,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={province}
               onChange={setProvince}
-              options={["Tất cả tỉnh thành", ...PROVINCES]}
+              options={['Tất cả tỉnh thành', ...PROVINCES]}
               placeholder="Tất cả tỉnh thành"
             />
           </FormField>
@@ -943,7 +1090,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={eventType}
               onChange={setEventType}
-              options={["Tất cả sự kiện", ...EVENT_TYPES]}
+              options={['Tất cả sự kiện', ...EVENT_TYPES]}
               placeholder="Tất cả sự kiện"
             />
           </FormField>
@@ -952,7 +1099,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={performanceType}
               onChange={setPerformanceType}
-              options={["Tất cả loại hình", ...PERFORMANCE_TYPES.map(p => p.label)]}
+              options={['Tất cả loại hình', ...PERFORMANCE_TYPES.map((p) => p.label)]}
               placeholder="Tất cả loại hình"
               searchable={false}
             />
@@ -983,7 +1130,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={yearRange}
               onChange={setYearRange}
-              options={["Tất cả thời gian", ...YEAR_RANGES.map(y => y.label)]}
+              options={['Tất cả thời gian', ...YEAR_RANGES.map((y) => y.label)]}
               placeholder="Tất cả thời gian"
               searchable={false}
             />
@@ -993,7 +1140,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
             <SearchableDropdown
               value={verificationStatus}
               onChange={setVerificationStatus}
-              options={["Tất cả trạng thái", ...VERIFICATION_STATUS.map(s => s.label)]}
+              options={['Tất cả trạng thái', ...VERIFICATION_STATUS.map((s) => s.label)]}
               placeholder="Tất cả trạng thái"
               searchable={false}
             />
@@ -1008,8 +1155,8 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
           onClick={handleClearAll}
           className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600"
           style={{ backgroundColor: '#FFFCF5' }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F5F0E8'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFCF5'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F0E8')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFCF5')}
         >
           Xóa bộ lọc
         </button>

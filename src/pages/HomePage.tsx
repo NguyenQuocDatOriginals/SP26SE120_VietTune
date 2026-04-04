@@ -1,48 +1,51 @@
-import { Link } from "react-router-dom";
-import { ArrowRight, TrendingUp, Clock, FileText, X } from "lucide-react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import {
-  Recording,
-  ModerationStatus,
-  VerificationStatus,
-  type LocalRecording,
-} from "@/types";
-import { recordingService } from "@/services/recordingService";
-import RecordingCardCompact from "@/components/features/RecordingCardCompact";
-import logo from "@/components/image/VietTune logo.png";
-import { fetchVerifiedSubmissionsAsRecordings } from "@/services/researcherArchiveService";
-import { getLocalRecordingFull, getLocalRecordingMetaList } from "@/services/recordingStorage";
-import { migrateVideoDataToVideoData } from "@/utils/helpers";
-import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
-import ExploreSearchHeader from "@/components/features/ExploreSearchHeader";
+import { ArrowRight, TrendingUp, Clock, FileText, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+import ExploreSearchHeader from '@/components/features/ExploreSearchHeader';
+import RecordingCardCompact from '@/components/features/RecordingCardCompact';
+import logo from '@/components/image/VietTune logo.png';
+import { recordingService } from '@/services/recordingService';
+import { getLocalRecordingFull, getLocalRecordingMetaList } from '@/services/recordingStorage';
+import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
+import { Recording, ModerationStatus, VerificationStatus, type LocalRecording } from '@/types';
+import { migrateVideoDataToVideoData } from '@/utils/helpers';
+import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 
 const MemoRecordingCardCompact = memo(RecordingCardCompact);
 
 /** Khối nội dung cùng họ với Explore (PLAN-homepage-explore Phase 1). */
 const exploreLikePanel =
-  "rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl";
+  'rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl';
 
 /** Hiển thị 2 panel lưới bản thu (phổ biến / mới). Đặt `true` nếu muốn bật lại + gọi API. */
 const SHOW_HOME_RECORDING_HIGHLIGHTS = false;
 
+function asObject(input: unknown): Record<string, unknown> | null {
+  return input && typeof input === 'object' && !Array.isArray(input)
+    ? (input as Record<string, unknown>)
+    : null;
+}
+
 function pickRecordingRows(input: unknown): Recording[] {
-  if (!input || typeof input !== "object") return [];
-  const root = input as Record<string, unknown>;
+  const root = asObject(input);
+  if (!root) return [];
   if (Array.isArray(root.items)) return root.items as Recording[];
   if (Array.isArray(root.data)) return root.data as Recording[];
   if (Array.isArray(root.Items)) return root.Items as Recording[];
   if (Array.isArray(root.Data)) return root.Data as Recording[];
   const nested = root.data;
-  if (nested && typeof nested === "object" && !Array.isArray(nested)) {
-    const d = nested as Record<string, unknown>;
+  const d = asObject(nested);
+  if (d) {
     if (Array.isArray(d.items)) return d.items as Recording[];
     if (Array.isArray(d.data)) return d.data as Recording[];
     if (Array.isArray(d.Items)) return d.Items as Recording[];
     if (Array.isArray(d.Data)) return d.Data as Recording[];
   }
   const nestedPascal = root.Data;
-  if (nestedPascal && typeof nestedPascal === "object" && !Array.isArray(nestedPascal)) {
-    const d = nestedPascal as Record<string, unknown>;
+  const dPascal = asObject(nestedPascal);
+  if (dPascal) {
+    const d = dPascal;
     if (Array.isArray(d.items)) return d.items as Recording[];
     if (Array.isArray(d.data)) return d.data as Recording[];
     if (Array.isArray(d.Items)) return d.Items as Recording[];
@@ -53,18 +56,15 @@ function pickRecordingRows(input: unknown): Recording[] {
 
 function pickVerified(rows: Recording[]): Recording[] {
   return rows.filter((r) => {
-    const row = r as unknown as Record<string, unknown>;
-    const raw =
-      row.verificationStatus ??
-      row.VerificationStatus ??
-      row.status ??
-      row.Status ??
-      "";
+    const row = asObject(r) ?? {};
+    const raw = row.verificationStatus ?? row.VerificationStatus ?? row.status ?? row.Status ?? '';
 
     // Accepted "verified" markers across mixed API shapes.
-    if (typeof raw === "number") return raw === 2;
+    if (typeof raw === 'number') return raw === 2;
     const normalized = String(raw).trim().toUpperCase();
-    return normalized === VerificationStatus.VERIFIED || normalized === "APPROVED" || normalized === "2";
+    return (
+      normalized === VerificationStatus.VERIFIED || normalized === 'APPROVED' || normalized === '2'
+    );
   });
 }
 
@@ -74,17 +74,14 @@ async function fetchApprovedLocalRecordings(): Promise<Recording[]> {
   const approved = migrated.filter(
     (r) =>
       r.moderation &&
-      typeof r.moderation === "object" &&
-      "status" in r.moderation &&
+      typeof r.moderation === 'object' &&
+      'status' in r.moderation &&
       (r.moderation as { status?: string }).status === ModerationStatus.APPROVED,
   );
-  const full = await Promise.all(
-    approved.map((r) => getLocalRecordingFull(r.id ?? "")),
-  );
+  const full = await Promise.all(approved.map((r) => getLocalRecordingFull(r.id ?? '')));
   const locals = full.filter((r): r is LocalRecording => r != null);
   return Promise.all(locals.map((r) => convertLocalToRecording(r)));
 }
-
 
 // Section Header Component
 function SectionHeader({
@@ -106,9 +103,7 @@ function SectionHeader({
         </div>
         <div>
           <h2 className="text-2xl font-semibold text-neutral-800">{title}</h2>
-          {subtitle && (
-            <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>}
         </div>
       </div>
       {action && (
@@ -127,7 +122,7 @@ function SectionHeader({
 export default function HomePage() {
   const [popularRecordings, setPopularRecordings] = useState<Recording[]>([]);
   const [recentRecordings, setRecentRecordings] = useState<Recording[]>([]);
-  const [semanticInput, setSemanticInput] = useState("");
+  const [semanticInput, setSemanticInput] = useState('');
   const [isSimulatingSearch, setIsSimulatingSearch] = useState(false);
   const [isGatewayModalOpen, setIsGatewayModalOpen] = useState(false);
   const simulateTimerRef = useRef<number | null>(null);
@@ -146,15 +141,15 @@ export default function HomePage() {
   useEffect(() => {
     if (!isGatewayModalOpen) return;
     const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     loginCtaRef.current?.focus();
     const onEsc = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsGatewayModalOpen(false);
+      if (event.key === 'Escape') setIsGatewayModalOpen(false);
     };
-    window.addEventListener("keydown", onEsc);
+    window.addEventListener('keydown', onEsc);
     return () => {
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onEsc);
+      window.removeEventListener('keydown', onEsc);
     };
   }, [isGatewayModalOpen]);
 
@@ -202,8 +197,7 @@ export default function HomePage() {
       // Final fallback for guest/listening UX.
       const fallback = await fetchVerifiedSubmissionsAsRecordings();
       const sorted = [...fallback].sort(
-        (a, b) =>
-          new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
+        (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
       );
       if (sorted.length > 0) {
         setRecentRecordings(sorted.slice(0, 6));
@@ -213,19 +207,17 @@ export default function HomePage() {
 
       const localApproved = await fetchApprovedLocalRecordings();
       const sortedLocal = [...localApproved].sort(
-        (a, b) =>
-          new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
+        (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
       );
       setRecentRecordings(sortedLocal.slice(0, 6));
       setPopularRecordings(sortedLocal.slice(0, 6));
     } catch (err) {
-      console.error("Error fetching recordings:", err);
+      console.error('Error fetching recordings:', err);
       // Guest fallback: keep listening experience available without login.
       try {
         const generic = await recordingService.getRecordings(1, 50);
         const genericRows = pickVerified(pickRecordingRows(generic)).sort(
-          (a, b) =>
-            new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
+          (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
         );
         if (genericRows.length > 0) {
           setRecentRecordings(genericRows.slice(0, 6));
@@ -235,8 +227,7 @@ export default function HomePage() {
 
         const fallback = await fetchVerifiedSubmissionsAsRecordings();
         const sorted = [...fallback].sort(
-          (a, b) =>
-            new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
+          (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
         );
         if (sorted.length > 0) {
           setRecentRecordings(sorted.slice(0, 6));
@@ -245,8 +236,7 @@ export default function HomePage() {
         }
         const localApproved = await fetchApprovedLocalRecordings();
         const sortedLocal = [...localApproved].sort(
-          (a, b) =>
-            new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
+          (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
         );
         setRecentRecordings(sortedLocal.slice(0, 6));
         setPopularRecordings(sortedLocal.slice(0, 6));
@@ -269,6 +259,11 @@ export default function HomePage() {
                 src={logo}
                 alt="VietTune Logo"
                 className="h-24 w-24 object-contain rounded-2xl shadow-md"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                width={96}
+                height={96}
               />
             </div>
 
@@ -310,7 +305,6 @@ export default function HomePage() {
               />
             </div>
           </div>
-
         </div>
 
         {/* Popular / Recent grids — tắt mặc định (SHOW_HOME_RECORDING_HIGHLIGHTS) */}
@@ -320,7 +314,7 @@ export default function HomePage() {
               icon={TrendingUp}
               title="Bản thu phổ biến"
               subtitle="Được nghe nhiều nhất trong tuần"
-              action={{ label: "Xem tất cả", to: "/explore" }}
+              action={{ label: 'Xem tất cả', to: '/explore' }}
             />
 
             <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -331,7 +325,7 @@ export default function HomePage() {
                     <MemoRecordingCardCompact
                       recording={recording}
                       to={`/recordings/${recording.id}`}
-                      linkState={{ from: "/" }}
+                      linkState={{ from: '/' }}
                     />
                   </li>
                 ))}
@@ -345,7 +339,7 @@ export default function HomePage() {
               icon={Clock}
               title="Tải lên gần đây"
               subtitle="Bản thu mới nhất từ cộng đồng"
-              action={{ label: "Xem tất cả", to: "/explore" }}
+              action={{ label: 'Xem tất cả', to: '/explore' }}
             />
 
             <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -356,7 +350,7 @@ export default function HomePage() {
                     <MemoRecordingCardCompact
                       recording={recording}
                       to={`/recordings/${recording.id}`}
-                      linkState={{ from: "/" }}
+                      linkState={{ from: '/' }}
                     />
                   </li>
                 ))}
@@ -369,9 +363,7 @@ export default function HomePage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-100/90 to-secondary-100/90 shadow-sm ring-1 ring-secondary-200/40">
             <FileText className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-semibold mb-3 text-neutral-900">
-            Điều khoản và Điều kiện
-          </h3>
+          <h3 className="text-xl font-semibold mb-3 text-neutral-900">Điều khoản và Điều kiện</h3>
           <p className="text-neutral-700 mb-6 font-medium leading-relaxed">
             Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
           </p>
@@ -418,7 +410,8 @@ export default function HomePage() {
               id="gateway-modal-desc"
               className="mx-auto max-w-3xl font-medium leading-relaxed text-neutral-700"
             >
-              Hệ thống đã tìm thấy các bản ghi âm và sơ đồ tri thức phù hợp! Đăng nhập hoặc đăng ký ngay để xem kết quả chi tiết và truy cập toàn bộ kho lưu trữ VietTune.
+              Hệ thống đã tìm thấy các bản ghi âm và sơ đồ tri thức phù hợp! Đăng nhập hoặc đăng ký
+              ngay để xem kết quả chi tiết và truy cập toàn bộ kho lưu trữ VietTune.
             </p>
 
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

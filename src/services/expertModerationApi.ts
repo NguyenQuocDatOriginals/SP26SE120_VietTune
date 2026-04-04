@@ -1,17 +1,19 @@
-import axios from "axios";
-import apiClient, { api } from "@/services/api";
-import type { MutationResult } from "@/types/mutationResult";
-import { mutationFail, mutationOk } from "@/types/mutationResult";
+import axios from 'axios';
+
+import { EXPERT_QUEUE_USE_MOCK, type ExpertQueueSource } from '@/config/expertWorkflowPhase';
+import { macroRegionDisplayNameFromProvinceRegionCode } from '@/config/provinceRegionCodes';
+import apiClient, { api } from '@/services/api';
+import { buildMockExpertQueue } from '@/services/expertModerationMock';
+import { referenceDataService } from '@/services/referenceDataService';
+import { logServiceWarn } from '@/services/serviceLogger';
 import {
   extractSubmissionRows,
   mapSubmissionToLocalRecording,
   type SubmissionLookupMaps,
-} from "@/services/submissionApiMapper";
-import { referenceDataService } from "@/services/referenceDataService";
-import type { LocalRecording } from "@/types";
-import { EXPERT_QUEUE_USE_MOCK, type ExpertQueueSource } from "@/config/expertWorkflowPhase";
-import { macroRegionDisplayNameFromProvinceRegionCode } from "@/config/provinceRegionCodes";
-import { buildMockExpertQueue } from "@/services/expertModerationMock";
+} from '@/services/submissionApiMapper';
+import type { LocalRecording } from '@/types';
+import { mutationFail, mutationOk } from '@/types/mutationResult';
+import type { MutationResult } from '@/types/mutationResult';
 
 const DEFAULT_PAGE_SIZE = 200;
 const LOOKUP_TTL_MS = 15 * 60 * 1000;
@@ -19,7 +21,9 @@ let lookupCache: { ts: number; data: SubmissionLookupMaps } | null = null;
 let lookupInflight: Promise<SubmissionLookupMaps> | null = null;
 
 function normalizeId(v: unknown): string {
-  return String(v ?? "").trim().toLowerCase();
+  return String(v ?? '')
+    .trim()
+    .toLowerCase();
 }
 
 /** Shared reference maps for resolving ethnic/ceremony/instrument/geo IDs in submission payloads. */
@@ -29,9 +33,8 @@ export async function buildSubmissionLookupMaps(): Promise<SubmissionLookupMaps>
   }
   if (lookupInflight) return lookupInflight;
   lookupInflight = (async () => {
-  try {
-    const [ethnics, ceremonies, instruments, communes, districts, provinces] =
-      await Promise.all([
+    try {
+      const [ethnics, ceremonies, instruments, communes, districts, provinces] = await Promise.all([
         referenceDataService.getEthnicGroups(),
         referenceDataService.getCeremonies(),
         referenceDataService.getInstruments(),
@@ -40,37 +43,37 @@ export async function buildSubmissionLookupMaps(): Promise<SubmissionLookupMaps>
         referenceDataService.getProvinces(),
       ]);
 
-    const macroRegionByProvinceId = Object.fromEntries(
-      provinces
-        .map((p) => {
-          const label = macroRegionDisplayNameFromProvinceRegionCode(p.regionCode).trim();
-          return label ? ([normalizeId(p.id), label] as const) : null;
-        })
-        .filter((e): e is readonly [string, string] => e != null),
-    );
-    const provinceIdByDistrictId = Object.fromEntries(
-      districts.map((d) => [normalizeId(d.id), normalizeId(d.provinceId)]),
-    );
-    const districtIdByCommuneId = Object.fromEntries(
-      communes.map((c) => [normalizeId(c.id), normalizeId(c.districtId)]),
-    );
+      const macroRegionByProvinceId = Object.fromEntries(
+        provinces
+          .map((p) => {
+            const label = macroRegionDisplayNameFromProvinceRegionCode(p.regionCode).trim();
+            return label ? ([normalizeId(p.id), label] as const) : null;
+          })
+          .filter((e): e is readonly [string, string] => e != null),
+      );
+      const provinceIdByDistrictId = Object.fromEntries(
+        districts.map((d) => [normalizeId(d.id), normalizeId(d.provinceId)]),
+      );
+      const districtIdByCommuneId = Object.fromEntries(
+        communes.map((c) => [normalizeId(c.id), normalizeId(c.districtId)]),
+      );
 
-    const data: SubmissionLookupMaps = {
-      ethnicById: Object.fromEntries(ethnics.map((x) => [normalizeId(x.id), x.name])),
-      ceremonyById: Object.fromEntries(ceremonies.map((x) => [normalizeId(x.id), x.name])),
-      instrumentById: Object.fromEntries(instruments.map((x) => [normalizeId(x.id), x.name])),
-      communeById: Object.fromEntries(communes.map((x) => [normalizeId(x.id), x.name])),
-      districtById: Object.fromEntries(districts.map((x) => [normalizeId(x.id), x.name])),
-      provinceById: Object.fromEntries(provinces.map((x) => [normalizeId(x.id), x.name])),
-      macroRegionByProvinceId,
-      provinceIdByDistrictId,
-      districtIdByCommuneId,
-    };
-    lookupCache = { ts: Date.now(), data };
-    return data;
-  } catch {
-    return {};
-  }
+      const data: SubmissionLookupMaps = {
+        ethnicById: Object.fromEntries(ethnics.map((x) => [normalizeId(x.id), x.name])),
+        ceremonyById: Object.fromEntries(ceremonies.map((x) => [normalizeId(x.id), x.name])),
+        instrumentById: Object.fromEntries(instruments.map((x) => [normalizeId(x.id), x.name])),
+        communeById: Object.fromEntries(communes.map((x) => [normalizeId(x.id), x.name])),
+        districtById: Object.fromEntries(districts.map((x) => [normalizeId(x.id), x.name])),
+        provinceById: Object.fromEntries(provinces.map((x) => [normalizeId(x.id), x.name])),
+        macroRegionByProvinceId,
+        provinceIdByDistrictId,
+        districtIdByCommuneId,
+      };
+      lookupCache = { ts: Date.now(), data };
+      return data;
+    } catch {
+      return {};
+    }
   })();
   try {
     return await lookupInflight;
@@ -87,7 +90,7 @@ async function getSubmissionsByStatus(params: {
 }): Promise<LocalRecording[]> {
   const lookups = params.lookups ?? (await buildSubmissionLookupMaps());
   try {
-    const res = await api.get<unknown>("/Submission/get-by-status", {
+    const res = await api.get<unknown>('/Submission/get-by-status', {
       params: {
         ...(params.status !== undefined ? { status: params.status } : {}),
         page: params.page ?? 1,
@@ -111,7 +114,7 @@ async function getAdminSubmissions(params: {
   lookups?: SubmissionLookupMaps;
 }): Promise<LocalRecording[]> {
   const lookups = params.lookups ?? (await buildSubmissionLookupMaps());
-  const res = await api.get<unknown>("/Admin/submissions", {
+  const res = await api.get<unknown>('/Admin/submissions', {
     params: {
       page: params.page ?? 1,
       pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
@@ -127,7 +130,7 @@ export async function fetchExpertQueueBase(source: ExpertQueueSource): Promise<L
     return buildMockExpertQueue();
   }
   const lookups = await buildSubmissionLookupMaps();
-  if (source === "admin") {
+  if (source === 'admin') {
     return getAdminSubmissions({ page: 1, pageSize: DEFAULT_PAGE_SIZE, lookups });
   }
   // Moderation queue requirement: only fetch submissions with backend status = 1.
@@ -151,7 +154,7 @@ export async function fetchApprovedSubmissionsForExpert(): Promise<LocalRecordin
   } catch (err: unknown) {
     const status = (err as { response?: { status?: number } })?.response?.status;
     if (status === 400 || status === 404) return [];
-    console.warn("[expertModerationApi] fetchApprovedSubmissionsForExpert failed", status);
+    logServiceWarn('[expertModerationApi] fetchApprovedSubmissionsForExpert failed', status);
     return [];
   }
 }
@@ -178,45 +181,45 @@ export async function assignSubmissionReviewer(
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
       if (status === 403) {
-        console.warn(
-          "[expertModerationApi] Assign reviewer forbidden (403). RBAC may not allow this role yet. submissionId=",
-          submissionId,
-          "reviewerId=",
-          reviewerId,
+        logServiceWarn(
+          '[expertModerationApi] Assign reviewer forbidden (403). RBAC may not allow this role yet. submissionId=',
+          { submissionId, reviewerId },
         );
         return { ok: false, forbidden: true, httpStatus: 403 };
       }
-      console.warn(
-        "[expertModerationApi] Assign reviewer failed",
-        { submissionId, reviewerId, status, message: err.message },
-      );
+      logServiceWarn('[expertModerationApi] Assign reviewer failed', {
+        submissionId,
+        reviewerId,
+        status,
+        message: err.message,
+      });
       return { ok: false, forbidden: false, httpStatus: status };
     }
-    console.warn("[expertModerationApi] Assign reviewer unexpected error", err);
+    logServiceWarn('[expertModerationApi] Assign reviewer unexpected error', err);
     return { ok: false, forbidden: false };
   }
 }
 
 export async function approveSubmissionOnServer(submissionId: string): Promise<MutationResult> {
   try {
-    await api.put("/Submission/approve-submission", undefined, {
+    await api.put('/Submission/approve-submission', undefined, {
       params: { submissionId },
     });
     return mutationOk();
   } catch (err: unknown) {
-    const httpStatus = axios.isAxiosError(err) ? (err.response?.status) : undefined;
+    const httpStatus = axios.isAxiosError(err) ? err.response?.status : undefined;
     return mutationFail(err, httpStatus);
   }
 }
 
 export async function rejectSubmissionOnServer(submissionId: string): Promise<MutationResult> {
   try {
-    await api.put("/Submission/reject-submission", undefined, {
+    await api.put('/Submission/reject-submission', undefined, {
       params: { submissionId },
     });
     return mutationOk();
   } catch (err: unknown) {
-    const httpStatus = axios.isAxiosError(err) ? (err.response?.status) : undefined;
+    const httpStatus = axios.isAxiosError(err) ? err.response?.status : undefined;
     return mutationFail(err, httpStatus);
   }
 }
@@ -225,7 +228,7 @@ export async function rejectSubmissionOnServer(submissionId: string): Promise<Mu
 export type ExpertModerationAuditPayload = {
   userId: string;
   submissionId: string;
-  action: "expert_approve" | "expert_reject";
+  action: 'expert_approve' | 'expert_reject';
   /** Serialized into newValuesJson */
   notesSummary: string;
 };
@@ -237,11 +240,11 @@ export async function postExpertModerationAuditLog(
     const newValuesJson = JSON.stringify({
       submissionId: params.submissionId,
       expertNotes: params.notesSummary,
-      source: "expert_moderation",
+      source: 'expert_moderation',
     });
-    await api.post("/AuditLog", {
+    await api.post('/AuditLog', {
       userId: params.userId,
-      entityType: "Submission",
+      entityType: 'Submission',
       entityId: params.submissionId,
       action: params.action,
       oldValuesJson: null,
@@ -250,7 +253,7 @@ export async function postExpertModerationAuditLog(
     });
     return true;
   } catch (err) {
-    console.warn("[expertModerationApi] Audit log POST failed", err);
+    logServiceWarn('[expertModerationApi] Audit log POST failed', err);
     return false;
   }
 }

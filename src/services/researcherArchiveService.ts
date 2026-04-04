@@ -1,11 +1,11 @@
-import { api } from "@/services/api";
+import { api } from '@/services/api';
+import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import {
   extractSubmissionRows,
   mapSubmissionToLocalRecording,
-} from "@/services/submissionApiMapper";
-import { buildSubmissionLookupMaps } from "@/services/expertModerationApi";
-import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
-import type { LocalRecording, Recording } from "@/types";
+} from '@/services/submissionApiMapper';
+import type { LocalRecording, Recording } from '@/types';
+import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 
 /**
  * Integer for GET /Submission/get-by-status = “đã duyệt” (same as Contributions tab Đã duyệt).
@@ -15,9 +15,10 @@ import type { LocalRecording, Recording } from "@/types";
 const DEFAULT_VERIFIED = 2;
 
 function verifiedStatusCodes(): number[] {
-  const raw = import.meta.env.VITE_RESEARCHER_VERIFIED_SUBMISSION_STATUS ?? String(DEFAULT_VERIFIED);
+  const raw =
+    import.meta.env.VITE_RESEARCHER_VERIFIED_SUBMISSION_STATUS ?? String(DEFAULT_VERIFIED);
   return raw
-    .split(",")
+    .split(',')
     .map((s: string) => parseInt(s.trim(), 10))
     .filter((n: number) => !Number.isNaN(n));
 }
@@ -32,7 +33,7 @@ export async function fetchVerifiedSubmissionsAsRecordings(opts?: {
   const signal = opts?.signal;
   const lookupPromise = buildSubmissionLookupMaps();
   const submissionPromises = statuses.map((status) =>
-    api.get<unknown>("/Submission/get-by-status", {
+    api.get<unknown>('/Submission/get-by-status', {
       params: { status, page: 1, pageSize: 500 },
       signal,
     }),

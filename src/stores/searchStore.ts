@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { SearchFilters } from '@/types';
 
 interface SearchState {

@@ -1,6 +1,6 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/constants";
-import { getItem } from "@/services/storageService";
+import { api } from '@/services/api';
+import type { ServiceApiClient } from '@/services/serviceApiClient';
+import { logServiceError } from '@/services/serviceLogger';
 
 export interface QAMessageRequest {
   id: string;
@@ -16,55 +16,55 @@ export interface QAMessageRequest {
   createdAt: string;
 }
 
-const getHeaders = () => {
-  const token = getItem("access_token");
+export function createQAMessageService(client: ServiceApiClient) {
   return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    createQAMessage: async (data: QAMessageRequest): Promise<void> => {
+      try {
+        await client.post('/QAMessage', data);
+      } catch (err) {
+        logServiceError('Lỗi khi lưu tin nhắn', err);
+        throw err;
+      }
+    },
+
+    fetchConversationMessages: async (conversationId: string): Promise<QAMessageRequest[]> => {
+      try {
+        const res = await client.get<{ data?: QAMessageRequest[] } | QAMessageRequest[]>(
+          '/QAMessage/get-by-conversation',
+          {
+            params: { conversationId },
+          },
+        );
+        if (Array.isArray(res)) return res;
+        return res?.data || [];
+      } catch (err) {
+        logServiceError('Lỗi khi lấy tin nhắn hội thoại', err);
+        return [];
+      }
+    },
+
+    flagMessage: async (messageId: string): Promise<void> => {
+      try {
+        await client.put('/QAMessage/flagged', { id: messageId });
+      } catch (err) {
+        logServiceError('Lỗi khi flag tin nhắn', err);
+        throw err;
+      }
+    },
+
+    unflagMessage: async (messageId: string): Promise<void> => {
+      try {
+        await client.put('/QAMessage/unflagged', { id: messageId });
+      } catch (err) {
+        logServiceError('Lỗi khi unflag tin nhắn', err);
+        throw err;
+      }
+    },
   };
-};
+}
 
-export const createQAMessage = async (data: QAMessageRequest): Promise<void> => {
-  try {
-    await axios.post(`${API_BASE_URL}/QAMessage`, data, {
-      headers: getHeaders(),
-    });
-  } catch (err) {
-    console.error("Lỗi khi lưu tin nhắn:", err);
-    throw err;
-  }
-};
-
-export const fetchConversationMessages = async (conversationId: string): Promise<QAMessageRequest[]> => {
-  try {
-    const res = await axios.get(`${API_BASE_URL}/QAMessage/get-by-conversation`, {
-      params: { conversationId },
-      headers: getHeaders(),
-    });
-    return res.data?.data || [];
-  } catch (err) {
-    console.error("Lỗi khi lấy tin nhắn hội thoại:", err);
-    return [];
-  }
-};
-
-export const flagMessage = async (messageId: string): Promise<void> => {
-  try {
-    await axios.put(`${API_BASE_URL}/QAMessage/flagged`, { id: messageId }, {
-      headers: getHeaders(),
-    });
-  } catch (err) {
-    console.error("Lỗi khi flag tin nhắn:", err);
-    throw err;
-  }
-};
-
-export const unflagMessage = async (messageId: string): Promise<void> => {
-  try {
-    await axios.put(`${API_BASE_URL}/QAMessage/unflagged`, { id: messageId }, {
-      headers: getHeaders(),
-    });
-  } catch (err) {
-    console.error("Lỗi khi unflag tin nhắn:", err);
-    throw err;
-  }
-};
+const qaMessageService = createQAMessageService(api);
+export const createQAMessage = qaMessageService.createQAMessage;
+export const fetchConversationMessages = qaMessageService.fetchConversationMessages;
+export const flagMessage = qaMessageService.flagMessage;
+export const unflagMessage = qaMessageService.unflagMessage;

@@ -1,22 +1,32 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, History } from "lucide-react";
-import BackButton from "@/components/common/BackButton";
-import { INTELLIGENCE_NAME } from "@/config/constants";
-import { sendResearcherChatMessage } from "@/services/researcherChatService";
-import { useAuth } from "@/contexts/AuthContext";
-import { createQAConversation, fetchUserConversations, QAConversationRequest } from "@/services/qaConversationService";
-import { createQAMessage, fetchConversationMessages, flagMessage, unflagMessage } from "@/services/qaMessageService";
-import { Message } from "@/types/chat";
-import ChatSidebar from "@/components/features/chatbot/ChatSidebar";
-import ChatMessageItem from "@/components/features/chatbot/ChatMessageItem";
+import { Send, History } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+
+import BackButton from '@/components/common/BackButton';
+import ChatMessageItem from '@/components/features/chatbot/ChatMessageItem';
+import ChatSidebar from '@/components/features/chatbot/ChatSidebar';
+import { INTELLIGENCE_NAME } from '@/config/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  createQAConversation,
+  fetchUserConversations,
+  QAConversationRequest,
+} from '@/services/qaConversationService';
+import {
+  createQAMessage,
+  fetchConversationMessages,
+  flagMessage,
+  unflagMessage,
+} from '@/services/qaMessageService';
+import { sendResearcherChatMessage } from '@/services/researcherChatService';
+import { Message } from '@/types/chat';
 
 /** Tin chào — đồng bộ với tab Hỏi Đáp AI (ResearcherPortalPage). */
 const WELCOME_MESSAGE =
-  "Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Bạn muốn tìm hiểu về điều gì?";
+  'Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Bạn muốn tìm hiểu về điều gì?';
 
 /** Fallback khi API lỗi hoặc không trả về nội dung. */
 const FALLBACK_REPLY =
-  "Xin lỗi, tôi chưa thể trả lời. Vui lòng kiểm tra kết nối backend (VietTune API + Gemini) và thử lại.";
+  'Xin lỗi, tôi chưa thể trả lời. Vui lòng kiểm tra kết nối backend (VietTune API + Gemini) và thử lại.';
 
 export default function ChatbotPage() {
   const { user } = useAuth();
@@ -24,18 +34,18 @@ export default function ChatbotPage() {
   const [isFirstMessage, setIsFirstMessage] = useState<boolean>(true);
   const [history, setHistory] = useState<QAConversationRequest[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [chatTitle, setChatTitle] = useState("Cuộc trò chuyện mới");
+  const [chatTitle, setChatTitle] = useState('Cuộc trò chuyện mới');
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>(() => [
     {
-      id: "welcome",
-      role: "assistant",
+      id: 'welcome',
+      role: 'assistant',
       content: WELCOME_MESSAGE,
       timestamp: new Date(),
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -48,10 +58,10 @@ export default function ChatbotPage() {
         await flagMessage(msgId);
       }
       setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, flaggedByExpert: !currentFlagged } : m))
+        prev.map((m) => (m.id === msgId ? { ...m, flaggedByExpert: !currentFlagged } : m)),
       );
     } catch (error) {
-      console.error("Lỗi khi cắm cờ:", error);
+      console.error('Lỗi khi cắm cờ:', error);
     }
   };
 
@@ -59,7 +69,9 @@ export default function ChatbotPage() {
     if (!user?.id) return;
     setIsLoadingHistory(true);
     const data = await fetchUserConversations(user.id);
-    setHistory(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    setHistory(
+      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    );
     setIsLoadingHistory(false);
   }, [user?.id]);
 
@@ -72,9 +84,9 @@ export default function ChatbotPage() {
   const handleSelectConversation = async (conv: QAConversationRequest) => {
     setConversationId(conv.id);
     setIsFirstMessage(false);
-    setChatTitle(conv.title || "Cuộc trò chuyện mới");
+    setChatTitle(conv.title || 'Cuộc trò chuyện mới');
     setIsLoadingMessages(true);
-    
+
     // Khởi tạo trạng thái rỗng trong lúc chờ
     setMessages([]);
 
@@ -82,7 +94,7 @@ export default function ChatbotPage() {
     if (remoteMsgs && remoteMsgs.length > 0) {
       const mapped: Message[] = remoteMsgs.map((m) => ({
         id: m.id,
-        role: m.role === 0 ? "user" : "assistant",
+        role: m.role === 0 ? 'user' : 'assistant',
         content: m.content,
         timestamp: new Date(m.createdAt),
         sourceRecordingIdsJson: m.sourceRecordingIdsJson,
@@ -92,7 +104,7 @@ export default function ChatbotPage() {
       }));
       setMessages(mapped);
     }
-    
+
     setIsLoadingMessages(false);
     // On mobile, close sidebar after selecting
     if (window.innerWidth < 1024) {
@@ -101,22 +113,22 @@ export default function ChatbotPage() {
   };
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
 
   const handleNewChat = () => {
     setConversationId(crypto.randomUUID());
     setIsFirstMessage(true);
-    setChatTitle("Cuộc trò chuyện mới");
+    setChatTitle('Cuộc trò chuyện mới');
     setMessages([
       {
-        id: "welcome",
-        role: "assistant",
+        id: 'welcome',
+        role: 'assistant',
         content: WELCOME_MESSAGE,
         timestamp: new Date(),
       },
     ]);
-    setInput("");
+    setInput('');
   };
 
   const sendMessage = async () => {
@@ -127,13 +139,13 @@ export default function ChatbotPage() {
     const userTimestamp = new Date();
     const userMsg: Message = {
       id: userMsgId,
-      role: "user",
+      role: 'user',
       content: text,
       timestamp: userTimestamp,
     };
-    
+
     setMessages((prev) => [...prev, userMsg]);
-    setInput("");
+    setInput('');
     setIsTyping(true);
 
     try {
@@ -141,9 +153,9 @@ export default function ChatbotPage() {
         setChatTitle(text);
         await createQAConversation({
           id: conversationId,
-          userId: user?.id || "00000000-0000-0000-0000-000000000000",
+          userId: user?.id || '00000000-0000-0000-0000-000000000000',
           title: text,
-          createdAt: userTimestamp.toISOString()
+          createdAt: userTimestamp.toISOString(),
         });
         setIsFirstMessage(false);
         void loadHistory(); // Refresh history list
@@ -154,13 +166,13 @@ export default function ChatbotPage() {
         conversationId: conversationId,
         role: 0,
         content: text,
-        sourceRecordingIdsJson: "[]",
-        sourceKBEntryIdsJson: "[]",
+        sourceRecordingIdsJson: '[]',
+        sourceKBEntryIdsJson: '[]',
         confidenceScore: 0,
         flaggedByExpert: false,
         correctedByExpertId: null,
         expertCorrection: null,
-        createdAt: userTimestamp.toISOString()
+        createdAt: userTimestamp.toISOString(),
       });
 
       const reply = await sendResearcherChatMessage(text);
@@ -169,11 +181,11 @@ export default function ChatbotPage() {
       const botTimestamp = new Date();
       const botMsg: Message = {
         id: botMsgId,
-        role: "assistant",
+        role: 'assistant',
         content,
         timestamp: botTimestamp,
       };
-      
+
       setMessages((prev) => [...prev, botMsg]);
 
       await createQAMessage({
@@ -181,21 +193,20 @@ export default function ChatbotPage() {
         conversationId: conversationId,
         role: 1,
         content: content,
-        sourceRecordingIdsJson: "[]",
-        sourceKBEntryIdsJson: "[]",
+        sourceRecordingIdsJson: '[]',
+        sourceKBEntryIdsJson: '[]',
         confidenceScore: 0,
         flaggedByExpert: false,
         correctedByExpertId: null,
         expertCorrection: null,
-        createdAt: botTimestamp.toISOString()
+        createdAt: botTimestamp.toISOString(),
       });
-      
     } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
-          role: "assistant",
+          role: 'assistant',
           content: FALLBACK_REPLY,
           timestamp: new Date(),
         },
@@ -206,7 +217,7 @@ export default function ChatbotPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void sendMessage();
     }
@@ -224,7 +235,6 @@ export default function ChatbotPage() {
 
         {/* Chat Layout with Sidebar */}
         <div className="flex gap-4 sm:gap-6 h-[700px] relative w-full overflow-hidden">
-          
           <ChatSidebar
             isSidebarOpen={isSidebarOpen}
             setIsSidebarOpen={setIsSidebarOpen}
@@ -240,19 +250,21 @@ export default function ChatbotPage() {
             <div className="bg-gradient-to-r from-primary-700 to-primary-600 text-white px-4 sm:px-6 py-4 border-b-2 border-primary-800 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-md lg:max-w-xl">{chatTitle}</h2>
+                  <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
+                    {chatTitle}
+                  </h2>
                   <p className="text-secondary-200 text-sm mt-0.5 truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
                     {INTELLIGENCE_NAME}
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div
               ref={listRef}
               className="flex-1 overflow-y-auto p-4 space-y-4"
               style={{
-                background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)",
+                background: 'linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)',
               }}
             >
               {isLoadingMessages ? (
@@ -273,15 +285,15 @@ export default function ChatbotPage() {
                   <div className="rounded-2xl px-4 py-3 bg-white border-2 border-secondary-200/80 shadow-sm flex gap-1.5">
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "0ms" }}
+                      style={{ animationDelay: '0ms' }}
                     />
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "150ms" }}
+                      style={{ animationDelay: '150ms' }}
                     />
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "300ms" }}
+                      style={{ animationDelay: '300ms' }}
                     />
                   </div>
                 </div>
@@ -310,19 +322,18 @@ export default function ChatbotPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Mobile Overlay button when sidebar is closed */}
           {!isSidebarOpen && (
-             <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden absolute bottom-24 left-4 z-10 p-3 bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200/80 rounded-full shadow-xl transition-colors"
-                title="Mở lịch sử trò chuyện"
-             >
-                <History className="w-5 h-5" />
-             </button>
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden absolute bottom-24 left-4 z-10 p-3 bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200/80 rounded-full shadow-xl transition-colors"
+              title="Mở lịch sử trò chuyện"
+            >
+              <History className="w-5 h-5" />
+            </button>
           )}
-
         </div>
       </div>
     </div>

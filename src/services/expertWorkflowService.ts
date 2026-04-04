@@ -4,26 +4,27 @@
  * claim/unclaim/approve/reject call server first, then overlay (notes / verification).
  */
 
-import { EXPERT_API_PHASE2, EXPERT_QUEUE_SOURCE } from "@/config/expertWorkflowPhase";
+import { EXPERT_API_PHASE2, EXPERT_QUEUE_SOURCE } from '@/config/expertWorkflowPhase';
 import {
   approveSubmissionOnServer,
   assignSubmissionReviewer,
   fetchExpertQueueBase,
   postExpertModerationAuditLog,
   rejectSubmissionOnServer,
-} from "@/services/expertModerationApi";
-import { getLocalRecordingMetaList } from "@/services/recordingStorage";
-import { getItemAsync, setItem } from "@/services/storageService";
-import type { LocalRecording } from "@/types";
-import type { MutationResult } from "@/types/mutationResult";
-import { mutationOk } from "@/types/mutationResult";
-import { ModerationStatus } from "@/types";
+} from '@/services/expertModerationApi';
+import { getLocalRecordingMetaList } from '@/services/recordingStorage';
+import { logServiceWarn } from '@/services/serviceLogger';
+import { getItemAsync, setItem } from '@/services/storageService';
+import type { LocalRecording } from '@/types';
+import { ModerationStatus } from '@/types';
+import type { MutationResult } from '@/types/mutationResult';
+import { mutationOk } from '@/types/mutationResult';
 
 // Phase 1 Spike: storage key — replace with server session / assign API in Phase 2.
-export const EXPERT_MODERATION_STATE_KEY = "EXPERT_MODERATION_STATE";
+export const EXPERT_MODERATION_STATE_KEY = 'EXPERT_MODERATION_STATE';
 
 /** Phase 1 (and Phase 2 draft): working expert notes per submissionId in localStorage. */
-export const EXPERT_REVIEW_NOTES_KEY = "EXPERT_REVIEW_NOTES_BY_SUBMISSION";
+export const EXPERT_REVIEW_NOTES_KEY = 'EXPERT_REVIEW_NOTES_BY_SUBMISSION';
 
 /** Checkbox / form state for the 3-step verification wizard (matches ModerationPage). */
 export interface ModerationVerificationData {
@@ -98,7 +99,7 @@ async function readMap(): Promise<ExpertModerationStateMap> {
   if (!raw) return {};
   try {
     const p = JSON.parse(raw) as unknown;
-    if (p && typeof p === "object" && !Array.isArray(p)) return p as ExpertModerationStateMap;
+    if (p && typeof p === 'object' && !Array.isArray(p)) return p as ExpertModerationStateMap;
   } catch {
     /* ignore */
   }
@@ -114,7 +115,7 @@ async function readReviewNotesMap(): Promise<Record<string, string>> {
   if (!raw) return {};
   try {
     const p = JSON.parse(raw) as unknown;
-    if (p && typeof p === "object" && !Array.isArray(p)) return p as Record<string, string>;
+    if (p && typeof p === 'object' && !Array.isArray(p)) return p as Record<string, string>;
   } catch {
     /* ignore */
   }
@@ -125,7 +126,10 @@ async function writeReviewNotesMap(map: Record<string, string>): Promise<void> {
   await setItem(EXPERT_REVIEW_NOTES_KEY, JSON.stringify(map));
 }
 
-function mergeBaseWithPatch(base: LocalRecording, patch?: ExpertSubmissionLocalPatch | null): LocalRecording {
+function mergeBaseWithPatch(
+  base: LocalRecording,
+  patch?: ExpertSubmissionLocalPatch | null,
+): LocalRecording {
   if (!patch) return base;
   const merged: LocalRecording = { ...base };
   if (patch.resubmittedForModeration !== undefined) {
@@ -141,7 +145,7 @@ function mergeBaseWithPatch(base: LocalRecording, patch?: ExpertSubmissionLocalP
   } else {
     mergedModeration.verificationData = mergeVerificationData(prevVd, nextVd ?? undefined);
   }
-  merged.moderation = mergedModeration as LocalRecording["moderation"];
+  merged.moderation = mergedModeration as LocalRecording['moderation'];
   return merged;
 }
 
@@ -194,23 +198,22 @@ async function applyRejectToMap(
   submissionId: string,
   expertId: string,
   expertUsername: string,
-  type: "direct" | "temporary",
+  type: 'direct' | 'temporary',
   rejectionNote: string,
   notes: string,
   opts?: { wasResubmitted?: boolean },
 ): Promise<void> {
   const map = await readMap();
   const prev = map[submissionId]?.moderation ?? {};
-  const lockFromReject = type === "direct" && opts?.wasResubmitted === true;
+  const lockFromReject = type === 'direct' && opts?.wasResubmitted === true;
   const trimmedExpertNotes = notes.trim();
   const moderation: LocalModerationState = {
     ...prev,
-    status:
-      type === "direct" ? ModerationStatus.REJECTED : ModerationStatus.TEMPORARILY_REJECTED,
+    status: type === 'direct' ? ModerationStatus.REJECTED : ModerationStatus.TEMPORARILY_REJECTED,
     reviewerId: expertId,
     reviewerName: expertUsername,
     reviewedAt: new Date().toISOString(),
-    rejectionNote: rejectionNote || "",
+    rejectionNote: rejectionNote || '',
     contributorEditLocked: lockFromReject || prev.contributorEditLocked,
     claimedBy: null,
     claimedByName: null,
@@ -231,7 +234,7 @@ export const expertWorkflowService = {
    */
   async getExpertReviewNotes(submissionId: string): Promise<string> {
     const m = await readReviewNotesMap();
-    return m[submissionId] ?? "";
+    return m[submissionId] ?? '';
   },
 
   /** Phase 1: persist to localStorage. Phase 2: same for draft; server audit on approve/reject via logExpertModerationDecision. */
@@ -254,7 +257,7 @@ export const expertWorkflowService = {
   async logExpertModerationDecision(params: {
     submissionId: string;
     userId: string;
-    action: "expert_approve" | "expert_reject";
+    action: 'expert_approve' | 'expert_reject';
     combinedNotes: string;
   }): Promise<boolean> {
     if (!EXPERT_API_PHASE2) return true;
@@ -309,8 +312,8 @@ export const expertWorkflowService = {
         if (assignResult.ok) {
           serverAssignSynced = true;
         } else if (assignResult.forbidden) {
-          console.warn(
-            "[expertWorkflowService] Claim: server assign returned 403 — using local overlay only (mock claim). submissionId=",
+          logServiceWarn(
+            '[expertWorkflowService] Claim: server assign returned 403 — using local overlay only (mock claim). submissionId=',
             submissionId,
           );
           serverAssignSynced = false;
@@ -348,7 +351,7 @@ export const expertWorkflowService = {
       }
       return { success: true };
     } catch (err) {
-      console.warn("[expertWorkflowService] claimSubmission failed", err);
+      logServiceWarn('[expertWorkflowService] claimSubmission failed', err);
       return { success: false };
     }
   },
@@ -359,8 +362,8 @@ export const expertWorkflowService = {
         const res = await assignSubmissionReviewer(submissionId, null);
         if (!res.ok) {
           if (res.forbidden) {
-            console.warn(
-              "[expertWorkflowService] Unclaim: server unassign returned 403 — clearing local overlay only. submissionId=",
+            logServiceWarn(
+              '[expertWorkflowService] Unclaim: server unassign returned 403 — clearing local overlay only. submissionId=',
               submissionId,
             );
           } else {
@@ -387,7 +390,7 @@ export const expertWorkflowService = {
       await writeMap(map);
       return true;
     } catch (err) {
-      console.warn("[expertWorkflowService] unclaimSubmission failed", err);
+      logServiceWarn('[expertWorkflowService] unclaimSubmission failed', err);
       return false;
     }
   },
@@ -401,7 +404,10 @@ export const expertWorkflowService = {
   },
 
   /** Restore overlay after failed server sync (or delete row if snapshot was undefined). */
-  async restoreSubmissionOverlay(submissionId: string, snapshot: ExpertOverlaySnapshot): Promise<void> {
+  async restoreSubmissionOverlay(
+    submissionId: string,
+    snapshot: ExpertOverlaySnapshot,
+  ): Promise<void> {
     const map = await readMap();
     if (snapshot === undefined) delete map[submissionId];
     else map[submissionId] = deepClonePatch(snapshot);
@@ -424,12 +430,20 @@ export const expertWorkflowService = {
     submissionId: string,
     expertId: string,
     expertUsername: string,
-    type: "direct" | "temporary",
+    type: 'direct' | 'temporary',
     rejectionNote: string,
     notes: string,
     opts?: { wasResubmitted?: boolean },
   ): Promise<void> {
-    await applyRejectToMap(submissionId, expertId, expertUsername, type, rejectionNote, notes, opts);
+    await applyRejectToMap(
+      submissionId,
+      expertId,
+      expertUsername,
+      type,
+      rejectionNote,
+      notes,
+      opts,
+    );
   },
 
   /** Phase 2: PUT approve-submission; Phase 1: no-op success. Luôn trả MutationResult (không nuốt lỗi). */
@@ -468,7 +482,7 @@ export const expertWorkflowService = {
     submissionId: string,
     expertId: string,
     expertUsername: string,
-    type: "direct" | "temporary",
+    type: 'direct' | 'temporary',
     rejectionNote: string,
     notes: string,
     opts?: { wasResubmitted?: boolean },
@@ -478,7 +492,15 @@ export const expertWorkflowService = {
         const serverRes = await rejectSubmissionOnServer(submissionId);
         if (!serverRes.ok) return false;
       }
-      await applyRejectToMap(submissionId, expertId, expertUsername, type, rejectionNote, notes, opts);
+      await applyRejectToMap(
+        submissionId,
+        expertId,
+        expertUsername,
+        type,
+        rejectionNote,
+        notes,
+        opts,
+      );
       return true;
     } catch {
       return false;

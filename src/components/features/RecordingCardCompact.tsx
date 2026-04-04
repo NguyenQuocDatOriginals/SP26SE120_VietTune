@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { Download, Eye, Pause, Play } from "lucide-react";
-import type { Recording } from "@/types";
-import logo from "@/components/image/VietTune logo.png";
-import { cn, formatDuration } from "@/utils/helpers";
+import { Download, Eye, Pause, Play } from 'lucide-react';
+import { memo } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+import logo from '@/components/image/VietTune logo.png';
+import type { Recording } from '@/types';
+import { cn, formatDuration } from '@/utils/helpers';
 
 export type RecordingCardCompactProps = {
   recording: Recording;
@@ -14,7 +16,7 @@ export type RecordingCardCompactProps = {
   className?: string;
 };
 
-export default function RecordingCardCompact({
+function RecordingCardCompact({
   recording,
   to,
   linkState,
@@ -23,7 +25,7 @@ export default function RecordingCardCompact({
 }: RecordingCardCompactProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-  const src = (recording.audioUrl ?? "").trim();
+  const src = (recording.audioUrl ?? '').trim();
 
   useEffect(() => {
     const a = audioRef.current;
@@ -31,13 +33,13 @@ export default function RecordingCardCompact({
     const onEnded = () => setPlaying(false);
     const onPause = () => setPlaying(false);
     const onPlay = () => setPlaying(true);
-    a.addEventListener("ended", onEnded);
-    a.addEventListener("pause", onPause);
-    a.addEventListener("play", onPlay);
+    a.addEventListener('ended', onEnded);
+    a.addEventListener('pause', onPause);
+    a.addEventListener('play', onPlay);
     return () => {
-      a.removeEventListener("ended", onEnded);
-      a.removeEventListener("pause", onPause);
-      a.removeEventListener("play", onPlay);
+      a.removeEventListener('ended', onEnded);
+      a.removeEventListener('pause', onPause);
+      a.removeEventListener('play', onPlay);
     };
   }, [src]);
 
@@ -53,24 +55,24 @@ export default function RecordingCardCompact({
   };
 
   const ethnicityLabel =
-    typeof recording.ethnicity === "object" && recording.ethnicity !== null
+    typeof recording.ethnicity === 'object' && recording.ethnicity !== null
       ? recording.ethnicity.nameVietnamese || recording.ethnicity.name
-      : "";
+      : '';
 
   const instrumentBadges = (recording.instruments ?? [])
-    .map((i) => (i.nameVietnamese || i.name || "").trim())
+    .map((i) => (i.nameVietnamese || i.name || '').trim())
     .filter(Boolean)
     .slice(0, 2);
 
   const durationSec = Number.isFinite(recording.duration) ? recording.duration : 0;
-  const titleForAlt = recording.titleVietnamese || recording.title || "Bản thu";
+  const titleForAlt = recording.titleVietnamese || recording.title || 'Bản thu';
 
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-2xl border border-secondary-200/70 bg-gradient-to-b from-[#FFFCF5] via-cream-50/80 to-secondary-50/45 shadow-md transition-all duration-300",
-        "hover:border-secondary-300/80 hover:shadow-lg",
-        "focus-within:ring-2 focus-within:ring-secondary-400 focus-within:ring-offset-2 focus-within:ring-offset-cream-50",
+        'group flex h-full flex-col overflow-hidden rounded-2xl border border-secondary-200/70 bg-gradient-to-b from-[#FFFCF5] via-cream-50/80 to-secondary-50/45 shadow-md transition-all duration-300',
+        'hover:border-secondary-300/80 hover:shadow-lg',
+        'focus-within:ring-2 focus-within:ring-secondary-400 focus-within:ring-offset-2 focus-within:ring-offset-cream-50',
         className,
       )}
     >
@@ -82,14 +84,27 @@ export default function RecordingCardCompact({
             src={recording.coverImage}
             alt={titleForAlt}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+            decoding="async"
+            width={640}
+            height={480}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <img src={logo} alt="" className="h-16 w-16 object-contain opacity-35" aria-hidden />
+            <img
+              src={logo}
+              alt=""
+              className="h-16 w-16 object-contain opacity-35"
+              aria-hidden
+              loading="lazy"
+              decoding="async"
+              width={64}
+              height={64}
+            />
           </div>
         )}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-neutral-900/35 via-transparent to-transparent" />
-        
+
         {recording._semanticScore !== undefined && recording._semanticScore > 0 ? (
           <span className="absolute top-3 left-3 inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-500/90 to-emerald-600/95 px-2 py-0.5 text-[11px] font-bold text-white shadow-md border border-emerald-400/50 backdrop-blur-sm shadow-emerald-500/20">
             Độ khớp: {Math.round(recording._semanticScore * 100)}%
@@ -101,14 +116,18 @@ export default function RecordingCardCompact({
           onClick={togglePlay}
           disabled={!src}
           className={cn(
-            "absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition",
-            "hover:bg-primary-500 hover:scale-105 active:scale-95",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-700",
-            "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100",
+            'absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition',
+            'hover:bg-primary-500 hover:scale-105 active:scale-95',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-primary-700',
+            'disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100',
           )}
-          aria-label={playing ? "Tạm dừng" : "Phát"}
+          aria-label={playing ? 'Tạm dừng' : 'Phát'}
         >
-          {playing ? <Pause className="h-5 w-5" strokeWidth={2.25} /> : <Play className="ml-0.5 h-5 w-5" strokeWidth={2.25} />}
+          {playing ? (
+            <Pause className="h-5 w-5" strokeWidth={2.25} />
+          ) : (
+            <Play className="ml-0.5 h-5 w-5" strokeWidth={2.25} />
+          )}
         </button>
         {durationSec > 0 ? (
           <span className="absolute bottom-3 left-3 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white">
@@ -119,7 +138,7 @@ export default function RecordingCardCompact({
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-4">
         <h3 className="line-clamp-2 min-h-[2.5rem] text-base font-bold leading-snug text-neutral-900">
-          {recording.titleVietnamese || recording.title || "Không có tiêu đề"}
+          {recording.titleVietnamese || recording.title || 'Không có tiêu đề'}
         </h3>
 
         <div className="flex flex-wrap gap-1.5">
@@ -163,3 +182,8 @@ export default function RecordingCardCompact({
     </article>
   );
 }
+
+const MemoizedRecordingCardCompact = memo(RecordingCardCompact);
+MemoizedRecordingCardCompact.displayName = 'RecordingCardCompact';
+
+export default MemoizedRecordingCardCompact;

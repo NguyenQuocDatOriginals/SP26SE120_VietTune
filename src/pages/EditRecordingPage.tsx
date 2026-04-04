@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { BookOpen } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
-import { ModerationStatus, UserRole } from "@/types";
-import type { LocalRecording } from "@/types";
-import { getLocalRecordingFull } from "@/services/recordingStorage";
-import UploadMusic from "@/components/features/UploadMusic";
-import BackButton from "@/components/common/BackButton";
-import ForbiddenPage from "@/pages/ForbiddenPage";
+import { BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+
+import BackButton from '@/components/common/BackButton';
+import UploadMusic from '@/components/features/UploadMusic';
+import ForbiddenPage from '@/pages/ForbiddenPage';
+import { getLocalRecordingFull } from '@/services/recordingStorage';
+import { useAuthStore } from '@/stores/authStore';
+import { ModerationStatus, UserRole } from '@/types';
+import type { LocalRecording } from '@/types';
 
 export default function EditRecordingPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,10 +39,13 @@ export default function EditRecordingPage() {
         const isExpert = user?.role === UserRole.EXPERT;
         const isAdmin = user?.role === UserRole.ADMIN;
         const isOwner = r.uploader && (r.uploader as { id?: string }).id === user?.id;
-        const status = r.moderation && typeof r.moderation === "object" && "status" in r.moderation
-          ? (r.moderation as { status?: string }).status
-          : undefined;
-        const mod = r.moderation as { status?: string; contributorEditLocked?: boolean } | undefined;
+        const status =
+          r.moderation && typeof r.moderation === 'object' && 'status' in r.moderation
+            ? (r.moderation as { status?: string }).status
+            : undefined;
+        const mod = r.moderation as
+          | { status?: string; contributorEditLocked?: boolean }
+          | undefined;
         const contributorEditLocked = mod?.contributorEditLocked === true;
         const isApproved = status === ModerationStatus.APPROVED;
         const isTemporarilyRejected = status === ModerationStatus.TEMPORARILY_REJECTED;
@@ -49,7 +53,10 @@ export default function EditRecordingPage() {
         // Permanently rejected: no one can edit. Temporarily rejected: only contributor (owner) can edit until resubmit.
         const canEdit =
           !isRejected &&
-          ((isContributor && isOwner && (isApproved || isTemporarilyRejected) && !contributorEditLocked) ||
+          ((isContributor &&
+            isOwner &&
+            (isApproved || isTemporarilyRejected) &&
+            !contributorEditLocked) ||
             (isExpert && isApproved) ||
             (isAdmin && (isApproved || isTemporarilyRejected)));
         if (!canEdit) {
@@ -59,7 +66,7 @@ export default function EditRecordingPage() {
           setRecording(r);
         }
       } catch (err) {
-        console.error("EditRecordingPage load error:", err);
+        console.error('EditRecordingPage load error:', err);
         if (!cancelled) setForbidden(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -71,7 +78,7 @@ export default function EditRecordingPage() {
   }, [id, user?.id, user?.role]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   if (loading) {
@@ -84,7 +91,10 @@ export default function EditRecordingPage() {
             </h1>
             <BackButton />
           </div>
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg p-8 text-center" style={{ backgroundColor: "#FFFCF5" }}>
+          <div
+            className="rounded-2xl border border-neutral-200/80 shadow-lg p-8 text-center"
+            style={{ backgroundColor: '#FFFCF5' }}
+          >
             <p className="text-neutral-600 font-medium">Đang tải...</p>
           </div>
         </div>
@@ -93,9 +103,7 @@ export default function EditRecordingPage() {
   }
 
   if (forbidden || !recording) {
-    return (
-      <ForbiddenPage message="Bạn không có quyền chỉnh sửa bản thu này." />
-    );
+    return <ForbiddenPage message="Bạn không có quyền chỉnh sửa bản thu này." />;
   }
 
   return (
@@ -111,13 +119,16 @@ export default function EditRecordingPage() {
         {/* Main form — same wrapper and padding as UploadPage */}
         <div
           className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl min-w-0 overflow-x-hidden"
-          style={{ backgroundColor: "#FFFCF5" }}
+          style={{ backgroundColor: '#FFFCF5' }}
         >
           <UploadMusic recordingId={id!} isApprovedEdit />
         </div>
 
         {/* Guidelines — same UI/UX as UploadPage */}
-        <div className="border border-neutral-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+        <div
+          className="border border-neutral-200/80 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
+          style={{ backgroundColor: '#FFFCF5' }}
+        >
           <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-secondary-100/90 rounded-lg shadow-sm">
               <BookOpen className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />

@@ -1,5 +1,5 @@
-import type { ErrorInfo } from "react";
-import * as Sentry from "@sentry/react";
+import * as Sentry from '@sentry/react';
+import type { ErrorInfo } from 'react';
 
 export interface ErrorReportContext {
   /** Khu vực / route (main, auth, admin) để lọc lỗi trên dashboard */
@@ -17,7 +17,7 @@ let reporter: ((error: Error, errorInfo?: ErrorInfo, context?: ErrorReportContex
  */
 export function initErrorReporting(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
-  if (dsn && typeof dsn === "string" && dsn.trim() !== "") {
+  if (dsn && typeof dsn === 'string' && dsn.trim() !== '') {
     Sentry.init({
       dsn,
       environment: import.meta.env.MODE,
@@ -60,11 +60,11 @@ export function reportError(
       reporter(error, errorInfo, context);
     } catch (e) {
       if (import.meta.env.DEV) {
-        console.error("Error reporter threw:", e);
+        console.error('Error reporter threw:', e);
       }
     }
   }
   if (import.meta.env.DEV) {
-    console.error("[ErrorBoundary] reportError:", error, errorInfo, context);
+    console.error('[ErrorBoundary] reportError:', error, errorInfo, context);
   }
 }

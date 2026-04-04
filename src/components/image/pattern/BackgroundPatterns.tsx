@@ -16,7 +16,7 @@ export function SoundWaves(props: { opacity?: number }) {
       const x = j * 20;
       const cy = y + (j % 2 === 0 ? -amp : amp);
       return `Q${x + 5} ${cy} ${x + 10} ${y}`;
-    }).join(" ")}`;
+    }).join(' ')}`;
     return { d, op: props.opacity ?? 0, w: i % 3 === 0 ? 0.8 : 0.5 };
   });
 
@@ -51,22 +51,33 @@ export function SoundWaves(props: { opacity?: number }) {
           ring.rs.map((r, ci) => (
             <circle
               key={`${ri}-${ci}`}
-              cx={ring.cx} cy={ring.cy} r={r}
-              fill="none" stroke="#2c1810"
+              cx={ring.cx}
+              cy={ring.cy}
+              r={r}
+              fill="none"
+              stroke="#2c1810"
               strokeWidth="0.5"
               opacity={props.opacity ? props.opacity / 2 : 0}
             />
-          ))
+          )),
         )}
 
         {[100, 220, 340, 460].map((x, i) => (
-          <line key={i} x1={x} y1="0" x2={x} y2="600" stroke="#2c1810" strokeWidth="0.2" opacity={props.opacity ? props.opacity / 4 : 0} />
+          <line
+            key={i}
+            x1={x}
+            y1="0"
+            x2={x}
+            y2="600"
+            stroke="#2c1810"
+            strokeWidth="0.2"
+            opacity={props.opacity ? props.opacity / 4 : 0}
+          />
         ))}
       </svg>
     </>
   );
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 2. THỔ CẨM — Brocade Diamonds
@@ -110,11 +121,17 @@ export function BrocadeDiamonds() {
             <g key={i}>
               <polygon
                 points={`${d.cx},${d.cy - s1} ${d.cx + s1},${d.cy} ${d.cx},${d.cy + s1} ${d.cx - s1},${d.cy}`}
-                fill="none" stroke="#c9a84c" strokeWidth="0.6" opacity="0.1"
+                fill="none"
+                stroke="#c9a84c"
+                strokeWidth="0.6"
+                opacity="0.1"
               />
               <polygon
                 points={`${d.cx},${d.cy - s2} ${d.cx + s2},${d.cy} ${d.cx},${d.cy + s2} ${d.cx - s2},${d.cy}`}
-                fill="none" stroke="#c9a84c" strokeWidth="0.4" opacity="0.07"
+                fill="none"
+                stroke="#c9a84c"
+                strokeWidth="0.4"
+                opacity="0.07"
               />
               <circle cx={d.cx} cy={d.cy} r="1.5" fill="#c9a84c" opacity="0.08" />
             </g>
@@ -127,25 +144,36 @@ export function BrocadeDiamonds() {
             key={`dot-${i}`}
             cx={(i * 37 + 15) % 480}
             cy={(i * 53 + 20) % 600}
-            r="0.8" fill="#c9a84c" opacity="0.12"
+            r="0.8"
+            fill="#c9a84c"
+            opacity="0.12"
           />
         ))}
 
         {[60, 160, 260, 360].map((x, i) => (
-          <line key={i} x1={x} y1="0" x2={x} y2="600" stroke="#c9a84c" strokeWidth="0.2" opacity="0.03" />
+          <line
+            key={i}
+            x1={x}
+            y1="0"
+            x2={x}
+            y2="600"
+            stroke="#c9a84c"
+            strokeWidth="0.2"
+            opacity="0.03"
+          />
         ))}
       </svg>
 
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, rgba(26,36,24,0.2) 0%, rgba(26,36,24,0.5) 50%, rgba(26,36,24,0.2) 100%)",
+          background:
+            'linear-gradient(180deg, rgba(26,36,24,0.2) 0%, rgba(26,36,24,0.5) 50%, rgba(26,36,24,0.2) 100%)',
         }}
       />
     </>
   );
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 3. DÂY ĐÀN — Zither Strings
@@ -197,7 +225,10 @@ export function ZitherStrings() {
         {strings.map((s, i) => (
           <line
             key={i}
-            x1={s.x} y1="0" x2={s.x} y2="600"
+            x1={s.x}
+            y1="0"
+            x2={s.x}
+            y2="600"
             stroke="#c9a84c"
             strokeWidth={s.thick ? 0.8 : 0.3}
             opacity={s.thick ? 0.12 : 0.06}
@@ -207,31 +238,49 @@ export function ZitherStrings() {
         {notes.map((n, i) => (
           <g key={i} opacity={n.op}>
             <ellipse cx={n.cx} cy={n.cy} rx="6" ry="4.5" fill="#c9a84c" />
-            <line x1={n.cx + 6} y1={n.cy} x2={n.cx + 6} y2={n.cy - 25} stroke="#c9a84c" strokeWidth="0.8" />
+            <line
+              x1={n.cx + 6}
+              y1={n.cy}
+              x2={n.cx + 6}
+              y2={n.cy - 25}
+              stroke="#c9a84c"
+              strokeWidth="0.8"
+            />
             {n.flag && (
               <path
                 d={`M${n.cx + 6} ${n.cy - 25} Q${n.cx + 12} ${n.cy - 22} ${n.cx + 12} ${n.cy - 15}`}
-                fill="none" stroke="#c9a84c" strokeWidth="0.8"
+                fill="none"
+                stroke="#c9a84c"
+                strokeWidth="0.8"
               />
             )}
           </g>
         ))}
 
         {circles.map((c, i) => (
-          <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill="none" stroke="#c9a84c" strokeWidth="0.3" opacity={c.op} />
+          <circle
+            key={i}
+            cx={c.cx}
+            cy={c.cy}
+            r={c.r}
+            fill="none"
+            stroke="#c9a84c"
+            strokeWidth="0.3"
+            opacity={c.op}
+          />
         ))}
       </svg>
 
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, rgba(30,21,24,0.2) 0%, rgba(44,24,16,0.5) 50%, rgba(30,21,24,0.2) 100%)",
+          background:
+            'linear-gradient(180deg, rgba(30,21,24,0.2) 0%, rgba(44,24,16,0.5) 50%, rgba(30,21,24,0.2) 100%)',
         }}
       />
     </>
   );
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 4. MÂY & RỒNG — Cloud Scrolls
@@ -277,14 +326,23 @@ export function CloudScrolls() {
 
         {/* Đám mây */}
         {clouds.map((c, i) => (
-          <g key={i} transform={`translate(${c.x}, ${c.y}) scale(${c.s})`} opacity={0.08 + (i % 3) * 0.02}>
+          <g
+            key={i}
+            transform={`translate(${c.x}, ${c.y}) scale(${c.s})`}
+            opacity={0.08 + (i % 3) * 0.02}
+          >
             <path
               d="M0 30 Q0 10 20 10 Q20 -5 45 5 Q60 -5 70 10 Q95 10 95 30"
-              fill="none" stroke="#c9a84c" strokeWidth="0.7"
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.7"
             />
             <path
               d="M5 32 Q10 22 25 20 Q28 8 48 12 Q58 5 68 18 Q85 20 90 32"
-              fill="none" stroke="#c9a84c" strokeWidth="0.4" opacity="0.6"
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.4"
+              opacity="0.6"
             />
           </g>
         ))}
@@ -294,11 +352,15 @@ export function CloudScrolls() {
           <g key={i} opacity={0.05 + (i % 2) * 0.02}>
             <path
               d={`M${s.cx} ${s.cy} Q${s.cx + s.r} ${s.cy - s.r} ${s.cx + s.r * 1.5} ${s.cy} Q${s.cx + s.r} ${s.cy + s.r} ${s.cx} ${s.cy}`}
-              fill="none" stroke="#c9a84c" strokeWidth="0.5"
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.5"
             />
             <path
               d={`M${s.cx} ${s.cy} Q${s.cx - s.r * 0.6} ${s.cy - s.r * 0.6} ${s.cx - s.r} ${s.cy} Q${s.cx - s.r * 0.6} ${s.cy + s.r * 0.6} ${s.cx} ${s.cy}`}
-              fill="none" stroke="#c9a84c" strokeWidth="0.3"
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.3"
             />
           </g>
         ))}
@@ -309,7 +371,9 @@ export function CloudScrolls() {
             key={i}
             cx={(i * 47 + 30) % 480}
             cy={(i * 71 + 40) % 600}
-            r="1" fill="#c9a84c" opacity="0.06"
+            r="1"
+            fill="#c9a84c"
+            opacity="0.06"
           />
         ))}
       </svg>
@@ -317,13 +381,13 @@ export function CloudScrolls() {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, rgba(44,24,16,0.2) 0%, rgba(44,24,16,0.5) 50%, rgba(44,24,16,0.2) 100%)",
+          background:
+            'linear-gradient(180deg, rgba(44,24,16,0.2) 0%, rgba(44,24,16,0.5) 50%, rgba(44,24,16,0.2) 100%)',
         }}
       />
     </>
   );
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 5. HOA VĂN TRỐNG ĐỒNG — Bronze Drum
@@ -359,18 +423,30 @@ export function BronzeDrum() {
         {/* Mặt trời trung tâm */}
         <g transform="translate(200, 280)" opacity="0.14">
           {Array.from({ length: rays }, (_, i) => {
-            const angle = (i * 360) / rays * Math.PI / 180;
+            const angle = (((i * 360) / rays) * Math.PI) / 180;
             return (
               <line
                 key={i}
-                x1={Math.cos(angle) * 30} y1={Math.sin(angle) * 30}
-                x2={Math.cos(angle) * 140} y2={Math.sin(angle) * 140}
-                stroke="#c9a84c" strokeWidth="0.6"
+                x1={Math.cos(angle) * 30}
+                y1={Math.sin(angle) * 30}
+                x2={Math.cos(angle) * 140}
+                y2={Math.sin(angle) * 140}
+                stroke="#c9a84c"
+                strokeWidth="0.6"
               />
             );
           })}
           {concentricRings.map((r, i) => (
-            <circle key={i} cx="0" cy="0" r={r} fill="none" stroke="#c9a84c" strokeWidth="0.5" opacity={0.7 - i * 0.08} />
+            <circle
+              key={i}
+              cx="0"
+              cy="0"
+              r={r}
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.5"
+              opacity={0.7 - i * 0.08}
+            />
           ))}
           <circle cx="0" cy="0" r="25" fill="none" stroke="#c9a84c" strokeWidth="1" />
           <circle cx="0" cy="0" r="8" fill="#c9a84c" opacity="0.25" />
@@ -378,15 +454,22 @@ export function BronzeDrum() {
 
         {/* Mặt trời nhỏ */}
         {smallSuns.map((sun, si) => (
-          <g key={si} transform={`translate(${sun.cx}, ${sun.cy}) scale(${sun.scale})`} opacity="0.08">
+          <g
+            key={si}
+            transform={`translate(${sun.cx}, ${sun.cy}) scale(${sun.scale})`}
+            opacity="0.08"
+          >
             {Array.from({ length: 12 }, (_, i) => {
-              const angle = (i * 30) * Math.PI / 180;
+              const angle = (i * 30 * Math.PI) / 180;
               return (
                 <line
                   key={i}
-                  x1={Math.cos(angle) * 20} y1={Math.sin(angle) * 20}
-                  x2={Math.cos(angle) * 80} y2={Math.sin(angle) * 80}
-                  stroke="#c9a84c" strokeWidth="0.6"
+                  x1={Math.cos(angle) * 20}
+                  y1={Math.sin(angle) * 20}
+                  x2={Math.cos(angle) * 80}
+                  y2={Math.sin(angle) * 80}
+                  stroke="#c9a84c"
+                  strokeWidth="0.6"
                 />
               );
             })}
@@ -399,10 +482,22 @@ export function BronzeDrum() {
         {/* Zigzag border */}
         <g opacity="0.06">
           {Array.from({ length: 32 }, (_, i) => (
-            <path key={`t-${i}`} d={`M${i * 15},0 L${i * 15 + 7.5},14 L${i * 15 + 15},0`} fill="none" stroke="#c9a84c" strokeWidth="0.6" />
+            <path
+              key={`t-${i}`}
+              d={`M${i * 15},0 L${i * 15 + 7.5},14 L${i * 15 + 15},0`}
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.6"
+            />
           ))}
           {Array.from({ length: 32 }, (_, i) => (
-            <path key={`b-${i}`} d={`M${i * 15},600 L${i * 15 + 7.5},586 L${i * 15 + 15},600`} fill="none" stroke="#c9a84c" strokeWidth="0.6" />
+            <path
+              key={`b-${i}`}
+              d={`M${i * 15},600 L${i * 15 + 7.5},586 L${i * 15 + 15},600`}
+              fill="none"
+              stroke="#c9a84c"
+              strokeWidth="0.6"
+            />
           ))}
         </g>
       </svg>
@@ -410,13 +505,13 @@ export function BronzeDrum() {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, rgba(38,26,16,0.2) 0%, rgba(38,26,16,0.5) 50%, rgba(38,26,16,0.2) 100%)",
+          background:
+            'linear-gradient(180deg, rgba(38,26,16,0.2) 0%, rgba(38,26,16,0.5) 50%, rgba(38,26,16,0.2) 100%)',
         }}
       />
     </>
   );
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 6. TRE & LÁ — Bamboo Grid
@@ -470,12 +565,25 @@ export function BambooGrid() {
         {/* Thân tre */}
         {stalks.map((s, i) => (
           <g key={i}>
-            <line x1={s.x} y1="0" x2={s.x} y2="600" stroke="#c9a84c" strokeWidth={s.w} opacity={s.op} />
+            <line
+              x1={s.x}
+              y1="0"
+              x2={s.x}
+              y2="600"
+              stroke="#c9a84c"
+              strokeWidth={s.w}
+              opacity={s.op}
+            />
             {s.nodes.map((ny, ni) => (
               <line
                 key={ni}
-                x1={s.x - 5} y1={ny} x2={s.x + 5} y2={ny}
-                stroke="#c9a84c" strokeWidth={s.w * 0.6} opacity={s.op * 1.3}
+                x1={s.x - 5}
+                y1={ny}
+                x2={s.x + 5}
+                y2={ny}
+                stroke="#c9a84c"
+                strokeWidth={s.w * 0.6}
+                opacity={s.op * 1.3}
               />
             ))}
           </g>
@@ -490,14 +598,24 @@ export function BambooGrid() {
 
         {/* Đường ngang nhẹ */}
         {Array.from({ length: 8 }, (_, i) => (
-          <line key={i} x1="0" y1={i * 75 + 30} x2="480" y2={i * 75 + 30} stroke="#c9a84c" strokeWidth="0.2" opacity="0.03" />
+          <line
+            key={i}
+            x1="0"
+            y1={i * 75 + 30}
+            x2="480"
+            y2={i * 75 + 30}
+            stroke="#c9a84c"
+            strokeWidth="0.2"
+            opacity="0.03"
+          />
         ))}
       </svg>
 
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(180deg, rgba(26,31,22,0.2) 0%, rgba(26,31,22,0.5) 50%, rgba(26,31,22,0.2) 100%)",
+          background:
+            'linear-gradient(180deg, rgba(26,31,22,0.2) 0%, rgba(26,31,22,0.5) 50%, rgba(26,31,22,0.2) 100%)',
         }}
       />
     </>

@@ -1,6 +1,7 @@
-import { type ClassValue, clsx } from "clsx";
-import type { LocalRecording } from "@/types";
-import { ModerationStatus } from "@/types";
+import { type ClassValue, clsx } from 'clsx';
+
+import type { LocalRecording } from '@/types';
+import { ModerationStatus } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
@@ -9,20 +10,20 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
+  if (bytes === 0) return '0 Bytes';
   const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
 
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;
-  return str.substring(0, length) + "...";
+  return str.substring(0, length) + '...';
 }
 
 export function debounce<T extends (...args: unknown[]) => unknown>(
@@ -42,22 +43,18 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Hàm này sẽ tự động migrate các bản ghi cũ có mediaType === "video"
  * nhưng đang lưu trong audioData sang videoData
  */
-export function migrateVideoDataToVideoData(
-  recordings: LocalRecording[],
-): LocalRecording[] {
+export function migrateVideoDataToVideoData(recordings: LocalRecording[]): LocalRecording[] {
   const migrated = recordings.map((rec) => {
     // Chỉ migrate nếu:
     // 1. mediaType === "video"
     // 2. Có audioData (không null/undefined và không rỗng)
     // 3. Chưa có videoData hoặc videoData rỗng/null
     if (
-      rec.mediaType === "video" &&
+      rec.mediaType === 'video' &&
       rec.audioData &&
-      typeof rec.audioData === "string" &&
+      typeof rec.audioData === 'string' &&
       rec.audioData.trim().length > 0 &&
-      (!rec.videoData ||
-        (typeof rec.videoData === "string" &&
-          rec.videoData.trim().length === 0))
+      (!rec.videoData || (typeof rec.videoData === 'string' && rec.videoData.trim().length === 0))
     ) {
       return {
         ...rec,
@@ -79,27 +76,24 @@ export function migrateVideoDataToVideoData(
  * @param dateString - ISO date string or Date object
  * @returns Formatted date string in Vietnamese locale, or '-' if invalid
  */
-export function formatDateTime(
-  dateString: string | Date | null | undefined,
-): string {
-  if (!dateString) return "-";
+export function formatDateTime(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '-';
 
   try {
-    const date =
-      typeof dateString === "string" ? new Date(dateString) : dateString;
-    if (isNaN(date.getTime())) return "-";
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return '-';
 
-    return date.toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     });
   } catch {
-    return "-";
+    return '-';
   }
 }
 
@@ -110,23 +104,20 @@ export function formatDateTime(
  * @param dateString - ISO date string or Date object
  * @returns Formatted date string in Vietnamese locale, or '-' if invalid
  */
-export function formatDate(
-  dateString: string | Date | null | undefined,
-): string {
-  if (!dateString) return "-";
+export function formatDate(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '-';
 
   try {
-    const date =
-      typeof dateString === "string" ? new Date(dateString) : dateString;
-    if (isNaN(date.getTime())) return "-";
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return '-';
 
-    return date.toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+    return date.toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     });
   } catch {
-    return "-";
+    return '-';
   }
 }
 
@@ -134,23 +125,23 @@ export function formatDate(
  * Trạng thái kiểm duyệt sang tiếng Việt (dùng chung cho Contributions, Moderation, ApprovedRecordings).
  */
 export function getModerationStatusLabel(status?: ModerationStatus | string): string {
-  if (!status) return "Không xác định";
+  if (!status) return 'Không xác định';
   switch (status) {
     case ModerationStatus.PENDING_REVIEW:
-    case "PENDING_REVIEW":
-      return "Đang chờ được kiểm duyệt";
+    case 'PENDING_REVIEW':
+      return 'Đang chờ được kiểm duyệt';
     case ModerationStatus.IN_REVIEW:
-    case "IN_REVIEW":
-      return "Đang được kiểm duyệt";
+    case 'IN_REVIEW':
+      return 'Đang được kiểm duyệt';
     case ModerationStatus.APPROVED:
-    case "APPROVED":
-      return "Đã được kiểm duyệt";
+    case 'APPROVED':
+      return 'Đã được kiểm duyệt';
     case ModerationStatus.REJECTED:
-    case "REJECTED":
-      return "Đã bị từ chối vĩnh viễn";
+    case 'REJECTED':
+      return 'Đã bị từ chối vĩnh viễn';
     case ModerationStatus.TEMPORARILY_REJECTED:
-    case "TEMPORARILY_REJECTED":
-      return "Đã bị từ chối tạm thời";
+    case 'TEMPORARILY_REJECTED':
+      return 'Đã bị từ chối tạm thời';
     default:
       return String(status);
   }

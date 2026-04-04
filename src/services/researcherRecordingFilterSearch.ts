@@ -1,9 +1,9 @@
-import { api } from "@/services/api";
-import { mapSubmissionToLocalRecording } from "@/services/submissionApiMapper";
-import { buildSubmissionLookupMaps } from "@/services/expertModerationApi";
-import { convertLocalToRecording } from "@/utils/localRecordingToRecording";
-import type { LocalRecording, Recording } from "@/types";
-import type { SubmissionLookupMaps } from "@/services/submissionApiMapper";
+import { api } from '@/services/api';
+import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
+import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
+import type { SubmissionLookupMaps } from '@/services/submissionApiMapper';
+import type { LocalRecording, Recording } from '@/types';
+import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 
 /** Query for GET /Recording/search-by-filter (see BE Swagger). */
 export type RecordingSearchByFilterQuery = {
@@ -31,7 +31,7 @@ export function normalizeDotNetJsonKeys(input: unknown, depth = 0): unknown {
   if (Array.isArray(input)) {
     return input.map((x) => normalizeDotNetJsonKeys(x, depth + 1));
   }
-  if (typeof input !== "object") return input;
+  if (typeof input !== 'object') return input;
   const obj = input as Record<string, unknown>;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -60,28 +60,37 @@ export function extractRecordingFilterSearchRows(res: unknown): Record<string, u
     if (Array.isArray(c)) return c as Record<string, unknown>[];
   }
   const dataVal = r.data;
-  if (dataVal && typeof dataVal === "object" && !Array.isArray(dataVal)) {
+  if (dataVal && typeof dataVal === 'object' && !Array.isArray(dataVal)) {
     const d = dataVal as Record<string, unknown>;
     const looksLikeRecording =
-      typeof d.title === "string" ||
-      typeof d.audioFileUrl === "string" ||
+      typeof d.title === 'string' ||
+      typeof d.audioFileUrl === 'string' ||
       Array.isArray(d.instrumentIds);
     if (looksLikeRecording) return [d];
   }
   return [];
 }
 
-function filterRowToLocal(row: Record<string, unknown>, lookups: SubmissionLookupMaps): LocalRecording {
+function filterRowToLocal(
+  row: Record<string, unknown>,
+  lookups: SubmissionLookupMaps,
+): LocalRecording {
   const rec =
-    row.recording && typeof row.recording === "object" && !Array.isArray(row.recording)
+    row.recording && typeof row.recording === 'object' && !Array.isArray(row.recording)
       ? (row.recording as Record<string, unknown>)
       : row;
   const topId = String(
-    row.id ?? row.recordingId ?? row.recording_id ?? rec.id ?? rec.recordingId ?? rec.recording_id ?? "",
+    row.id ??
+      row.recordingId ??
+      row.recording_id ??
+      rec.id ??
+      rec.recordingId ??
+      rec.recording_id ??
+      '',
   ).trim();
   const syntheticSubmission = {
     ...row,
-    id: topId || String(row.submissionId ?? row.submission_id ?? "").trim(),
+    id: topId || String(row.submissionId ?? row.submission_id ?? '').trim(),
     status: 2,
     recording: rec,
   } as Record<string, unknown>;
@@ -91,7 +100,9 @@ function filterRowToLocal(row: Record<string, unknown>, lookups: SubmissionLooku
 /**
  * Server-side search for researcher catalog (metadata filters + optional `q`).
  */
-export async function fetchRecordingsSearchByFilter(query: RecordingSearchByFilterQuery): Promise<Recording[]> {
+export async function fetchRecordingsSearchByFilter(
+  query: RecordingSearchByFilterQuery,
+): Promise<Recording[]> {
   const params: Record<string, string | number> = {
     page: query.page ?? 1,
     pageSize: query.pageSize ?? 500,
@@ -105,7 +116,7 @@ export async function fetchRecordingsSearchByFilter(query: RecordingSearchByFilt
 
   const [lookups, res] = await Promise.all([
     buildSubmissionLookupMaps(),
-    api.get<unknown>("/Recording/search-by-filter", { params }),
+    api.get<unknown>('/Recording/search-by-filter', { params }),
   ]);
   const rows = extractRecordingFilterSearchRows(res);
   const locals = rows.map((row, index) => {

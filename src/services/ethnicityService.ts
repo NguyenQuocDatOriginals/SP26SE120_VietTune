@@ -1,4 +1,5 @@
 import { api } from './api';
+
 import { Ethnicity, PaginatedResponse, ApiResponse } from '@/types';
 
 export const ethnicityService = {

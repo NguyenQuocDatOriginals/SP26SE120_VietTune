@@ -1,18 +1,18 @@
 export function normalizeSearchText(input: string): string {
-  return (input ?? "")
+  return (input ?? '')
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/Đ/g, "D")
-    .replace(/đ/g, "d")
-    .replace(/\s+/g, " ")
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/Đ/g, 'D')
+    .replace(/đ/g, 'd')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
 export function tokenizeSearchText(input: string): string[] {
   const normalized = normalizeSearchText(input);
   if (!normalized) return [];
-  return normalized.split(" ").filter(Boolean);
+  return normalized.split(' ').filter(Boolean);
 }
 
 function isSubsequence(needle: string, haystack: string): boolean {
@@ -51,4 +51,3 @@ export function scoreSearchOption(option: string, query: string): number {
   }
   return score;
 }
-

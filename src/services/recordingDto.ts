@@ -1,4 +1,4 @@
-import type { LocalRecording } from "@/types";
+import type { LocalRecording } from '@/types';
 
 /**
  * OpenAPI `RecordingDto` (VietTuneArchive v1) — additionalProperties: false.
@@ -40,7 +40,7 @@ export type RecordingDto = {
 export function buildRecordingUploadPayload(recording: LocalRecording): Record<string, unknown> {
   const uploaderId = (recording.uploader as { id?: string } | undefined)?.id;
   const duration =
-    typeof recording.duration === "number" && Number.isFinite(recording.duration)
+    typeof recording.duration === 'number' && Number.isFinite(recording.duration)
       ? Math.round(recording.duration)
       : undefined;
 
@@ -48,13 +48,13 @@ export function buildRecordingUploadPayload(recording: LocalRecording): Record<s
     title: recording.basicInfo?.title ?? recording.title ?? null,
     description: recording.description ?? null,
     audioFileUrl:
-      typeof recording.audioUrl === "string" && !recording.audioUrl.startsWith("data:")
+      typeof recording.audioUrl === 'string' && !recording.audioUrl.startsWith('data:')
         ? recording.audioUrl
-        : typeof recording.audioData === "string" && !recording.audioData.startsWith("data:")
+        : typeof recording.audioData === 'string' && !recording.audioData.startsWith('data:')
           ? recording.audioData
           : null,
     videoFileUrl:
-      typeof recording.videoData === "string" && !recording.videoData.startsWith("data:")
+      typeof recording.videoData === 'string' && !recording.videoData.startsWith('data:')
         ? recording.videoData
         : null,
     durationSeconds: duration ?? null,
@@ -62,7 +62,8 @@ export function buildRecordingUploadPayload(recording: LocalRecording): Record<s
     recordingDate: recording.recordedDate ?? recording.basicInfo?.recordingDate ?? null,
     lyricsOriginal: recording.metadata?.lyrics ?? null,
     lyricsVietnamese: recording.metadata?.lyricsTranslation ?? null,
-    performanceContext: recording.metadata?.ritualContext ?? recording.metadata?.culturalSignificance ?? null,
+    performanceContext:
+      recording.metadata?.ritualContext ?? recording.metadata?.culturalSignificance ?? null,
     tempo: recording.metadata?.tempo ?? null,
     instrumentIds:
       Array.isArray(recording.instruments) && recording.instruments.length > 0

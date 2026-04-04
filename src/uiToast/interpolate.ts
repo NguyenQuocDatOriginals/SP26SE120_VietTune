@@ -5,6 +5,6 @@ export function interpolate(
 ): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     const v = vars[key];
-    return v != null ? String(v) : "";
+    return v != null ? String(v) : '';
   });
 }

@@ -1,7 +1,8 @@
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Upload } from "lucide-react";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { Upload } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface UploadProgressDialogProps {
   isOpen: boolean;
@@ -18,34 +19,34 @@ interface UploadProgressDialogProps {
  */
 export default function UploadProgressDialog({
   isOpen,
-  title = "Đang đóng góp",
-  message = "File âm thanh/video đang được đóng góp lên hệ thống.",
-  description = "Vui lòng không đóng trang hoặc thoát cho đến khi hoàn tất.",
-  maxWidth = "max-w-3xl",
-  zIndex = "z-50",
+  title = 'Đang đóng góp',
+  message = 'File âm thanh/video đang được đóng góp lên hệ thống.',
+  description = 'Vui lòng không đóng trang hoặc thoát cho đến khi hoàn tất.',
+  maxWidth = 'max-w-3xl',
+  zIndex = 'z-50',
 }: UploadProgressDialogProps) {
   useEffect(() => {
     if (isOpen) {
       const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
+      document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
     } else {
       const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
+        window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
       }
     }
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -55,14 +56,14 @@ export default function UploadProgressDialog({
     <div
       className={`fixed inset-0 ${zIndex} flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto`}
       style={{
-        animation: "fadeIn 0.3s ease-out",
+        animation: 'fadeIn 0.3s ease-out',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        width: "100vw",
-        height: "100vh",
-        position: "fixed",
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
       }}
       onClick={(e) => e.stopPropagation()}
       role="dialog"
@@ -73,8 +74,8 @@ export default function UploadProgressDialog({
       <div
         className={`rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm ${maxWidth} w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform`}
         style={{
-          backgroundColor: "#FFF2D6",
-          animation: "slideUp 0.3s ease-out",
+          backgroundColor: '#FFF2D6',
+          animation: 'slideUp 0.3s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -89,7 +90,7 @@ export default function UploadProgressDialog({
         <div className="overflow-y-auto p-6">
           <div
             className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: "#FFFCF5" }}
+            style={{ backgroundColor: '#FFFCF5' }}
           >
             <div className="flex flex-col items-center gap-4 mb-2">
               <div className="p-3 bg-primary-100/90 rounded-full flex-shrink-0 shadow-sm">

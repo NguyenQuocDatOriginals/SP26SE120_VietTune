@@ -1,25 +1,26 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { Search, Sparkles, Download } from "lucide-react";
-import BackButton from "@/components/common/BackButton";
-import { Recording, SearchFilters, Region, RecordingType, VerificationStatus } from "@/types";
-import { recordingService } from "@/services/recordingService";
-import AudioPlayer from "@/components/features/AudioPlayer";
-import VideoPlayer from "@/components/features/VideoPlayer";
-import { isYouTubeUrl } from "@/utils/youtube";
-import SearchBar from "@/components/features/SearchBar";
-import Pagination from "@/components/common/Pagination";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { Search, Sparkles, Download } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+
+import BackButton from '@/components/common/BackButton';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import Pagination from '@/components/common/Pagination';
+import AudioPlayer from '@/components/features/AudioPlayer';
+import SearchBar from '@/components/features/SearchBar';
+import VideoPlayer from '@/components/features/VideoPlayer';
+import { recordingService } from '@/services/recordingService';
+import { Recording, SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
+import { isYouTubeUrl } from '@/utils/youtube';
 
 // Build SearchFilters from URL search params (restore filter state from shareable links)
 function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
-  const q = searchParams.get("q")?.trim();
-  const region = searchParams.get("region");
-  const type = searchParams.get("type");
-  const status = searchParams.get("status");
-  const from = searchParams.get("from");
-  const to = searchParams.get("to");
-  const tagsParam = searchParams.get("tags");
+  const q = searchParams.get('q')?.trim();
+  const region = searchParams.get('region');
+  const type = searchParams.get('type');
+  const status = searchParams.get('status');
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
+  const tagsParam = searchParams.get('tags');
 
   const filters: SearchFilters = {};
   if (q) filters.query = q;
@@ -35,7 +36,10 @@ function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
   if (from) filters.dateFrom = from;
   if (to) filters.dateTo = to;
   if (tagsParam) {
-    filters.tags = tagsParam.split(",").map((t) => t.trim()).filter(Boolean);
+    filters.tags = tagsParam
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
   }
   return filters;
 }
@@ -49,7 +53,7 @@ function searchParamsFromFilters(filters: SearchFilters): Record<string, string>
   if (filters.verificationStatus?.length) params.status = filters.verificationStatus[0];
   if (filters.dateFrom) params.from = filters.dateFrom;
   if (filters.dateTo) params.to = filters.dateTo;
-  if (filters.tags?.length) params.tags = filters.tags.join(",");
+  if (filters.tags?.length) params.tags = filters.tags.join(',');
   return params;
 }
 
@@ -60,12 +64,14 @@ export default function SearchPage() {
 
   const initialFiltersFromUrl = useMemo(
     () => filtersFromSearchParams(searchParams),
-    [searchParams]
+    [searchParams],
   );
 
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(() => Object.keys(initialFiltersFromUrl).length > 0);
+  const [hasSearched, setHasSearched] = useState(
+    () => Object.keys(initialFiltersFromUrl).length > 0,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
@@ -77,27 +83,25 @@ export default function SearchPage() {
       type ApiResponseType = { items: Recording[]; total: number; totalPages: number };
       let response: ApiResponseType | unknown;
       if (Object.keys(filters).length > 0) {
-        response = await recordingService.searchRecordings(
-          filters,
-          currentPage,
-          20
-        );
+        response = await recordingService.searchRecordings(filters, currentPage, 20);
       } else {
         response = await recordingService.getRecordings(currentPage, 20);
       }
 
-      const apiItems = response && Array.isArray((response as ApiResponseType).items)
-        ? (response as ApiResponseType).items
-        : [];
+      const apiItems =
+        response && Array.isArray((response as ApiResponseType).items)
+          ? (response as ApiResponseType).items
+          : [];
 
       setRecordings(apiItems);
       setTotalPages((response as ApiResponseType)?.totalPages ?? 1);
-      const apiTotal = (response && typeof (response as ApiResponseType).total === 'number')
-        ? (response as ApiResponseType).total
-        : apiItems.length;
+      const apiTotal =
+        response && typeof (response as ApiResponseType).total === 'number'
+          ? (response as ApiResponseType).total
+          : apiItems.length;
       setTotalResults(apiTotal);
     } catch (error) {
-      console.error("Error fetching recordings:", error);
+      console.error('Error fetching recordings:', error);
       setRecordings([]);
       setTotalResults(0);
     } finally {
@@ -149,13 +153,19 @@ export default function SearchPage() {
         </div>
 
         {/* Main Search Form — same card style as SemanticSearchPage */}
-        <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+        <div
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
+          style={{ backgroundColor: '#FFFCF5' }}
+        >
           <SearchBar onSearch={handleSearch} initialFilters={filters} />
         </div>
 
         {/* Search Results — same card style as SemanticSearchPage */}
         {hasSearched && (
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: "#FFFCF5" }}>
+          <div
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
+            style={{ backgroundColor: '#FFFCF5' }}
+          >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
               <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
                 <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
@@ -171,9 +181,12 @@ export default function SearchPage() {
             ) : recordings.length === 0 ? (
               <div className="py-10 text-center">
                 <Search className="h-12 w-12 text-neutral-400 mx-auto mb-4" strokeWidth={1.5} />
-                <h3 className="text-lg font-semibold text-neutral-800 mb-2">Không tìm thấy bản thu</h3>
+                <h3 className="text-lg font-semibold text-neutral-800 mb-2">
+                  Không tìm thấy bản thu
+                </h3>
                 <p className="text-neutral-600 font-medium leading-relaxed max-w-md mx-auto mb-4">
-                  Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn. Bạn cũng có thể dùng Tìm theo ý nghĩa.
+                  Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm kết quả phù hợp hơn. Bạn cũng có thể
+                  dùng Tìm theo ý nghĩa.
                 </p>
                 <Link
                   to="/semantic-search"
@@ -197,7 +210,9 @@ export default function SearchPage() {
                         title: r.title,
                         titleVietnamese: r.titleVietnamese,
                         description: r.description,
-                        ethnicity: r.ethnicity ? { name: r.ethnicity.name, nameVietnamese: r.ethnicity.nameVietnamese } : null,
+                        ethnicity: r.ethnicity
+                          ? { name: r.ethnicity.name, nameVietnamese: r.ethnicity.nameVietnamese }
+                          : null,
                         region: r.region,
                         recordingType: r.recordingType,
                         duration: r.duration,
@@ -208,9 +223,22 @@ export default function SearchPage() {
                         metadata: r.metadata,
                         verificationStatus: r.verificationStatus,
                       }));
-                      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), total: payload.length, recordings: payload }, null, 2)], { type: "application/json" });
+                      const blob = new Blob(
+                        [
+                          JSON.stringify(
+                            {
+                              exportedAt: new Date().toISOString(),
+                              total: payload.length,
+                              recordings: payload,
+                            },
+                            null,
+                            2,
+                          ),
+                        ],
+                        { type: 'application/json' },
+                      );
                       const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
+                      const a = document.createElement('a');
                       a.href = url;
                       a.download = `viettune-search-export-${new Date().toISOString().slice(0, 10)}.json`;
                       a.click();
@@ -226,8 +254,12 @@ export default function SearchPage() {
                   {recordings.map((recording, idx) => {
                     try {
                       // For API recordings, check if it's video/YouTube
-                      const apiSrc = typeof recording.audioUrl === "string" ? recording.audioUrl : "";
-                      const isApiVideo = apiSrc && (isYouTubeUrl(apiSrc) || apiSrc.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
+                      const apiSrc =
+                        typeof recording.audioUrl === 'string' ? recording.audioUrl : '';
+                      const isApiVideo =
+                        apiSrc &&
+                        (isYouTubeUrl(apiSrc) ||
+                          apiSrc.match(/\.(mp4|mov|avi|webm|mkv|mpeg|mpg|wmv|3gp|flv)$/i));
 
                       return isApiVideo ? (
                         <VideoPlayer
@@ -251,9 +283,12 @@ export default function SearchPage() {
                         />
                       );
                     } catch (err) {
-                      console.error("Error rendering recording:", err, recording);
+                      console.error('Error rendering recording:', err, recording);
                       return (
-                        <div key={recording.id || `err-${idx}`} className="border border-red-200 rounded-xl p-6 text-center text-red-600">
+                        <div
+                          key={recording.id || `err-${idx}`}
+                          className="border border-red-200 rounded-xl p-6 text-center text-red-600"
+                        >
                           <p>Có lỗi khi hiển thị bản thu.</p>
                         </div>
                       );
@@ -275,7 +310,10 @@ export default function SearchPage() {
 
         {/* Initial State - Search Tips */}
         {!hasSearched && (
-          <div className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8" style={{ backgroundColor: "#FFFCF5" }}>
+          <div
+            className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8"
+            style={{ backgroundColor: '#FFFCF5' }}
+          >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
               <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
                 <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} />

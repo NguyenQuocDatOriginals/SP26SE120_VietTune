@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import WaveSurfer from "wavesurfer.js";
-import { Download, Eye, Pause, Play } from "lucide-react";
-import type { Recording } from "@/types";
-import logo from "@/components/image/VietTune logo.png";
+import { Download, Eye, Pause, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import WaveSurfer from 'wavesurfer.js';
+
+import logo from '@/components/image/VietTune logo.png';
+import type { Recording } from '@/types';
 
 type SingleTrackPlayerProps = {
   recording: Recording;
@@ -10,13 +11,13 @@ type SingleTrackPlayerProps = {
 };
 
 function formatTime(value: number): string {
-  if (!Number.isFinite(value) || value < 0) return "00:00";
+  if (!Number.isFinite(value) || value < 0) return '00:00';
   const min = Math.floor(value / 60);
   const sec = Math.floor(value % 60);
-  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-export default function SingleTrackPlayer({ recording, className = "" }: SingleTrackPlayerProps) {
+export default function SingleTrackPlayer({ recording, className = '' }: SingleTrackPlayerProps) {
   const waveContainerRef = useRef<HTMLDivElement | null>(null);
   const waveRef = useRef<WaveSurfer | null>(null);
   const [ready, setReady] = useState(false);
@@ -24,7 +25,7 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [hasWaveError, setHasWaveError] = useState(false);
-  const src = (recording.audioUrl ?? "").trim();
+  const src = (recording.audioUrl ?? '').trim();
 
   useEffect(() => {
     if (!waveContainerRef.current || !src) return;
@@ -36,9 +37,9 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
       barWidth: 3,
       barGap: 2,
       barRadius: 4,
-      waveColor: "#E8C98E",
-      progressColor: "#9B2C2C",
-      cursorColor: "#9B2C2C",
+      waveColor: '#E8C98E',
+      progressColor: '#9B2C2C',
+      cursorColor: '#9B2C2C',
       cursorWidth: 2,
       normalize: true,
     });
@@ -67,13 +68,13 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
       setIsPlaying(false);
     };
 
-    ws.on("ready", onReady);
-    ws.on("decode", onDecode);
-    ws.on("timeupdate", onTimeUpdate);
-    ws.on("play", onPlay);
-    ws.on("pause", onPause);
-    ws.on("finish", onFinish);
-    ws.on("error", onError);
+    ws.on('ready', onReady);
+    ws.on('decode', onDecode);
+    ws.on('timeupdate', onTimeUpdate);
+    ws.on('play', onPlay);
+    ws.on('pause', onPause);
+    ws.on('finish', onFinish);
+    ws.on('error', onError);
 
     return () => {
       ws.destroy();
@@ -92,31 +93,57 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
 
   if (!src) {
     return (
-      <div className={`rounded-2xl border border-primary-200/70 bg-[#FFFCF5] p-4 shadow-sm ${className}`}>
+      <div
+        className={`rounded-2xl border border-primary-200/70 bg-[#FFFCF5] p-4 shadow-sm ${className}`}
+      >
         <p className="text-sm text-neutral-600">Bản thu này chưa có nguồn âm thanh để phát.</p>
       </div>
     );
   }
 
   return (
-    <div className={`rounded-2xl border border-primary-200/80 bg-[#FFFCF5] p-4 shadow-md ${className}`}>
+    <div
+      className={`rounded-2xl border border-primary-200/80 bg-[#FFFCF5] p-4 shadow-md ${className}`}
+    >
       <div className="flex items-start gap-3">
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 sm:h-28 sm:w-28">
           {recording.coverImage ? (
-            <img src={recording.coverImage} alt={recording.title} className="h-full w-full object-cover" />
+            <img
+              src={recording.coverImage}
+              alt={recording.title}
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+              width={112}
+              height={112}
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <img src={logo} alt="VietTune" className="h-14 w-14 object-contain opacity-40" />
+              <img
+                src={logo}
+                alt="VietTune"
+                className="h-14 w-14 object-contain opacity-40"
+                loading="lazy"
+                decoding="async"
+                width={56}
+                height={56}
+              />
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-xl font-semibold leading-tight text-neutral-900">
-            {recording.title || "Không có tiêu đề"}
+            {recording.title || 'Không có tiêu đề'}
           </h3>
           <div className="mt-3 flex items-center gap-4 text-xs text-neutral-600">
-            <span className="inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{recording.viewCount ?? 0}</span>
-            <span className="inline-flex items-center gap-1"><Download className="h-3.5 w-3.5" />{recording.downloadCount ?? 0}</span>
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" />
+              {recording.viewCount ?? 0}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Download className="h-3.5 w-3.5" />
+              {recording.downloadCount ?? 0}
+            </span>
           </div>
         </div>
       </div>
@@ -138,7 +165,7 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
             onClick={togglePlay}
             disabled={!ready}
             className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label={isPlaying ? "Tạm dừng" : "Phát"}
+            aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
           >
             {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
           </button>
@@ -147,4 +174,3 @@ export default function SingleTrackPlayer({ recording, className = "" }: SingleT
     </div>
   );
 }
-

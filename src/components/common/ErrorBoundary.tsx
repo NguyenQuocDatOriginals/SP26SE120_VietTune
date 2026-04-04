@@ -1,6 +1,7 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
-import { reportError } from "@/services/errorReporting";
+import { AlertTriangle } from 'lucide-react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+
+import { reportError } from '@/services/errorReporting';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -20,10 +21,7 @@ interface ErrorBoundaryState {
  * displays a fallback UI instead of a blank screen, and optionally logs the error.
  * Must be a class component (React does not yet support error boundaries in function components).
  */
-export default class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -56,9 +54,7 @@ export default class ErrorBoundary extends Component<
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-6">
               <AlertTriangle className="w-8 h-8" aria-hidden />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-2">
-              Đã xảy ra lỗi
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-2">Đã xảy ra lỗi</h1>
             <p className="text-neutral-600 mb-6">
               Ứng dụng gặp sự cố không mong muốn. Bạn có thể thử lại hoặc quay về trang chủ.
             </p>
