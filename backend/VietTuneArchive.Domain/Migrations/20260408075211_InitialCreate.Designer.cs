@@ -12,8 +12,8 @@ using VietTuneArchive.Domain.Context;
 namespace VietTuneArchive.Domain.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20260408074854_AddKBEntryIdToVectorEmbeddings")]
-    partial class AddKBEntryIdToVectorEmbeddings
+    [Migration("20260408075211_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
