@@ -1,9 +1,8 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace VietTuneArchive.Application.DTOs.KnowledgeBase
+namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase
 {
-    public class CreateKBEntryRequest
+    public class UpdateKBEntryRequest
     {
         [Required, MaxLength(500)]
         public string Title { get; set; }
@@ -11,9 +10,9 @@ namespace VietTuneArchive.Application.DTOs.KnowledgeBase
         [Required]
         public string Content { get; set; }
 
-        [Required]
         public string Category { get; set; }
 
-        public List<CreateKBCitationRequest>? Citations { get; set; }
+        [MaxLength(500)]
+        public string? RevisionNote { get; set; }
     }
 }

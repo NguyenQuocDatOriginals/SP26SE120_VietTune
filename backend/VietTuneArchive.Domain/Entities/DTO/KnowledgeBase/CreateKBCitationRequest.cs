@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VietTuneArchive.Application.DTOs.KnowledgeBase
+namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase
 {
-    public class UpdateKBCitationRequest
+    public class CreateKBCitationRequest
     {
         [Required, MaxLength(1000)]
         public string Citation { get; set; }

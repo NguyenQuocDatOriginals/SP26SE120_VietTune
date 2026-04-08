@@ -5,9 +5,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Text;
 using VietTuneArchive.Application.IServices;
-using VietTuneArchive.Application.DTOs.KnowledgeBase;
 using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.IRepositories;
+using VietTuneArchive.Domain.Entities.DTO.KnowledgeBase;
 
 namespace VietTuneArchive.Application.Services
 {
