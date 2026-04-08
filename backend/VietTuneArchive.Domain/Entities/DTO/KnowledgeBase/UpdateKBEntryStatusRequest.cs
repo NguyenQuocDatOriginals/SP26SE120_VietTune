@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace VietTuneArchive.Application.DTOs.KnowledgeBase
+namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase
 {
     public class UpdateKBEntryStatusRequest
     {
