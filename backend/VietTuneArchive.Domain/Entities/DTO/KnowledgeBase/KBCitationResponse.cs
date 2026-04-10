@@ -1,5 +1,3 @@
-using System;
-
 namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase
 {
     public class KBCitationResponse

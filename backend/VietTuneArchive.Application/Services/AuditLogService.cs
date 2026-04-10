@@ -147,7 +147,7 @@ namespace VietTuneArchive.Application.Services
                 if (startDate > endDate)
                     throw new ArgumentException("Start date must be before end date");
 
-                var logs = await _auditLogRepository.GetAsync(al => 
+                var logs = await _auditLogRepository.GetAsync(al =>
                     al.CreatedAt >= startDate && al.CreatedAt <= endDate);
                 var dtos = _mapper.Map<List<AuditLogDto>>(logs.OrderByDescending(al => al.CreatedAt).ToList());
                 return new ServiceResponse<List<AuditLogDto>>

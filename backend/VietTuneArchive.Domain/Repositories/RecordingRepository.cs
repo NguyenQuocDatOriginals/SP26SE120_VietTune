@@ -1,8 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.Entities.Enum;
 using VietTuneArchive.Domain.IRepositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace VietTuneArchive.Domain.Repositories
 {
@@ -13,7 +13,7 @@ namespace VietTuneArchive.Domain.Repositories
         {
             _context = context;
         }
-        public async Task<IEnumerable<Recording>> SearchByTitle (string title)
+        public async Task<IEnumerable<Recording>> SearchByTitle(string title)
         {
             return await _context.Recordings
                 .Include(r => r.RecordingInstruments)

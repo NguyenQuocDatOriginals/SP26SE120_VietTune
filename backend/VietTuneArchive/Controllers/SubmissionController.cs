@@ -153,7 +153,7 @@ namespace VietTuneArchive.API.Controllers
             return BadRequest(result);
         }
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllSubmissions (
+        public async Task<IActionResult> GetAllSubmissions(
     [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var result = await _submissionService.GetAllSubmissionsAsync();

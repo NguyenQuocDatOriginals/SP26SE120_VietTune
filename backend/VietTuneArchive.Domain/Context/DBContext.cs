@@ -74,7 +74,7 @@ namespace VietTuneArchive.Domain.Context
                 entity.Property(e => e.IsActive).IsRequired();
                 entity.Property(e => e.CreatedAt).IsRequired();
                 entity.HasIndex(e => e.Email).IsUnique();
-                
+
                 // One-to-many: User -> RefreshTokens
                 entity.HasMany(e => e.RefreshTokens)
                     .WithOne(rt => rt.User)

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase
 {
     public class KBEntryDetailResponse

@@ -7,7 +7,7 @@ namespace VietTuneArchive.Domain.Repositories
 {
     public class DistrictRepository : GenericRepository<District>, IDistrictRepository
     {
-        private readonly DBContext _context;    
+        private readonly DBContext _context;
         public DistrictRepository(DBContext context) : base(context)
         {
             _context = context;

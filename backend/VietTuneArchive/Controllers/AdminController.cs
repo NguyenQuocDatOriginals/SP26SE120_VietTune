@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.Mapper.DTOs;
 using static VietTuneArchive.Application.Mapper.DTOs.AdminDto;
-using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
 using static VietTuneArchive.Application.Mapper.DTOs.Request.AdminRequest;
 
 namespace VietTuneArchive.API.Controllers

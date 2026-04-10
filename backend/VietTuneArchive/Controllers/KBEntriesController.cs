@@ -1,6 +1,4 @@
-using System;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
@@ -126,30 +124,36 @@ namespace VietTuneArchive.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetCitations(Guid entryId)
         {
-            try {
+            try
+            {
                 var entry = await _kbEntryService.GetEntryByIdAsync(entryId);
                 return Ok(entry.Citations);
-            } catch (Exception ex) { return NotFound(new { message = ex.Message }); }
+            }
+            catch (Exception ex) { return NotFound(new { message = ex.Message }); }
         }
 
         [HttpPost("{entryId:guid}/citations")]
         [Authorize(Roles = "Expert,Admin")]
         public async Task<IActionResult> AddCitation(Guid entryId, [FromBody] CreateKBCitationRequest request)
         {
-            try {
+            try
+            {
                 var citation = await _kbEntryService.AddCitationAsync(entryId, request);
                 return StatusCode(201, citation);
-            } catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+            }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
 
         [HttpPut("citations/{citationId:guid}")]
         [Authorize(Roles = "Expert,Admin")]
         public async Task<IActionResult> UpdateCitation(Guid citationId, [FromBody] UpdateKBCitationRequest request)
         {
-            try {
+            try
+            {
                 var citation = await _kbEntryService.UpdateCitationAsync(citationId, request);
                 return Ok(citation);
-            } catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+            }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
 
         [HttpDelete("citations/{citationId:guid}")]
@@ -172,10 +176,12 @@ namespace VietTuneArchive.API.Controllers
         [Authorize(Roles = "Expert,Admin")]
         public async Task<IActionResult> GetRevisionDetail(Guid revisionId)
         {
-            try {
+            try
+            {
                 var revision = await _kbEntryService.GetRevisionDetailAsync(revisionId);
                 return Ok(revision);
-            } catch (Exception ex) { return NotFound(new { message = ex.Message }); }
+            }
+            catch (Exception ex) { return NotFound(new { message = ex.Message }); }
         }
     }
 }

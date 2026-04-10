@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
-using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Entities.DTO.KnowledgeBase;
+using VietTuneArchive.Domain.IRepositories;
 
 namespace VietTuneArchive.Domain.Repositories
 {
@@ -35,7 +31,7 @@ namespace VietTuneArchive.Domain.Repositories
 
             if (!string.IsNullOrEmpty(queryParams.Search))
             {
-                query = query.Where(e => EF.Functions.ILike(e.Title, $"%{queryParams.Search}%") || 
+                query = query.Where(e => EF.Functions.ILike(e.Title, $"%{queryParams.Search}%") ||
                                          EF.Functions.ILike(e.Content, $"%{queryParams.Search}%"));
             }
 

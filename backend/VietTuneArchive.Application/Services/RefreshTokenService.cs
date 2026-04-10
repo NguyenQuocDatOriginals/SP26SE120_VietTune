@@ -193,7 +193,7 @@ namespace VietTuneArchive.Application.Services
                 if (userId == Guid.Empty)
                     throw new ArgumentException("User id cannot be empty", nameof(userId));
 
-                var count = await _refreshTokenRepository.CountAsync(rt => 
+                var count = await _refreshTokenRepository.CountAsync(rt =>
                     rt.UserId == userId && rt.ExpiresAt > DateTime.UtcNow);
                 return new ServiceResponse<int>
                 {
