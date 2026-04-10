@@ -1,11 +1,13 @@
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service.EmailConfirmation;
+using VietTuneArchive.Application.Common;
 using VietTuneArchive.Application.Common.Email;
+using VietTuneArchive.Application.Hubs;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper;
 using VietTuneArchive.Application.Services;
@@ -13,9 +15,6 @@ using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Repositories;
-using VietTuneArchive.Application.Common;
-using Microsoft.Extensions.Options;
-using VietTuneArchive.Application.Hubs;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
@@ -54,9 +53,10 @@ builder.Services.AddSwaggerGen(c =>
 {
     try
     {
-        c.SwaggerDoc(builder.Configuration["Swagger:Version"] ?? "v1", new() { 
-            Title = builder.Configuration["Swagger:Title"] ?? "VietTuneArchive", 
-            Version = builder.Configuration["Swagger:Version"] ?? "v1" 
+        c.SwaggerDoc(builder.Configuration["Swagger:Version"] ?? "v1", new()
+        {
+            Title = builder.Configuration["Swagger:Title"] ?? "VietTuneArchive",
+            Version = builder.Configuration["Swagger:Version"] ?? "v1"
         });
         c.AddSecurityDefinition("Bearer", new()
         {
@@ -69,7 +69,7 @@ builder.Services.AddSwaggerGen(c =>
         {
             { new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } }, new string[] { } }
         });
-        
+
         // ✅ Fix: Handle circular references
         //c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
     }
@@ -237,7 +237,7 @@ builder.Services.AddHttpClient<EmailService>();
 // SignalR Service
 builder.Services.AddSignalR();
 
-builder.Services.AddCors(o => 
+builder.Services.AddCors(o =>
 {
     o.AddPolicy("AllowReactApp", p =>
     {

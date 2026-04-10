@@ -57,9 +57,9 @@ namespace VietTuneArchive.Application.Services
                 if (recordingId == Guid.Empty)
                     throw new ArgumentException("Recording id cannot be empty", nameof(recordingId));
 
-                var image = await _recordingImageRepository.GetFirstOrDefaultAsync(ri => 
+                var image = await _recordingImageRepository.GetFirstOrDefaultAsync(ri =>
                     ri.RecordingId == recordingId && ri.SortOrder == 0);
-                
+
                 if (image == null)
                     return new ServiceResponse<RecordingImageDto>
                     {

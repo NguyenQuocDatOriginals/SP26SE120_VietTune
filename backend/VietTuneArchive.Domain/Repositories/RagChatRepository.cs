@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
@@ -27,7 +23,7 @@ namespace VietTuneArchive.Domain.Repositories
                 Title = title,
                 CreatedAt = DateTime.UtcNow
             };
-            
+
             _context.QAConversations.Add(conversation);
             await _context.SaveChangesAsync();
             return conversation;
@@ -53,7 +49,7 @@ namespace VietTuneArchive.Domain.Repositories
             var conversation = await _context.QAConversations
                 .Include(c => c.QAMessages)
                 .FirstOrDefaultAsync(c => c.Id == conversationId);
-                
+
             if (conversation != null)
             {
                 if (conversation.QAMessages != null && conversation.QAMessages.Any())
@@ -75,7 +71,7 @@ namespace VietTuneArchive.Domain.Repositories
             {
                 message.CreatedAt = DateTime.UtcNow;
             }
-            
+
             _context.QAMessages.Add(message);
             await _context.SaveChangesAsync();
             return message;

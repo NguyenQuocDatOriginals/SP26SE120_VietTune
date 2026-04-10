@@ -10,7 +10,7 @@ namespace VietTuneArchive.Domain.Repositories
         private readonly DBContext _context;
         public CommuneRepository(DBContext context) : base(context)
         {
-            _context = context; 
+            _context = context;
         }
         public async Task<IEnumerable<Commune>> GetByDistrictIdAsync(Guid districtId)
         {

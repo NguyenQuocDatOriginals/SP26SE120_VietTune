@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace VietTuneArchive.Domain.Entities.DTO.KnowledgeBase

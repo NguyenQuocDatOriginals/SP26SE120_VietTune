@@ -36,7 +36,7 @@ namespace VietTuneArchive.API.Controllers
         public async Task<ActionResult<ServiceResponse<EthnicGroupDto>>> Create([FromBody] EthnicGroupDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return result.Success 
+            return result.Success
                 ? CreatedAtAction(nameof(GetById), new { id = result.Data?.Id }, result)
                 : BadRequest(result);
         }

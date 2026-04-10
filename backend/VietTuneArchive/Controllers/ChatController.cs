@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using VietTuneArchive.Application.Common;
+using Microsoft.AspNetCore.Mvc;
 
 namespace VietTuneArchive.API.Controllers
 {

@@ -1,6 +1,4 @@
-using System;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
@@ -19,7 +17,7 @@ namespace VietTuneArchive.API.Controllers
         private readonly IKnowledgeRetrievalService _retrievalService;
 
         public RagChatController(
-            IRagChatService ragChatService, 
+            IRagChatService ragChatService,
             IEmbeddingService embeddingService,
             IVectorEmbeddingService geminiVectorService,
             IKnowledgeRetrievalService retrievalService)
@@ -32,7 +30,7 @@ namespace VietTuneArchive.API.Controllers
 
         private Guid GetUserId()
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                         ?? User.FindFirst("id")?.Value;
             if (Guid.TryParse(userIdStr, out var userId)) return userId;
             throw new UnauthorizedAccessException("User ID not found in token");

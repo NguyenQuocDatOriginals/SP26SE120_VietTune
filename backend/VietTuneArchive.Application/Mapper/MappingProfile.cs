@@ -29,9 +29,9 @@ namespace VietTuneArchive.Application.Mapper
 
             // ============= RECORDING & RELATED =============
             CreateMap<Recording, RecordingDto>()
-                .ForMember(dest => dest.InstrumentIds, 
-                    opt => opt.MapFrom(src => src.RecordingInstruments != null 
-                        ? src.RecordingInstruments.Select(ri => ri.InstrumentId).ToList() 
+                .ForMember(dest => dest.InstrumentIds,
+                    opt => opt.MapFrom(src => src.RecordingInstruments != null
+                        ? src.RecordingInstruments.Select(ri => ri.InstrumentId).ToList()
                         : new List<Guid>()))
                 .ReverseMap();
             CreateMap<Recording, GetRecordingDto>()

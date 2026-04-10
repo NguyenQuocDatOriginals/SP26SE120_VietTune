@@ -1,21 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using VietTuneArchive.Application.Common;
 using VietTuneArchive.Application.IServices;
-using VietTuneArchive.Application.Mapper.DTOs;
-using VietTuneArchive.Application.Mapper.DTOs.Response;
 using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.Entities.Model;
 using VietTuneArchive.Domain.IRepositories;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest;
-using ForgotPasswordRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.ForgotPasswordRequest;
-using LoginRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.LoginRequest;
-using RegisterRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.RegisterRequest;
-using ResetPasswordRequest = VietTuneArchive.Application.Mapper.DTOs.Request.AuthRequest.ResetPasswordRequest;
 
 namespace VietTuneArchive.API.Controllers
 {

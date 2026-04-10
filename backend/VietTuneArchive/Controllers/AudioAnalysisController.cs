@@ -1,14 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
@@ -56,7 +48,7 @@ namespace VietTuneArchive.API.Controllers
             {
                 using var stream = file.OpenReadStream();
                 var result = await _detectionService.DetectInstrumentsAsync(stream, file.FileName, includeTimeline);
-                
+
                 if (!result.Success)
                 {
                     return BadRequest(new ServiceResponse<PythonAnalyzeData> { Success = false, Message = result.Error ?? "Detection failed." });
@@ -98,7 +90,7 @@ namespace VietTuneArchive.API.Controllers
                     return BadRequest(new ServiceResponse<PythonAnalyzeData> { Success = false, Message = "Recording does not have an audio URL." });
 
                 _logger.LogInformation("Downloading audio from {Url} for recording {RecordingId}", recording.AudioFileUrl, recordingId);
-                
+
                 using var response = await _httpClient.GetAsync(recording.AudioFileUrl);
                 if (!response.IsSuccessStatusCode)
                 {

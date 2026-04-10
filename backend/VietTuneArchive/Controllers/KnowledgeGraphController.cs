@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph;
 

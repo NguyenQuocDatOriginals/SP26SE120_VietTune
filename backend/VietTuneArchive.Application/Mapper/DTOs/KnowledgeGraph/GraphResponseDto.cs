@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph
 {
     /// <summary>
@@ -10,7 +8,7 @@ namespace VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph
     {
         public List<GraphNodeDto> Nodes { get; set; } = new();
         public List<GraphEdgeDto> Edges { get; set; } = new();
-        
+
         /// <summary>
         /// Tổng số nodes có thể có (trước khi limit), dùng cho pagination.
         /// </summary>

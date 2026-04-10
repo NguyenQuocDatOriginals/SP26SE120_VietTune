@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VietTuneArchive.Domain.Entities.Model
+﻿namespace VietTuneArchive.Domain.Entities.Model
 {
     public class LoginModel
     {

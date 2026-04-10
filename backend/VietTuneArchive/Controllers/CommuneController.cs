@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
-using VietTuneArchive.Application.Services;
-using VietTuneArchive.Domain.Entities.Enum;
 
 namespace VietTuneArchive.API.Controllers
 {
@@ -49,7 +47,7 @@ namespace VietTuneArchive.API.Controllers
         public async Task<ActionResult<ServiceResponse<CommuneDto>>> Create([FromBody] CommuneDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return result.Success 
+            return result.Success
                 ? CreatedAtAction(nameof(GetById), new { id = result.Data?.Id }, result)
                 : BadRequest(result);
         }

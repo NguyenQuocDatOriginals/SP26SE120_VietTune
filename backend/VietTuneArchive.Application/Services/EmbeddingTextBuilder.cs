@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Domain.Entities;
 

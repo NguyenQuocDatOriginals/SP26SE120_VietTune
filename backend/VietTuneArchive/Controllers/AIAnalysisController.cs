@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using VietTuneArchive.Application.IServices;
 using static VietTuneArchive.Application.Mapper.DTOs.AudioAnalysisResultDto;
-using static VietTuneArchive.Application.Mapper.DTOs.CommonDto;
-using static VietTuneArchive.Application.Mapper.DTOs.Request.AIAnalysisRequest;
 
 namespace VietTuneArchive.API.Controllers
 {

@@ -69,7 +69,7 @@ namespace VietTuneArchive.API.Controllers
                 return BadRequest(ModelState);
 
             var result = await _service.CreateVersionAsync(createDto);
-            return result.Success 
+            return result.Success
                 ? CreatedAtAction(nameof(GetById), new { id = result.Data?.Id }, result)
                 : BadRequest(result);
         }
