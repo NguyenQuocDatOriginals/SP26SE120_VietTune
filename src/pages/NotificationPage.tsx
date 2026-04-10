@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { Bell, CheckCircle, Edit3, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -6,6 +11,15 @@ import { recordingRequestService } from '@/services/recordingRequestService';
 import { useAuthStore } from '@/stores/authStore';
 import type { AppNotification } from '@/types';
 import { formatDateTime } from '@/utils/helpers';
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function NotificationPage() {
   const { user } = useAuthStore();
@@ -20,6 +34,15 @@ export default function NotificationPage() {
     return () => clearInterval(t);
   }, [user?.role]);
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleMarkRead = async (id: string) => {
     await recordingRequestService.markNotificationRead(id);
     if (user?.role)
@@ -27,6 +50,11 @@ export default function NotificationPage() {
   };
 
   const hasUnread = notifications.some((n) => !n.read);
+  /**
+   * Handler UI.
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+   */
+
   const handleMarkAllRead = async () => {
     if (!user?.role) return;
     await recordingRequestService.markAllNotificationsReadForRole(user.role);

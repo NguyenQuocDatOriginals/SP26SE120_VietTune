@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -7,6 +12,15 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   className?: string;
 }
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function Pagination({
   currentPage,

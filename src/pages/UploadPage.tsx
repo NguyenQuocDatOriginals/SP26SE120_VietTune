@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { BookOpen, LogIn, FileText, Upload, CheckCircle, Lightbulb, X, Music } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,6 +16,15 @@ import { buildLoginRedirectPath } from '@/utils/routeAccess';
 
 const guideButtonClass =
   'inline-flex items-center justify-center gap-2 h-11 px-6 py-0 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50';
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function UploadPage() {
   const { user } = useAuthStore();

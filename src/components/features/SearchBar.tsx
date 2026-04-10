@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { ChevronDown, Search, MapPin, Music, Filter, Plus, AlertCircle } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -358,6 +363,11 @@ function SearchableDropdown({
   }, [options, search]);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -518,6 +528,11 @@ function MultiSelectTags({
   }, [options, values, search]);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -753,6 +768,15 @@ const REGION_TO_LABEL: Record<Region, string> = {
   [Region.MEKONG_DELTA]: 'Tây Nam Bộ',
 };
 
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
+
 export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarProps) {
   const [query, setQuery] = useState(initialFilters.query || '');
   const [genres, setGenres] = useState<string[]>([]);
@@ -861,6 +885,15 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     verificationStatus,
   ]);
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleSearch = () => {
     const filters: SearchFilters = {
       query: query.trim() || undefined,
@@ -941,6 +974,15 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     onSearch(filters);
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleClearAll = () => {
     setQuery('');
     setGenres([]);
@@ -954,6 +996,15 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
     setVerificationStatus('');
     onSearch({});
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -1148,7 +1199,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         </div>
       </CollapsibleSection>
 
-      {/* Action Buttons */}
+      {/* Nhóm nút thao tác */}
       <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
         <button
           type="button"

@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 
 import { Edit, Trash2, Check, X } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
@@ -32,7 +37,7 @@ import {
 import { buildTagsFromLocal } from '@/utils/recordingTags';
 import { isYouTubeUrl } from '@/utils/youtube';
 
-// Extended Recording type that may include original local data
+// Kiểu Recording mở rộng (có thể kèm dữ liệu local gốc)
 type RecordingWithLocalData = Recording & {
   _originalLocalData?: LocalRecording & {
     culturalContext?: {
@@ -40,6 +45,15 @@ type RecordingWithLocalData = Recording & {
     };
   };
 };
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function ApprovedRecordingsPage() {
   const { user } = useAuthStore();
@@ -71,7 +85,7 @@ export default function ApprovedRecordingsPage() {
   const [editSubmissions, setEditSubmissions] = useState<EditSubmissionForReview[]>([]);
   const [approveEditTarget, setApproveEditTarget] = useState<EditSubmissionForReview | null>(null);
 
-  // Single combined polling interval — replaces 3 separate intervals (3s, 4s, 4s) → 1 interval at 30s
+  // Gộp polling thành 1 interval — thay vì 3 interval (3s, 4s, 4s) → dùng 1 interval 30s
   useEffect(() => {
     if (!user?.id) return;
     const fetchAll = () => {
@@ -81,11 +95,20 @@ export default function ApprovedRecordingsPage() {
         .then(setForwardedDeletes);
       recordingRequestService.getPendingEditSubmissionsForExpert().then(setEditSubmissions);
     };
-    // Initial load
+    // Tải dữ liệu lần đầu
     fetchAll();
     const t = setInterval(fetchAll, 30_000);
     return () => clearInterval(t);
   }, [load, user?.id]);
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -115,6 +138,15 @@ export default function ApprovedRecordingsPage() {
     }
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleRejectConfirm = async () => {
     if (!rejectTarget || !user) return;
     try {
@@ -134,6 +166,15 @@ export default function ApprovedRecordingsPage() {
       console.error(err);
     }
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleApproveEditConfirm = async () => {
     if (!approveEditTarget) return;
@@ -256,7 +297,7 @@ export default function ApprovedRecordingsPage() {
             </div>
           </div>
 
-          {/* Action Buttons — Mờ khi bản thu đang có yêu cầu xóa chờ xử lý (cho đến khi expert từ chối) */}
+          {/* Nhóm nút thao tác — Mờ khi bản thu đang có yêu cầu xóa chờ xử lý (cho đến khi chuyên gia từ chối) */}
           <div className="ml-4 flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => !hasPendingDeleteRequest && navigate(`/recordings/${it.id}/edit`)}
@@ -292,7 +333,7 @@ export default function ApprovedRecordingsPage() {
           </div>
         </div>
 
-        {/* Media Player */}
+        {/* Trình phát media */}
         {mediaSrc && (
           <div className="mt-4">
             {isVideo ? (

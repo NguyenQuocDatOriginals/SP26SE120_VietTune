@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { AlertCircle, X } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -18,6 +23,15 @@ interface ConfirmationDialogProps {
   icon?: React.ReactNode;
   closeOnBackdropClick?: boolean;
 }
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function ConfirmationDialog({
   isOpen,
@@ -68,6 +82,15 @@ export default function ConfirmationDialog({
   useEffect(() => {
     if (!isOpen) return;
 
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
@@ -85,6 +108,15 @@ export default function ConfirmationDialog({
       <AlertCircle className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
     </div>
   );
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnBackdropClick && e.target === e.currentTarget) {

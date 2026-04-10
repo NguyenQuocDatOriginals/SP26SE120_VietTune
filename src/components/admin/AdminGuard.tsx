@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 
@@ -7,6 +12,11 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useAuthStore } from '@/stores/authStore';
 import { ADMIN_ROUTE_POLICY, evaluateGuardAccess, logGuardDecision } from '@/utils/routeAccess';
+/**
+ * Component trang (page).
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+ */
+
 export default function AdminGuard() {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();

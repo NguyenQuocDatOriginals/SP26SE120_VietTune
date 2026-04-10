@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { Send, History } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 
@@ -28,6 +33,15 @@ const WELCOME_MESSAGE =
 const FALLBACK_REPLY =
   'Xin lỗi, tôi chưa thể trả lời. Vui lòng kiểm tra kết nối backend (VietTune API + Gemini) và thử lại.';
 
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
+
 export default function ChatbotPage() {
   const { user } = useAuth();
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
@@ -49,6 +63,15 @@ export default function ChatbotPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleToggleFlag = async (msgId: string, currentFlagged: boolean) => {
     try {
@@ -80,6 +103,15 @@ export default function ChatbotPage() {
       void loadHistory();
     }
   }, [loadHistory, user?.id]);
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleSelectConversation = async (conv: QAConversationRequest) => {
     setConversationId(conv.id);
@@ -115,6 +147,15 @@ export default function ChatbotPage() {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleNewChat = () => {
     setConversationId(crypto.randomUUID());
@@ -215,6 +256,15 @@ export default function ChatbotPage() {
       setIsTyping(false);
     }
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

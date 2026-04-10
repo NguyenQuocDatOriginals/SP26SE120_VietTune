@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import axios from 'axios';
 import {
   LogIn,
@@ -108,6 +113,15 @@ const CONTRIBUTOR_STATUS_TABS: Array<{ label: string; value: number | 'ALL' }> =
 ];
 
 const CONTRIBUTIONS_SUBMISSIONS_PANEL_ID = 'contributions-submissions-panel';
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function ContributionsPage() {
   const { user } = useAuth();
@@ -341,6 +355,15 @@ export default function ContributionsPage() {
     }
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleQuickEdit = async (sub: Submission) => {
     const rec = sub.recording;
     const effectiveMediaType = rec?.videoFileUrl ? 'video' : 'audio';
@@ -393,6 +416,15 @@ export default function ContributionsPage() {
     await sessionSetItem('editingRecording', JSON.stringify(editingObj));
     navigate('/upload?edit=true');
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -991,7 +1023,7 @@ export default function ContributionsPage() {
                       )}
                   </div>
 
-                  {/* Media Player */}
+                  {/* Trình phát media */}
                   {detailSubmission.recording && (
                     <div className="mb-6">
                       {(() => {
@@ -999,7 +1031,7 @@ export default function ContributionsPage() {
                         const title = rec.title || 'Không có tiêu đề';
                         const performer = rec.performerName || 'Đang cập nhật...';
 
-                        // Try all possible media source fields from backend
+                        // Thử tất cả trường nguồn media có thể có từ backend
                         const recMedia = rec as SubmissionRecordingMedia;
                         const audioSrc = recMedia.audioFileUrl || recMedia.audioUrl;
                         const videoSrc = rec.videoFileUrl;

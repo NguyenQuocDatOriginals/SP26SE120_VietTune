@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { BookOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -9,6 +14,15 @@ import { getLocalRecordingFull } from '@/services/recordingStorage';
 import { useAuthStore } from '@/stores/authStore';
 import { ModerationStatus, UserRole } from '@/types';
 import type { LocalRecording } from '@/types';
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function EditRecordingPage() {
   const { id } = useParams<{ id: string }>();

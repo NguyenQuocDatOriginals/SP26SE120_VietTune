@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { Search, Music, ArrowRight, ListFilter, X } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo, useDeferredValue, memo, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';

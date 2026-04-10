@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import {
   Users,
   BarChart3,
@@ -128,6 +133,11 @@ function RoleSelectDropdown({
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -254,6 +264,11 @@ function ExpertSelectDropdown({
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -349,6 +364,15 @@ function ExpertSelectDropdown({
     </div>
   );
 }
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();
@@ -859,6 +883,15 @@ export default function AdminDashboard() {
     count: ethnicityCounts[e.name] ?? 0,
   }));
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleAssignRole = async (userId: string, newRole: string) => {
     try {
       // Prefer backend, fallback to local overrides
@@ -884,6 +917,15 @@ export default function AdminDashboard() {
     }
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleDeleteUser = async (userId: string) => {
     try {
       // Prefer deactivating on backend; keep UI removal locally as well
@@ -902,6 +944,15 @@ export default function AdminDashboard() {
       uiToast.error(notifyLine('Lỗi', 'Không thể xóa người dùng.'));
     }
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleRemoveRecording = async (id: string) => {
     try {

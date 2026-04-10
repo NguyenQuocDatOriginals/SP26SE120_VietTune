@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { Target, Users, Heart, FileText, X, UserMinus } from 'lucide-react';
 import { useEffect, useLayoutEffect, useState, FormEvent } from 'react';
 import { createPortal } from 'react-dom';
@@ -11,6 +16,15 @@ import { authService } from '@/services/authService';
 import { getItem, setItem } from '@/services/storageService';
 import { User, UserRole } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function ProfilePage() {
   const { user, setUser, logout } = useAuth();
@@ -72,6 +86,15 @@ export default function ProfilePage() {
     setErrors({});
     setIsEditOpen(true);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleSaveProfile = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,6 +181,15 @@ export default function ProfilePage() {
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleDeleteAccountConfirm = async () => {
     if (!user) return;
     try {
@@ -227,6 +259,15 @@ export default function ProfilePage() {
   // Handle ESC key to close dialogs
   useEffect(() => {
     if (!isEditOpen && !showDeleteAccountConfirm) return;
+
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

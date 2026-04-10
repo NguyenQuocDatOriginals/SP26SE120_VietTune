@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import {
   AlertCircle,
   X,
@@ -158,7 +163,7 @@ function mergeDisplayItem(
   };
 }
 
-// Extended Recording type that may include original local data
+// Kiểu Recording mở rộng (có thể kèm dữ liệu local gốc)
 type RecordingWithLocalData = Recording & {
   _originalLocalData?: LocalRecordingMini & {
     culturalContext?: {
@@ -167,11 +172,20 @@ type RecordingWithLocalData = Recording & {
   };
 };
 
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
+
 export default function ModerationPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [showVerificationDialog, setShowVerificationDialog] = useState<string | null>(null);
-  /** Full recording (with media blobs) for the active dialog only — cleared on close to avoid OOM. */
+  /** Bản thu đầy đủ (kèm blob media) chỉ dành cho dialog đang mở — sẽ xoá khi đóng để tránh OOM. */
   const [dialogCurrentRecording, setDialogCurrentRecording] = useState<LocalRecordingMini | null>(
     null,
   );
@@ -541,6 +555,15 @@ export default function ModerationPage() {
 
     if (!hasOpenDialog) return;
 
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.preventDefault();
@@ -615,6 +638,15 @@ export default function ModerationPage() {
     await load();
     setShowVerificationDialog(id);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleConfirmApprove = async () => {
     const id = showApproveConfirmDialog;
@@ -736,6 +768,15 @@ export default function ModerationPage() {
     })();
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleConfirmReject = async () => {
     const id = showRejectConfirmDialog;
     if (!id) return;
@@ -756,6 +797,15 @@ export default function ModerationPage() {
     // Show confirmation dialog
     setShowUnclaimDialog(id);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleConfirmUnclaim = async () => {
     const id = showUnclaimDialog;
@@ -778,6 +828,15 @@ export default function ModerationPage() {
     setShowUnclaimDialog(null);
     await load();
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleConfirmDelete = async () => {
     const id = showDeleteConfirmId;

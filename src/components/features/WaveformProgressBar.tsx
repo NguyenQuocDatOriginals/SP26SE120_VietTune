@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { useMemo } from 'react';
 
 interface WaveformProgressBarProps {
@@ -11,6 +16,15 @@ interface WaveformProgressBarProps {
   className?: string;
   barCount?: number; // Number of bars in the waveform
 }
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function WaveformProgressBar({
   progress,
@@ -33,6 +47,15 @@ export default function WaveformProgressBar({
     return heights;
   }, [barCount]);
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -40,6 +63,15 @@ export default function WaveformProgressBar({
     const newTime = percent * duration;
     onSeek(newTime);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (onDragStart) {

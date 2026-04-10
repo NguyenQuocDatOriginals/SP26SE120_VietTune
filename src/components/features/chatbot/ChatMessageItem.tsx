@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { Bot, BookOpen, Music, CheckCircle2, Flag } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -8,6 +13,15 @@ interface ChatMessageItemProps {
   message: Message;
   onToggleFlag?: (messageId: string, currentFlagged: boolean) => void;
 }
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function ChatMessageItem({ message, onToggleFlag }: ChatMessageItemProps) {
   const sources = useMemo(() => {

@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import {
   Play,
   Pause,
@@ -24,10 +29,10 @@ import type { Recording } from '@/types';
 import type { LocalRecording } from '@/types';
 import { getRegionDisplayName } from '@/utils/recordingTags';
 
-// Props type for AudioPlayer
+// Kiểu props cho AudioPlayer
 
 
-// Extended Recording type that may include original local data
+// Kiểu Recording mở rộng (có thể kèm dữ liệu local gốc)
 type RecordingWithLocalData = Recording & {
   _originalLocalData?: LocalRecording & {
     culturalContext?: {
@@ -49,6 +54,15 @@ type Props = {
   /** When set, passed as state.from when navigating to detail (keeps search filters on back) */
   returnTo?: string;
 };
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function AudioPlayer({
   src,
@@ -95,6 +109,11 @@ export default function AudioPlayer({
   const mediaRef = isVideo ? videoRef : audioRef;
 
   // Handle click to navigate to detail page (excluding buttons and progress bar)
+  /**
+   * Handler UI.
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+   */
+
   const handleContainerClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on buttons, progress bar, or their children
     const target = e.target as HTMLElement;
@@ -272,6 +291,15 @@ export default function AudioPlayer({
     media.currentTime = next;
     setCurrentTime(next);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleVolume = (v: number) => {
     const media = mediaRef.current;

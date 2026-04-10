@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { isAxiosError } from 'axios';
 import {
   ChevronDown,
@@ -51,7 +56,7 @@ import type { LocalRecording } from '@/types';
 import { UserRole } from '@/types';
 import { uiToast } from '@/uiToast';
 
-// Extended type for local recording storage (supports both legacy and new formats)
+// Kiểu mở rộng cho lưu trữ bản thu local (hỗ trợ cả định dạng cũ và mới)
 type LocalRecordingStorage = LocalRecording & {
   uploadedAt?: string; // Legacy field
   culturalContext?: {
@@ -478,6 +483,11 @@ function SearchableDropdown({
   }, [options, search]);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -644,6 +654,11 @@ function MultiSelectTags({
   }, [options, values, search]);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -868,6 +883,11 @@ function DatePicker({
   const lunarMonths = getLunarMonthsForYear(viewLunar.year);
 
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -887,6 +907,11 @@ function DatePicker({
 
   // Close month/year dropdowns when clicking outside them
   useEffect(() => {
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutsideDropdowns = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;
@@ -972,6 +997,15 @@ function DatePicker({
   ];
   const dayNames = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleDateClick = (day: number) => {
     const year = viewDate.getFullYear();
     const month = (viewDate.getMonth() + 1).toString().padStart(2, '0');
@@ -981,9 +1015,27 @@ function DatePicker({
     setIsOpen(false);
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handlePrevMonth = () => {
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleNextMonth = () => {
     const nextMonth = viewDate.getMonth() + 1;
@@ -1622,6 +1674,15 @@ export interface UploadMusicProps {
   isApprovedEdit?: boolean;
 }
 
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
+
 export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusicProps = {}) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -1706,7 +1767,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   const [performanceType, setPerformanceType] = useState('');
   const [instruments, setInstruments] = useState<string[]>([]);
 
-  // Reference data from API (replaces hardcoded arrays)
+  // Dữ liệu tham chiếu lấy từ API (thay thế các mảng hardcode)
   const [ETHNICITIES, setETHNICITIES] = useState<string[]>([]);
   const [ethnicGroupsData, setEthnicGroupsData] = useState<EthnicGroupItem[]>([]);
   const [REGIONS, setREGIONS] = useState<string[]>([]);
@@ -1865,6 +1926,11 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   const [instrumentImage, setInstrumentImage] = useState<File | null>(null);
   const [instrumentImagePreview, setInstrumentImagePreview] = useState<string>('');
   // Instrument image upload handler
+  /**
+   * Handler UI.
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+   */
+
   const handleInstrumentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setInstrumentImage(file);
@@ -1935,6 +2001,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     instruments,
   });
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleGetGpsLocation = () => {
     if (!navigator.geolocation) {
       setGpsError('Trình duyệt không hỗ trợ GPS.');
@@ -1978,6 +2053,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleAiSuggestMetadata = async () => {
     setAiSuggestError(null);
@@ -2027,6 +2111,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
       setAiSuggestLoading(false);
     }
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -2253,6 +2346,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     }
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleLyricsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
@@ -2324,6 +2426,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
     return true;
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleUploadAndCreateDraft = async () => {
     if (!file || createdRecordingId) return;
@@ -2526,6 +2637,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
       setIsUploadingMedia(false);
     }
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleNextStep = async () => {
     const newErrors: Record<string, string> = {};
@@ -2984,6 +3104,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
     if (!hasEnteredData) return;
 
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // Modern browsers require preventDefault and setting returnValue to show the dialog
       e.preventDefault();
@@ -3044,6 +3173,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   useEffect(() => {
     if (!showConfirmDialog && submitStatus !== 'success') return;
 
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showConfirmDialog) {
@@ -3058,6 +3196,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [showConfirmDialog, submitStatus]);
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3077,6 +3224,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setShowConfirmDialog(true);
   };
 
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
+
   const handleSaveDraft = async () => {
     if (isSubmitting) return;
 
@@ -3091,6 +3247,15 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
     await handleConfirmSubmit(false);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleConfirmSubmit = async (isFinal: boolean = true) => {
     if (isFinal) {
@@ -3392,7 +3557,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           formatDuration={formatDuration}
         />
 
-        {/* Media Player for NEW Uploads (once uploaded to server) - Only show in Step 2 as requested */}
+        {/* Trình phát media cho bản tải mới (sau khi upload lên server) - Chỉ hiển thị ở Bước 2 theo yêu cầu */}
         {!isEditMode && newUploadedUrl && uploadWizardStep === 2 && (
           <div
             className="mb-6 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/85 to-secondary-50/45 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50"

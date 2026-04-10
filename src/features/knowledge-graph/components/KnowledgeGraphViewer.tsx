@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
 
@@ -12,6 +17,15 @@ const useContainerDimensions = (myRef: React.RefObject<HTMLElement>) => {
       width: myRef.current?.offsetWidth || 0,
       height: myRef.current?.offsetHeight || 0,
     });
+
+    /**
+
+     * Handler UI.
+
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+     */
+
 
     const handleResize = () => {
       setDimensions(getDimensions());
@@ -176,6 +190,15 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({ data, onNod
     },
     [getNodeColor, getNodeSize, hoverNode, neighbors],
   );
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (containerRef.current) {

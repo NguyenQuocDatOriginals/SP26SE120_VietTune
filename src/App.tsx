@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Toaster } from 'react-hot-toast';
 import {
@@ -97,7 +102,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): candidate protected route review in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): cân nhắc rà soát route protected ở Sprint 3.2+ */}
         <Route
           path="recordings/:id/edit"
           element={
@@ -106,7 +111,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): candidate protected route review in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): cân nhắc rà soát route protected ở Sprint 3.2+ */}
         <Route
           path="upload"
           element={
@@ -179,7 +184,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): auth-only route candidate in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): cân nhắc chuyển thành route chỉ cho người dùng đã đăng nhập ở Sprint 3.2+ */}
         <Route
           path="profile"
           element={
@@ -188,7 +193,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): auth-only route candidate in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): cân nhắc chuyển thành route chỉ cho người dùng đã đăng nhập ở Sprint 3.2+ */}
         <Route
           path="contributions"
           element={
@@ -198,7 +203,7 @@ const router = createBrowserRouter(
           }
         />
         <Route path="dashboard" element={<Navigate to="/moderation" replace />} />
-        {/* TODO(route-policy): role/auth review in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): rà soát role/auth ở Sprint 3.2+ */}
         <Route
           path="moderation"
           element={
@@ -207,7 +212,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): role/auth review in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): rà soát role/auth ở Sprint 3.2+ */}
         <Route
           path="approved-recordings"
           element={
@@ -216,7 +221,7 @@ const router = createBrowserRouter(
             </RouteSuspense>
           }
         />
-        {/* TODO(route-policy): auth-only route candidate in Sprint 3.2+ */}
+        {/* VIỆC CẦN LÀM(route-policy): cân nhắc chuyển thành route chỉ cho người dùng đã đăng nhập ở Sprint 3.2+ */}
         <Route
           path="notifications"
           element={

@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import { ChevronDown, Search, X } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
@@ -122,6 +127,11 @@ export default function SearchableDropdown({
 
   useEffect(() => {
     if (!menuOpen) return;
+    /**
+     * Handler UI.
+     * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+     */
+
     const handleClickOutside = (event: MouseEvent) => {
       if (isClickOnScrollbar(event)) return;
       const target = event.target as Node;

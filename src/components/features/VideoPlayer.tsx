@@ -1,3 +1,8 @@
+/**
+ * Tài liệu hoá tiếng Việt cho file TSX.
+ * Ghi chú: TSX/JSX không thể chú thích "từng dòng" bằng `//` trong phần JSX mà không phá cú pháp,
+ * nên file này được chú thích theo khối/chức năng chính (component/handler/luồng dữ liệu).
+ */
 import {
   Play,
   Pause,
@@ -21,10 +26,10 @@ import type { Recording } from '@/types';
 import type { LocalRecording } from '@/types';
 import { getRegionDisplayName } from '@/utils/recordingTags';
 
-/** Throttle interval for time updates (ms) - reduces re-renders during playback */
+/** Khoảng throttle cho cập nhật thời gian (ms) - giảm số lần re-render khi đang phát */
 const TIME_UPDATE_THROTTLE_MS = 200;
 
-// Extended Recording type that may include original local data
+// Kiểu Recording mở rộng (có thể kèm dữ liệu local gốc)
 type RecordingWithLocalData = Recording & {
   _originalLocalData?: LocalRecording & {
     culturalContext?: {
@@ -33,7 +38,7 @@ type RecordingWithLocalData = Recording & {
   };
 };
 
-// Props type for VideoPlayer
+// Kiểu props cho VideoPlayer
 type Props = {
   src?: string;
   title?: string;
@@ -46,6 +51,15 @@ type Props = {
   /** When set, passed as state.from when navigating to detail (keeps search filters on back) */
   returnTo?: string;
 };
+
+/**
+
+ * Component trang (page).
+
+ * - Trách nhiệm: hiển thị UI và điều phối các thao tác chính của trang.
+
+ */
+
 
 export default function VideoPlayer({
   src,
@@ -139,6 +153,11 @@ export default function VideoPlayer({
   const videoSrcReady = isVideo && (isDataVideo ? resolvedVideoSrc != null : true);
 
   // Handle click to navigate to detail page (excluding buttons and progress bar)
+  /**
+   * Handler UI.
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+   */
+
   const handleContainerClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const isButton = target.closest('button') !== null;
@@ -416,6 +435,15 @@ export default function VideoPlayer({
     media.currentTime = next;
     setCurrentTime(next);
   };
+
+  /**
+
+   * Handler UI.
+
+   * - Mục tiêu: xử lý tương tác người dùng và cập nhật trạng thái liên quan.
+
+   */
+
 
   const handleVolume = (v: number) => {
     const media = videoRef.current;
