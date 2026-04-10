@@ -42,6 +42,7 @@ namespace VietTuneArchive.Domain.Context
         public DbSet<Submission> Submissions { get; set; }
         public DbSet<SubmissionVersion> SubmissionVersions { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<CopyrightDispute> CopyrightDisputes { get; set; }
 
         // DbSets - Knowledge Base
         public DbSet<KBEntry> KBEntries { get; set; }
@@ -510,6 +511,32 @@ namespace VietTuneArchive.Domain.Context
                 entity.Property(e => e.Stage).IsRequired();
                 entity.Property(e => e.Decision).IsRequired();
                 entity.Property(e => e.CreatedAt).IsRequired();
+            });
+
+            // ============= COPYRIGHT DISPUTE =============
+            modelBuilder.Entity<CopyrightDispute>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.RecordingId).IsRequired();
+                entity.Property(e => e.ReportedByUserId).IsRequired();
+                entity.Property(e => e.ReasonCode).IsRequired();
+                entity.Property(e => e.Description).IsRequired();
+                entity.Property(e => e.CreatedAt).IsRequired();
+
+                entity.HasOne(e => e.Recording)
+                    .WithMany()
+                    .HasForeignKey(e => e.RecordingId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Submission)
+                    .WithMany()
+                    .HasForeignKey(e => e.SubmissionId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.ReportedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ReportedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ============= KNOWLEDGE BASE =============
