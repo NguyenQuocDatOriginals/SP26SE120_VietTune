@@ -11,26 +11,28 @@ import {
 
 import AdminGuard from './components/admin/AdminGuard';
 import ResearcherGuard from './components/admin/ResearcherGuard';
+import LoginModal from './components/auth/LoginModal';
 import ErrorBoundary from './components/common/ErrorBoundary';
-import LoadingSpinner from './components/common/LoadingSpinner';
-import NotificationProvider from './components/common/NotificationProvider';
+import LoadingState from './components/common/LoadingState';
 import ScrollToTop from './components/common/ScrollToTop';
 import MainLayout from './components/layout/MainLayout';
 
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const SemanticSearchPage = lazy(() => import('./pages/SemanticSearchPage'));
 const ChatbotPage = lazy(() => import('./pages/ChatbotPage'));
+const KbEntryPublicViewPage = lazy(() => import('./pages/KbEntryPublicViewPage'));
 const InstrumentsPage = lazy(() => import('./pages/InstrumentsPage'));
 const EthnicitiesPage = lazy(() => import('./pages/EthnicitiesPage'));
 const MastersPage = lazy(() => import('./pages/MastersPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
-const TermsPage = lazy(() => import('./pages/TermsPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const ConfirmAccountPage = lazy(() => import('./pages/auth/ConfirmAccountPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const ContributionsPage = lazy(() => import('./pages/ContributionsPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const KnowledgeBasePage = lazy(() => import('./pages/admin/KnowledgeBasePage'));
 const CreateExpertPage = lazy(() => import('./pages/admin/CreateExpertPage'));
 const ModerationPage = lazy(() => import('./pages/ModerationPage'));
 const ApprovedRecordingsPage = lazy(() => import('./pages/ApprovedRecordingsPage'));
@@ -43,16 +45,11 @@ const HomePage = lazy(() => import('./pages/HomePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const RecordingDetailPage = lazy(() => import('./pages/RecordingDetailPage'));
 const UploadPage = lazy(() => import('./pages/UploadPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 function RouteSuspense({ children }: { children: ReactNode }) {
   return (
-    <Suspense
-      fallback={
-        <div className="py-10">
-          <LoadingSpinner size="lg" />
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingState size="lg" padded />}>
       {children}
     </Suspense>
   );
@@ -61,11 +58,12 @@ function RouteSuspense({ children }: { children: ReactNode }) {
 // Root wrapper to provide shared context/components within the RouterProvider
 function RootWrapper() {
   return (
-    <NotificationProvider>
+    <>
       <Toaster position="top-right" toastOptions={{ duration: 5000 }} />
       <ScrollToTop />
+      <LoginModal />
       <Outlet />
-    </NotificationProvider>
+    </>
   );
 }
 
@@ -136,6 +134,14 @@ const router = createBrowserRouter(
           element={
             <RouteSuspense>
               <ChatbotPage />
+            </RouteSuspense>
+          }
+        />
+        <Route
+          path="kb/entry/:id"
+          element={
+            <RouteSuspense>
+              <KbEntryPublicViewPage />
             </RouteSuspense>
           }
         />
@@ -252,6 +258,14 @@ const router = createBrowserRouter(
               </RouteSuspense>
             }
           />
+          <Route
+            path="knowledge-base"
+            element={
+              <RouteSuspense>
+                <KnowledgeBasePage />
+              </RouteSuspense>
+            }
+          />
         </Route>
       </Route>
       <Route
@@ -290,6 +304,16 @@ const router = createBrowserRouter(
           <ErrorBoundary region="auth">
             <RouteSuspense>
               <ConfirmAccountPage />
+            </RouteSuspense>
+          </ErrorBoundary>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <ErrorBoundary region="auth">
+            <RouteSuspense>
+              <ForgotPasswordPage />
             </RouteSuspense>
           </ErrorBoundary>
         }

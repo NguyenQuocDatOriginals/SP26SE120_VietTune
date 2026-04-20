@@ -1,4 +1,4 @@
-import type { Recording, RecordingType, VerificationStatus } from '@/types/recording';
+import type { RecordingType, VerificationStatus } from '@/types/recording';
 import type { Region } from '@/types/reference';
 
 export interface SearchFilters {
@@ -12,13 +12,6 @@ export interface SearchFilters {
   dateFrom?: string;
   dateTo?: string;
   tags?: string[];
-}
-
-export interface SearchResult {
-  recordings: Recording[];
-  total: number;
-  page: number;
-  pageSize: number;
 }
 
 export interface ApiResponse<T> {

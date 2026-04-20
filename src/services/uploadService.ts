@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { assertSupabaseConfigured, supabase } from './supabaseClient';
 
 import { logServiceError, logServiceInfo, logServiceWarn } from '@/services/serviceLogger';
 
@@ -14,6 +14,8 @@ export const uploadFileToSupabase = async (
   bucketName: string = import.meta.env.VITE_SUPABASE_BUCKET || 'audio',
 ): Promise<string> => {
   try {
+    assertSupabaseConfigured();
+    if (!supabase) throw new Error('Supabase client is not configured.');
     // Generate a unique file name to avoid collisions
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -51,6 +53,8 @@ export const deleteFileFromSupabase = async (
   _defaultBucketName: string = 'VietTuneArchive',
 ): Promise<void> => {
   try {
+    assertSupabaseConfigured();
+    if (!supabase) return;
     if (!publicUrl) {
       logServiceWarn('[Supabase Delete] No URL provided');
       return;

@@ -108,9 +108,8 @@ export default function ConfirmationDialog({
       }}
     >
       <div
-        className={`rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm ${maxWidth} w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform`}
+        className={`rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm ${maxWidth} w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform`}
         style={{
-          backgroundColor: '#FFF2D6',
           animation: isOpen ? 'slideUp 0.3s ease-out' : 'none',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -130,8 +129,7 @@ export default function ConfirmationDialog({
         {/* Content */}
         <div className="overflow-y-auto p-6">
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <div className="flex flex-col items-center gap-4 mb-2">
               {defaultIcon}

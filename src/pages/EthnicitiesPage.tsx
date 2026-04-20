@@ -13,8 +13,7 @@ export default function EthnicitiesPage() {
 
         {/* Introduction */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Bức tranh đa sắc của các dân tộc
@@ -31,8 +30,7 @@ export default function EthnicitiesPage() {
 
         {/* Northern Region */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Dân tộc trung du và miền núi Bắc Bộ
@@ -101,8 +99,7 @@ export default function EthnicitiesPage() {
 
         {/* Central Highlands */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Dân tộc cao nguyên Trung Bộ
@@ -160,8 +157,7 @@ export default function EthnicitiesPage() {
 
         {/* Southern and Coastal */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Dân tộc Nam Trung Bộ, Đông Nam Bộ và Tây Nam Bộ
@@ -201,8 +197,7 @@ export default function EthnicitiesPage() {
 
         {/* Musical Characteristics */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Đặc điểm âm nhạc chung</h2>
           <div className="space-y-4 text-neutral-700">
@@ -265,8 +260,7 @@ export default function EthnicitiesPage() {
 
         {/* Additional Groups */}
         <div
-          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Các dân tộc đáng chú ý khác

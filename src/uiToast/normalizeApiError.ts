@@ -1,6 +1,6 @@
-import axios, { type AxiosError } from 'axios';
-
 import { NORMALIZED_API_ERROR_KEY, type NormalizedApiError } from './types';
+
+import { getHttpStatus } from '@/utils/httpError';
 
 function pickRawMessage(data: unknown): string | null {
   if (data == null) return null;
@@ -14,16 +14,41 @@ function pickRawMessage(data: unknown): string | null {
   return null;
 }
 
-export function normalizeAxiosError(error: AxiosError): NormalizedApiError {
-  const status = error.response?.status;
-  const rawMessage = pickRawMessage(error.response?.data);
+function hasHttpLikeResponse(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const r = (error as { response?: unknown }).response;
+  if (r == null || typeof r !== 'object') return false;
+  const resp = r as { status?: unknown; data?: unknown };
+  return typeof resp.status === 'number' || resp.data !== undefined;
+}
+
+function isAbortLikeError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const c = (error as { code?: string }).code;
+  return c === 'ECONNABORTED';
+}
+
+function isNetworkLikeError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const m = error.message.toLowerCase();
+  if (m.includes('network') || m.includes('failed to fetch')) return true;
+  const c = (error as { code?: string }).code;
+  return c === 'ECONNABORTED' || c === 'ERR_NETWORK';
+}
+
+export function normalizeApiError(error: unknown): NormalizedApiError {
+  const status = getHttpStatus(error);
+  const e = typeof error === 'object' && error !== null ? error : null;
+  const responseData = e && 'response' in e ? (e as { response?: { data?: unknown } }).response?.data : undefined;
+  const rawMessage = pickRawMessage(responseData);
 
   let code: string;
   if (status != null) {
     code = `HTTP_${status}`;
-  } else if (error.code === 'ECONNABORTED') {
+  } else if (isAbortLikeError(error)) {
     code = 'TIMEOUT';
-  } else if (error.message?.toLowerCase().includes('network') || error.code === 'ERR_NETWORK') {
+  } else if (isNetworkLikeError(error)) {
     code = 'NETWORK';
   } else {
     code = 'UNKNOWN';
@@ -36,9 +61,13 @@ export function normalizeAxiosError(error: AxiosError): NormalizedApiError {
   };
 }
 
-/** Call from Axios response error interceptor only — never show toast here. */
-export function attachNormalizedApiError(error: AxiosError): void {
-  const normalized = normalizeAxiosError(error);
+export function normalizeAxiosError(error: unknown): NormalizedApiError {
+  return normalizeApiError(error);
+}
+
+export function attachNormalizedApiError(error: unknown): void {
+  if (typeof error !== 'object' || error === null) return;
+  const normalized = normalizeApiError(error);
   Object.defineProperty(error, NORMALIZED_API_ERROR_KEY, {
     value: normalized,
     enumerable: false,
@@ -47,7 +76,10 @@ export function attachNormalizedApiError(error: AxiosError): void {
 }
 
 export function getNormalizedApiError(error: unknown): NormalizedApiError | null {
-  if (!axios.isAxiosError(error)) return null;
-  const v = (error as AxiosError & Record<string, unknown>)[NORMALIZED_API_ERROR_KEY];
-  return v && typeof v === 'object' ? (v as NormalizedApiError) : null;
+  if (typeof error !== 'object' || error === null) return null;
+  const rec = error as Record<string, unknown>;
+  const attached = rec[NORMALIZED_API_ERROR_KEY];
+  if (attached && typeof attached === 'object') return attached as NormalizedApiError;
+  if (!hasHttpLikeResponse(error)) return null;
+  return normalizeApiError(error);
 }

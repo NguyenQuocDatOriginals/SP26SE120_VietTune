@@ -101,7 +101,7 @@ export default function SemanticSearchPage() {
       if (cancelled) return;
       setAllRecordings(apiItems);
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
@@ -143,8 +143,7 @@ export default function SemanticSearchPage() {
 
         {/* Main search card — same style as UploadPage main form card */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -158,8 +157,7 @@ export default function SemanticSearchPage() {
           </p>
 
           <div
-            className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-xl focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-xl focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4 bg-surface-panel"
           >
             <Search
               className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500"
@@ -198,8 +196,7 @@ export default function SemanticSearchPage() {
 
         {/* Suggested queries — same card style as UploadPage guidelines block */}
         <div
-          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8 bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -216,14 +213,7 @@ export default function SemanticSearchPage() {
                   setQuery(s);
                   runSearchWithQuery(s);
                 }}
-                className="px-4 py-2 rounded-xl border border-neutral-400/80 text-neutral-900 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:border-primary-500"
-                style={{ backgroundColor: '#FFFCF5' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFF7E6';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFCF5';
-                }}
+                className="px-4 py-2 rounded-xl border border-neutral-400/80 text-neutral-900 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:border-primary-500 bg-surface-panel hover:bg-cream-50"
               >
                 {s}
               </button>
@@ -233,8 +223,7 @@ export default function SemanticSearchPage() {
 
         {/* Results — same card style */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">

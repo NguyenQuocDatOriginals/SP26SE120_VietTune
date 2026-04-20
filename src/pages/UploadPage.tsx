@@ -1,20 +1,20 @@
 import { BookOpen, LogIn, FileText, Upload, CheckCircle, Lightbulb, X, Music } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
 import UploadMusic from '@/components/features/UploadMusic';
 import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { UserRole } from '@/types';
 import { cn } from '@/utils/helpers';
-import { buildLoginRedirectPath } from '@/utils/routeAccess';
 
 const guideButtonClass =
   'inline-flex items-center justify-center gap-2 h-11 px-6 py-0 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50';
 
 export default function UploadPage() {
-  const { user } = useAuthStore();
-  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const openLoginModal = useLoginModalStore((s) => s.openLoginModal);
   const [showGuidePopup, setShowGuidePopup] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -28,7 +28,7 @@ export default function UploadPage() {
   const isNotContributor = !user || user.role !== UserRole.CONTRIBUTOR;
 
   return (
-    <div className="min-h-screen min-w-0 bg-gradient-to-b from-cream-50 via-[#F9F5EF] to-secondary-50/35">
+    <div className="min-h-screen min-w-0 bg-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header — same rhythm as ExplorePage */}
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 lg:mb-8">
@@ -53,7 +53,7 @@ export default function UploadPage() {
         {isNotContributor && (
           <div
             className={cn(
-              'mb-6 lg:mb-8 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/90 to-secondary-50/50 p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl ring-1 ring-primary-100/40',
+              'mb-6 lg:mb-8 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/90 to-secondary-50/50 p-4 sm:p-6 lg:p-8 shadow-lg backdrop-blur-sm text-center transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl ring-1 ring-primary-100/40',
             )}
           >
             <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 text-primary-800">
@@ -63,10 +63,10 @@ export default function UploadPage() {
               Vui lòng đăng nhập bằng tài khoản Người đóng góp để sử dụng chức năng này.
             </div>
             <button
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFCF5] mx-auto"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-panel mx-auto"
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'auto' });
-                navigate(buildLoginRedirectPath('/upload'));
+                openLoginModal({ redirect: '/upload' });
               }}
               type="button"
             >
@@ -80,7 +80,7 @@ export default function UploadPage() {
         <div className="lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-8 xl:gap-10 lg:items-start">
           <aside
             className={cn(
-              'mb-6 flex flex-col rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-[#FFFCF5] to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:mb-0',
+              'mb-6 flex flex-col rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:mb-0',
               /* Cùng hệ với MainLayout pt-32 / lg:pt-40 — tránh sidebar dính dưới header cố định */
               'lg:sticky lg:top-32 lg:self-start lg:max-h-[min(100vh-10rem,56rem)] lg:overflow-y-auto xl:top-40 xl:max-h-[min(100vh-12rem,56rem)]',
             )}
@@ -107,7 +107,7 @@ export default function UploadPage() {
           <main className="min-w-0">
             <div
               className={cn(
-                'rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl min-w-0 overflow-x-hidden',
+                'rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl min-w-0 overflow-x-hidden',
                 isNotContributor ? 'opacity-50 pointer-events-none select-none' : '',
               )}
             >
@@ -137,11 +137,11 @@ export default function UploadPage() {
           onClick={() => setShowGuidePopup(false)}
         >
           <div
-            className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/90 to-secondary-50/50 shadow-2xl backdrop-blur-sm max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform hover:border-secondary-300/50"
+            className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/90 to-secondary-50/50 shadow-2xl backdrop-blur-sm max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform hover:border-secondary-300/50"
             style={{ animation: 'slideUp 0.3s ease-out' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-secondary-200/50 flex-shrink-0 bg-gradient-to-r from-[#FFFCF5]/80 to-secondary-50/30">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-secondary-200/50 flex-shrink-0 bg-gradient-to-r from-surface-panel/80 to-secondary-50/30">
               <h2
                 id="guide-popup-title"
                 className="text-xl sm:text-2xl font-semibold text-neutral-900 flex items-center gap-3"

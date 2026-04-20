@@ -19,7 +19,7 @@ export default function UploadWizardStepper({
   if (!showWizard) return null;
 
   return (
-    <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6">
+    <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6">
       <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100/95 to-secondary-100/90 shadow-sm ring-1 ring-secondary-200/50 sm:h-10 sm:w-10">
           <Upload
@@ -43,7 +43,7 @@ export default function UploadWizardStepper({
               className={cn(
                 'h-2.5 w-2.5 shrink-0 rounded-full transition-colors',
                 uploadWizardStep === step
-                  ? 'bg-primary-600 ring-2 ring-secondary-300/70 ring-offset-2 ring-offset-[#FFFCF5]'
+                  ? 'bg-primary-600 ring-2 ring-secondary-300/70 ring-offset-2 ring-offset-surface-panel'
                   : uploadWizardStep > step
                     ? 'bg-primary-500'
                     : 'bg-neutral-400/90',
@@ -100,7 +100,7 @@ export default function UploadWizardStepper({
                       : `Bước ${step}: ${label}, chưa thể chuyển tới`
                 }
                 className={cn(
-                  'flex min-h-[44px] min-w-0 max-w-[10.5rem] flex-1 flex-col items-center justify-center gap-1.5 px-1 pt-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFFCF5] sm:max-w-none',
+                  'flex min-h-[44px] min-w-0 max-w-[10.5rem] flex-1 flex-col items-center justify-center gap-1.5 px-1 pt-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-panel sm:max-w-none',
                   isNavigable ? 'cursor-pointer' : 'cursor-not-allowed',
                 )}
               >
@@ -108,7 +108,7 @@ export default function UploadWizardStepper({
                   className={cn(
                     'flex h-11 w-11 items-center justify-center rounded-full border-2 text-white shadow-sm transition-all',
                     isActive
-                      ? 'border-primary-600 bg-gradient-to-br from-primary-600 to-primary-700 ring-2 ring-secondary-300/70 ring-offset-2 ring-offset-[#FFFCF5]'
+                      ? 'border-primary-600 bg-gradient-to-br from-primary-600 to-primary-700 ring-2 ring-secondary-300/70 ring-offset-2 ring-offset-surface-panel'
                       : isDone
                         ? 'border-primary-500 bg-primary-100 text-primary-700'
                         : isNavigable

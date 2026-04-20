@@ -1,14 +1,13 @@
-
 import { Edit, Trash2, Check, X } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import AudioPlayer from '@/components/features/AudioPlayer';
 import VideoPlayer from '@/components/features/VideoPlayer';
+import { useApprovedRecordings } from '@/hooks/useApprovedRecordings';
 import ForbiddenPage from '@/pages/ForbiddenPage';
-import { fetchApprovedSubmissionsForExpert } from '@/services/expertModerationApi';
 import { recordingRequestService } from '@/services/recordingRequestService';
 import { removeLocalRecording } from '@/services/recordingStorage';
 import { useAuthStore } from '@/stores/authStore';
@@ -25,8 +24,8 @@ import {
 import type { DeleteRecordingRequest, EditSubmissionForReview } from '@/types';
 import type { LocalRecording } from '@/types';
 import {
-  migrateVideoDataToVideoData,
   formatDateTime,
+  getModerationStatusBadgeClassNames,
   getModerationStatusLabel,
 } from '@/utils/helpers';
 import { buildTagsFromLocal } from '@/utils/recordingTags';
@@ -42,24 +41,10 @@ type RecordingWithLocalData = Recording & {
 };
 
 export default function ApprovedRecordingsPage() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-  const [items, setItems] = useState<LocalRecording[]>([]);
-
-  const load = useCallback(async () => {
-    try {
-      const list = await fetchApprovedSubmissionsForExpert();
-      const migrated = migrateVideoDataToVideoData(list as LocalRecording[]);
-      setItems(migrated.filter((r): r is LocalRecording => r != null));
-    } catch (err) {
-      console.error(err);
-      setItems([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { items, load, forwardedDeletes, editSubmissions, refreshRequestQueues } =
+    useApprovedRecordings(user?.id);
 
   const [deleteTarget, setDeleteTarget] = useState<
     | { type: 'direct'; id: string; title: string }
@@ -67,25 +52,7 @@ export default function ApprovedRecordingsPage() {
     | null
   >(null);
   const [rejectTarget, setRejectTarget] = useState<DeleteRecordingRequest | null>(null);
-  const [forwardedDeletes, setForwardedDeletes] = useState<DeleteRecordingRequest[]>([]);
-  const [editSubmissions, setEditSubmissions] = useState<EditSubmissionForReview[]>([]);
   const [approveEditTarget, setApproveEditTarget] = useState<EditSubmissionForReview | null>(null);
-
-  // Single combined polling interval — replaces 3 separate intervals (3s, 4s, 4s) → 1 interval at 30s
-  useEffect(() => {
-    if (!user?.id) return;
-    const fetchAll = () => {
-      void load();
-      recordingRequestService
-        .getForwardedDeleteRequestsForExpert(user.id)
-        .then(setForwardedDeletes);
-      recordingRequestService.getPendingEditSubmissionsForExpert().then(setEditSubmissions);
-    };
-    // Initial load
-    fetchAll();
-    const t = setInterval(fetchAll, 30_000);
-    return () => clearInterval(t);
-  }, [load, user?.id]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -95,6 +62,13 @@ export default function ApprovedRecordingsPage() {
           deleteTarget.req.id,
           removeLocalRecording,
         );
+        await recordingRequestService.addNotification({
+          type: 'recording_deleted',
+          title: 'Bản thu đã bị xóa',
+          body: `"${deleteTarget.req.recordingTitle}" đã bị xóa theo yêu cầu.`,
+          forRoles: [UserRole.CONTRIBUTOR],
+          recordingId: deleteTarget.req.recordingId,
+        });
       } else {
         await removeLocalRecording(deleteTarget.id);
         await recordingRequestService.addNotification({
@@ -107,9 +81,7 @@ export default function ApprovedRecordingsPage() {
       }
       setDeleteTarget(null);
       void load();
-      setForwardedDeletes(
-        await recordingRequestService.getForwardedDeleteRequestsForExpert(user?.id ?? ''),
-      );
+      await refreshRequestQueues();
     } catch (err) {
       console.error(err);
     }
@@ -127,9 +99,7 @@ export default function ApprovedRecordingsPage() {
         recordingId: rejectTarget.recordingId,
       });
       setRejectTarget(null);
-      setForwardedDeletes(
-        await recordingRequestService.getForwardedDeleteRequestsForExpert(user.id),
-      );
+      await refreshRequestQueues();
     } catch (err) {
       console.error(err);
     }
@@ -139,8 +109,15 @@ export default function ApprovedRecordingsPage() {
     if (!approveEditTarget) return;
     try {
       await recordingRequestService.approveEditSubmission(approveEditTarget.id);
+      await recordingRequestService.addNotification({
+        type: 'edit_submission_approved',
+        title: 'Yêu cầu chỉnh sửa được duyệt',
+        body: `Bạn đã được phép chỉnh sửa "${approveEditTarget.recordingTitle}".`,
+        forRoles: [UserRole.CONTRIBUTOR],
+        recordingId: approveEditTarget.recordingId,
+      });
       setApproveEditTarget(null);
-      setEditSubmissions(await recordingRequestService.getPendingEditSubmissionsForExpert());
+      await refreshRequestQueues();
       void load();
     } catch (err) {
       console.error(err);
@@ -216,8 +193,7 @@ export default function ApprovedRecordingsPage() {
     return (
       <div
         key={it.id}
-        className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-        style={{ backgroundColor: '#FFFCF5' }}
+        className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
       >
         <div className="mb-4 flex items-start justify-between">
           <div className="flex-1">
@@ -252,7 +228,9 @@ export default function ApprovedRecordingsPage() {
             )}
             <div className="text-sm mt-2">
               Trạng thái:{' '}
-              <span className="font-medium">{getModerationStatusLabel(it.moderation?.status)}</span>
+              <span className={getModerationStatusBadgeClassNames(it.moderation?.status)}>
+                {getModerationStatusLabel(it.moderation?.status)}
+              </span>
             </div>
           </div>
 
@@ -495,8 +473,7 @@ export default function ApprovedRecordingsPage() {
 
         {editSubmissions.length > 0 && (
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 bg-surface-panel"
           >
             <h2 className="text-xl font-semibold text-neutral-900 mb-4">
               Chỉnh sửa bản thu chờ duyệt
@@ -509,8 +486,7 @@ export default function ApprovedRecordingsPage() {
               {editSubmissions.map((sub) => (
                 <div
                   key={sub.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4"
-                  style={{ backgroundColor: '#FFFCF5' }}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4 bg-surface-panel"
                 >
                   <div>
                     <p className="font-medium text-neutral-900">{sub.recordingTitle}</p>
@@ -545,8 +521,7 @@ export default function ApprovedRecordingsPage() {
 
         {forwardedDeletes.length > 0 && (
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 bg-surface-panel"
           >
             <h2 className="text-xl font-semibold text-neutral-900 mb-4">
               Yêu cầu xóa bản thu đã chuyển đến bạn
@@ -559,8 +534,7 @@ export default function ApprovedRecordingsPage() {
               {forwardedDeletes.map((req) => (
                 <div
                   key={req.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4"
-                  style={{ backgroundColor: '#FFFCF5' }}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-neutral-200/80 p-4 bg-surface-panel"
                 >
                   <div>
                     <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
@@ -595,16 +569,14 @@ export default function ApprovedRecordingsPage() {
 
         {items.length === 0 && forwardedDeletes.length === 0 && editSubmissions.length === 0 ? (
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-xl font-semibold mb-2 text-neutral-900">Không có bản thu</h2>
             <p className="text-neutral-700 font-medium">Không có bản thu nào đã được kiểm duyệt.</p>
           </div>
         ) : (
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <div className="space-y-8">
               {/* Bản thu do tôi kiểm duyệt */}

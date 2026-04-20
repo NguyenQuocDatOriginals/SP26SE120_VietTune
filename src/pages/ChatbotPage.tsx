@@ -1,16 +1,14 @@
 import { Send, History } from 'lucide-react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import BackButton from '@/components/common/BackButton';
 import ChatMessageItem from '@/components/features/chatbot/ChatMessageItem';
 import ChatSidebar from '@/components/features/chatbot/ChatSidebar';
 import { INTELLIGENCE_NAME } from '@/config/constants';
+import { CHAT_INPUT_COUNTER_FROM, CHAT_INPUT_MAX_LENGTH } from '@/config/validationConstants';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  createQAConversation,
-  fetchUserConversations,
-  QAConversationRequest,
-} from '@/services/qaConversationService';
+import { useChatbotSession } from '@/hooks/useChatbotSession';
+import { createQAConversation, type QAConversationRequest } from '@/services/qaConversationService';
 import {
   createQAMessage,
   fetchConversationMessages,
@@ -30,10 +28,9 @@ const FALLBACK_REPLY =
 
 export default function ChatbotPage() {
   const { user } = useAuth();
+  const { history, isLoadingHistory, loadHistory } = useChatbotSession(user?.id);
   const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
   const [isFirstMessage, setIsFirstMessage] = useState<boolean>(true);
-  const [history, setHistory] = useState<QAConversationRequest[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [chatTitle, setChatTitle] = useState('Cuộc trò chuyện mới');
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
@@ -64,22 +61,6 @@ export default function ChatbotPage() {
       console.error('Lỗi khi cắm cờ:', error);
     }
   };
-
-  const loadHistory = useCallback(async () => {
-    if (!user?.id) return;
-    setIsLoadingHistory(true);
-    const data = await fetchUserConversations(user.id);
-    setHistory(
-      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    );
-    setIsLoadingHistory(false);
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (user?.id) {
-      void loadHistory();
-    }
-  }, [loadHistory, user?.id]);
 
   const handleSelectConversation = async (conv: QAConversationRequest) => {
     setConversationId(conv.id);
@@ -262,10 +243,7 @@ export default function ChatbotPage() {
 
             <div
               ref={listRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{
-                background: 'linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)',
-              }}
+              className="flex-1 overflow-y-auto bg-gradient-to-br from-surface-panel to-[#FFF1F3] p-4 space-y-4"
             >
               {isLoadingMessages ? (
                 <div className="flex justify-center h-full items-center text-neutral-500 font-medium">
@@ -306,6 +284,7 @@ export default function ChatbotPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  maxLength={CHAT_INPUT_MAX_LENGTH}
                   placeholder="Hỏi về nhạc cụ, phong cách biểu diễn, lịch sử,..."
                   className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border-2 border-primary-200/80 focus:border-primary-500 outline-none text-neutral-900 placeholder-neutral-500"
                   aria-label="Tin nhắn"
@@ -320,6 +299,15 @@ export default function ChatbotPage() {
                   <Send className="w-5 h-5" strokeWidth={2.5} />
                 </button>
               </div>
+              {input.length >= CHAT_INPUT_COUNTER_FROM ? (
+                <p
+                  className={`mt-1.5 text-right text-xs tabular-nums ${
+                    input.length >= CHAT_INPUT_MAX_LENGTH ? 'font-semibold text-amber-800' : 'text-neutral-600'
+                  }`}
+                >
+                  {input.length} / {CHAT_INPUT_MAX_LENGTH}
+                </p>
+              ) : null}
             </div>
           </div>
 

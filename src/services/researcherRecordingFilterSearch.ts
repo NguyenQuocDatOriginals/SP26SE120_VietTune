@@ -1,4 +1,5 @@
-import { api } from '@/services/api';
+import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
+import type { ApiRecordingSearchByFilterQuery } from '@/api';
 import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
 import type { SubmissionLookupMaps } from '@/services/submissionApiMapper';
@@ -6,17 +7,21 @@ import type { LocalRecording, Recording } from '@/types';
 import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 
 /** Query for GET /Recording/search-by-filter (see BE Swagger). */
-export type RecordingSearchByFilterQuery = {
+export type RecordingSearchByFilterQuery = ApiRecordingSearchByFilterQuery & {
   q?: string;
-  ethnicGroupId?: string;
-  instrumentId?: string;
-  ceremonyId?: string;
-  /** Macro region: FE sends `Region` enum key (e.g. RED_RIVER_DELTA); align with BE if codes differ. */
-  regionCode?: string;
-  communeId?: string;
-  page?: number;
-  pageSize?: number;
 };
+
+type RecordingFilterSearchApiResponse =
+  | Record<string, unknown>[]
+  | {
+      data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      Data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      items?: Record<string, unknown>[];
+      Items?: Record<string, unknown>[];
+      records?: Record<string, unknown>[];
+      result?: Record<string, unknown>[] | { items?: Record<string, unknown>[] };
+      value?: Record<string, unknown>[];
+    };
 
 function normalizeJsonKey(k: string): string {
   if (!k) return k;
@@ -103,20 +108,26 @@ function filterRowToLocal(
 export async function fetchRecordingsSearchByFilter(
   query: RecordingSearchByFilterQuery,
 ): Promise<Recording[]> {
-  const params: Record<string, string | number> = {
+  const apiQuery: ApiRecordingSearchByFilterQuery & { q?: string } = {
     page: query.page ?? 1,
     pageSize: query.pageSize ?? 500,
+    ...(query.q?.trim() ? { q: query.q.trim() } : {}),
+    ...(query.ethnicGroupId ? { ethnicGroupId: query.ethnicGroupId } : {}),
+    ...(query.instrumentId ? { instrumentId: query.instrumentId } : {}),
+    ...(query.ceremonyId ? { ceremonyId: query.ceremonyId } : {}),
+    ...(query.regionCode ? { regionCode: query.regionCode } : {}),
+    ...(query.communeId ? { communeId: query.communeId } : {}),
   };
-  if (query.q?.trim()) params.q = query.q.trim();
-  if (query.ethnicGroupId) params.ethnicGroupId = query.ethnicGroupId;
-  if (query.instrumentId) params.instrumentId = query.instrumentId;
-  if (query.ceremonyId) params.ceremonyId = query.ceremonyId;
-  if (query.regionCode) params.regionCode = query.regionCode;
-  if (query.communeId) params.communeId = query.communeId;
 
   const [lookups, res] = await Promise.all([
     buildSubmissionLookupMaps(),
-    api.get<unknown>('/Recording/search-by-filter', { params }),
+    apiOk(
+      asApiEnvelope<RecordingFilterSearchApiResponse>(
+        apiFetch.GET('/api/Recording/search-by-filter', {
+          params: { query: openApiQueryRecord(apiQuery) },
+        }),
+      ),
+    ),
   ]);
   const rows = extractRecordingFilterSearchRows(res);
   const locals = rows.map((row, index) => {

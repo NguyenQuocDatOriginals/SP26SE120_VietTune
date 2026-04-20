@@ -113,7 +113,7 @@ function AccordionSection({
     <details className="group border-b border-secondary-200/70 last:border-b-0" open={defaultOpen}>
       <summary
         className={cn(
-          'flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-secondary-50/95 to-[#FFFCF5] py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:from-secondary-100/90 hover:to-secondary-50/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2',
+          'flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg bg-gradient-to-r from-secondary-50/95 to-surface-panel py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:from-secondary-100/90 hover:to-secondary-50/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-500 focus-visible:ring-offset-2',
           '[&::-webkit-details-marker]:hidden',
         )}
       >
@@ -252,7 +252,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
         </AccordionSection>
       </div>
 
-      <div className="relative z-10 mt-3 shrink-0 border-t border-secondary-200/70 bg-gradient-to-t from-secondary-50/50 to-[#FFFCF5] pt-3">
+      <div className="relative z-10 mt-3 shrink-0 border-t border-secondary-200/70 bg-gradient-to-t from-secondary-50/50 to-surface-panel pt-3">
         <button
           type="button"
           onClick={onApply}

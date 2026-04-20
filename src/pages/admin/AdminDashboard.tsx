@@ -1,402 +1,76 @@
-import {
-  Users,
-  BarChart3,
-  Shield,
-  ChevronRight,
-  ChevronDown,
-  User as UserIcon,
-  Music,
-  MapPin,
-  FileWarning,
-  UserMinus,
-  Trash2,
-  FileEdit,
-  BookOpen,
-  Bot,
-  Flag,
-  Database,
-  RefreshCcw,
-  Gauge,
-} from 'lucide-react';
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
+import { Users, BarChart3, Shield, ChevronRight, ChevronDown, BookOpen, Bot } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
+import AdminDashboardAiMonitoringPanel from '@/components/admin/AdminDashboardAiMonitoringPanel';
+import AdminDashboardAnalyticsPanel from '@/components/admin/AdminDashboardAnalyticsPanel';
+import AdminDashboardModerationPanel from '@/components/admin/AdminDashboardModerationPanel';
+import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import BackButton from '@/components/common/BackButton';
 import Card from '@/components/common/Card';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
-import { USER_ROLE_NAMES } from '@/config/constants';
+import {
+  getRoleNameVi,
+  LegacyAdminPanelId,
+  ROLE_NAMES_VI,
+  StepId,
+} from '@/features/admin/adminDashboardTypes';
+import { useAdminDashboardData } from '@/features/admin/hooks/useAdminDashboardData';
 import { accountDeletionService } from '@/services/accountDeletionService';
 import { adminApi } from '@/services/adminApi';
-import { analyticsApi } from '@/services/analyticsApi';
-import { api } from '@/services/api';
-import { knowledgeBaseApi } from '@/services/knowledgeBaseApi';
 import { recordingRequestService } from '@/services/recordingRequestService';
 import { removeLocalRecording } from '@/services/recordingStorage';
 import { getItem, setItem } from '@/services/storageService';
-import {
-  extractSubmissionRows,
-  mapSubmissionToLocalRecording,
-} from '@/services/submissionApiMapper';
 import { useAuthStore } from '@/stores/authStore';
-import { ModerationStatus } from '@/types';
 import { UserRole } from '@/types';
-import type { LocalRecording } from '@/types';
-import type {
-  ExpertAccountDeletionRequest,
-  DeleteRecordingRequest,
-  EditRecordingRequest,
-} from '@/types';
+import type { ExpertAccountDeletionRequest } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
-import { migrateVideoDataToVideoData } from '@/utils/helpers';
-
-type StepId = 'users' | 'analytics' | 'aiMonitoring' | 'moderation';
-
-type LegacyAdminPanelId = 'expertDeletion' | 'recordRequests';
-
-function asObject(input: unknown): Record<string, unknown> | null {
-  return input && typeof input === 'object' && !Array.isArray(input)
-    ? (input as Record<string, unknown>)
-    : null;
-}
-
-interface AggregatedUser {
-  id: string;
-  username: string;
-  email: string | undefined;
-  fullName: string | undefined;
-  role: string;
-  contributionCount: number;
-  approvedCount: number;
-  rejectedCount: number;
-}
-
-const ROLE_OPTIONS: { value: string; label: string }[] = [
-  { value: UserRole.CONTRIBUTOR, label: 'Người đóng góp' },
-  { value: UserRole.EXPERT, label: 'Chuyên gia' },
-  { value: UserRole.RESEARCHER, label: 'Nhà nghiên cứu' },
-];
-
-const ROLE_NAMES_VI: Record<string, string> = {
-  [UserRole.ADMIN]: 'Quản trị viên',
-  ADMIN: 'Quản trị viên',
-  MODERATOR: 'Điều hành viên',
-  [UserRole.RESEARCHER]: 'Nhà nghiên cứu',
-  [UserRole.CONTRIBUTOR]: 'Người đóng góp',
-  [UserRole.EXPERT]: 'Chuyên gia',
-  [UserRole.USER]: 'Người dùng',
-};
-
-function getRoleNameVi(role: string): string {
-  const normalized = role.trim();
-  const lowerRoleAlias: Record<string, string> = {
-    admin: 'Quản trị viên',
-    administrator: 'Quản trị viên',
-    researcher: 'Nhà nghiên cứu',
-    contributor: 'Người đóng góp',
-    expert: 'Chuyên gia',
-  };
-
-  return (
-    ROLE_NAMES_VI[normalized] ??
-    ROLE_NAMES_VI[normalized.toUpperCase()] ??
-    lowerRoleAlias[normalized.toLowerCase()] ??
-    normalized
-  );
-}
-
-const DELETE_ACTION = '__DELETE__' as const;
-
-function isClickOnScrollbar(event: MouseEvent): boolean {
-  const w = window.innerWidth - document.documentElement.clientWidth;
-  return w > 0 && event.clientX >= document.documentElement.clientWidth;
-}
-
-function RoleSelectDropdown({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: string;
-  onChange: (role: string) => void;
-  disabled?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isClickOnScrollbar(event)) return;
-      const target = event.target as Node;
-      const outDropdown = dropdownRef.current && !dropdownRef.current.contains(target);
-      const outMenu = menuRef.current && !menuRef.current.contains(target);
-      if (outDropdown && (menuRef.current ? outMenu : true)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const updateRect = () => {
-      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
-    };
-    if (isOpen) updateRect();
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, true);
-    return () => {
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect, true);
-    };
-  }, [isOpen]);
-
-  const label =
-    ROLE_OPTIONS.find((o) => o.value === value)?.label ??
-    getRoleNameVi((USER_ROLE_NAMES as Record<string, string>)[value] ?? value);
-
-  return (
-    <div ref={dropdownRef} className="relative min-w-[140px]">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full h-11 px-6 py-0 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 transition-all duration-300 text-left inline-flex items-center justify-between gap-2 shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 whitespace-nowrap ${disabled ? 'opacity-50 cursor-not-allowed hover:scale-100' : 'cursor-pointer'}`}
-        style={{ backgroundColor: '#FFFCF5' }}
-      >
-        <span
-          className={`min-w-0 truncate whitespace-nowrap ${value ? 'text-neutral-900 font-medium' : 'text-neutral-400'}`}
-        >
-          {label}
-        </span>
-        <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          strokeWidth={2.5}
-        />
-      </button>
-      {isOpen &&
-        menuRect &&
-        createPortal(
-          <div
-            ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
-            style={{
-              backgroundColor: '#FFFCF5',
-              position: 'absolute',
-              left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
-              top: menuRect.bottom + (window.scrollY ?? 0) + 8,
-              width: Math.max(menuRect.width, 180),
-              zIndex: 40,
-            }}
-          >
-            <div
-              className="max-h-60 overflow-y-auto"
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#9B2C2C rgba(255, 255, 255, 0.3)',
-              }}
-            >
-              {ROLE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${
-                    value === opt.value
-                      ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium'
-                      : 'text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(DELETE_ACTION);
-                  setIsOpen(false);
-                }}
-                className="w-full px-5 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 cursor-pointer"
-              >
-                Xóa khỏi hệ thống
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
-    </div>
-  );
-}
-
-/** Dropdown UI/UX aligned with UploadMusic.tsx: pill trigger, rounded-2xl panel, primary gradient selected, hover primary-100. */
-function ExpertSelectDropdown({
-  options,
-  value,
-  onChange,
-  placeholder = ' -- Chọn Chuyên gia -- ',
-  disabled,
-}: {
-  options: { id: string; label: string }[];
-  value: string;
-  onChange: (id: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isClickOnScrollbar(event)) return;
-      const target = event.target as Node;
-      const outDropdown = dropdownRef.current && !dropdownRef.current.contains(target);
-      const outMenu = menuRef.current && !menuRef.current.contains(target);
-      if (outDropdown && (menuRef.current ? outMenu : true)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const updateRect = () => {
-      if (buttonRef.current) setMenuRect(buttonRef.current.getBoundingClientRect());
-    };
-    if (isOpen) updateRect();
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, true);
-    return () => {
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect, true);
-    };
-  }, [isOpen]);
-
-  const selectedLabel = value
-    ? (options.find((o) => o.id === value)?.label ?? placeholder)
-    : placeholder;
-
-  return (
-    <div ref={dropdownRef} className="relative min-w-[180px]">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400/80 rounded-full focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        style={{ backgroundColor: '#FFFCF5' }}
-      >
-        <span className={value ? 'text-neutral-900 font-medium' : 'text-neutral-400'}>
-          {selectedLabel}
-        </span>
-        <ChevronDown
-          className={`h-5 w-5 text-neutral-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          strokeWidth={2.5}
-        />
-      </button>
-      {isOpen &&
-        menuRect &&
-        createPortal(
-          <div
-            ref={(el) => (menuRef.current = el)}
-            className="rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300"
-            style={{
-              backgroundColor: '#FFFCF5',
-              position: 'absolute',
-              left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
-              top: menuRect.bottom + (window.scrollY ?? 0) + 8,
-              width: Math.max(menuRect.width, 200),
-              zIndex: 40,
-            }}
-          >
-            <div
-              className="max-h-60 overflow-y-auto"
-              style={{ scrollbarWidth: 'thin', scrollbarColor: '#9B2C2C rgba(255, 255, 255, 0.3)' }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  onChange('');
-                  setIsOpen(false);
-                }}
-                className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${!value ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium' : 'text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700'}`}
-              >
-                {placeholder}
-              </button>
-              {options.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.id);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${value === opt.id ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium' : 'text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700'}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>,
-          document.body,
-        )}
-    </div>
-  );
-}
 
 export default function AdminDashboard() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [step, setStep] = useState<StepId>('users');
   const [showAdminGuide, setShowAdminGuide] = useState(false);
   const [legacyPanel, setLegacyPanel] = useState<LegacyAdminPanelId | null>(null);
-  const [recordings, setRecordings] = useState<LocalRecording[]>([]);
-  const [remoteUsers, setRemoteUsers] = useState<AggregatedUser[] | null>(null);
-  const [remoteKbCount, setRemoteKbCount] = useState<number | null>(null);
-  const [remoteMonthlyCounts, setRemoteMonthlyCounts] = useState<Record<string, number> | null>(
-    null,
-  );
-  const [remoteTotalRecordings, setRemoteTotalRecordings] = useState<number | null>(null);
-  const [remoteInstrumentCount, setRemoteInstrumentCount] = useState<number | null>(null);
-  const [remoteInstruments, setRemoteInstruments] = useState<
-    { id: string; name: string; category: string | undefined }[] | null
-  >(null);
-  const [remoteUsersLoadState, setRemoteUsersLoadState] = useState<
-    'idle' | 'loading' | 'ok' | 'error'
-  >('idle');
-  const [showUsersLoadingHint, setShowUsersLoadingHint] = useState(false);
-  const [remoteEthnicGroups, setRemoteEthnicGroups] = useState<
-    { id: string; name: string }[] | null
-  >(null);
-  const [remoteEthnicGroupsLoadState, setRemoteEthnicGroupsLoadState] = useState<
-    'idle' | 'loading' | 'ok' | 'error'
-  >('idle');
-  const [usersOverrides, setUsersOverrides] = useState<
-    Record<string, { role?: string; username?: string; fullName?: string }>
-  >({});
+  const {
+    load,
+    recordings,
+    remoteKbCount,
+    aiFlaggedCount,
+    setAiFlaggedCount,
+    expertPerformanceRows,
+    avgExpertAccuracy,
+    remoteTotalRecordings,
+    remoteInstrumentCount,
+    remoteInstruments,
+    remoteUsersLoadState,
+    showUsersLoadingHint,
+    setShowUsersLoadingHint,
+    remoteEthnicGroupsLoadState,
+    setUsersOverrides,
+    usersOverrides,
+    pendingExpertDeletions,
+    setPendingExpertDeletions,
+    deleteRecordingRequests,
+    setDeleteRecordingRequests,
+    editRecordingRequests,
+    setEditRecordingRequests,
+    deletedUserIds,
+    setDeletedUserIds,
+    usersForTable,
+    allUsers,
+    monthlyCountsFinal,
+    ethnicGroupsFromApi,
+  } = useAdminDashboardData();
+
   const [removeTarget, setRemoveTarget] = useState<{ id: string; title?: string } | null>(null);
   const [deleteUserTarget, setDeleteUserTarget] = useState<{ id: string; username: string } | null>(
     null,
   );
   const [expertDeletionApproveTarget, setExpertDeletionApproveTarget] =
     useState<ExpertAccountDeletionRequest | null>(null);
-  const [pendingExpertDeletions, setPendingExpertDeletions] = useState<
-    ExpertAccountDeletionRequest[]
-  >([]);
-  const [deleteRecordingRequests, setDeleteRecordingRequests] = useState<DeleteRecordingRequest[]>(
-    [],
-  );
-  const [editRecordingRequests, setEditRecordingRequests] = useState<EditRecordingRequest[]>([]);
   const [forwardDeleteExpertId, setForwardDeleteExpertId] = useState<{
     requestId: string;
     expertId: string;
   } | null>(null);
-  const [deletedUserIds, setDeletedUserIds] = useState<Set<string>>(new Set());
 
   const stepIndex = useMemo(() => {
     const order: StepId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
@@ -408,456 +82,6 @@ export default function AdminDashboard() {
     const next = order[Math.max(0, Math.min(order.length - 1, idx))];
     setStep(next);
   };
-
-  const load = useCallback(
-    async (opts?: { showUserLoadingHint?: boolean }) => {
-      const shouldShowUserLoading = !!opts?.showUserLoadingHint;
-      // --- Admin backend data (best-effort) ---
-      // Avoid UI flicker: keep showing last good list during background refresh.
-      // Only enter "loading" when we have no data yet AND user explicitly wants a hint.
-      if (shouldShowUserLoading && remoteUsersLoadState !== 'ok' && !remoteUsers) {
-        setRemoteUsersLoadState('loading');
-      }
-      const [
-        usersRes,
-        contributorsRes,
-        trendRes,
-        kbCountRes,
-        overviewRes,
-        instrumentsRes,
-        recordingsRes,
-        ethnicGroupsRes,
-      ] = await Promise.allSettled([
-        adminApi.getUsers(), // MUST drive user list
-        analyticsApi.getContributors(),
-        analyticsApi.getSubmissionsTrend(),
-        knowledgeBaseApi.countKnowledgeBaseItems(),
-        analyticsApi.getOverview(),
-        api.get<unknown>('/Instrument'),
-        api.get<unknown>('/Recording'),
-        // Ethnic groups (prefer /EthnicGroup, fallback handled below)
-        api.get<unknown>('/EthnicGroup'),
-      ]);
-
-      // ---- Users (primary) ----
-      if (usersRes.status === 'fulfilled') {
-        const users = usersRes.value;
-        const contributors = contributorsRes.status === 'fulfilled' ? contributorsRes.value : [];
-
-        const contribById = new Map<
-          string,
-          { total: number; approved: number; rejected: number }
-        >();
-        contributors.forEach((c) => {
-          const anyC = asObject(c);
-          if (!anyC) return;
-          const id = String(anyC.userId ?? anyC.id ?? anyC.UserId ?? anyC.Id ?? '');
-          const email =
-            (typeof anyC.email === 'string' ? anyC.email : undefined) ??
-            (typeof anyC.Email === 'string' ? (anyC.Email as string) : undefined);
-          const username =
-            (typeof anyC.username === 'string' ? anyC.username : undefined) ??
-            (typeof anyC.userName === 'string' ? (anyC.userName as string) : undefined) ??
-            (typeof anyC.UserName === 'string' ? (anyC.UserName as string) : undefined);
-
-          const total = Number(anyC.contributionCount ?? anyC.submissions ?? anyC.total ?? 0) || 0;
-          const approved = Number(anyC.approvedCount ?? anyC.approved ?? 0) || 0;
-          const rejected = Number(anyC.rejectedCount ?? anyC.rejected ?? 0) || 0;
-
-          const keys = [id, email, username].filter(
-            (k): k is string => typeof k === 'string' && k.trim().length > 0,
-          );
-          if (keys.length === 0) return;
-          keys.forEach((k) => contribById.set(k, { total, approved, rejected }));
-        });
-
-        const normalizedUsers: AggregatedUser[] = users
-          .map((u) => {
-            const anyU = asObject(u);
-            if (!anyU) return null;
-            const email =
-              (typeof anyU.email === 'string' ? anyU.email : undefined) ??
-              (typeof anyU.Email === 'string' ? (anyU.Email as string) : undefined) ??
-              (typeof anyU.mail === 'string' ? (anyU.mail as string) : undefined);
-            const rawId = (anyU.id ?? anyU.userId ?? anyU.Id ?? anyU.UserId) as unknown;
-            const id = String(rawId ?? email ?? '');
-            if (!id) return null;
-            const counts = contribById.get(id) ??
-              (email ? contribById.get(email) : undefined) ?? {
-                total: 0,
-                approved: 0,
-                rejected: 0,
-              };
-            const roleRaw =
-              (typeof anyU.role === 'string' ? anyU.role : undefined) ??
-              (typeof anyU.Role === 'string' ? (anyU.Role as string) : undefined);
-            const fullNameRaw =
-              (typeof anyU.fullName === 'string' ? anyU.fullName : undefined) ??
-              (typeof anyU.FullName === 'string' ? (anyU.FullName as string) : undefined) ??
-              (typeof anyU.name === 'string' ? (anyU.name as string) : undefined);
-            const usernameRaw =
-              (typeof anyU.username === 'string' ? anyU.username : undefined) ??
-              (typeof anyU.userName === 'string' ? (anyU.userName as string) : undefined) ??
-              (typeof anyU.UserName === 'string' ? (anyU.UserName as string) : undefined);
-            return {
-              id,
-              username: String(usernameRaw ?? email ?? id),
-              email: email,
-              fullName: fullNameRaw,
-              role: String(roleRaw ?? UserRole.USER),
-              contributionCount: counts.total,
-              approvedCount: counts.approved,
-              rejectedCount: counts.rejected,
-            };
-          })
-          .filter((x): x is AggregatedUser => !!x);
-
-        setRemoteUsers(normalizedUsers);
-        setRemoteUsersLoadState('ok');
-      } else {
-        // Do NOT clear existing list on background failures to avoid flicker.
-        if (!remoteUsers) setRemoteUsersLoadState('error');
-      }
-
-      // ---- Trend ----
-      if (trendRes.status === 'fulfilled') {
-        setRemoteMonthlyCounts(Object.keys(trendRes.value).length ? trendRes.value : null);
-      } else {
-        setRemoteMonthlyCounts(null);
-      }
-
-      // ---- Knowledge base count ----
-      if (kbCountRes.status === 'fulfilled')
-        setRemoteKbCount(Number.isFinite(kbCountRes.value) ? kbCountRes.value : null);
-      else setRemoteKbCount(null);
-
-      // ---- Instruments ----
-      if (instrumentsRes.status === 'fulfilled') {
-        const instrumentsRaw = instrumentsRes.value;
-        const instrumentArr = Array.isArray(instrumentsRaw)
-          ? (instrumentsRaw as unknown[])
-          : instrumentsRaw &&
-              typeof instrumentsRaw === 'object' &&
-              'data' in (instrumentsRaw as Record<string, unknown>) &&
-              Array.isArray((instrumentsRaw as Record<string, unknown>).data)
-            ? ((instrumentsRaw as Record<string, unknown>).data as unknown[])
-            : instrumentsRaw &&
-                typeof instrumentsRaw === 'object' &&
-                'items' in (instrumentsRaw as Record<string, unknown>) &&
-                Array.isArray((instrumentsRaw as Record<string, unknown>).items)
-              ? ((instrumentsRaw as Record<string, unknown>).items as unknown[])
-              : [];
-        const instruments = instrumentArr
-          .map((it) => {
-            const o = it && typeof it === 'object' ? (it as Record<string, unknown>) : null;
-            if (!o) return null;
-            const id = String(o.id ?? o.instrumentId ?? o._id ?? o.name ?? '');
-            const name = String(o.name ?? o.instrumentName ?? o.title ?? '');
-            if (!id || !name) return null;
-            const category = typeof o.category === 'string' ? o.category : undefined;
-            return { id, name, category };
-          })
-          .filter((x): x is { id: string; name: string; category: string | undefined } => !!x);
-        setRemoteInstruments(instruments.length ? instruments : []);
-        setRemoteInstrumentCount(instruments.length);
-      } else {
-        setRemoteInstruments(null);
-        setRemoteInstrumentCount(null);
-      }
-
-      // ---- Total recordings ----
-      const overview = overviewRes.status === 'fulfilled' ? overviewRes.value : null;
-      if (recordingsRes.status === 'fulfilled') {
-        const recordingsRaw = recordingsRes.value;
-        const recordingArr = Array.isArray(recordingsRaw)
-          ? (recordingsRaw as unknown[])
-          : recordingsRaw &&
-              typeof recordingsRaw === 'object' &&
-              'data' in (recordingsRaw as Record<string, unknown>) &&
-              Array.isArray((recordingsRaw as Record<string, unknown>).data)
-            ? ((recordingsRaw as Record<string, unknown>).data as unknown[])
-            : recordingsRaw &&
-                typeof recordingsRaw === 'object' &&
-                'items' in (recordingsRaw as Record<string, unknown>) &&
-                Array.isArray((recordingsRaw as Record<string, unknown>).items)
-              ? ((recordingsRaw as Record<string, unknown>).items as unknown[])
-              : [];
-        const totalFromList = recordingArr.length;
-        setRemoteTotalRecordings(
-          typeof overview?.totalRecordings === 'number'
-            ? overview.totalRecordings
-            : totalFromList || null,
-        );
-      } else {
-        setRemoteTotalRecordings(
-          typeof overview?.totalRecordings === 'number' ? overview.totalRecordings : null,
-        );
-      }
-
-      // ---- Ethnic groups (from API) ----
-      setRemoteEthnicGroupsLoadState('loading');
-      const normalizeEthnicGroups = (raw: unknown): { id: string; name: string }[] => {
-        const arr = Array.isArray(raw)
-          ? (raw as unknown[])
-          : raw && typeof raw === 'object'
-            ? 'data' in (raw as Record<string, unknown>) &&
-              Array.isArray((raw as Record<string, unknown>).data)
-              ? ((raw as Record<string, unknown>).data as unknown[])
-              : 'items' in (raw as Record<string, unknown>) &&
-                  Array.isArray((raw as Record<string, unknown>).items)
-                ? ((raw as Record<string, unknown>).items as unknown[])
-                : []
-            : [];
-        return arr
-          .map((it) => {
-            const o = it && typeof it === 'object' ? (it as Record<string, unknown>) : null;
-            if (!o) return null;
-            const id = String(o.id ?? o.ethnicGroupId ?? o._id ?? o.name ?? o.ethnicity ?? '');
-            const name = String(o.name ?? o.ethnicGroupName ?? o.ethnicity ?? o.label ?? '');
-            if (!id || !name) return null;
-            return { id, name };
-          })
-          .filter((x): x is { id: string; name: string } => !!x);
-      };
-
-      if (ethnicGroupsRes.status === 'fulfilled') {
-        const list = normalizeEthnicGroups(ethnicGroupsRes.value);
-        setRemoteEthnicGroups(list);
-        setRemoteEthnicGroupsLoadState('ok');
-      } else {
-        // Fallback to /ReferenceData/ethnic-groups if /EthnicGroup fails
-        try {
-          const fallbackRaw = await api.get<unknown>('/ReferenceData/ethnic-groups');
-          const list = normalizeEthnicGroups(fallbackRaw);
-          setRemoteEthnicGroups(list);
-          setRemoteEthnicGroupsLoadState('ok');
-        } catch {
-          setRemoteEthnicGroups(null);
-          setRemoteEthnicGroupsLoadState('error');
-        }
-      }
-
-      try {
-        // Admin: use GET /Admin/submissions to list all submissions (role-appropriate endpoint)
-        const adminSubmissionsRaw = await api.get<unknown>('/Admin/submissions', {
-          params: { page: 1, pageSize: 200 },
-        });
-        const rows = extractSubmissionRows(adminSubmissionsRaw);
-        const migrated = migrateVideoDataToVideoData(
-          rows.map((row) => mapSubmissionToLocalRecording(row)) as LocalRecording[],
-        );
-        setRecordings(migrated);
-      } catch {
-        setRecordings([]);
-      }
-      try {
-        const oRaw = getItem('users_overrides');
-        const o = oRaw
-          ? (JSON.parse(oRaw) as Record<
-              string,
-              { role?: string; username?: string; fullName?: string }
-            >)
-          : {};
-        setUsersOverrides(o);
-      } catch {
-        setUsersOverrides({});
-      }
-      try {
-        const dRaw = getItem('admin_deleted_user_ids');
-        const arr = dRaw ? (JSON.parse(dRaw) as string[]) : [];
-        setDeletedUserIds(new Set(arr));
-      } catch {
-        setDeletedUserIds(new Set());
-      }
-      setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
-      recordingRequestService.getDeleteRecordingRequests().then(setDeleteRecordingRequests);
-      recordingRequestService.getEditRecordingRequests().then(setEditRecordingRequests);
-    },
-    [remoteUsers, remoteUsersLoadState],
-  );
-
-  useEffect(() => {
-    void load();
-    // Background refresh every 30s — keeps UI stable without hammering the API
-    const t = setInterval(() => {
-      void load();
-    }, 30000);
-    return () => clearInterval(t);
-  }, [load]);
-
-  const demoUsers: AggregatedUser[] = [
-    {
-      id: 'contrib_demo',
-      username: 'contributor_demo',
-      email: undefined,
-      fullName: undefined,
-      role: UserRole.CONTRIBUTOR,
-      contributionCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-    },
-    {
-      id: 'expert_a',
-      username: 'expertA',
-      email: undefined,
-      fullName: undefined,
-      role: UserRole.EXPERT,
-      contributionCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-    },
-    {
-      id: 'expert_b',
-      username: 'expertB',
-      email: undefined,
-      fullName: undefined,
-      role: UserRole.EXPERT,
-      contributionCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-    },
-    {
-      id: 'expert_c',
-      username: 'expertC',
-      email: undefined,
-      fullName: undefined,
-      role: UserRole.EXPERT,
-      contributionCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-    },
-    {
-      id: 'admin_demo',
-      username: 'admin_demo',
-      email: undefined,
-      fullName: undefined,
-      role: UserRole.ADMIN,
-      contributionCount: 0,
-      approvedCount: 0,
-      rejectedCount: 0,
-    },
-  ];
-
-  const uploaderCounts: Record<string, { total: number; approved: number; rejected: number }> = {};
-  recordings.forEach((r) => {
-    const uid = (r.uploader as { id?: string })?.id ?? 'anonymous';
-    if (!uploaderCounts[uid]) uploaderCounts[uid] = { total: 0, approved: 0, rejected: 0 };
-    uploaderCounts[uid].total += 1;
-    const st = (r.moderation as { status?: string })?.status;
-    if (st === ModerationStatus.APPROVED) uploaderCounts[uid].approved += 1;
-    else if (st === ModerationStatus.REJECTED || st === ModerationStatus.TEMPORARILY_REJECTED)
-      uploaderCounts[uid].rejected += 1;
-  });
-
-  const aggregated: AggregatedUser[] = demoUsers.map((u) => {
-    const counts = uploaderCounts[u.id] ?? { total: 0, approved: 0, rejected: 0 };
-    const override = usersOverrides[u.id];
-    const overRole = override?.role;
-    const overUsername = override?.username;
-    const overFullName = override?.fullName;
-    return {
-      ...u,
-      username: overUsername ?? u.username,
-      fullName: overFullName ?? u.fullName,
-      role: overRole ?? u.role,
-      contributionCount: counts.total,
-      approvedCount: counts.approved,
-      rejectedCount: counts.rejected,
-    };
-  });
-
-  const uploaderIds = new Set(
-    recordings.map((r) => (r.uploader as { id?: string })?.id).filter(Boolean),
-  );
-  const extraUsers: AggregatedUser[] = [];
-  uploaderIds.forEach((id) => {
-    if (id && !demoUsers.some((d) => d.id === id)) {
-      const r0 = recordings.find((r) => (r.uploader as { id?: string })?.id === id);
-      const u = r0?.uploader as {
-        id?: string;
-        username?: string;
-        email?: string;
-        fullName?: string;
-        role?: string;
-      };
-      const counts = uploaderCounts[id] ?? { total: 0, approved: 0, rejected: 0 };
-      const override = usersOverrides[id];
-      const overRole = override?.role;
-      const overUsername = override?.username;
-      const overFullName = override?.fullName;
-      extraUsers.push({
-        id: id!,
-        username: overUsername ?? u?.username ?? id,
-        email: u?.email,
-        fullName: overFullName ?? u?.fullName,
-        role: overRole ?? u?.role ?? UserRole.USER,
-        contributionCount: counts.total,
-        approvedCount: counts.approved,
-        rejectedCount: counts.rejected,
-      });
-    }
-  });
-  const localUsers = [...aggregated.filter((u) => u.role !== UserRole.ADMIN), ...extraUsers].filter(
-    (u) => !deletedUserIds.has(u.id),
-  );
-
-  // Critical requirement: User Management MUST NOT show demo/fake users.
-  // It must render ONLY the list from `/api/Admin/users`.
-  const usersForTable = (remoteUsers ?? []).filter(
-    (u) => u.role !== UserRole.ADMIN && !deletedUserIds.has(u.id),
-  );
-
-  // Other parts can still use local fallback when backend is unavailable.
-  const allUsers = (remoteUsersLoadState === 'ok' ? (remoteUsers ?? []) : localUsers).filter(
-    (u) => u.role !== UserRole.ADMIN && !deletedUserIds.has(u.id),
-  );
-
-  const ethnicityCounts: Record<string, number> = {};
-  const regionCounts: Record<string, number> = {};
-  const monthlyCounts: Record<string, number> = {};
-  recordings.forEach((r) => {
-    const rec = r as LocalRecording & {
-      culturalContext?: { ethnicity?: string; region?: string };
-      basicInfo?: { genre?: string };
-    };
-    const eth = rec.culturalContext?.ethnicity ?? rec.basicInfo?.genre ?? 'Khác';
-    ethnicityCounts[eth] = (ethnicityCounts[eth] ?? 0) + 1;
-    const reg = rec.culturalContext?.region ?? 'Chưa xác định';
-    regionCounts[reg] = (regionCounts[reg] ?? 0) + 1;
-    const up = r.uploadedDate ? new Date(r.uploadedDate) : null;
-    if (up) {
-      const key = `${up.getFullYear()}-${String(up.getMonth() + 1).padStart(2, '0')}`;
-      monthlyCounts[key] = (monthlyCounts[key] ?? 0) + 1;
-    }
-  });
-
-  const monthlyCountsFinal = remoteMonthlyCounts ?? monthlyCounts;
-
-  const byUploaderNewestFirst = [...recordings]
-    .filter((r) => (r.uploader as { id?: string })?.id)
-    .sort((a, b) => {
-      const da = a.uploadedDate ? new Date(a.uploadedDate).getTime() : 0;
-      const db = b.uploadedDate ? new Date(b.uploadedDate).getTime() : 0;
-      return db - da;
-    });
-  const latestUsernameByUploader: Record<string, string> = {};
-  byUploaderNewestFirst.forEach((r) => {
-    const uid = (r.uploader as { id?: string })?.id;
-    const uname = (r.uploader as { username?: string })?.username;
-    if (uid && uname !== undefined && uname !== null && !(uid in latestUsernameByUploader)) {
-      latestUsernameByUploader[uid] = String(uname);
-    }
-  });
-
-  const prolific = [...allUsers]
-    .filter((u) => u.role === UserRole.CONTRIBUTOR || u.role === UserRole.USER)
-    .sort((a, b) => b.contributionCount - a.contributionCount)
-    .slice(0, 10);
-  const ethnicGroupsFromApi = remoteEthnicGroups ?? [];
-  const gapData = ethnicGroupsFromApi.map((e) => ({
-    name: e.name,
-    count: ethnicityCounts[e.name] ?? 0,
-  }));
 
   const handleAssignRole = async (userId: string, newRole: string) => {
     try {
@@ -873,6 +97,7 @@ export default function AdminDashboard() {
       o[userId].role = newRole;
       void setItem('users_overrides', JSON.stringify(o));
       setUsersOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], role: newRole } }));
+      // Backend auto-notification: RoleChanged → tránh tạo thông báo kép ở FE.
       uiToast.success(
         notifyLine(
           'Thành công',
@@ -892,6 +117,7 @@ export default function AdminDashboard() {
       } catch {
         // ignore and fallback
       }
+      // Backend auto-notification: AccountDeactivated → tránh tạo thông báo kép ở FE.
       const next = new Set(deletedUserIds);
       next.add(userId);
       setDeletedUserIds(next);
@@ -903,9 +129,19 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRemoveRecording = async (id: string) => {
+  const handleRemoveRecording = async () => {
+    const target = removeTarget;
+    if (!target) return;
+    const recordingTitle = target.title?.trim() || 'Bản thu';
     try {
-      await removeLocalRecording(id);
+      await removeLocalRecording(target.id);
+      void recordingRequestService.addNotification({
+        type: 'recording_deleted',
+        title: 'Bản thu đã bị xóa',
+        body: `"${recordingTitle}" đã bị xóa bởi quản trị viên.`,
+        forRoles: [UserRole.CONTRIBUTOR, UserRole.EXPERT],
+        recordingId: target.id,
+      });
       setRemoveTarget(null);
       void load();
       uiToast.success(notifyLine('Thành công', 'Đã xóa bản ghi khỏi hệ thống.'));
@@ -914,16 +150,8 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!user || user.role !== UserRole.ADMIN) return null;
-
-  const expertOptions = (() => {
-    const oRaw = getItem('users_overrides');
-    const o = oRaw
-      ? (JSON.parse(oRaw) as Record<
-          string,
-          { id?: string; username?: string; fullName?: string; role?: string }
-        >)
-      : {};
+  const expertOptions = useMemo(() => {
+    const o = usersOverrides;
     const experts: { id: string; username: string; fullName?: string }[] = [];
     ['expert_a', 'expert_b', 'expert_c'].forEach((id) => {
       const u = o[id];
@@ -935,14 +163,19 @@ export default function AdminDashboard() {
         experts.push({ id, username: u.username ?? id, fullName: u.fullName });
     });
     return experts;
-  })();
+  }, [usersOverrides]);
 
-  const steps: { id: StepId; label: string; icon: React.ElementType }[] = [
-    { id: 'users', label: 'Quản lý người dùng', icon: Users },
-    { id: 'analytics', label: 'Phân tích & thống kê', icon: BarChart3 },
-    { id: 'aiMonitoring', label: 'Giám sát hệ thống AI', icon: Bot },
-    { id: 'moderation', label: 'Kiểm duyệt nội dung', icon: Shield },
-  ];
+  const steps: { id: StepId; label: string; icon: React.ElementType }[] = useMemo(
+    () => [
+      { id: 'users', label: 'Quản lý người dùng', icon: Users },
+      { id: 'analytics', label: 'Phân tích & thống kê', icon: BarChart3 },
+      { id: 'aiMonitoring', label: 'Giám sát hệ thống AI', icon: Bot },
+      { id: 'moderation', label: 'Kiểm duyệt nội dung', icon: Shield },
+    ],
+    [],
+  );
+
+  if (!user || user.role !== UserRole.ADMIN) return null;
 
   const guideButtonClass =
     'inline-flex items-center justify-center gap-2 h-11 px-6 py-0 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none';
@@ -970,8 +203,7 @@ export default function AdminDashboard() {
 
         {/* Wizard stepper — aligned with UploadMusic.tsx */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <p className="text-sm font-semibold text-primary-800 mb-3">Điều hướng quản trị</p>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -989,9 +221,8 @@ export default function AdminDashboard() {
                   className={`inline-flex items-center justify-center gap-2 h-11 px-5 py-0 rounded-full text-sm font-semibold border transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 whitespace-nowrap ${
                     isActive
                       ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white border-primary-600 shadow-primary-600/30'
-                      : 'border-neutral-300/80 text-neutral-800 hover:border-primary-300 cursor-pointer'
+                      : 'border-neutral-300/80 text-neutral-800 hover:border-primary-300 cursor-pointer bg-surface-panel'
                   }`}
-                  style={!isActive ? { backgroundColor: '#FFFCF5' } : undefined}
                 >
                   <Icon className="w-4 h-4" strokeWidth={2.5} />
                   <span>{label}</span>
@@ -1003,819 +234,59 @@ export default function AdminDashboard() {
 
         <Card variant="bordered" className="!p-0 overflow-hidden">
           {step === 'users' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
-                <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
-                  <Users className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                </div>
-                Quản lý người dùng
-              </h2>
-              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-                Phân công vai trò (dựa trên bằng cấp/thành tích) và theo dõi chất lượng đóng góp (số
-                bản thu, đã duyệt, từ chối).
-              </p>
-
-              {remoteUsersLoadState === 'error' && (
-                <div className="mb-6 flex items-center gap-3 p-4 bg-red-50/90 border border-red-300/80 rounded-2xl shadow-sm backdrop-blur-sm">
-                  <FileWarning className="h-5 w-5 text-red-600 flex-shrink-0" strokeWidth={2.5} />
-                  <p className="text-red-800 font-medium">
-                    Không thể lấy danh sách người dùng từ API{' '}
-                    <span className="font-semibold">/api/User/GetAll</span>. Vui lòng kiểm tra
-                    mock/backend.
-                  </p>
-                </div>
-              )}
-
-              <div
-                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 mb-6 transition-all duration-300 hover:shadow-xl"
-                style={{ backgroundColor: '#FFFCF5' }}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-neutral-700">Gợi ý quy trình</div>
-                    <div className="text-neutral-600 font-medium text-sm leading-relaxed">
-                      Ưu tiên gán vai trò{' '}
-                      <span className="text-neutral-900 font-semibold">Chuyên gia</span> cho người
-                      dùng có hồ sơ học thuật phù hợp; theo dõi tỉ lệ duyệt/từ chối để đánh giá chất
-                      lượng đóng góp.
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAdminGuide(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
-                      title="Mở hướng dẫn"
-                    >
-                      <BookOpen className="h-4 w-4" strokeWidth={2.5} />
-                      Xem hướng dẫn
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          setShowUsersLoadingHint(true);
-                          await load({ showUserLoadingHint: true });
-                          uiToast.success(
-                            notifyLine('Đã làm mới', 'Dữ liệu quản trị đã được cập nhật.'),
-                          );
-                        } finally {
-                          setShowUsersLoadingHint(false);
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-neutral-200/80 text-neutral-800 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                      title="Làm mới dữ liệu"
-                    >
-                      <RefreshCcw className="h-4 w-4" strokeWidth={2.5} />
-                      Làm mới
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-neutral-200">
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Người dùng</th>
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Vai trò</th>
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Điểm đóng góp</th>
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Đã duyệt</th>
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Từ chối</th>
-                      <th className="py-3 px-4 font-semibold text-neutral-800">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usersForTable.map((u) => (
-                      <tr key={u.id} className="border-b border-neutral-100">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <UserIcon className="h-4 w-4 text-neutral-400" />
-                            <div className="min-w-0">
-                              <div className="font-medium text-neutral-900 truncate">
-                                {u.fullName ?? u.username}
-                              </div>
-                              <div className="text-neutral-500 text-sm font-medium break-all">
-                                {u.email ?? u.username}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-neutral-700">{getRoleNameVi(u.role)}</td>
-                        <td className="py-3 px-4 text-neutral-700">{u.contributionCount}</td>
-                        <td className="py-3 px-4 text-green-600 font-medium">{u.approvedCount}</td>
-                        <td className="py-3 px-4 text-red-600 font-medium">{u.rejectedCount}</td>
-                        <td className="py-3 px-4">
-                          {u.role !== UserRole.ADMIN && (
-                            <RoleSelectDropdown
-                              value={u.role}
-                              onChange={(v) => {
-                                if (v === DELETE_ACTION)
-                                  setDeleteUserTarget({ id: u.id, username: u.username });
-                                else handleAssignRole(u.id, v);
-                              }}
-                            />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {showUsersLoadingHint && remoteUsersLoadState !== 'ok' && (
-                <div className="mt-4 text-sm text-neutral-600 font-medium">
-                  Đang tải danh sách người dùng từ API…
-                </div>
-              )}
-
-              {remoteUsersLoadState === 'ok' && usersForTable.length === 0 && (
-                <div
-                  className="mt-4 rounded-2xl border border-neutral-200/80 shadow-sm p-6 text-center"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <p className="text-neutral-700 font-semibold">Không có người dùng để hiển thị.</p>
-                  <p className="text-neutral-600 font-medium text-sm mt-1">
-                    (Danh sách này lấy trực tiếp từ{' '}
-                    <span className="font-semibold">/api/Admin/users</span>.)
-                  </p>
-                </div>
-              )}
-            </div>
+            <AdminUserManagement
+              remoteUsersLoadState={remoteUsersLoadState}
+              usersForTable={usersForTable}
+              showUsersLoadingHint={showUsersLoadingHint}
+              setShowUsersLoadingHint={setShowUsersLoadingHint}
+              load={load}
+              onOpenGuide={() => setShowAdminGuide(true)}
+              getRoleNameVi={getRoleNameVi}
+              onAssignRole={handleAssignRole}
+              onRequestDeleteUser={(p) => setDeleteUserTarget(p)}
+            />
           )}
 
           {step === 'analytics' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
-                <div className="p-2 bg-secondary-100/90 rounded-lg shadow-sm">
-                  <BarChart3 className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />
-                </div>
-                Phân tích bộ sưu tập
-              </h2>
-              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-                Khoảng trống theo dân tộc, xu hướng đóng góp theo tháng, người đóng góp tích cực.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <Music className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Tổng bản ghi</div>
-                  <p className="text-3xl font-bold text-primary-600">
-                    {remoteTotalRecordings ?? recordings.length}
-                  </p>
-                </div>
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-secondary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <MapPin className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Dân tộc</div>
-                  <p className="text-3xl font-bold text-primary-600">
-                    {remoteEthnicGroupsLoadState === 'ok' ? ethnicGroupsFromApi.length : '—'}
-                  </p>
-                </div>
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <Users className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Người dùng</div>
-                  <p className="text-3xl font-bold text-primary-600">{allUsers.length}</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-4 flex items-center justify-between gap-3">
-                    <span>Nhạc cụ</span>
-                    <span className="text-primary-600 font-bold">
-                      {remoteInstrumentCount ?? '—'}
-                    </span>
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {!remoteInstruments && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-neutral-100 text-neutral-700 text-sm font-semibold">
-                        Đang tải…
-                      </span>
-                    )}
-                    {remoteInstruments && remoteInstruments.length === 0 && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-neutral-100 text-neutral-700 text-sm font-semibold">
-                        Chưa có dữ liệu.
-                      </span>
-                    )}
-                    {remoteInstruments && remoteInstruments.length > 0 && (
-                      <>
-                        {remoteInstruments.slice(0, 24).map((ins) => (
-                          <span
-                            key={ins.id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800"
-                            title={ins.category ? `Nhóm: ${ins.category}` : undefined}
-                          >
-                            {ins.name}
-                          </span>
-                        ))}
-                        {remoteInstruments.length > 24 && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-neutral-100 text-neutral-700 text-sm font-semibold">
-                            +{remoteInstruments.length - 24}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-4 flex items-center justify-between gap-3">
-                    <span>Dân tộc</span>
-                    <span className="text-primary-600 font-bold">
-                      {remoteEthnicGroupsLoadState === 'ok' ? ethnicGroupsFromApi.length : '—'}
-                    </span>
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {remoteEthnicGroupsLoadState === 'loading' && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-neutral-100 text-neutral-700 text-sm font-semibold">
-                        Đang tải…
-                      </span>
-                    )}
-                    {remoteEthnicGroupsLoadState === 'error' && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-red-100 text-red-800 text-sm font-semibold">
-                        Không thể tải danh sách dân tộc từ API.
-                      </span>
-                    )}
-                    {remoteEthnicGroupsLoadState === 'ok' &&
-                      gapData.map(({ name }) => (
-                        <span
-                          key={name}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium bg-primary-100 text-primary-800"
-                        >
-                          {name}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-4">
-                    Đóng góp theo tháng
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(monthlyCountsFinal)
-                      .sort(([a], [b]) => b.localeCompare(a))
-                      .slice(0, 12)
-                      .map(([k, v]) => (
-                        <span
-                          key={k}
-                          className="inline-flex px-3 py-1.5 rounded-full bg-primary-100 text-primary-800 text-sm font-medium"
-                        >
-                          {k}: {v}
-                        </span>
-                      ))}
-                  </div>
-                </div>
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-4">
-                    Người đóng góp tích cực
-                  </h3>
-                  <ul className="space-y-3">
-                    {prolific.map((u, i) => {
-                      const displayName =
-                        usersOverrides[u.id]?.fullName ??
-                        u.fullName ??
-                        usersOverrides[u.id]?.username ??
-                        latestUsernameByUploader[u.id] ??
-                        u.username;
-                      const displayEmail = u.email ?? usersOverrides[u.id]?.username ?? u.username;
-                      return (
-                        <li
-                          key={u.id}
-                          className="flex items-center justify-between py-2 px-3 rounded-lg border border-neutral-200/80"
-                          style={{ backgroundColor: '#FFFCF5' }}
-                        >
-                          <div className="min-w-0">
-                            <div className="font-medium text-neutral-900 truncate">
-                              #{i + 1} {displayName}
-                            </div>
-                            <div className="text-neutral-500 text-sm font-medium break-all">
-                              {displayEmail}
-                            </div>
-                          </div>
-                          <span className="text-neutral-700 font-medium">
-                            {u.contributionCount} bản thu
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <AdminDashboardAnalyticsPanel
+              remoteTotalRecordings={remoteTotalRecordings}
+              recordingsLength={recordings.length}
+              remoteEthnicGroupsLoadState={remoteEthnicGroupsLoadState}
+              ethnicGroupCount={ethnicGroupsFromApi.length}
+              allUsersCount={allUsers.length}
+              remoteInstrumentCount={remoteInstrumentCount}
+              remoteInstruments={remoteInstruments}
+              monthlyCountsFinal={monthlyCountsFinal}
+            />
           )}
 
           {step === 'aiMonitoring' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
-                <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
-                  <Bot className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                </div>
-                Giám sát hệ thống AI
-              </h2>
-              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-                Theo dõi hiệu suất chatbot, xử lý cảnh báo (câu trả lời bị cắm cờ), và quản lý cập
-                nhật cơ sở tri thức để huấn luyện lại.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <Gauge className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Độ chính xác</div>
-                  <p className="text-3xl font-bold text-primary-600">—</p>
-                  <div className="text-sm text-neutral-600 font-medium mt-2">
-                    Chỉ số sẽ được hiển thị khi hệ thống đo lường AI sẵn sàng.
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-amber-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <Flag className="h-6 w-6 text-amber-700" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Câu trả lời bị cắm cờ</div>
-                  <p className="text-3xl font-bold text-primary-600">
-                    {(() => {
-                      try {
-                        const raw = getItem('ai_flagged_responses');
-                        const arr = raw ? (JSON.parse(raw) as unknown[]) : [];
-                        return Array.isArray(arr) ? arr.length : 0;
-                      } catch {
-                        return 0;
-                      }
-                    })()}
-                  </p>
-                </div>
-
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <div className="bg-secondary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
-                    <Database className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
-                  </div>
-                  <div className="text-neutral-600 font-medium mb-2">Cơ sở tri thức</div>
-                  <p className="text-3xl font-bold text-primary-600">{remoteKbCount ?? '—'}</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2 flex items-center gap-2">
-                    <Flag className="h-5 w-5 text-amber-700" strokeWidth={2.5} />
-                    Xử lý cảnh báo AI
-                  </h3>
-                  <p className="text-neutral-700 font-medium leading-relaxed mb-4">
-                    Danh sách các phản hồi chatbot bị người dùng/chuyên gia báo cáo để Quản trị viên
-                    rà soát, phân loại, và quyết định cập nhật cơ sở tri thức.
-                  </p>
-                  <div
-                    className="rounded-2xl border border-neutral-200/80 p-4 text-sm text-neutral-600 font-medium"
-                    style={{ backgroundColor: '#FFFCF5' }}
-                  >
-                    Chưa có dữ liệu hiển thị. (Hiện tại dựa trên khóa cục bộ:{' '}
-                    <span className="text-neutral-900 font-semibold">ai_flagged_responses</span>)
-                  </div>
-                </div>
-
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2 flex items-center gap-2">
-                    <Database className="h-5 w-5 text-secondary-600" strokeWidth={2.5} />
-                    Cập nhật dữ liệu AI (cơ sở tri thức)
-                  </h3>
-                  <p className="text-neutral-700 font-medium leading-relaxed mb-4">
-                    Quản lý các gói cập nhật tri thức: thêm/sửa/xóa tài liệu, theo dõi phiên bản và
-                    kích hoạt huấn luyện lại.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        uiToast.info(
-                          notifyLine(
-                            'Thông tin',
-                            'Chức năng cập nhật cơ sở tri thức sẽ kích hoạt khi có backend/flow đầy đủ.',
-                          ),
-                        )
-                      }
-                      className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
-                    >
-                      Tạo bản cập nhật cơ sở tri thức
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        uiToast.info(
-                          notifyLine(
-                            'Thông tin',
-                            'Trang lịch sử cập nhật cơ sở tri thức sẽ được kết nối sau.',
-                          ),
-                        )
-                      }
-                      className="px-4 py-2 rounded-full border border-neutral-200/80 text-neutral-800 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                    >
-                      Xem lịch sử
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AdminDashboardAiMonitoringPanel
+              avgExpertAccuracy={avgExpertAccuracy}
+              aiFlaggedCount={aiFlaggedCount}
+              remoteKbCount={remoteKbCount}
+              expertPerformanceRows={expertPerformanceRows}
+              onFlaggedCountChange={setAiFlaggedCount}
+              currentUserId={user?.id}
+            />
           )}
 
           {step === 'moderation' && (
-            <div className="p-8">
-              <h2 className="text-2xl font-semibold text-neutral-900 mb-4 flex items-center gap-3">
-                <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
-                  <Shield className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                </div>
-                Kiểm duyệt nội dung
-              </h2>
-              <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-                Xử lý tranh chấp bản quyền, xóa nội dung không phù hợp, và quản lý thời hạn hạn chế
-                công bố đối với tài liệu nhạy cảm (triển khai đầy đủ khi backend sẵn sàng).
-              </p>
-
-              {/* Moderation quick actions */}
-              <div
-                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 lg:p-8 mb-6 transition-all duration-300 hover:shadow-xl"
-                style={{ backgroundColor: '#FFFCF5' }}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-neutral-700">Bảng xử lý nhanh</div>
-                    <div className="text-neutral-600 font-medium text-sm leading-relaxed">
-                      Các luồng nâng cao (xóa tài khoản Chuyên gia, yêu cầu xóa/chỉnh sửa bản thu)
-                      được gom tại đây để Quản trị viên xử lý tập trung.
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setLegacyPanel((p) => (p === 'recordRequests' ? null : 'recordRequests'))
-                      }
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all shadow-sm hover:shadow-md ${
-                        legacyPanel === 'recordRequests'
-                          ? 'bg-primary-600 text-white border-primary-600'
-                          : 'border-neutral-200/80 text-neutral-800'
-                      } cursor-pointer`}
-                      style={
-                        legacyPanel === 'recordRequests'
-                          ? undefined
-                          : { backgroundColor: '#FFFCF5' }
-                      }
-                      title="Yêu cầu xóa/chỉnh sửa bản thu"
-                    >
-                      <FileEdit className="h-4 w-4" strokeWidth={2.5} />
-                      Yêu cầu bản thu
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setLegacyPanel((p) => (p === 'expertDeletion' ? null : 'expertDeletion'))
-                      }
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all shadow-sm hover:shadow-md ${
-                        legacyPanel === 'expertDeletion'
-                          ? 'bg-red-600 text-white border-red-600'
-                          : 'border-neutral-200/80 text-neutral-800'
-                      } cursor-pointer`}
-                      style={
-                        legacyPanel === 'expertDeletion'
-                          ? undefined
-                          : { backgroundColor: '#FFFCF5' }
-                      }
-                      title="Yêu cầu xóa tài khoản Chuyên gia"
-                    >
-                      <UserMinus className="h-4 w-4" strokeWidth={2.5} />
-                      Xóa tài khoản Chuyên gia
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Legacy: Record requests */}
-              {legacyPanel === 'recordRequests' && (
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 mb-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2 flex items-center gap-2">
-                    <FileEdit className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                    Yêu cầu xóa / chỉnh sửa bản thu
-                  </h3>
-                  <p className="text-neutral-700 font-medium leading-relaxed mb-4">
-                    Yêu cầu xóa bản thu được Quản trị viên chuyển cho Chuyên gia duyệt. Yêu cầu
-                    chỉnh sửa được Quản trị viên duyệt để Người đóng góp chỉnh sửa và gửi Chuyên gia
-                    kiểm duyệt.
-                  </p>
-
-                  <div className="space-y-8">
-                    <div>
-                      <h4 className="text-lg font-semibold text-neutral-900 mb-3 flex items-center gap-2">
-                        <Trash2 className="h-5 w-5 text-red-600" strokeWidth={2.5} />
-                        Yêu cầu xóa bản thu (chờ chuyển Chuyên gia)
-                      </h4>
-                      {deleteRecordingRequests.filter((r) => r.status === 'pending_admin')
-                        .length === 0 ? (
-                        <p className="text-neutral-500 font-medium text-sm">Chưa có yêu cầu.</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {deleteRecordingRequests
-                            .filter((r) => r.status === 'pending_admin')
-                            .map((req) => (
-                              <div
-                                key={req.id}
-                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 p-4"
-                                style={{ backgroundColor: '#FFFCF5' }}
-                              >
-                                <div>
-                                  <p className="font-medium text-neutral-900">
-                                    {req.recordingTitle}
-                                  </p>
-                                  <p className="text-sm text-neutral-600">
-                                    Người đóng góp: {req.contributorName} ·{' '}
-                                    {new Date(req.requestedAt).toLocaleString('vi-VN')}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <ExpertSelectDropdown
-                                    options={expertOptions.map((ex) => ({
-                                      id: ex.id,
-                                      label: ex.fullName ?? ex.username,
-                                    }))}
-                                    value={
-                                      forwardDeleteExpertId?.requestId === req.id
-                                        ? forwardDeleteExpertId.expertId
-                                        : ''
-                                    }
-                                    onChange={(id) =>
-                                      setForwardDeleteExpertId(
-                                        id ? { requestId: req.id, expertId: id } : null,
-                                      )
-                                    }
-                                    placeholder=" -- Chọn Chuyên gia -- "
-                                  />
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      !forwardDeleteExpertId ||
-                                      forwardDeleteExpertId.requestId !== req.id ||
-                                      !forwardDeleteExpertId.expertId
-                                    }
-                                    onClick={async () => {
-                                      if (
-                                        !forwardDeleteExpertId ||
-                                        forwardDeleteExpertId.requestId !== req.id
-                                      )
-                                        return;
-                                      try {
-                                        await recordingRequestService.forwardDeleteToExpert(
-                                          req.id,
-                                          forwardDeleteExpertId.expertId,
-                                        );
-                                        setForwardDeleteExpertId(null);
-                                        setDeleteRecordingRequests(
-                                          await recordingRequestService.getDeleteRecordingRequests(),
-                                        );
-                                        uiToast.success(
-                                          notifyLine(
-                                            'Thành công',
-                                            'Đã chuyển yêu cầu xóa đến Chuyên gia.',
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        uiToast.error(
-                                          notifyLine('Lỗi', 'Không thể chuyển yêu cầu.'),
-                                        );
-                                      }
-                                    }}
-                                    className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium cursor-pointer"
-                                  >
-                                    Chuyển đến Chuyên gia
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h4 className="text-lg font-semibold text-neutral-900 mb-3 flex items-center gap-2">
-                        <FileEdit className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                        Yêu cầu chỉnh sửa bản thu (chờ duyệt)
-                      </h4>
-                      {editRecordingRequests.filter((r) => r.status === 'pending').length === 0 ? (
-                        <p className="text-neutral-500 font-medium text-sm">Chưa có yêu cầu.</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {editRecordingRequests
-                            .filter((r) => r.status === 'pending')
-                            .map((req) => (
-                              <div
-                                key={req.id}
-                                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 p-4"
-                                style={{ backgroundColor: '#FFFCF5' }}
-                              >
-                                <div>
-                                  <p className="font-medium text-neutral-900">
-                                    {req.recordingTitle}
-                                  </p>
-                                  <p className="text-sm text-neutral-600">
-                                    Người đóng góp: {req.contributorName} ·{' '}
-                                    {new Date(req.requestedAt).toLocaleString('vi-VN')}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Link
-                                    to={`/recordings/${req.recordingId}/edit`}
-                                    className="px-4 py-2 rounded-full border border-primary-200/80 text-primary-700 hover:text-primary-800 hover:border-primary-300 text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-                                    style={{ backgroundColor: '#FFFCF5' }}
-                                  >
-                                    Chỉnh sửa ngay
-                                  </Link>
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      try {
-                                        await recordingRequestService.approveEditRequest(req.id);
-                                        setEditRecordingRequests(
-                                          await recordingRequestService.getEditRecordingRequests(),
-                                        );
-                                        uiToast.success(
-                                          notifyLine(
-                                            'Thành công',
-                                            'Đã duyệt yêu cầu chỉnh sửa bản thu. Người đóng góp có thể chỉnh sửa bản thu.',
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        uiToast.error(
-                                          notifyLine(
-                                            'Lỗi',
-                                            'Không thể duyệt yêu cầu chỉnh sửa bản thu. Vui lòng thử lại.',
-                                          ),
-                                        );
-                                      }
-                                    }}
-                                    className="px-4 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium cursor-pointer"
-                                  >
-                                    Duyệt yêu cầu chỉnh sửa bản thu
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Legacy: Expert deletion */}
-              {legacyPanel === 'expertDeletion' && (
-                <div
-                  className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 mb-6 transition-all duration-300 hover:shadow-xl"
-                  style={{ backgroundColor: '#FFFCF5' }}
-                >
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2 flex items-center gap-2">
-                    <UserMinus className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
-                    Yêu cầu xóa tài khoản Chuyên gia
-                  </h3>
-                  <p className="text-neutral-700 font-medium leading-relaxed mb-4">
-                    Chuyên gia gửi yêu cầu xóa tài khoản sẽ hiển thị tại đây. Sau khi bạn duyệt, tài
-                    khoản Chuyên gia đó sẽ bị xóa khỏi hệ thống.
-                  </p>
-                  {pendingExpertDeletions.length === 0 ? (
-                    <div
-                      className="rounded-2xl border border-neutral-200/80 p-6 text-center"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                    >
-                      <p className="text-neutral-500 font-medium">
-                        Chưa có yêu cầu xóa tài khoản Chuyên gia nào.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {pendingExpertDeletions.map((req) => (
-                        <div
-                          key={req.expertId}
-                          className="flex items-center justify-between rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                          style={{ backgroundColor: '#FFFCF5' }}
-                        >
-                          <div>
-                            <p className="font-semibold text-neutral-900 mb-1">
-                              {req.expertFullName ?? req.expertUsername}
-                            </p>
-                            <p className="text-sm text-neutral-600 font-medium">
-                              @{req.expertUsername} · Yêu cầu lúc:{' '}
-                              {new Date(req.requestedAt).toLocaleString('vi-VN')}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setExpertDeletionApproveTarget(req)}
-                            className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium bg-red-600 hover:bg-red-700 text-white border border-red-200/80 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-                          >
-                            Duyệt xóa tài khoản
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {recordings.length === 0 ? (
-                  <div
-                    className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300"
-                    style={{ backgroundColor: '#FFFCF5' }}
-                  >
-                    <p className="text-neutral-500 font-medium">Chưa có bản ghi nào.</p>
-                  </div>
-                ) : (
-                  recordings
-                    .filter((r) => r.id)
-                    .map((r) => {
-                      const st = (r.moderation as { status?: string })?.status ?? 'PENDING_REVIEW';
-                      const title = r.basicInfo?.title ?? r.title ?? 'Không có tiêu đề';
-                      return (
-                        <div
-                          key={r.id}
-                          className="flex items-center justify-between rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                          style={{ backgroundColor: '#FFFCF5' }}
-                        >
-                          <div>
-                            <p className="font-semibold text-neutral-900 mb-1">{title}</p>
-                            <p className="text-sm text-neutral-600 font-medium">
-                              Người đóng góp:{' '}
-                              {(r.uploader as { username?: string })?.username ?? 'Khách'} · Trạng
-                              thái: {st}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Link
-                              to={`/recordings/${r.id}`}
-                              className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-200/80 hover:border-primary-300 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-                              style={{ backgroundColor: '#FFFCF5' }}
-                            >
-                              Xem
-                            </Link>
-                            <button
-                              onClick={() => setRemoveTarget({ id: r.id!, title })}
-                              className="inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium text-red-600 hover:text-red-700 border border-red-200/80 hover:border-red-300 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer"
-                              style={{ backgroundColor: '#FFFCF5' }}
-                            >
-                              <FileWarning className="h-4 w-4" />
-                              Xóa
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                )}
-              </div>
-            </div>
+            <AdminDashboardModerationPanel
+              legacyPanel={legacyPanel}
+              setLegacyPanel={setLegacyPanel}
+              deleteRecordingRequests={deleteRecordingRequests}
+              setDeleteRecordingRequests={setDeleteRecordingRequests}
+              editRecordingRequests={editRecordingRequests}
+              setEditRecordingRequests={setEditRecordingRequests}
+              expertOptions={expertOptions}
+              forwardDeleteExpertId={forwardDeleteExpertId}
+              setForwardDeleteExpertId={setForwardDeleteExpertId}
+              pendingExpertDeletions={pendingExpertDeletions}
+              onRequestExpertDeletionApprove={setExpertDeletionApproveTarget}
+              recordings={recordings}
+              onRequestRemoveRecording={({ id, title }) => setRemoveTarget({ id, title })}
+            />
           )}
         </Card>
 
@@ -1825,8 +296,7 @@ export default function AdminDashboard() {
             type="button"
             onClick={() => setStepByIndex(stepIndex - 1)}
             disabled={stepIndex === 0}
-            className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 rounded-full border-2 border-neutral-300/90 text-neutral-900 font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 cursor-pointer focus:outline-none disabled:cursor-not-allowed disabled:opacity-90 disabled:text-neutral-700 disabled:border-neutral-200/80 disabled:hover:scale-100"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 rounded-full border-2 border-neutral-300/90 text-neutral-900 font-semibold transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110 active:scale-95 cursor-pointer focus:outline-none disabled:cursor-not-allowed disabled:opacity-90 disabled:text-neutral-700 disabled:border-neutral-200/80 disabled:hover:scale-100 bg-surface-panel"
           >
             Quay lại
           </button>
@@ -1849,13 +319,13 @@ export default function AdminDashboard() {
       <ConfirmationDialog
         isOpen={!!removeTarget}
         onClose={() => setRemoveTarget(null)}
-        onConfirm={() => removeTarget && handleRemoveRecording(removeTarget.id)}
+        onConfirm={() => void handleRemoveRecording()}
         title="Xóa bản ghi"
         message={removeTarget ? `Bạn có chắc muốn xóa "${removeTarget.title}" khỏi hệ thống?` : ''}
         description="Hành động này không thể hoàn tác."
         confirmText="Xóa"
         cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 hover:bg-red-500 text-white"
+        confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
       />
 
       <ConfirmationDialog
@@ -1871,7 +341,7 @@ export default function AdminDashboard() {
         description="Người dùng sẽ không còn hiển thị trong danh sách quản lý. Hành động này không thể hoàn tác."
         confirmText="Xóa"
         cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 hover:bg-red-500 text-white"
+        confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
       />
 
       {/* Guide popup — aligned with UploadPage.tsx */}
@@ -1894,8 +364,7 @@ export default function AdminDashboard() {
           onClick={() => setShowAdminGuide(false)}
         >
           <div
-            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform bg-white"
-            style={{ animation: 'slideUp 0.3s ease-out', backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform bg-surface-panel animate-[slideUp_0.3s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-200/80 flex-shrink-0">
@@ -2049,7 +518,7 @@ export default function AdminDashboard() {
               type: 'expert_account_deletion_approved',
               title: 'Đã duyệt xóa tài khoản Chuyên gia',
               body: `Tài khoản ${expertDeletionApproveTarget.expertFullName ?? expertDeletionApproveTarget.expertUsername} đã được xóa khỏi hệ thống.`,
-              forRoles: [UserRole.ADMIN],
+              forRoles: [UserRole.EXPERT],
             });
             setExpertDeletionApproveTarget(null);
             setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
@@ -2070,7 +539,7 @@ export default function AdminDashboard() {
         description="Chuyên gia này sẽ bị xóa khỏi hệ thống. Nếu đang đăng nhập bằng tài khoản đó, họ sẽ bị đăng xuất. Hành động không thể hoàn tác."
         confirmText="Duyệt xóa"
         cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 hover:bg-red-500 text-white"
+        confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
       />
     </div>
   );

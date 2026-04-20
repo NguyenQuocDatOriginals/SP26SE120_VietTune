@@ -1,5 +1,5 @@
 import type { ModerationVerificationData } from '@/services/expertWorkflowService';
-import type { ModerationStatus } from '@/types';
+import type { ApiSubmissionStatus, ModerationStatus } from '@/types';
 
 /** Queue / overlay shape for expert moderation list items (aligned with expertWorkflowService). */
 export interface LocalRecordingMini {
@@ -42,9 +42,12 @@ export interface LocalRecordingMini {
     catalogId?: string;
   };
   uploadedAt?: string;
+  /** Seconds — present when merged from API queue (`LocalRecording`). */
+  duration?: number;
   uploader?: { id?: string; username?: string };
   moderation?: {
-    status?: ModerationStatus | string;
+    /** Prefer backend status (0..5); tolerate legacy strings during migration. */
+    status?: ApiSubmissionStatus | ModerationStatus | string | number | null;
     claimedBy?: string | null;
     claimedByName?: string | null;
     claimedAt?: string | null;
@@ -56,7 +59,6 @@ export interface LocalRecordingMini {
     rejectionNote?: string;
     notes?: string;
     contributorEditLocked?: boolean;
-    assignBlockedByRbac?: boolean;
   };
   resubmittedForModeration?: boolean;
 }

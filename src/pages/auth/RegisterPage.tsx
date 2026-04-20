@@ -11,6 +11,7 @@ import { authService } from '@/services/authService';
 import { sessionGetItem, sessionRemoveItem } from '@/services/storageService';
 import { RegisterForm } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
+import { validatePassword } from '@/utils/validation';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -147,13 +148,13 @@ export default function RegisterPage() {
               labelColor="light"
               label="Mật khẩu"
               type="password"
-              placeholder="Tạo mật khẩu mạnh"
+              placeholder="Ít nhất 6 ký tự, chữ hoa, chữ thường và số"
               className="border-neutral-300 py-3.5 focus:border-primary-500 shadow-none ring-0 focus:ring-2 focus:ring-primary-500/20"
               {...register('password', {
                 required: 'Mật khẩu là bắt buộc',
-                minLength: {
-                  value: 6,
-                  message: 'Mật khẩu phải có ít nhất 6 ký tự',
+                validate: (v) => {
+                  const r = validatePassword(v || '');
+                  return r.valid || r.errors[0];
                 },
               })}
               error={errors.password?.message}

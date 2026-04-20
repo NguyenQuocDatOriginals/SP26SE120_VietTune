@@ -13,8 +13,7 @@ export default function InstrumentsPage() {
 
         {/* Introduction */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Kể chuyện qua nhạc cụ</h2>
           <p className="text-neutral-600 font-medium leading-relaxed mb-4">
@@ -33,8 +32,7 @@ export default function InstrumentsPage() {
 
         {/* Classification */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Hệ thống phân loại</h2>
           <div className="text-neutral-700">
@@ -149,8 +147,7 @@ export default function InstrumentsPage() {
 
         {/* Bamboo Instruments */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Nhạc cụ tre trúc: Sáng tạo và thích nghi
@@ -209,8 +206,7 @@ export default function InstrumentsPage() {
 
         {/* Gong Culture */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Văn hóa cồng chiêng: Nhạc cụ thiêng liêng của cao nguyên Trung Bộ
@@ -267,8 +263,7 @@ export default function InstrumentsPage() {
 
         {/* String Instruments */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Nhạc cụ dây: Thẩm mỹ tinh tế và kỹ thuật điêu luyện
@@ -325,8 +320,7 @@ export default function InstrumentsPage() {
 
         {/* Construction and Materials */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Tri thức truyền thống: Chế tác và vật liệu
@@ -385,8 +379,7 @@ export default function InstrumentsPage() {
 
         {/* Preservation Challenges */}
         <div
-          className="border border-neutral-200 rounded-2xl p-8 shadow-md"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="border border-neutral-200 rounded-2xl p-8 shadow-md bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-800 mb-4">
             Bảo tồn và nhu cầu tài liệu hóa

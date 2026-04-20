@@ -22,8 +22,7 @@ function RecordingCard({ recording, linkState }: RecordingCardProps) {
   return (
     <Link to={`/recordings/${recording.id}`} state={linkState} className="block cursor-pointer">
       <div
-        className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300"
-        style={{ backgroundColor: '#FFFCF5' }}
+        className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300 bg-surface-panel"
       >
         {/* Cover Image */}
         <div className="relative h-48 bg-neutral-100">

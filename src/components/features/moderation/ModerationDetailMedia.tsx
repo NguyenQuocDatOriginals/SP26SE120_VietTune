@@ -51,3 +51,5 @@ export function ModerationDetailMedia({
     </div>
   );
 }
+
+export default ModerationDetailMedia;

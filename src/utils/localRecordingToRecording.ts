@@ -13,6 +13,7 @@ import {
   UserRole,
   InstrumentCategory,
 } from '@/types';
+import { ModerationStatus, toModerationUiStatus } from '@/types/moderation';
 import { buildTagsFromLocal } from '@/utils/recordingTags';
 
 const getAudioDuration = (audioDataUrl: string): Promise<number> => {
@@ -51,7 +52,7 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
   } else if (local.audioData && typeof local.audioData === 'string' && local.audioData.trim()) {
     mediaSrc = local.audioData;
   }
-  const isApproved = local.moderation?.status === 'APPROVED';
+  const isApproved = toModerationUiStatus(local.moderation?.status) === ModerationStatus.APPROVED;
   const ethnicityLabel = cc?.ethnicity?.trim();
   const ethnicityResolved =
     local.ethnicity ??
@@ -122,9 +123,11 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
       typeof local.uploader === 'object' && local.uploader != null
         ? {
             id: local.uploader?.id ?? 'local-user',
-            username: local.uploader?.username ?? 'Bạn',
+            username: (local.uploader?.username ?? '').trim(),
             email: local.uploader?.email ?? '',
-            fullName: local.uploader?.fullName ?? local.uploader?.username ?? 'Người tải lên',
+            fullName:
+              (local.uploader?.fullName ?? local.uploader?.username ?? '').trim() ||
+              'Không có thông tin',
             role: (typeof local.uploader?.role === 'string'
               ? local.uploader.role
               : UserRole.USER) as UserRole,
@@ -133,9 +136,9 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
           }
         : {
             id: 'local-user',
-            username: 'Bạn',
+            username: '',
             email: '',
-            fullName: 'Người tải lên',
+            fullName: 'Không có thông tin',
             role: UserRole.USER,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),

@@ -13,7 +13,18 @@
  *  - /api/Instrument                  → instruments
  */
 
-import { api } from '@/services/api';
+import { apiFetch, apiOk, normalizePagedResponse } from '@/api';
+import type {
+  ApiCommuneListQuery,
+  ApiDistrictListQuery,
+  ApiInstrumentListQuery,
+  ApiReferenceDataCeremoniesQuery,
+  ApiReferenceDataEthnicGroupsQuery,
+  ApiReferenceDataMusicalScalesQuery,
+  ApiReferenceDataProvincesQuery,
+  ApiReferenceDataTagsQuery,
+  ApiReferenceDataVocalStylesQuery,
+} from '@/api';
 import { logServiceWarn } from '@/services/serviceLogger';
 
 // ---------- Types ----------
@@ -79,40 +90,33 @@ export interface TagItem {
   name: string;
 }
 
-// ---------- Paginated response shape ----------
-
-interface PaginatedApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 // ---------- Helper: fetch ALL pages ----------
 
 const DEFAULT_REF_PAGE_SIZE = 250;
 /** Parallel page requests per wave (Commune/District có thể >30 trang — gọi tuần tự rất chậm). */
 const REF_PAGE_FETCH_CONCURRENCY = 8;
 
-async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): Promise<T[]> {
-  const separator = url.includes('?') ? '&' : '?';
-  const urlFor = (page: number) => `${url}${separator}page=${page}&pageSize=${pageSize}`;
+type PagedQuery = { page?: number; pageSize?: number };
 
+async function fetchAllPages<T, Q extends PagedQuery>(
+  fetchPage: (page: number, pageSize: number) => Promise<unknown>,
+  _baseQuery: Q,
+  pageSize = DEFAULT_REF_PAGE_SIZE,
+): Promise<T[]> {
   let first;
   try {
-    first = await api.get<PaginatedApiResponse<T>>(urlFor(1));
+    first = await fetchPage(1, pageSize);
   } catch (err) {
-    logServiceWarn(`Failed to fetch ${url} page 1`, err);
+    logServiceWarn('Failed to fetch reference data page 1', err);
     return [];
   }
 
-  const firstItems = first?.data ?? [];
+  const firstNorm = normalizePagedResponse<T>(first);
+  const firstItems = firstNorm.items ?? [];
   const all: T[] = [...firstItems];
   if (firstItems.length === 0) return all;
 
-  const total = typeof first?.total === 'number' ? first.total : undefined;
+  const total = typeof firstNorm.total === 'number' ? firstNorm.total : undefined;
   if (total !== undefined && all.length >= total) return all;
 
   if (total === undefined) {
@@ -120,14 +124,14 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
     let lastLen = firstItems.length;
     while (lastLen === pageSize) {
       try {
-        const res = await api.get<PaginatedApiResponse<T>>(urlFor(page));
-        const items = res?.data ?? [];
+        const res = await fetchPage(page, pageSize);
+        const items = normalizePagedResponse<T>(res).items ?? [];
         all.push(...items);
         lastLen = items.length;
         if (items.length === 0) break;
         page++;
       } catch (err) {
-        logServiceWarn(`Failed to fetch ${url} page ${page}`, err);
+        logServiceWarn(`Failed to fetch reference data page ${page}`, err);
         break;
       }
     }
@@ -142,13 +146,13 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
     const chunk = rest.slice(i, i + REF_PAGE_FETCH_CONCURRENCY);
     try {
       const batch = await Promise.all(
-        chunk.map((p) => api.get<PaginatedApiResponse<T>>(urlFor(p))),
+        chunk.map((p) => fetchPage(p, pageSize)),
       );
       for (const res of batch) {
-        all.push(...(res?.data ?? []));
+        all.push(...(normalizePagedResponse<T>(res).items ?? []));
       }
     } catch (err) {
-      logServiceWarn(`Failed to fetch ${url} parallel pages`, err);
+      logServiceWarn('Failed to fetch reference data parallel pages', err);
       break;
     }
   }
@@ -158,14 +162,52 @@ async function fetchAllPages<T>(url: string, pageSize = DEFAULT_REF_PAGE_SIZE): 
 // ---------- In-memory cache ----------
 
 const cache: Record<string, { data: unknown[]; ts: number }> = {};
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes — giảm tải lại Commune/District khi mở Researcher/Moderation
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
-async function cachedFetch<T>(key: string, url: string): Promise<T[]> {
+async function cachedFetch<T, Q extends PagedQuery>(key: string, url: string, baseQuery: Q): Promise<T[]> {
   const entry = cache[key];
   if (entry && Date.now() - entry.ts < CACHE_TTL_MS) {
     return entry.data as T[];
   }
-  const data = await fetchAllPages<T>(url);
+  const data = await fetchAllPages<T, Q>(
+    async (page, pageSize) => {
+      switch (url) {
+        case '/ReferenceData/ethnic-groups':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/ethnic-groups', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/ReferenceData/provinces':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/provinces', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/ReferenceData/ceremonies':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/ceremonies', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/ReferenceData/vocal-styles':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/vocal-styles', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/ReferenceData/musical-scales':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/musical-scales', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/ReferenceData/tags':
+          return apiOk(
+            apiFetch.GET('/api/ReferenceData/tags', { params: { query: { ...baseQuery, page, pageSize } } }),
+          );
+        case '/Instrument':
+          return apiOk(apiFetch.GET('/api/Instrument', { params: { query: { ...baseQuery, page, pageSize } } }));
+        case '/District':
+          return apiOk(apiFetch.GET('/api/District', { params: { query: { ...baseQuery, page, pageSize } } }));
+        case '/Commune':
+          return apiOk(apiFetch.GET('/api/Commune', { params: { query: { ...baseQuery, page, pageSize } } }));
+        default:
+          throw new Error(`Unsupported reference data url: ${url}`);
+      }
+    },
+    baseQuery,
+  );
   cache[key] = { data, ts: Date.now() };
   return data;
 }
@@ -175,46 +217,91 @@ async function cachedFetch<T>(key: string, url: string): Promise<T[]> {
 export const referenceDataService = {
   /** Fetch all ethnic groups (dân tộc) */
   getEthnicGroups: () =>
-    cachedFetch<EthnicGroupItem>('ethnicGroups', '/ReferenceData/ethnic-groups'),
+    cachedFetch<EthnicGroupItem, ApiReferenceDataEthnicGroupsQuery>(
+      'ethnicGroups',
+      '/ReferenceData/ethnic-groups',
+      {},
+    ),
 
   /** Fetch all provinces (tỉnh thành) */
-  getProvinces: () => cachedFetch<ProvinceItem>('provinces', '/ReferenceData/provinces'),
+  getProvinces: () =>
+    cachedFetch<ProvinceItem, ApiReferenceDataProvincesQuery>('provinces', '/ReferenceData/provinces', {}),
 
   /** Fetch all districts (quận huyện) */
-  getDistricts: () => cachedFetch<DistrictItem>('districts', '/District'),
+  getDistricts: () =>
+    cachedFetch<DistrictItem, ApiDistrictListQuery>('districts', '/District', {}),
 
   /** Fetch districts by province Id */
   getDistrictsByProvince: (provinceId: string) =>
-    cachedFetch<DistrictItem>(
-      `districts_prov_${provinceId}`,
-      `/District/get-by-province/${provinceId}`,
-    ),
+    (async () => {
+      const key = `districts_prov_${provinceId}`;
+      const entry = cache[key];
+      if (entry && Date.now() - entry.ts < CACHE_TTL_MS) return entry.data as DistrictItem[];
+      const res = await apiOk(
+        apiFetch.GET('/api/District/get-by-province/{provinceId}', {
+          params: { path: { provinceId } },
+        }),
+      );
+      const data = Array.isArray(res)
+        ? (res as DistrictItem[])
+        : (normalizePagedResponse<DistrictItem>(res as unknown).items ?? []);
+      cache[key] = { data, ts: Date.now() };
+      return data;
+    })(),
 
   /** Fetch all communes (phường xã) */
-  getCommunes: () => cachedFetch<CommuneItem>('communes', '/Commune'),
+  getCommunes: () =>
+    cachedFetch<CommuneItem, ApiCommuneListQuery>('communes', '/Commune', {}),
 
   /** Fetch communes by district Id */
   getCommunesByDistrict: (districtId: string) =>
-    cachedFetch<CommuneItem>(
-      `communes_dist_${districtId}`,
-      `/Commune/get-by-district/${districtId}`,
-    ),
+    (async () => {
+      const key = `communes_dist_${districtId}`;
+      const entry = cache[key];
+      if (entry && Date.now() - entry.ts < CACHE_TTL_MS) return entry.data as CommuneItem[];
+      const res = await apiOk(
+        apiFetch.GET('/api/Commune/get-by-district/{districtId}', {
+          params: { path: { districtId } },
+        }),
+      );
+      const data = Array.isArray(res)
+        ? (res as CommuneItem[])
+        : (normalizePagedResponse<CommuneItem>(res as unknown).items ?? []);
+      cache[key] = { data, ts: Date.now() };
+      return data;
+    })(),
 
   /** Fetch all ceremonies / event types (nghi lễ / loại sự kiện) */
-  getCeremonies: () => cachedFetch<CeremonyItem>('ceremonies', '/ReferenceData/ceremonies'),
+  getCeremonies: () =>
+    cachedFetch<CeremonyItem, ApiReferenceDataCeremoniesQuery>(
+      'ceremonies',
+      '/ReferenceData/ceremonies',
+      {},
+    ),
 
   /** Fetch all vocal styles */
-  getVocalStyles: () => cachedFetch<VocalStyleItem>('vocalStyles', '/ReferenceData/vocal-styles'),
+  getVocalStyles: () =>
+    cachedFetch<VocalStyleItem, ApiReferenceDataVocalStylesQuery>(
+      'vocalStyles',
+      '/ReferenceData/vocal-styles',
+      {},
+    ),
 
   /** Fetch all musical scales */
   getMusicalScales: () =>
-    cachedFetch<MusicalScaleItem>('musicalScales', '/ReferenceData/musical-scales'),
+    cachedFetch<MusicalScaleItem, ApiReferenceDataMusicalScalesQuery>(
+      'musicalScales',
+      '/ReferenceData/musical-scales',
+      {},
+    ),
 
   /** Fetch all tags */
-  getTags: () => cachedFetch<TagItem>('tags', '/ReferenceData/tags'),
+  getTags: () =>
+    cachedFetch<TagItem, ApiReferenceDataTagsQuery>('tags', '/ReferenceData/tags', {}),
 
   /** Fetch all instruments (nhạc cụ) */
-  getInstruments: () => cachedFetch<InstrumentItem>('instruments', '/Instrument'),
+  getInstruments: () =>
+    cachedFetch<InstrumentItem, ApiInstrumentListQuery>('instruments', '/Instrument', {}),
 
   /** Clear cache (e.g. after admin edits reference data) */
   clearCache: () => {

@@ -1,5 +1,8 @@
 import type { CSSProperties } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+import { MODERATION_REJECT_REASON_MAX_LENGTH } from '@/config/validationConstants';
 
 const backdropStyle: CSSProperties = {
   animation: 'fadeIn 0.3s ease-out',
@@ -29,6 +32,26 @@ export function ModerationRejectReasonFormPortal({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const [noteError, setNoteError] = useState<string | null>(null);
+
+  const handleNoteChange = useCallback(
+    (v: string) => {
+      setNoteError(null);
+      onRejectNoteChange(v);
+    },
+    [onRejectNoteChange],
+  );
+
+  const handleConfirm = useCallback(() => {
+    const t = rejectNote.trim();
+    if (!t) {
+      setNoteError('Vui lòng nhập lý do từ chối.');
+      return;
+    }
+    setNoteError(null);
+    onConfirm();
+  }, [rejectNote, onConfirm]);
+
   if (!submissionId) return null;
 
   return createPortal(
@@ -44,9 +67,8 @@ export function ModerationRejectReasonFormPortal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="moderation-reject-dialog-title"
-        className="rounded-2xl shadow-xl border border-neutral-300/80 backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform outline-none"
+        className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform outline-none"
         style={{
-          backgroundColor: '#FFF2D6',
           animation: 'slideUp 0.3s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -58,8 +80,8 @@ export function ModerationRejectReasonFormPortal({
           Từ chối bản thu
         </h3>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Loại từ chối</label>
+          <fieldset className="space-y-2 border-0 p-0 m-0">
+            <legend className="block text-sm font-medium text-neutral-700 mb-2">Loại từ chối</legend>
             <div className="space-y-2">
               <div className="flex items-center gap-3 select-none">
                 <input
@@ -96,7 +118,7 @@ export function ModerationRejectReasonFormPortal({
                 </div>
               </div>
             </div>
-          </div>
+          </fieldset>
           <div>
             <label
               htmlFor="moderation-reject-reason"
@@ -105,23 +127,43 @@ export function ModerationRejectReasonFormPortal({
               Lý do từ chối
             </label>
             <p id="reject-dialog-type-hint" className="text-xs text-neutral-700 mb-2">
-              Bắt buộc nhập lý do trước khi xác nhận từ chối.
+              Bắt buộc nhập lý do trước khi xác nhận từ chối (tối đa {MODERATION_REJECT_REASON_MAX_LENGTH} ký tự).
             </p>
             <textarea
               id="moderation-reject-reason"
               value={rejectNote}
-              onChange={(e) => onRejectNoteChange(e.target.value)}
+              onChange={(e) => handleNoteChange(e.target.value)}
               rows={4}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg text-neutral-900 placeholder:text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
-              style={{ backgroundColor: '#FFFCF5' }}
+              maxLength={MODERATION_REJECT_REASON_MAX_LENGTH}
+              aria-invalid={noteError ? true : undefined}
+              aria-describedby="reject-dialog-type-hint reject-note-error reject-note-counter"
+              className={`w-full px-4 py-2 border rounded-lg text-neutral-900 placeholder:text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500 bg-surface-panel ${
+                noteError ? 'border-red-600' : 'border-neutral-300'
+              }`}
               placeholder={
                 rejectType === 'temporary'
                   ? 'Nhập lý do từ chối và ghi chú những điểm cần chỉnh sửa...'
                   : 'Nhập lý do từ chối...'
               }
               aria-required="true"
-              aria-describedby="reject-dialog-type-hint"
             />
+            {noteError ? (
+              <p id="reject-note-error" className="mt-1.5 text-xs text-red-700" role="alert">
+                {noteError}
+              </p>
+            ) : (
+              <span id="reject-note-error" className="sr-only" />
+            )}
+            <p
+              id="reject-note-counter"
+              className={`mt-1.5 text-xs tabular-nums ${
+                rejectNote.length >= MODERATION_REJECT_REASON_MAX_LENGTH - 100
+                  ? 'text-amber-800 font-medium'
+                  : 'text-neutral-600'
+              }`}
+            >
+              {rejectNote.length} / {MODERATION_REJECT_REASON_MAX_LENGTH}
+            </p>
           </div>
           <div className="flex justify-end gap-3">
             <button
@@ -133,7 +175,7 @@ export function ModerationRejectReasonFormPortal({
             </button>
             <button
               type="button"
-              onClick={onConfirm}
+              onClick={handleConfirm}
               className="px-4 py-2 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
             >
               {rejectType === 'direct' ? 'Từ chối vĩnh viễn' : 'Từ chối tạm thời'}
@@ -145,3 +187,5 @@ export function ModerationRejectReasonFormPortal({
     document.body,
   );
 }
+
+export default ModerationRejectReasonFormPortal;

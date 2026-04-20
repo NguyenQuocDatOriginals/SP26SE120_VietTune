@@ -75,9 +75,8 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
       }}
     >
       <div
-        className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
+        className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform"
         style={{
-          backgroundColor: '#FFF2D6',
           animation: isOpen ? 'slideUp 0.3s ease-out' : 'none',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -103,8 +102,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
         >
           {/* Preamble */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <p className="text-neutral-700 font-medium leading-relaxed">
               <strong className="text-neutral-900">Lưu ý quan trọng:</strong> Vui lòng đọc kỹ các
@@ -116,8 +114,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 1. Definitions */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 1. Định nghĩa và giải thích thuật ngữ
@@ -159,8 +156,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 2. General Provisions */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Điều 2. Quy định chung</h2>
             <div className="space-y-3 text-neutral-700">
@@ -189,8 +185,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 3. Mission and Purpose */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 3. Sứ mệnh và mục đích hoạt động
@@ -220,8 +215,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 4. User Account */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 4. Đăng ký và quản lý Tài khoản
@@ -259,8 +253,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 5. Content Contribution */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 5. Đóng góp và sử dụng Nội dung
@@ -302,8 +295,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 6. Intellectual Property */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 6. Quyền sở hữu trí tuệ
@@ -345,8 +337,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 7. Verification Process */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 7. Quy trình xác minh và kiểm duyệt
@@ -382,8 +373,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 8. Privacy and Data Protection */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 8. Quyền riêng tư và bảo vệ dữ liệu cá nhân
@@ -423,8 +413,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 9. Community Standards */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 9. Quy tắc ứng xử cộng đồng
@@ -459,8 +448,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 10. Prohibited Activities */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 10. Các hành vi bị nghiêm cấm
@@ -491,8 +479,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* 11-20 Combined */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">
               Điều 11. Ghi nhận nguồn và trích dẫn
@@ -589,8 +576,7 @@ export default function TermsAndConditions({ isOpen, onClose }: TermsAndConditio
 
           {/* Last Updated */}
           <div
-            className="rounded-2xl shadow-md border border-neutral-200 p-6"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl shadow-md border border-neutral-200 p-6 bg-surface-panel"
           >
             <p className="text-neutral-700">
               <strong className="text-neutral-900">Ngày có hiệu lực:</strong> 20 tháng 1 năm 2026

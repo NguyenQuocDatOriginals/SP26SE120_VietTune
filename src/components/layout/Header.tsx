@@ -1,31 +1,24 @@
-import {
-  Bell,
-  User,
-  LogOut,
-  Menu,
-  X,
-  MessageCircle,
-  CheckCircle,
-  Edit3,
-  Trash2,
-} from 'lucide-react';
+import { Bell, User, LogOut, Menu, X, MessageCircle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { NotificationTypeIcon } from '@/components/common/NotificationTypeIcon';
 import logo from '@/components/image/VietTune logo.png';
 import { APP_NAME, INTELLIGENCE_NAME } from '@/config/constants';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotificationPolling } from '@/hooks/useNotificationPolling';
 import { recordingRequestService } from '@/services/recordingRequestService';
-import { sessionSetItem } from '@/services/storageService';
-import { UserRole } from '@/types';
-import type { AppNotification } from '@/types';
-import { formatDateTime } from '@/utils/helpers';
+import { useLoginModalStore } from '@/stores/loginModalStore';
+import { UserRole, type AppNotification } from '@/types';
+import { formatRelativeTimeVi } from '@/utils/helpers';
 import { getLayoutFeatureItems } from '@/utils/layoutFeatureItems';
+import { getNotificationTargetPath } from '@/utils/notificationRoutes';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const openLoginModal = useLoginModalStore((s) => s.openLoginModal);
 
   // Account dropdown refs/state
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -37,24 +30,28 @@ export default function Header() {
   const notiButtonRef = useRef<HTMLButtonElement | null>(null);
   const notiMenuRef = useRef<HTMLDivElement | null>(null);
   const [isNotiOpen, setIsNotiOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { notifications, unreadCount, reloadNotifications, isInitialLoading } =
+    useNotificationPolling({
+      enabled: isAuthenticated && !!user?.role,
+      role: user?.role,
+    });
 
-  useEffect(() => {
-    if (isAuthenticated && user?.role) {
-      recordingRequestService.getNotificationsForRole(user.role).then(setNotifications);
-      const t = setInterval(() => {
-        recordingRequestService.getNotificationsForRole(user.role).then(setNotifications);
-      }, 30000); // refresh every 30s
-      return () => clearInterval(t);
+  const handleNotificationItemClick = async (n: AppNotification) => {
+    if (!n.read) {
+      try {
+        await recordingRequestService.markNotificationRead(n.id);
+        await reloadNotifications();
+      } catch {
+        /* vẫn điều hướng */
+      }
     }
-  }, [isAuthenticated, user?.role]);
+    setIsNotiOpen(false);
+    navigate(getNotificationTargetPath(n));
+  };
 
   const handleLogout = () => {
-    // Set fromLogout before navigate so LoginPage sees it on mount and hides "Trở về".
-    sessionSetItem('fromLogout', '1');
-    // Navigate without redirect
-    navigate('/login', { replace: true });
-    queueMicrotask(() => logout());
+    logout();
+    navigate('/', { replace: true });
   };
 
   // Close menu on outside click and Escape key; update position on resize/scroll
@@ -172,56 +169,57 @@ export default function Header() {
                       type="button"
                       onClick={() => setIsNotiOpen(!isNotiOpen)}
                       className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white transition-colors duration-200 hover:bg-white/10 hover:text-secondary-300 active:text-secondary-400"
-                      aria-label="Thông báo"
+                      aria-label={
+                        unreadCount > 0
+                          ? `Thông báo (${unreadCount} chưa đọc)`
+                          : 'Thông báo'
+                      }
                     >
                       <Bell className="h-5 w-5" strokeWidth={2.5} />
-                      {notifications.some((n) => !n.read) && (
-                        <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full border-2 border-primary-800 bg-red-500" />
+                      {unreadCount > 0 && (
+                        <span
+                          className="absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-primary-800"
+                          aria-hidden
+                        >
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
                       )}
                     </button>
                     {isNotiOpen && (
                       <div
                         ref={(el) => (notiMenuRef.current = el)}
-                        className="absolute right-0 mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-[#FFFCF5] z-[70] w-80 sm:w-96 transition-all duration-300 flex flex-col"
-                        style={{ top: '100%' }}
+                        className="absolute right-0 top-full mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-surface-panel z-[70] w-80 sm:w-96 transition-all duration-300 flex flex-col"
                       >
                         <div className="px-5 py-3 border-b border-neutral-200 flex justify-between items-center bg-white shadow-sm z-10">
                           <span className="font-semibold text-neutral-900">Thông báo mới</span>
                         </div>
                         <div className="max-h-[60vh] overflow-y-auto">
-                          {notifications.length > 0 ? (
+                          {isInitialLoading && notifications.length === 0 ? (
+                            <ul className="divide-y divide-neutral-100" aria-busy="true">
+                              {[0, 1, 2].map((i) => (
+                                <li key={i} className="list-none p-4">
+                                  <div className="flex gap-3 animate-pulse">
+                                    <div className="h-9 w-9 shrink-0 rounded-lg bg-neutral-200" />
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                      <div className="h-4 w-3/4 rounded bg-neutral-200" />
+                                      <div className="h-3 w-full rounded bg-neutral-100" />
+                                      <div className="h-3 w-16 rounded bg-neutral-100" />
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : notifications.length > 0 ? (
                             <ul className="divide-y divide-neutral-100">
                               {notifications.slice(0, 8).map((n) => (
-                                <li
-                                  key={n.id}
-                                  className={`p-4 hover:bg-neutral-50 transition-colors ${!n.read ? 'bg-primary-50/50' : 'bg-white'}`}
-                                >
-                                  <div className="flex gap-3">
+                                <li key={n.id} className="list-none animate-noti-fade-in">
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleNotificationItemClick(n)}
+                                    className={`flex w-full gap-3 p-4 text-left transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset ${!n.read ? 'bg-primary-50/50' : 'bg-white'}`}
+                                  >
                                     <div className="mt-0.5 flex-shrink-0">
-                                      {n.type === 'recording_deleted' ? (
-                                        <Trash2
-                                          className="h-5 w-5 text-red-600"
-                                          strokeWidth={2.5}
-                                        />
-                                      ) : n.type === 'recording_edited' ? (
-                                        <Edit3
-                                          className="h-5 w-5 text-primary-600"
-                                          strokeWidth={2.5}
-                                        />
-                                      ) : n.type === 'edit_submission_approved' ||
-                                        n.type === 'expert_account_deletion_approved' ? (
-                                        <CheckCircle
-                                          className="h-5 w-5 text-green-600"
-                                          strokeWidth={2.5}
-                                        />
-                                      ) : n.type === 'delete_request_rejected' ? (
-                                        <X className="h-5 w-5 text-neutral-600" strokeWidth={2.5} />
-                                      ) : (
-                                        <Bell
-                                          className="h-5 w-5 text-primary-600"
-                                          strokeWidth={2.5}
-                                        />
-                                      )}
+                                      <NotificationTypeIcon type={n.type} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-start justify-between gap-1 mb-1">
@@ -244,11 +242,14 @@ export default function Header() {
                                       >
                                         {n.body}
                                       </p>
-                                      <p className="text-[11px] text-neutral-400 mt-1">
-                                        {formatDateTime(n.createdAt)}
+                                      <p
+                                        className="text-[11px] text-neutral-400 mt-1"
+                                        title={n.createdAt}
+                                      >
+                                        {formatRelativeTimeVi(n.createdAt)}
                                       </p>
                                     </div>
-                                  </div>
+                                  </button>
                                 </li>
                               ))}
                             </ul>
@@ -293,10 +294,7 @@ export default function Header() {
                     {isMenuOpen && (
                       <div
                         ref={(el) => (menuRef.current = el)}
-                        className="absolute right-0 mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-[#FFFCF5] z-[70] w-56 transition-all duration-300"
-                        style={{
-                          top: '100%',
-                        }}
+                        className="absolute right-0 top-full mt-2 rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden bg-surface-panel z-[70] w-56 transition-all duration-300"
                       >
                         <div className="max-h-60 overflow-y-auto">
                           <Link
@@ -325,12 +323,13 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/login"
-                    className="flex h-9 items-center px-3 text-sm font-semibold text-white transition-colors hover:text-secondary-300 active:text-secondary-400"
+                  <button
+                    type="button"
+                    onClick={() => openLoginModal()}
+                    className="flex h-9 cursor-pointer items-center px-3 text-sm font-semibold text-white transition-colors hover:text-secondary-300 active:text-secondary-400"
                   >
                     Đăng nhập
-                  </Link>
+                  </button>
                   <Link
                     to="/register"
                     className="flex h-9 items-center rounded-xl bg-gradient-to-br from-secondary-500 to-secondary-600 px-3 text-sm font-semibold text-white shadow-md transition-colors duration-300 hover:from-secondary-400 hover:to-secondary-500 hover:shadow-lg cursor-pointer"
@@ -462,14 +461,22 @@ export default function Header() {
                   {(user?.role === UserRole.CONTRIBUTOR ||
                     user?.role === UserRole.EXPERT ||
                     user?.role === UserRole.ADMIN) && (
-                    <Link
-                      to="/notifications"
-                      className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Thông báo
-                    </Link>
-                  )}
+                      <Link
+                        to="/notifications"
+                        className="flex items-center justify-between gap-3 px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <span>Thông báo</span>
+                        {unreadCount > 0 && (
+                          <span
+                            className="flex min-h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold leading-none text-white ring-2 ring-primary-800"
+                            aria-label={`${unreadCount} chưa đọc`}
+                          >
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                   {user?.role === UserRole.ADMIN && (
                     <Link
                       to="/admin"
@@ -492,13 +499,16 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/login"
-                    className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                  <button
+                    type="button"
+                    className="block w-full px-4 py-3 text-left text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      openLoginModal();
+                    }}
                   >
                     Đăng nhập
-                  </Link>
+                  </button>
                   <Link
                     to="/register"
                     className="block px-4 py-3 text-secondary-300 font-medium hover:bg-white/10 rounded-lg transition-colors"

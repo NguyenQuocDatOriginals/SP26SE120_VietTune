@@ -1,5 +1,5 @@
-import { Heart, Download, Share2, Eye, User } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, Download, User, MapPin, ShieldAlert } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
@@ -7,60 +7,60 @@ import Badge from '@/components/common/Badge';
 import Button from '@/components/common/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import AudioPlayer from '@/components/features/AudioPlayer';
+import DisputeReportForm from '@/components/features/moderation/DisputeReportForm';
 import VideoPlayer from '@/components/features/VideoPlayer';
 import { RECORDING_TYPE_NAMES } from '@/config/constants';
-import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
-import { recordingService } from '@/services/recordingService';
-import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
-import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
-import { submissionService } from '@/services/submissionService';
+import { useRecordingDetail } from '@/hooks/useRecordingDetail';
+import { useAuthStore } from '@/stores/authStore';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { Recording } from '@/types';
+import type { AnnotationDto, AnnotationType } from '@/types/annotation';
+import { ANNOTATION_TYPE_LABELS } from '@/types/annotation';
+import { COPYRIGHT_DISPUTE_STATUS_LABELS } from '@/types/copyrightDispute';
+import { uiToast } from '@/uiToast';
+import { formatSecondsToTime, isLikelyHttpUrl } from '@/utils/annotationHelpers';
 import { formatDateTime, formatDate, formatDuration } from '@/utils/helpers';
-import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 import { getRegionDisplayName } from '@/utils/recordingTags';
+import { SURFACE_CARD } from '@/utils/surfaceTokens';
 import { isYouTubeUrl } from '@/utils/youtube';
 
 type LocationState = { from?: string; preloadedRecording?: Recording };
 
-function isRecordingCandidate(value: unknown): value is Recording {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const row = value as Record<string, unknown>;
-  return typeof row.id === 'string' && typeof row.title === 'string';
+function readExtraString(
+  row: unknown,
+  keys: string[],
+): string | undefined {
+  if (!row || typeof row !== 'object') return undefined;
+  const fields = row as Record<string, unknown>;
+  for (const key of keys) {
+    const value = fields[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return undefined;
 }
 
-function pickRecordingFromApiBody(body: unknown): Recording | null {
-  if (!body || typeof body !== 'object') return null;
-  const b = body as Record<string, unknown>;
-  const nested = b.data ?? b.Data;
-  if (isRecordingCandidate(nested)) return nested;
-  if (isRecordingCandidate(b)) return b;
-  return null;
+function readExtraNumber(
+  row: unknown,
+  keys: string[],
+): number | undefined {
+  if (!row || typeof row !== 'object') return undefined;
+  const fields = row as Record<string, unknown>;
+  for (const key of keys) {
+    const value = fields[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return undefined;
 }
-
-function pickSubmissionDetailRow(res: unknown): Record<string, unknown> | null {
-  if (!res || typeof res !== 'object') return null;
-  const r = res as Record<string, unknown>;
-  const failed = r.isSuccess === false || r.IsSuccess === false;
-  if (failed) return null;
-  const d = r.data ?? r.Data;
-  if (d && typeof d === 'object' && !Array.isArray(d)) return d as Record<string, unknown>;
-  return null;
-}
-
-function extractRecordingListFromApiResponse(res: unknown): Recording[] {
-  if (!res || typeof res !== 'object') return [];
-  const r = res as Record<string, unknown>;
-  if (Array.isArray(r.items)) return r.items as Recording[];
-  if (Array.isArray(r.data)) return r.data as Recording[];
-  const data = r.data as Record<string, unknown> | undefined;
-  if (data && Array.isArray(data.items)) return data.items as Recording[];
-  return [];
-}
-
-const SURFACE_CARD =
-  'rounded-xl border border-neutral-200/80 bg-[#FFFCF5] p-4 sm:p-5 shadow-sm transition-shadow duration-200 hover:shadow-md';
 
 type TopicChip = { key: string; label: string; variant: 'primary' | 'secondary' };
+type AnnotationGroup = { key: string; label: string; items: AnnotationDto[] };
+
+const ANNOTATION_TYPE_ORDER: AnnotationType[] = [
+  'scholarly_note',
+  'rare_variant',
+  'research_link',
+  'general',
+];
 
 /** Single canonical chip row: ethnicity, region, type, freeform tags (instruments stay in sidebar only). */
 function buildTopicChips(recording: Recording): TopicChip[] {
@@ -98,87 +98,114 @@ function isRecordingVideoUrl(url: string): boolean {
 }
 
 export default function RecordingDetailPage() {
+  const user = useAuthStore((s) => s.user);
+  const openLoginModal = useLoginModalStore((s) => s.openLoginModal);
   const { id: idParam } = useParams<{ id: string }>();
   const id = idParam ? decodeURIComponent(idParam) : undefined;
   const location = useLocation();
   const state = (location.state as LocationState | undefined) ?? {};
   const returnTo = state.from;
   const preloadedRecording = state.preloadedRecording;
-  const [recording, setRecording] = useState<Recording | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
 
-  useEffect(() => {
-    if (!id) {
-      setRecording(null);
-      setLoading(false);
-      return;
-    }
-    if (preloadedRecording?.id === id) {
-      setRecording(preloadedRecording);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        try {
-          const response = await recordingService.getRecordingById(id);
-          const rec = pickRecordingFromApiBody(response);
-          if (rec && !cancelled) {
-            setRecording(rec);
-            return;
-          }
-        } catch (err) {
-          console.warn('GET /Recording/{id} failed, trying submission / list fallbacks', err);
-        }
-
-        try {
-          const subRes = await submissionService.getSubmissionById(id);
-          const row = pickSubmissionDetailRow(subRes);
-          if (row && !cancelled) {
-            const lookups = await buildSubmissionLookupMaps();
-            const local = mapSubmissionToLocalRecording(row, lookups);
-            const rec = await convertLocalToRecording(local);
-            if (!cancelled) setRecording(rec);
-            return;
-          }
-        } catch {
-          // ignore
-        }
-
-        try {
-          const listRes = await recordingService.getRecordings(1, 500);
-          const items = extractRecordingListFromApiResponse(listRes);
-          const matched = items.find((x) => x.id === id);
-          if (matched && !cancelled) {
-            setRecording(matched);
-            return;
-          }
-        } catch {
-          // ignore and try verified-submission fallback below
-        }
-
-        try {
-          const fallback = await fetchVerifiedSubmissionsAsRecordings();
-          const matched = fallback.find((x) => x.id === id);
-          if (matched && !cancelled) setRecording(matched);
-          else if (!cancelled) setRecording(null);
-        } catch {
-          if (!cancelled) setRecording(null);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, preloadedRecording]);
+  const { recording, loading, notFound, annotations, embargo, disputes, refetchDisputes } =
+    useRecordingDetail(id, preloadedRecording);
 
   const topicChips = useMemo(() => (recording ? buildTopicChips(recording) : []), [recording]);
+  const recordingLocation = useMemo(
+    () => readExtraString(recording, ['recordingLocation', 'provinceName']),
+    [recording],
+  );
+  const gpsLat = useMemo(
+    () => readExtraNumber(recording, ['gpsLatitude', 'latitude']),
+    [recording],
+  );
+  const gpsLon = useMemo(
+    () => readExtraNumber(recording, ['gpsLongitude', 'longitude']),
+    [recording],
+  );
+  const hasGps = useMemo(
+    () =>
+      typeof gpsLat === 'number' &&
+      typeof gpsLon === 'number' &&
+      (gpsLat !== 0 || gpsLon !== 0),
+    [gpsLat, gpsLon],
+  );
+  const gpsMapUrl = useMemo(
+    () => (hasGps ? `https://www.google.com/maps?q=${gpsLat},${gpsLon}` : null),
+    [hasGps, gpsLat, gpsLon],
+  );
+  const gpsEmbedUrl = useMemo(
+    () =>
+      hasGps
+        ? `https://www.openstreetmap.org/export/embed.html?bbox=${gpsLon! - 0.01},${
+            gpsLat! - 0.01
+          },${gpsLon! + 0.01},${gpsLat! + 0.01}&marker=${gpsLat},${gpsLon}`
+        : null,
+    [hasGps, gpsLat, gpsLon],
+  );
+  const annotationGroups = useMemo<AnnotationGroup[]>(() => {
+    if (annotations.length === 0) return [];
+
+    const buckets = new Map<string, AnnotationDto[]>();
+    for (const item of annotations) {
+      const key = (item.type ?? 'general').trim() || 'general';
+      const arr = buckets.get(key) ?? [];
+      arr.push(item);
+      buckets.set(key, arr);
+    }
+
+    for (const arr of buckets.values()) {
+      arr.sort((a, b) => {
+        const aStart = a.timestampStart ?? Number.MAX_SAFE_INTEGER;
+        const bStart = b.timestampStart ?? Number.MAX_SAFE_INTEGER;
+        if (aStart !== bStart) return aStart - bStart;
+        return String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? ''));
+      });
+    }
+
+    const ordered: AnnotationGroup[] = [];
+    for (const type of ANNOTATION_TYPE_ORDER) {
+      const items = buckets.get(type);
+      if (items && items.length > 0) {
+        ordered.push({
+          key: type,
+          label: ANNOTATION_TYPE_LABELS[type] ?? type,
+          items,
+        });
+        buckets.delete(type);
+      }
+    }
+
+    for (const [key, items] of buckets.entries()) {
+      ordered.push({
+        key,
+        label: ANNOTATION_TYPE_LABELS[key] ?? key,
+        items,
+      });
+    }
+    return ordered;
+  }, [annotations]);
+  const isEmbargoActive = embargo?.status === 3;
+  const activeDisputes = useMemo(
+    () => disputes.filter((row) => row.status === 0 || row.status === 1),
+    [disputes],
+  );
+  const hasActiveDispute = activeDisputes.length > 0;
+  const activeDisputeStatus = useMemo(() => {
+    const first = activeDisputes[0];
+    if (!first) return null;
+    return COPYRIGHT_DISPUTE_STATUS_LABELS[first.status] ?? `Trạng thái ${first.status}`;
+  }, [activeDisputes]);
+
+  function openDisputeModal(): void {
+    if (!user?.id) {
+      uiToast.warning('Bạn cần đăng nhập để báo cáo tranh chấp bản quyền.');
+      openLoginModal({ redirect: location.pathname });
+      return;
+    }
+    setShowDisputeModal(true);
+  }
 
   if (loading) {
     return (
@@ -192,10 +219,20 @@ export default function RecordingDetailPage() {
     return (
       <div className="min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-neutral-900">Không tìm thấy bản thu</h1>
+          <div className="flex items-center justify-between mb-4 gap-4">
+            <h1 className="text-2xl font-bold text-neutral-900">
+              {notFound
+                ? 'Bản ghi không tồn tại hoặc đã bị hạn chế truy cập'
+                : 'Không tìm thấy bản ghi'}
+            </h1>
             <BackButton to={returnTo} />
           </div>
+          {notFound && (
+            <p className="text-neutral-600 max-w-xl text-sm sm:text-base leading-relaxed">
+              Bản ghi này có thể đã bị xóa, đang trong thời gian hạn chế công bố, hoặc bạn không có
+              quyền xem.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -217,6 +254,41 @@ export default function RecordingDetailPage() {
           >
             {recording.title}
           </h1>
+          {isEmbargoActive && (
+            <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <p className="inline-flex items-center gap-2 font-semibold">
+                <AlertTriangle className="h-4 w-4" />
+                Bản ghi đang trong thời hạn hạn chế công bố.
+              </p>
+              {embargo?.embargoEndDate && (
+                <p className="mt-1 text-xs text-amber-800">
+                  Dự kiến kết thúc: {formatDateTime(embargo.embargoEndDate)}
+                </p>
+              )}
+            </div>
+          )}
+          {hasActiveDispute && (
+            <div className="mt-3 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900">
+              <p className="inline-flex items-center gap-2 font-semibold">
+                <ShieldAlert className="h-4 w-4" />
+                Bản ghi đang bị tranh chấp bản quyền.
+              </p>
+              <p className="mt-1 text-xs text-rose-800">
+                Trạng thái hiện tại: {activeDisputeStatus} · Số vụ tranh chấp đang mở:{' '}
+                {activeDisputes.length}
+              </p>
+            </div>
+          )}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={openDisputeModal}
+              className="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Báo cáo vi phạm bản quyền
+            </button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-12">
@@ -261,40 +333,13 @@ export default function RecordingDetailPage() {
               </div>
             )}
 
-            {/* Actions + compact stats — one visual band */}
-            <div
-              className={`${SURFACE_CARD} flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between`}
-            >
+            {/* Actions — chỉ nút tải xuống */}
+            <div className={SURFACE_CARD}>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" className="cursor-pointer">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Thích
-                </Button>
                 <Button variant="outline" className="cursor-pointer">
                   <Download className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Tải xuống
                 </Button>
-                <Button variant="outline" className="cursor-pointer">
-                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  Chia sẻ
-                </Button>
-              </div>
-              <div
-                className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-neutral-200/80 pt-3 text-sm text-neutral-600 sm:border-t-0 sm:pt-0"
-                aria-label="Thống kê tương tác"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Eye className="h-4 w-4 shrink-0 text-primary-600" strokeWidth={2.25} />
-                  {recording.viewCount} xem
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Heart className="h-4 w-4 shrink-0 text-primary-600" strokeWidth={2.25} />
-                  {recording.likeCount} thích
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Download className="h-4 w-4 shrink-0 text-primary-600" strokeWidth={2.25} />
-                  {recording.downloadCount} tải
-                </span>
               </div>
             </div>
 
@@ -305,6 +350,18 @@ export default function RecordingDetailPage() {
                 <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                   {recording.description}
                 </p>
+              </div>
+            )}
+
+            {hasGps && gpsEmbedUrl && (
+              <div className={SURFACE_CARD}>
+                <h2 className="text-base font-semibold mb-3 text-neutral-900">Bản đồ vị trí ghi âm</h2>
+                <iframe
+                  title="Recording location map"
+                  src={gpsEmbedUrl}
+                  className="h-52 w-full rounded-xl border border-neutral-200/80"
+                  loading="lazy"
+                />
               </div>
             )}
 
@@ -354,6 +411,57 @@ export default function RecordingDetailPage() {
                   </dl>
                 </div>
               )}
+
+            {/* Expert annotations (read-only) */}
+            {annotationGroups.length > 0 && (
+              <div className={SURFACE_CARD}>
+                <h2 className="text-base font-semibold mb-3 text-neutral-900">Chú thích chuyên gia</h2>
+                <div className="space-y-4">
+                  {annotationGroups.map((group) => (
+                    <section key={group.key} className="rounded-xl border border-neutral-200 bg-white p-3">
+                      <h3 className="text-sm font-semibold text-primary-800 mb-2">{group.label}</h3>
+                      <ul className="space-y-2">
+                        {group.items.map((item) => {
+                          const timeStart = formatSecondsToTime(item.timestampStart ?? null, '');
+                          const timeEnd = formatSecondsToTime(item.timestampEnd ?? null, '');
+                          const hasTime = Boolean(timeStart || timeEnd);
+                          const citation = (item.researchCitation ?? '').trim();
+                          return (
+                            <li key={item.id} className="rounded-lg border border-neutral-200 bg-surface-panel p-3">
+                              {hasTime && (
+                                <p className="mb-1 text-xs font-medium text-neutral-600">
+                                  {timeStart && timeEnd ? `${timeStart} - ${timeEnd}` : timeStart || timeEnd}
+                                </p>
+                              )}
+                              <p className="text-sm text-neutral-800 whitespace-pre-wrap">
+                                {item.content || '(Không có nội dung)'}
+                              </p>
+                              {citation && (
+                                <p className="mt-2 text-xs text-neutral-700">
+                                  Trích dẫn:{' '}
+                                  {isLikelyHttpUrl(citation) ? (
+                                    <a
+                                      href={citation}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-primary-700 hover:text-primary-800 underline"
+                                    >
+                                      {citation}
+                                    </a>
+                                  ) : (
+                                    <span>{citation}</span>
+                                  )}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Lyrics */}
             {recording.metadata?.lyrics && (
@@ -420,6 +528,32 @@ export default function RecordingDetailPage() {
                     {formatDateTime(recording.uploadedDate)}
                   </dd>
                 </div>
+                {(recordingLocation || hasGps) && (
+                  <div>
+                    <dt className="text-sm text-neutral-500">Vị trí ghi âm</dt>
+                    <dd className="font-medium text-neutral-900 space-y-1">
+                      {recordingLocation && <p>{recordingLocation}</p>}
+                      {hasGps && (
+                        <p>
+                          <span className="inline-flex items-center gap-1 text-neutral-700">
+                            <MapPin className="h-4 w-4 text-primary-600" strokeWidth={2.25} />
+                            {`${gpsLat?.toFixed(6)}, ${gpsLon?.toFixed(6)}`}
+                          </span>
+                          {gpsMapUrl && (
+                            <a
+                              href={gpsMapUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="ml-2 text-primary-700 hover:text-primary-800 underline"
+                            >
+                              Xem bản đồ
+                            </a>
+                          )}
+                        </p>
+                      )}
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
 
@@ -472,13 +606,48 @@ export default function RecordingDetailPage() {
                 </div>
                 <div>
                   <p className="font-medium text-neutral-900">{recording.uploader.fullName}</p>
-                  <p className="text-sm text-neutral-500">@{recording.uploader.username}</p>
+                  {recording.uploader.username ? (
+                    <p className="text-sm text-neutral-500">@{recording.uploader.username}</p>
+                  ) : null}
                 </div>
               </div>
             </div>
           </aside>
         </div>
       </div>
+      {showDisputeModal && recording?.id && user?.id && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4"
+          role="presentation"
+          onClick={() => setShowDisputeModal(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="report-dispute-title"
+            className="w-full max-w-2xl rounded-2xl border border-neutral-200 bg-surface-panel p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 id="report-dispute-title" className="text-lg font-semibold text-neutral-900">
+                Báo cáo tranh chấp bản quyền
+              </h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowDisputeModal(false)}>
+                Đóng
+              </Button>
+            </div>
+            <DisputeReportForm
+              recordingId={recording.id}
+              userId={user.id}
+              onCancel={() => setShowDisputeModal(false)}
+              onSuccess={async () => {
+                setShowDisputeModal(false);
+                await refetchDisputes();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

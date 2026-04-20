@@ -46,7 +46,21 @@ export interface AppNotification {
     | 'recording_edited'
     | 'expert_account_deletion_approved'
     | 'delete_request_rejected'
-    | 'edit_submission_approved';
+    | 'edit_submission_approved'
+    | 'submission_pending_review'
+    | 'submission_approved'
+    | 'submission_rejected'
+    | 'submission_updated'
+    | 'delete_request_forwarded'
+    | 'edit_request_approved'
+    | 'role_changed'
+    | 'account_deactivated'
+    | 'dispute_resolved'
+    | 'embargo_lifted'
+    | 'expert_deletion_requested'
+    | 'submission_claimed'
+    | 'submission_unassigned'
+    | 'account_activated';
   title: string;
   body: string;
   forRoles: UserRole[];

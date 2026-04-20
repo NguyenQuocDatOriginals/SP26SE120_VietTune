@@ -33,9 +33,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               : 'border-neutral-400/80 focus:border-transparent',
             'disabled:opacity-60 disabled:cursor-not-allowed',
             'shadow-sm hover:shadow-md focus:shadow-lg',
+            'bg-surface-panel',
             className,
           )}
-          style={{ backgroundColor: '#FFFCF5' }}
           {...props}
         />
         {error && <p className="mt-0.5 text-xs text-primary-600">{error}</p>}

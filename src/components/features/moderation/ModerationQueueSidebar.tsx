@@ -16,6 +16,7 @@ export function ModerationQueueSidebar({
   onSearchQueryChange,
   items,
   selectedId,
+  currentUserId,
   onSelect,
 }: {
   queueStatusMeta: ModerationQueueStatusMeta;
@@ -27,13 +28,14 @@ export function ModerationQueueSidebar({
   onSearchQueryChange: (v: string) => void;
   items: LocalRecordingMini[];
   selectedId: string | null;
+  currentUserId?: string;
   onSelect: (id: string | null) => void;
 }) {
   const visibleQueueItems = items.filter((it) => it.id);
   return (
     <div
       /* Keep sticky offsets aligned with MainLayout header like Upload/Contributions pages. */
-      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-[#FFFCF5] to-secondary-50/55 shadow-lg backdrop-blur-sm flex flex-col overflow-hidden lg:sticky lg:top-32 lg:self-start lg:max-h-[min(100vh-10rem,56rem)] xl:top-40 xl:max-h-[min(100vh-12rem,56rem)]"
+      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 shadow-lg backdrop-blur-sm flex flex-col overflow-hidden lg:sticky lg:top-32 lg:self-start lg:max-h-[min(100vh-10rem,56rem)] xl:top-40 xl:max-h-[min(100vh-12rem,56rem)]"
       aria-label="Hàng đợi kiểm duyệt (sidebar)"
     >
       <div className="p-4 flex-shrink-0 bg-gradient-to-b from-amber-50/40 to-white">
@@ -102,7 +104,7 @@ export function ModerationQueueSidebar({
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-neutral-600">Sắp xếp theo ngày</label>
+            <p className="block text-xs font-medium text-neutral-600">Sắp xếp theo ngày</p>
             <SearchableDropdown
               value={dateSort === 'newest' ? 'Mới nhất' : 'Cũ nhất'}
               onChange={(val) => onDateSortChange(val === 'Mới nhất' ? 'newest' : 'oldest')}
@@ -142,6 +144,11 @@ export function ModerationQueueSidebar({
                       ? 'border-l-green-500'
                       : 'border-l-red-400';
               const rowTitle = it.basicInfo?.title || it.title || 'Không có tiêu đề';
+              const claimedByMe =
+                !!currentUserId &&
+                status === ModerationStatus.IN_REVIEW &&
+                (it.moderation?.claimedBy === currentUserId ||
+                  it.moderation?.reviewerId === currentUserId);
               return (
                 <div
                   key={it.id}
@@ -154,8 +161,6 @@ export function ModerationQueueSidebar({
                       : `${rowTitle}, trạng thái ${getModerationStatusLabel(status)}`
                   }
                   aria-current={selectedId === it.id ? 'true' : undefined}
-                  aria-posinset={idx + 1}
-                  aria-setsize={visibleQueueItems.length}
                   data-selected={selectedId === it.id ? 'true' : undefined}
                   onClick={() => onSelect(it.id ?? null)}
                   onKeyDown={(e) => {
@@ -198,9 +203,16 @@ export function ModerationQueueSidebar({
                     <h3 className="text-sm font-semibold text-neutral-900 line-clamp-2 pr-1">
                       {rowTitle}
                     </h3>
-                    <span className="w-fit shrink-0 px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-200 text-neutral-900 border border-neutral-400/50">
-                      {getModerationStatusLabel(status)}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1 shrink-0">
+                      <span className="w-fit px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-200 text-neutral-900 border border-neutral-400/50">
+                        {getModerationStatusLabel(status)}
+                      </span>
+                      {claimedByMe && (
+                        <span className="w-fit px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-100 text-primary-800 border border-primary-300/70">
+                          Đã nhận
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-neutral-600">
                     <UserIcon className="h-3.5 w-3.5 shrink-0" />
@@ -234,3 +246,5 @@ export function ModerationQueueSidebar({
     </div>
   );
 }
+
+export default ModerationQueueSidebar;

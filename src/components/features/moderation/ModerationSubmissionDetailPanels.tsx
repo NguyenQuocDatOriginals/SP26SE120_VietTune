@@ -1,8 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
 
 import { EXPERT_API_PHASE2 } from '@/config/expertWorkflowPhase';
+import { MODERATION_EXPERT_TEXTAREA_MAX_LENGTH } from '@/config/validationConstants';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import { ModerationStatus } from '@/types';
+import { toModerationUiStatus } from '@/types/moderation';
 
 export type ModerationSubmissionInfoRow = {
   key: string;
@@ -43,7 +45,7 @@ export function ModerationSubmissionDetailPanels({
     !!submissionId &&
     !!currentUserId &&
     item.moderation?.claimedBy === currentUserId &&
-    item.moderation?.status === ModerationStatus.IN_REVIEW;
+    toModerationUiStatus(item.moderation?.status) === ModerationStatus.IN_REVIEW;
 
   return (
     <>
@@ -68,9 +70,10 @@ export function ModerationSubmissionDetailPanels({
             value={expertReviewNotesDraft}
             onChange={(e) => onExpertReviewNotesChange(submissionId, e.target.value)}
             rows={4}
+            maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
             placeholder="Theo dõi ngữ cảnh, nguồn tham chiếu…"
             aria-describedby={`expert-review-notes-detail-hint-${submissionId}`}
-            className="w-full rounded-xl border border-neutral-200/90 bg-[#FFFCF5] px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-400/60 resize-y min-h-[96px]"
+            className="w-full rounded-xl border border-neutral-200/90 bg-surface-panel px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-400/60 resize-y min-h-[96px]"
           />
         </div>
       )}

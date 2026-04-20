@@ -1,14 +1,14 @@
 import { Search, Music, ArrowRight, ListFilter, X } from 'lucide-react';
-import { useState, useEffect, useCallback, useMemo, useDeferredValue, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import ExploreResultRow from '@/components/features/ExploreResultRow';
 import ExploreSearchHeader, {
   type ExploreSearchMode,
 } from '@/components/features/ExploreSearchHeader';
 import FilterSidebar from '@/components/features/FilterSidebar';
-import RecordingCardCompact from '@/components/features/RecordingCardCompact';
 import { EXPLORE_FILTER_OPTIONS } from '@/constants/exploreFilterOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -17,17 +17,14 @@ import {
   searchFiltersToExploreDraft,
   type ExploreFacetDraft,
 } from '@/features/explore/utils/exploreFacetDraft';
-import {
-  loadExploreRecordings,
-  isExploreRequestAborted,
-  type ExploreDataSource,
-} from '@/features/explore/utils/exploreRecordingsLoad';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useExploreData } from '@/hooks/useExploreData';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { Recording, SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
+import { SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
 import { cn } from '@/utils/helpers';
+import { SURFACE_PANEL_GRADIENT } from '@/utils/surfaceTokens';
 
-const MemoRecordingCard = memo(RecordingCardCompact);
+const EXPLORE_PAGE_SIZE = 20;
 
 function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
   const q = searchParams.get('q')?.trim();
@@ -99,23 +96,6 @@ function buildExploreSearchParams(
   return p;
 }
 
-function exploreDataSourceShortLabel(source: ExploreDataSource): string {
-  switch (source) {
-    case 'recordingGuest':
-      return 'Guest';
-    case 'searchApi':
-      return 'Search API';
-    case 'recordingApi':
-      return 'Recording API';
-    case 'archiveFallback':
-      return 'Archive';
-    case 'semanticLocal':
-      return 'Ngữ nghĩa';
-    default:
-      return '';
-  }
-}
-
 /**
  * Explore — Phase 5 data model (URL = applied state):
  * - `searchMode` → URL `mode` (`keyword` | `semantic`).
@@ -134,12 +114,8 @@ export default function ExplorePage() {
     [searchParams],
   );
 
-  const [recordings, setRecordings] = useState<Recording[]>([]);
-  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(initialFiltersFromUrl);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
-  const [dataSource, setDataSource] = useState<ExploreDataSource>('empty');
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [facetDraft, setFacetDraft] = useState<ExploreFacetDraft>(() =>
     searchFiltersToExploreDraft(initialFiltersFromUrl, EXPLORE_FILTER_OPTIONS),
@@ -147,14 +123,22 @@ export default function ExplorePage() {
   const sqFromUrl = searchParams.get('sq') ?? '';
   const [semanticInput, setSemanticInput] = useState(sqFromUrl);
   const debouncedSemanticInput = useDebounce(semanticInput, 600);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const exploreMode: ExploreSearchMode =
     searchParams.get('mode') === 'semantic' ? 'semantic' : 'keyword';
 
+  const { recordings, loading, totalResults, searchError, setSearchError } = useExploreData({
+    currentPage,
+    exploreMode,
+    filters,
+    sqFromUrl,
+    isAuthenticated,
+  });
+
   const isNarrowViewport = useMediaQuery('(max-width: 1023px)');
   const filterDrawerTriggerRef = useRef<HTMLButtonElement>(null);
   const filterDrawerCloseRef = useRef<HTMLButtonElement>(null);
+  const resultsTopRef = useRef<HTMLDivElement>(null);
 
   const closeFilterDrawer = useCallback(() => {
     setFilterDrawerOpen(false);
@@ -199,66 +183,6 @@ export default function ExplorePage() {
       document.body.style.overflow = prev;
     };
   }, [filterDrawerOpen]);
-
-  const logExploreTelemetry = useCallback(
-    (source: ExploreDataSource, count: number, extra?: Record<string, unknown>) => {
-      if (!import.meta.env.DEV) return;
-      console.info('[ExplorePage]', {
-        source,
-        count,
-        isAuthenticated,
-        page: currentPage,
-        filters,
-        exploreMode,
-        semanticQ: sqFromUrl,
-        ...extra,
-      });
-    },
-    [currentPage, exploreMode, filters, isAuthenticated, sqFromUrl],
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setSearchError(null);
-      try {
-        const r = await loadExploreRecordings({
-          signal: controller.signal,
-          currentPage,
-          exploreMode,
-          filters,
-          sqActive: sqFromUrl.trim(),
-          isAuthenticated,
-        });
-        if (cancelled || controller.signal.aborted) return;
-        setRecordings(r.recordings);
-        setTotalResults(r.totalResults);
-        setDataSource(r.dataSource);
-        setSearchError(r.fetchWarning ?? null);
-        logExploreTelemetry(r.dataSource, r.recordings.length, {
-          ...(r.fetchWarning ? { fallback: true } : {}),
-        });
-      } catch (e) {
-        if (cancelled || controller.signal.aborted || isExploreRequestAborted(e)) return;
-        console.error('Explore load failed:', e);
-        setRecordings([]);
-        setTotalResults(0);
-        setDataSource('empty');
-        setSearchError('Không tải được dữ liệu. Bạn có thể thử lại sau.');
-        logExploreTelemetry('empty', 0, { failed: true });
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [currentPage, exploreMode, filters, isAuthenticated, logExploreTelemetry, sqFromUrl]);
 
   const handleSearch = useCallback(
     (newFilters: SearchFilters) => {
@@ -318,7 +242,7 @@ export default function ExplorePage() {
     setSemanticInput('');
     setSearchError(null);
     setSearchParams({}, { replace: true });
-  }, [setSearchParams]);
+  }, [setSearchError, setSearchParams]);
 
   useEffect(() => {
     const next = filtersFromSearchParams(searchParams);
@@ -327,15 +251,20 @@ export default function ExplorePage() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (currentPage <= 1) return;
+    resultsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [currentPage]);
+
+  useEffect(() => {
     setFacetDraft(searchFiltersToExploreDraft(filters, EXPLORE_FILTER_OPTIONS));
   }, [filters]);
 
   const hasFilters = Object.keys(filters).length > 0;
   const hasSemanticQuery = sqFromUrl.trim().length > 0;
   const filterBadgeActive = hasFilters || hasSemanticQuery;
+  const totalPages = Math.max(1, Math.ceil(totalResults / EXPLORE_PAGE_SIZE));
 
   const deferredRecordings = useDeferredValue(recordings);
-  const cardSourceLabel = useMemo(() => exploreDataSourceShortLabel(dataSource), [dataSource]);
 
   const handleFacetApply = useCallback(() => {
     const next = exploreDraftToSearchFilters(facetDraft);
@@ -354,7 +283,7 @@ export default function ExplorePage() {
   }, [clearAllExplore]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-50 via-[#F9F5EF] to-secondary-50/35">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header — responsive; wraps on small screens */}
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 lg:mb-8">
@@ -405,7 +334,7 @@ export default function ExplorePage() {
           <aside
             id="explore-filter-drawer"
             className={cn(
-              'flex min-h-0 max-h-[min(100vh-6rem,56rem)] flex-col overflow-hidden rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-[#FFFCF5] to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:max-h-[calc(100vh-7rem)]',
+              'flex min-h-0 max-h-[min(100vh-6rem,56rem)] flex-col overflow-hidden rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:max-h-[calc(100vh-7rem)]',
               'lg:sticky lg:top-24 lg:self-start',
               'max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-50 max-lg:h-full max-lg:max-h-none max-lg:max-w-[min(100vw,22rem)] max-lg:w-full max-lg:rounded-none max-lg:rounded-l-2xl max-lg:border-y-0 max-lg:border-r-0',
               filterDrawerOpen
@@ -471,7 +400,8 @@ export default function ExplorePage() {
               semanticBusy={loading && exploreMode === 'semantic'}
             />
             <div
-              className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 mb-8 lg:mb-0"
+              ref={resultsTopRef}
+              className={cn(SURFACE_PANEL_GRADIENT, 'p-6 sm:p-8 mb-8 lg:mb-0')}
               aria-live="polite"
               aria-busy={loading}
             >
@@ -516,9 +446,7 @@ export default function ExplorePage() {
                   {(hasFilters || hasSemanticQuery) && (
                     <button
                       type="button"
-                      onClick={() => {
-                        clearAllExplore();
-                      }}
+                      onClick={clearAllExplore}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
                     >
                       Xóa bộ lọc
@@ -535,32 +463,39 @@ export default function ExplorePage() {
                         ? `Tìm thấy ${totalResults} bản thu`
                         : `Có ${totalResults} bản thu đã được kiểm duyệt`}
                   </p>
-                  <p className="text-[11px] text-neutral-500 mb-6">
-                    Nguồn dữ liệu:{' '}
-                    {dataSource === 'recordingGuest'
-                      ? 'recordingGuest (guest)'
-                      : dataSource === 'searchApi'
-                        ? 'Search API'
-                        : dataSource === 'recordingApi'
-                          ? 'Recording API'
-                          : dataSource === 'archiveFallback'
-                            ? 'Archive fallback'
-                            : dataSource === 'semanticLocal'
-                              ? 'Xếp hạng ngữ nghĩa (trên máy)'
-                              : 'Không có dữ liệu'}
-                  </p>
-                  <ul className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {deferredRecordings.map((r) => (
-                      <li key={r.id} className="min-w-0">
-                        <MemoRecordingCard
-                          recording={r}
-                          to={`/recordings/${r.id}`}
-                          linkState={{ from: returnTo }}
-                          sourceLabel={cardSourceLabel}
-                        />
-                      </li>
+                  <div className="space-y-4">
+                    {deferredRecordings.map((r, idx) => (
+                      <ExploreResultRow
+                        key={r.id ?? `${r.title ?? 'recording'}-${idx}`}
+                        recording={r}
+                        returnTo={returnTo}
+                        rowIndex={idx}
+                      />
                     ))}
-                  </ul>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Trước
+                      </button>
+                      <span className="px-3 text-sm font-medium text-neutral-600">
+                        Trang {currentPage} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>

@@ -7,6 +7,7 @@ export {
   type MessageKey,
 } from './messageCatalog';
 export {
+  normalizeApiError,
   normalizeAxiosError,
   attachNormalizedApiError,
   getNormalizedApiError,

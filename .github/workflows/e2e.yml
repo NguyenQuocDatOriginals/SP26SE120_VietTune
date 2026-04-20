@@ -8,6 +8,7 @@ on:
     branches: [main, master, develop, FE-API]
   pull_request:
     branches: [main, master, develop, FE-API]
+  workflow_dispatch:
 
 concurrency:
   group: e2e-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -27,6 +28,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate API types are up to date
+        run: |
+          npm run api:generate
+          git diff --exit-code src/api/generated.d.ts
 
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
@@ -68,3 +74,53 @@ jobs:
   #         CI: true
   #         E2E_CONTRIBUTOR_EMAIL: ${{ secrets.E2E_CONTRIBUTOR_EMAIL }}
   #         E2E_CONTRIBUTOR_PASSWORD: ${{ secrets.E2E_CONTRIBUTOR_PASSWORD }}
+
+  # Full features (multi-role) — chỉ chạy khi bạn chủ động bấm Run workflow và đã set secrets.
+  playwright-features:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E features (guest + multi-role; Real API)
+        run: npm run test:e2e:features:ci
+        env:
+          CI: true
+          PW_BASE_URL: ${{ vars.PW_BASE_URL }}
+          E2E_CONTRIBUTOR_EMAIL: ${{ secrets.E2E_CONTRIBUTOR_EMAIL }}
+          E2E_CONTRIBUTOR_PASSWORD: ${{ secrets.E2E_CONTRIBUTOR_PASSWORD }}
+          E2E_EXPERT_EMAIL: ${{ secrets.E2E_EXPERT_EMAIL }}
+          E2E_EXPERT_PASSWORD: ${{ secrets.E2E_EXPERT_PASSWORD }}
+          E2E_RESEARCHER_EMAIL: ${{ secrets.E2E_RESEARCHER_EMAIL }}
+          E2E_RESEARCHER_PASSWORD: ${{ secrets.E2E_RESEARCHER_PASSWORD }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+
+      - name: Upload Playwright report (features)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-features
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload JUnit (features)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-junit-features
+          path: test-results/junit.xml
+          retention-days: 14
+          if-no-files-found: ignore

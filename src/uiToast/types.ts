@@ -1,4 +1,4 @@
-/** Normalized API error attached by Axios response interceptor — no toast here. */
+/** Chuẩn hoá lỗi API (gắn qua interceptor hoặc suy ra từ `response` lỗi HTTP). */
 export type NormalizedApiError = {
   /** e.g. HTTP_403, NETWORK, TIMEOUT */
   code: string;

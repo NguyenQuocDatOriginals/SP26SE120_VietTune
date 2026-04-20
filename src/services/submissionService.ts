@@ -1,7 +1,12 @@
-import axios from 'axios';
-
-import { api } from './api';
 import { extractSubmissionRows } from './submissionApiMapper';
+
+import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
+import type {
+  ApiSubmissionActionQuery,
+  ApiSubmissionGetByStatusQuery,
+  ApiSubmissionMyQuery,
+} from '@/api';
+import { getHttpStatus } from '@/utils/httpError';
 
 // Types matching the backend response
 export interface SubmissionRecording {
@@ -56,6 +61,26 @@ interface SubmissionDetailResponse {
   isSuccess: boolean;
   message: string;
   data: Submission;
+}
+
+type SubmissionListApiResponse =
+  | Submission[]
+  | {
+      isSuccess?: boolean;
+      message?: string;
+      data?: Submission[] | Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      Data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      items?: Record<string, unknown>[];
+      Items?: Record<string, unknown>[];
+    };
+
+function toSubmissionStatus(
+  value: number,
+): ApiSubmissionGetByStatusQuery['status'] {
+  if (value === 0 || value === 1 || value === 2 || value === 3 || value === 4 || value === 5) {
+    return value;
+  }
+  return undefined;
 }
 
 function pickField(row: Record<string, unknown> | null | undefined, ...keys: string[]): unknown {
@@ -174,7 +199,7 @@ export const submissionService = {
    */
   getMySubmissions: async (userId: string, page: number = 1, pageSize: number = 10) => {
     const uid = userId.trim().toLowerCase();
-    const attempts: Array<Record<string, unknown>> = [
+    const attempts: ApiSubmissionMyQuery[] = [
       { page, pageSize, userId },
       { page, pageSize },
     ];
@@ -183,7 +208,13 @@ export const submissionService = {
     for (let attemptIndex = 0; attemptIndex < attempts.length; attemptIndex++) {
       const params = attempts[attemptIndex];
       try {
-        const raw = await api.get<unknown>('/Submission/my', { params });
+        const raw = await apiOk(
+          asApiEnvelope<SubmissionListApiResponse>(
+            apiFetch.GET('/api/Submission/my', {
+              params: { query: openApiQueryRecord(params) },
+            }),
+          ),
+        );
 
         const env = raw as Record<string, unknown> | null;
         const rows = extractSubmissionRows(raw);
@@ -207,7 +238,7 @@ export const submissionService = {
         return { isSuccess, message, data: filtered } satisfies SubmissionListResponse;
       } catch (err) {
         lastErr = err;
-        const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+        const status = getHttpStatus(err);
 
         // Chỉ fallback khi endpoint có thể yêu cầu/không yêu cầu userId.
         // Các mã khác (401/500/...) thì không nên che giấu.
@@ -223,37 +254,67 @@ export const submissionService = {
 
   /** Get submissions by status (paginated) */
   getSubmissionsByStatus: async (status: number, page: number = 1, pageSize: number = 10) => {
-    return api.get<SubmissionListResponse>(
-      `/Submission/get-by-status?status=${status}&page=${page}&pageSize=${pageSize}`,
+    const params: ApiSubmissionGetByStatusQuery = {
+      status: toSubmissionStatus(status),
+      page,
+      pageSize,
+    };
+    return apiOk(
+      asApiEnvelope<SubmissionListResponse>(
+        apiFetch.GET('/api/Submission/get-by-status', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
     );
   },
 
   /** Get submission detail by ID */
   getSubmissionById: async (id: string) => {
-    return api.get<SubmissionDetailResponse>(`/Submission/${id}`);
+    return apiOk(
+      asApiEnvelope<SubmissionDetailResponse>(
+        apiFetch.GET('/api/Submission/{id}', {
+          params: { path: { id } },
+        }),
+      ),
+    );
   },
 
   /** Delete a submission */
   deleteSubmission: async (id: string) => {
-    return api.delete<{ isSuccess: boolean; message: string }>(`/Submission/${id}`);
+    return apiOk(
+      asApiEnvelope<{ isSuccess: boolean; message: string }>(
+        apiFetch.DELETE('/api/Submission/{id}', {
+          params: { path: { id } },
+        }),
+      ),
+    );
   },
 
   /** Confirm submission (final step) */
   confirmSubmission: async (submissionId: string) => {
-    return api.put<{ isSuccess: boolean; message: string; data: boolean }>(
-      `/Submission/confirm-submit-submission?submissionId=${submissionId}`,
-      {},
+    const params: ApiSubmissionActionQuery = { submissionId };
+    return apiOk(
+      asApiEnvelope<{ isSuccess: boolean; message: string; data: boolean }>(
+        apiFetch.PUT('/api/Submission/confirm-submit-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
     );
   },
 
-  /** Request edit for a submission */
+  /** Request edit for a submission (contributor asks admin for edit while pending). */
   requestEditSubmission: async (submissionId: string) => {
-    // We send submissionId as a JSON string `"guid"` assuming it binds to [FromBody] Guid submissionId
-    // or we might need { submissionId } depending on backend. We will try passing just the string wrapper.
-    return api.put<{ isSuccess: boolean; message: string; data: boolean }>(
-      '/Submission/edit-request-submission',
-      `"${submissionId}"`,
-      { headers: { 'Content-Type': 'application/json' } },
+    const id = String(submissionId ?? '').trim();
+    if (!id) {
+      return Promise.reject(new Error('submissionId is required'));
+    }
+    const params: ApiSubmissionActionQuery = { submissionId: id };
+    return apiOk(
+      asApiEnvelope<{ isSuccess: boolean; message: string; data: boolean }>(
+        apiFetch.PUT('/api/Submission/edit-request-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
     );
   },
 };

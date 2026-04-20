@@ -1,5 +1,13 @@
 import { ChevronDown, Search, X } from 'lucide-react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+  type KeyboardEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { normalizeSearchText, scoreSearchOption } from '@/utils/searchText';
@@ -12,7 +20,9 @@ function isClickOnScrollbar(event: MouseEvent): boolean {
   return false;
 }
 
-/** Dropdown UI đồng bộ UploadMusic/SearchBar: button rounded-full, panel searchable, #FFFCF5 */
+export type SearchableDropdownVariant = 'default' | 'upload';
+
+/** Dropdown UI đồng bộ UploadMusic/SearchBar: button rounded-full, panel searchable, bg-surface-panel */
 export default function SearchableDropdown({
   value,
   onChange,
@@ -20,10 +30,10 @@ export default function SearchableDropdown({
   placeholder = 'Tất cả',
   searchable = true,
   disabled = false,
-  /** Khi truyền `isOpen` + `onOpenChange`, trạng thái mở/đóng do cha quản lý (nhóm dropdown độc quyền). */
   isOpen: isOpenControlled,
   onOpenChange,
   ariaLabel,
+  variant = 'default',
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -34,7 +44,10 @@ export default function SearchableDropdown({
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   ariaLabel?: string;
+  variant?: SearchableDropdownVariant;
 }) {
+  const isUpload = variant === 'upload';
+
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const controlled = isOpenControlled !== undefined;
   const menuOpen = controlled ? Boolean(isOpenControlled) : uncontrolledOpen;
@@ -57,22 +70,48 @@ export default function SearchableDropdown({
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [menuRect, setMenuRect] = useState<DOMRect | null>(null);
 
-  const sanitizedOptions = Array.from(new Set(options.map((x) => x.trim()).filter(Boolean)));
   const normalizedQuery = normalizeSearchText(debouncedSearch);
-  const filteredOptions = normalizedQuery
-    ? sanitizedOptions
-        .map((option) => ({ option, score: scoreSearchOption(option, normalizedQuery) }))
-        .filter((x) => x.score >= 0)
-        .sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score;
-          return a.option.localeCompare(b.option, 'vi');
-        })
-        .map((x) => x.option)
-    : sanitizedOptions;
+  const filteredOptions = useMemo(() => {
+    const sanitized = Array.from(new Set(options.map((x) => x.trim()).filter(Boolean)));
+    if (!normalizedQuery) return sanitized;
+    return sanitized
+      .map((option) => ({ option, score: scoreSearchOption(option, normalizedQuery) }))
+      .filter((x) => x.score >= 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.option.localeCompare(b.option, 'vi');
+      })
+      .map((x) => x.option);
+  }, [options, normalizedQuery]);
+
+  const optionsToRender = useMemo(() => {
+    if (isUpload || !value) return filteredOptions;
+    return [placeholder, ...filteredOptions];
+  }, [isUpload, value, placeholder, filteredOptions]);
 
   const handleSearchInput = useCallback((raw: string) => {
     setSearch(raw);
   }, []);
+
+  const closeAndClearSearch = useCallback(() => {
+    setMenuOpen(false);
+    setSearch('');
+    setDebouncedSearch('');
+  }, [setMenuOpen]);
+
+  const commitSelectionFromClick = useCallback(
+    (option: string) => {
+      if (isUpload) {
+        if (option === value && value) onChange('');
+        else onChange(option);
+      } else {
+        if (option === placeholder && value) onChange('');
+        else onChange(option);
+      }
+      closeAndClearSearch();
+    },
+    [isUpload, value, placeholder, onChange, closeAndClearSearch],
+  );
 
   useEffect(() => {
     const id = window.setTimeout(() => setDebouncedSearch(search), 150);
@@ -89,6 +128,11 @@ export default function SearchableDropdown({
     }
   }, [menuOpen, search]);
 
+  useLayoutEffect(() => {
+    if (!menuOpen || !searchable) return;
+    inputRef.current?.focus();
+  }, [menuOpen, searchable]);
+
   useEffect(() => {
     setActiveOptionIndex(0);
   }, [debouncedSearch, value, menuOpen]);
@@ -98,8 +142,6 @@ export default function SearchableDropdown({
     const node = optionRefs.current[activeOptionIndex];
     node?.scrollIntoView({ block: 'nearest' });
   }, [activeOptionIndex, menuOpen, filteredOptions.length]);
-
-  const optionsToRender = value ? [placeholder, ...filteredOptions] : filteredOptions;
 
   const getLabelWithHighlight = useCallback(
     (label: string) => {
@@ -151,27 +193,82 @@ export default function SearchableDropdown({
 
   const displayLabel = value || placeholder;
 
+  const onSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!optionsToRender.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveOptionIndex((prev) => Math.min(prev + 1, optionsToRender.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveOptionIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const picked = optionsToRender[activeOptionIndex];
+      if (isUpload) {
+        if (picked === value && value) onChange('');
+        else if (picked) onChange(picked);
+      } else if (picked === placeholder) {
+        onChange('');
+      } else if (picked) {
+        onChange(picked);
+      }
+      closeAndClearSearch();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAndClearSearch();
+      buttonRef.current?.focus();
+    }
+  };
+
+  const rootClass = 'relative w-full min-w-0';
+  const buttonClass = isUpload
+    ? `w-full px-5 py-3 pr-10 text-neutral-900 border border-neutral-400 rounded-xl focus:outline-none focus:border-primary-500 transition-all duration-200 text-left flex items-center justify-between shadow-sm hover:shadow-md ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+      } bg-surface-panel`
+    : `group w-full min-h-[2.75rem] px-4 py-2.5 pr-10 text-neutral-900 border border-neutral-300/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500 transition-all duration-200 text-left flex items-center gap-2 shadow-sm hover:border-primary-300/80 hover:shadow bg-surface-panel ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+      }`;
+
+  const panelClass = isUpload
+    ? 'rounded-2xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-300 bg-surface-panel'
+    : 'rounded-xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-200 bg-surface-panel';
+
+  const searchSectionClass = isUpload
+    ? 'p-3 border-b border-neutral-200'
+    : 'p-2.5 border-b border-neutral-200/90';
+
+  const searchInputClass = isUpload
+    ? 'w-full pl-9 pr-9 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-400/80 rounded-xl focus:outline-none focus:border-primary-500 text-sm shadow-sm hover:shadow-md transition-all duration-200 bg-surface-panel'
+    : 'w-full pl-9 pr-9 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-300/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm shadow-sm bg-white';
+
+  const emptyPadding = isUpload ? 'px-5 py-3' : 'px-4 py-3';
+
   return (
-    <div ref={dropdownRef} className="relative w-full min-w-0">
+    <div ref={dropdownRef} className={rootClass}>
       <button
         ref={buttonRef}
         type="button"
         onClick={() => !disabled && setMenuOpen(!menuOpen)}
         disabled={disabled}
-        className={`group w-full min-h-[2.75rem] px-4 py-2.5 pr-10 text-neutral-900 border border-neutral-300/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500 transition-all duration-200 text-left flex items-center gap-2 shadow-sm hover:border-primary-300/80 hover:shadow ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer bg-white'}`}
-        style={{ backgroundColor: '#FFFCF5' }}
+        className={buttonClass}
         title={displayLabel}
         aria-expanded={menuOpen}
         aria-haspopup="listbox"
         aria-label={ariaLabel}
       >
         <span
-          className={`min-w-0 flex-1 truncate text-sm leading-snug ${value ? 'text-neutral-900 font-medium' : 'text-neutral-500 font-normal'}`}
+          className={
+            isUpload
+              ? value
+                ? 'text-neutral-900 font-medium text-sm'
+                : 'text-neutral-400 text-sm'
+              : `min-w-0 flex-1 truncate text-sm leading-snug ${value ? 'text-neutral-900 font-medium' : 'text-neutral-500 font-normal'}`
+          }
         >
           {displayLabel}
         </span>
         <ChevronDown
-          className={`h-4 w-4 flex-shrink-0 text-neutral-500 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
+          className={`${isUpload ? 'h-5 w-5' : 'h-4 w-4 flex-shrink-0'} text-neutral-500 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
           strokeWidth={2.5}
           aria-hidden
         />
@@ -184,9 +281,8 @@ export default function SearchableDropdown({
             ref={(el) => {
               menuRef.current = el;
             }}
-            className="rounded-xl border border-neutral-300/80 shadow-xl backdrop-blur-sm overflow-hidden transition-all duration-200"
+            className={panelClass}
             style={{
-              backgroundColor: '#FFFCF5',
               position: 'absolute',
               left: Math.max(8, menuRect.left + (window.scrollX ?? 0)),
               top: menuRect.bottom + (window.scrollY ?? 0) + 8,
@@ -197,7 +293,7 @@ export default function SearchableDropdown({
             aria-label={ariaLabel}
           >
             {searchable && (
-              <div className="p-2.5 border-b border-neutral-200/90">
+              <div className={searchSectionClass}>
                 <div className="relative">
                   <Search
                     className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400"
@@ -209,35 +305,9 @@ export default function SearchableDropdown({
                     value={search}
                     onChange={(e) => handleSearchInput(e.target.value)}
                     onInput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
-                    onKeyDown={(e) => {
-                      if (!optionsToRender.length) return;
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setActiveOptionIndex((prev) =>
-                          Math.min(prev + 1, optionsToRender.length - 1),
-                        );
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setActiveOptionIndex((prev) => Math.max(prev - 1, 0));
-                      } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const picked = optionsToRender[activeOptionIndex];
-                        if (picked === placeholder) onChange('');
-                        else if (picked) onChange(picked);
-                        setMenuOpen(false);
-                        setSearch('');
-                        setDebouncedSearch('');
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        setMenuOpen(false);
-                        setSearch('');
-                        setDebouncedSearch('');
-                        buttonRef.current?.focus();
-                      }
-                    }}
+                    onKeyDown={onSearchKeyDown}
                     placeholder="Tìm kiếm..."
-                    className="w-full pl-9 pr-9 py-2 text-neutral-900 placeholder-neutral-500 border border-neutral-300/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-sm shadow-sm bg-white"
-                    autoFocus
+                    className={searchInputClass}
                   />
                   {search.trim() && (
                     <button
@@ -254,9 +324,11 @@ export default function SearchableDropdown({
                     </button>
                   )}
                 </div>
-                <p className="mt-1 text-[11px] text-neutral-500 px-1">
-                  {filteredOptions.length} kết quả
-                </p>
+                {!isUpload && (
+                  <p className="mt-1 text-[11px] text-neutral-500 px-1">
+                    {filteredOptions.length} kết quả
+                  </p>
+                )}
               </div>
             )}
             <div
@@ -267,7 +339,7 @@ export default function SearchableDropdown({
               }}
             >
               {filteredOptions.length === 0 ? (
-                <div className="px-4 py-3 text-neutral-400 text-sm text-center">
+                <div className={`${emptyPadding} text-neutral-400 text-sm text-center`}>
                   Không tìm thấy kết quả
                 </div>
               ) : (
@@ -279,22 +351,26 @@ export default function SearchableDropdown({
                         optionRefs.current[idx] = el;
                       }}
                       type="button"
-                      onClick={() => {
-                        if (option === placeholder && value) onChange('');
-                        else onChange(option);
-                        setMenuOpen(false);
-                        setSearch('');
-                        setDebouncedSearch('');
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors cursor-pointer ${
-                        idx === activeOptionIndex ? 'ring-1 ring-primary-300/70' : ''
-                      } ${
-                        value === option
-                          ? 'bg-primary-600 text-white font-medium'
-                          : option === placeholder
-                            ? 'text-neutral-600 hover:bg-primary-50 hover:text-primary-800 border-b border-neutral-200/80'
-                            : 'text-neutral-900 hover:bg-primary-50 hover:text-primary-800'
-                      }`}
+                      onClick={() => commitSelectionFromClick(option)}
+                      className={
+                        isUpload
+                          ? `w-full px-5 py-3 text-left text-sm transition-all duration-200 cursor-pointer ${
+                              idx === activeOptionIndex ? 'ring-2 ring-primary-400/40' : ''
+                            } ${
+                              value === option
+                                ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-medium'
+                                : 'text-neutral-900 hover:bg-primary-100/90 hover:text-primary-700'
+                            }`
+                          : `w-full px-4 py-2.5 text-left text-sm transition-colors cursor-pointer ${
+                              idx === activeOptionIndex ? 'ring-1 ring-primary-300/70' : ''
+                            } ${
+                              value === option
+                                ? 'bg-primary-600 text-white font-medium'
+                                : option === placeholder
+                                  ? 'text-neutral-600 hover:bg-primary-50 hover:text-primary-800 border-b border-neutral-200/80'
+                                  : 'text-neutral-900 hover:bg-primary-50 hover:text-primary-800'
+                            }`
+                      }
                       onMouseEnter={() => setActiveOptionIndex(idx)}
                     >
                       {getLabelWithHighlight(option)}

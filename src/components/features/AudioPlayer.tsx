@@ -11,7 +11,7 @@ import {
   Music,
   Repeat,
 } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import WaveformProgressBar from './WaveformProgressBar';
@@ -87,7 +87,7 @@ export default function AudioPlayer({
   const myId = useId();
   const activeMediaId = useMediaFocusStore((s) => s.activeMediaId);
   const setActiveMediaId = useMediaFocusStore((s) => s.setActiveMediaId);
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const location = useLocation();
   const isExpert = String(user?.role) === UserRole.EXPERT;
@@ -317,13 +317,30 @@ export default function AudioPlayer({
   const displayTime = isDragging && dragTime !== null ? dragTime : currentTime;
   const progressPercent = duration ? (displayTime / duration) * 100 : 0;
 
+  const volumeFillStyle = useMemo(
+    () => ({
+      width: `${(isMuted ? 0 : displayVolume) * 100}%`,
+      transition: isDraggingVolume ? 'none' : 'width 0.1s linear',
+    }),
+    [isMuted, displayVolume, isDraggingVolume],
+  );
+  const volumeThumbStyle = useMemo(
+    () => ({
+      left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
+      opacity: isDraggingVolume ? 1 : 0,
+      transition: isDraggingVolume
+        ? 'opacity 0s, transform 0.2s'
+        : 'opacity 0.2s, transform 0.2s',
+    }),
+    [isMuted, displayVolume, isDraggingVolume],
+  );
+
   // Container version with delete button and metadata
   if (showContainer && recording) {
     return (
       <div className={className}>
         <div
-          className="p-5 rounded-xl border border-neutral-200 cursor-pointer"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="p-5 rounded-xl border border-neutral-200 cursor-pointer bg-surface-panel"
           onClick={handleContainerClick}
         >
           {/* Audio Player (Full Version) */}
@@ -335,8 +352,7 @@ export default function AudioPlayer({
             )}
 
             <div
-              className="p-6 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="p-6 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
             >
               {/* Title & Artist */}
               {(title || artist) && (
@@ -483,21 +499,12 @@ export default function AudioPlayer({
                     <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/volume transition-all duration-200 hover:h-2.5 will-change-[height]">
                       <div
                         className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                        style={{
-                          width: `${(isMuted ? 0 : displayVolume) * 100}%`,
-                          transition: isDraggingVolume ? 'none' : 'width 0.1s linear',
-                        }}
+                        style={volumeFillStyle}
                       />
                       {/* Thumb */}
                       <div
                         className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-lg transition-transform duration-200 will-change-transform"
-                        style={{
-                          left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
-                          opacity: isDraggingVolume ? 1 : 0,
-                          transition: isDraggingVolume
-                            ? 'opacity 0s, transform 0.2s'
-                            : 'opacity 0.2s, transform 0.2s',
-                        }}
+                        style={volumeThumbStyle}
                       />
                     </div>
                   </div>
@@ -512,10 +519,7 @@ export default function AudioPlayer({
                     title="Lùi 5 giây"
                   >
                     <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-                    <span
-                      className="absolute text-[10px] font-bold text-neutral-800"
-                      style={{ marginTop: '1px' }}
-                    >
+                    <span className="absolute text-[10px] font-bold text-neutral-800 mt-px">
                       5
                     </span>
                   </button>
@@ -542,10 +546,7 @@ export default function AudioPlayer({
                     title="Tiến 5 giây"
                   >
                     <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-                    <span
-                      className="absolute text-[10px] font-bold text-neutral-800"
-                      style={{ marginTop: '1px' }}
-                    >
+                    <span className="absolute text-[10px] font-bold text-neutral-800 mt-px">
                       5
                     </span>
                   </button>
@@ -668,8 +669,7 @@ export default function AudioPlayer({
         <audio ref={audioRef} src={src} preload="metadata" />
       )}
       <div
-        className="p-6 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-        style={{ backgroundColor: '#FFFCF5' }}
+        className="p-6 border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
       >
         {/* Title & Artist */}
         {(title || artist) && (
@@ -847,21 +847,12 @@ export default function AudioPlayer({
               <div className="relative h-2 bg-neutral-200/80 rounded-full cursor-pointer group/volume transition-all duration-200 hover:h-2.5 will-change-[height]">
                 <div
                   className="h-full bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-sm will-change-[width]"
-                  style={{
-                    width: `${(isMuted ? 0 : displayVolume) * 100}%`,
-                    transition: isDraggingVolume ? 'none' : 'width 0.1s linear',
-                  }}
+                  style={volumeFillStyle}
                 />
                 {/* Thumb */}
                 <div
                   className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary-600 rounded-full shadow-md border-2 border-white cursor-grab active:cursor-grabbing hover:scale-125 hover:shadow-lg transition-transform duration-200 will-change-transform"
-                  style={{
-                    left: `calc(${(isMuted ? 0 : displayVolume) * 100}% - 7px)`,
-                    opacity: isDraggingVolume ? 1 : 0,
-                    transition: isDraggingVolume
-                      ? 'opacity 0s, transform 0.2s'
-                      : 'opacity 0.2s, transform 0.2s',
-                  }}
+                  style={volumeThumbStyle}
                 />
               </div>
             </div>
@@ -876,10 +867,7 @@ export default function AudioPlayer({
               title="Lùi 5 giây"
             >
               <RotateCcw className="w-5 h-5" strokeWidth={2.5} />
-              <span
-                className="absolute text-[10px] font-bold text-neutral-800"
-                style={{ marginTop: '1px' }}
-              >
+              <span className="absolute text-[10px] font-bold text-neutral-800 mt-px">
                 5
               </span>
             </button>
@@ -905,10 +893,7 @@ export default function AudioPlayer({
               title="Tiến 5 giây"
             >
               <RotateCw className="w-5 h-5" strokeWidth={2.5} />
-              <span
-                className="absolute text-[10px] font-bold text-neutral-800"
-                style={{ marginTop: '1px' }}
-              >
+              <span className="absolute text-[10px] font-bold text-neutral-800 mt-px">
                 5
               </span>
             </button>

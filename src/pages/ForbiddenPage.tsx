@@ -9,7 +9,7 @@ interface ForbiddenPageProps {
 
 export default function ForbiddenPage({ message }: ForbiddenPageProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-50">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-transparent">
       <div className="text-center">
         <h1 className="text-9xl font-bold text-primary-600">403</h1>
         <h2 className="text-3xl font-semibold text-neutral-900 mb-4">Truy cập bị từ chối</h2>

@@ -1,4 +1,4 @@
-import { api } from '@/services/api';
+import { legacyApi } from '@/api/legacyHttp';
 import type { ServiceApiClient } from '@/services/serviceApiClient';
 import { logServiceWarn } from '@/services/serviceLogger';
 
@@ -39,5 +39,5 @@ export function createGeocodeService(client: ServiceApiClient) {
   };
 }
 
-const geocodeService = createGeocodeService(api);
+const geocodeService = createGeocodeService(legacyApi);
 export const getAddressFromCoordinates = geocodeService.getAddressFromCoordinates;

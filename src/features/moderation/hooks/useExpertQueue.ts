@@ -20,7 +20,7 @@ export function useExpertQueue(opts: {
     if (queueLoadInFlightRef.current) return;
     queueLoadInFlightRef.current = true;
     try {
-      const all = (await expertWorkflowService.getQueue()) as LocalRecordingMini[];
+      const all = (await expertWorkflowService.getQueue(userId)) as LocalRecordingMini[];
       const migrated = migrateVideoDataToVideoData(all);
       const { expertItems, visibleItems } = projectModerationLists(
         migrated,
