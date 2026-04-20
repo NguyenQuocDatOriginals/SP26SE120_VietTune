@@ -1,10 +1,42 @@
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import { Region, RecordingQuality, RecordingType, UserRole, VerificationStatus } from '@/types';
 import type { Recording } from '@/types';
+import type { LocalRecording } from '@/types';
 import { buildTagsFromLocal } from '@/utils/recordingTags';
 
+function sanitizeExpertTagList(tags: string[]): string[] {
+  const seen = new Set<string>();
+  return tags
+    .map((t) => String(t).trim())
+    .filter((t) => t.length > 0 && !/^ID:/i.test(t))
+    .filter((t) => {
+      if (seen.has(t)) return false;
+      seen.add(t);
+      return true;
+    });
+}
+
+function ethnicityDisplayName(raw: string | undefined): string {
+  const t = raw?.trim() ?? '';
+  if (!t || /^ID:/i.test(t)) return 'Không xác định';
+  return t;
+}
+
 /** Minimal `Recording` shape for AudioPlayer/VideoPlayer inside the verification wizard. */
-export function buildRecordingForModerationWizard(item: LocalRecordingMini): Recording {
+export function buildRecordingForModerationWizard(
+  item: LocalRecordingMini,
+  opts?: { culturalContext?: LocalRecordingMini['culturalContext'] },
+): Recording {
+  const ctx = opts?.culturalContext ?? item.culturalContext;
+  const forTags: LocalRecordingMini = { ...item, culturalContext: ctx };
+  let tags = sanitizeExpertTagList(buildTagsFromLocal(forTags));
+  const ethLabel = ethnicityDisplayName(ctx?.ethnicity);
+  if (ethLabel !== 'Không xác định') {
+    tags = tags.filter((t) => t !== ethLabel);
+  }
+  const regionForDisplay =
+    ctx?.region?.trim() && !/^ID:/i.test(ctx.region.trim()) ? ctx.region.trim() : undefined;
+
   return {
     id: item.id ?? '',
     title: item.basicInfo?.title || item.title || 'Không có tiêu đề',
@@ -12,21 +44,15 @@ export function buildRecordingForModerationWizard(item: LocalRecordingMini): Rec
     description: 'Bản thu đang chờ kiểm duyệt',
     ethnicity: {
       id: 'local',
-      name: item.culturalContext?.ethnicity || 'Không xác định',
-      nameVietnamese: item.culturalContext?.ethnicity || 'Không xác định',
-      region: (() => {
-        const regionKey = item.culturalContext?.region as keyof typeof Region;
-        return Region[regionKey] ?? Region.RED_RIVER_DELTA;
-      })(),
+      name: ethLabel,
+      nameVietnamese: ethLabel,
+      region: Region.RED_RIVER_DELTA,
       recordingCount: 0,
     },
-    region: (() => {
-      const regionKey = item.culturalContext?.region as keyof typeof Region;
-      return Region[regionKey] ?? Region.RED_RIVER_DELTA;
-    })(),
+    region: Region.RED_RIVER_DELTA,
     recordingType: RecordingType.OTHER,
-    duration: 0,
-    audioUrl: item.audioData ?? '',
+    duration: typeof item.duration === 'number' ? item.duration : 0,
+    audioUrl: item.audioData ?? item.audioUrl ?? '',
     instruments: [],
     performers: [],
     uploadedDate: item.uploadedAt || new Date().toISOString(),
@@ -39,7 +65,7 @@ export function buildRecordingForModerationWizard(item: LocalRecordingMini): Rec
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-    tags: buildTagsFromLocal(item),
+    tags,
     metadata: { recordingQuality: RecordingQuality.FIELD_RECORDING, lyrics: '' },
     verificationStatus:
       item.moderation?.status === 'APPROVED'
@@ -48,5 +74,13 @@ export function buildRecordingForModerationWizard(item: LocalRecordingMini): Rec
     viewCount: 0,
     likeCount: 0,
     downloadCount: 0,
+    ...(regionForDisplay
+      ? {
+          _originalLocalData: {
+            culturalContext: { region: regionForDisplay },
+            region: regionForDisplay,
+          } as LocalRecording,
+        }
+      : {}),
   } as Recording;
 }

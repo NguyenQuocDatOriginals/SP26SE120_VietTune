@@ -1,21 +1,18 @@
-import { Target, Users, Heart, FileText, X, UserMinus } from 'lucide-react';
+import { Target, Users, Heart, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useState, FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
-import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { accountDeletionService } from '@/services/accountDeletionService';
 import { authService } from '@/services/authService';
 import { getItem, setItem } from '@/services/storageService';
 import { User, UserRole } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
+import { cn } from '@/utils/helpers';
+import { SURFACE_CARD } from '@/utils/surfaceTokens';
 
 export default function ProfilePage() {
-  const { user, setUser, logout } = useAuth();
-  const navigate = useNavigate();
-  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const { user, setUser } = useAuth();
 
   // Edit profile modal state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -111,7 +108,7 @@ export default function ProfilePage() {
       } catch (err) {
         console.error('Failed to save profile on server', err);
         // Queue update for background retry and persist locally
-        authService.queuePendingProfileUpdate(updated.id, {
+        void authService.queuePendingProfileUpdate(updated.id, {
           fullName: updated.fullName,
           username: updated.username,
           email: updated.email,
@@ -158,34 +155,6 @@ export default function ProfilePage() {
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
-  const handleDeleteAccountConfirm = async () => {
-    if (!user) return;
-    try {
-      if (user.role === UserRole.CONTRIBUTOR) {
-        await accountDeletionService.deleteAccountContributor(user.id);
-        logout();
-        navigate('/login', { replace: true });
-        uiToast.success(notifyLine('Thành công', 'Tài khoản đã được xóa khỏi hệ thống.'));
-      } else if (user.role === UserRole.EXPERT) {
-        await accountDeletionService.requestExpertAccountDeletion({
-          expertId: user.id,
-          expertUsername: user.username,
-          expertFullName: user.fullName,
-        });
-        setShowDeleteAccountConfirm(false);
-        uiToast.success(
-          notifyLine(
-            'Thành công',
-            'Yêu cầu xóa tài khoản đã được gửi đến Quản trị viên. Bạn sẽ được xóa khỏi hệ thống sau khi được duyệt.',
-          ),
-        );
-      }
-    } catch (err) {
-      console.error('Delete account error:', err);
-      uiToast.error(notifyLine('Lỗi', 'Không thể xử lý yêu cầu. Vui lòng thử lại.'));
-    }
-  };
-
   /** Tránh kẹt position:fixed / overflow từ modal trang khác khi vào Hồ sơ */
   useLayoutEffect(() => {
     document.body.style.position = '';
@@ -196,7 +165,7 @@ export default function ProfilePage() {
 
   // Disable body scroll when dialogs are open
   useEffect(() => {
-    if (isEditOpen || showDeleteAccountConfirm) {
+    if (isEditOpen) {
       // Save current scroll position
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
@@ -222,22 +191,26 @@ export default function ProfilePage() {
       document.body.style.width = '';
       document.body.style.overflow = '';
     };
-  }, [isEditOpen, showDeleteAccountConfirm]);
+  }, [isEditOpen]);
 
   // Handle ESC key to close dialogs
   useEffect(() => {
-    if (!isEditOpen && !showDeleteAccountConfirm) return;
+    if (!isEditOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isEditOpen) setIsEditOpen(false);
-        if (showDeleteAccountConfirm) setShowDeleteAccountConfirm(false);
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isEditOpen, showDeleteAccountConfirm]);
+  }, [isEditOpen]);
+
+  const profileSurfaceClassName = cn(
+    SURFACE_CARD,
+    'rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl',
+  );
 
   return (
     <div className="min-h-screen">
@@ -249,8 +222,7 @@ export default function ProfilePage() {
 
         <div className="prose max-w-none">
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className={cn(profileSurfaceClassName, 'p-8 mb-8')}
           >
             <div className="flex items-start justify-between">
               <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Thông tin tài khoản</h2>
@@ -294,9 +266,8 @@ export default function ProfilePage() {
                 }}
               >
                 <div
-                  className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
+                  className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
                   style={{
-                    backgroundColor: '#FFF2D6',
                     animation: 'slideUp 0.3s ease-out',
                   }}
                   onClick={(e) => e.stopPropagation()}
@@ -313,10 +284,14 @@ export default function ProfilePage() {
                   </div>
                   <form onSubmit={handleSaveProfile} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-800 mb-2">
+                      <label
+                        htmlFor="profile-edit-fullname"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
                         Họ và tên
                       </label>
                       <input
+                        id="profile-edit-fullname"
                         type="text"
                         value={formFullName}
                         onChange={(e) => {
@@ -327,18 +302,21 @@ export default function ProfilePage() {
                           setTouchedFullName(true);
                           validate();
                         }}
-                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                        style={{ backgroundColor: '#FFFCF5' }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
                       />
                       {touchedFullName && errors.fullName && (
                         <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-neutral-800 mb-2">
+                      <label
+                        htmlFor="profile-edit-username"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
                         Tên người dùng
                       </label>
                       <input
+                        id="profile-edit-username"
                         type="text"
                         value={formUsername}
                         onChange={(e) => {
@@ -349,18 +327,21 @@ export default function ProfilePage() {
                           setTouchedUsername(true);
                           validate();
                         }}
-                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                        style={{ backgroundColor: '#FFFCF5' }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
                       />
                       {touchedUsername && errors.username && (
                         <p className="text-sm text-red-600 mt-1">{errors.username}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-neutral-800 mb-2">
+                      <label
+                        htmlFor="profile-edit-email"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
                         Email
                       </label>
                       <input
+                        id="profile-edit-email"
                         type="email"
                         value={formEmail}
                         onChange={(e) => {
@@ -371,8 +352,7 @@ export default function ProfilePage() {
                           setTouchedEmail(true);
                           validate();
                         }}
-                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                        style={{ backgroundColor: '#FFFCF5' }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
                       />
                       {touchedEmail && errors.email && (
                         <p className="text-sm text-red-600 mt-1">{errors.email}</p>
@@ -403,8 +383,7 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className={cn(profileSurfaceClassName, 'p-6')}
             >
               <div className="bg-primary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Target className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
@@ -417,8 +396,7 @@ export default function ProfilePage() {
             </div>
 
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className={cn(profileSurfaceClassName, 'p-6')}
             >
               <div className="bg-secondary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Users className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
@@ -432,8 +410,7 @@ export default function ProfilePage() {
           </div>
 
           <div
-            className="rounded-2xl border border-neutral-200/80 p-6 mb-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className={cn(profileSurfaceClassName, 'p-6 mb-8')}
           >
             <div className="bg-primary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
               <Heart className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
@@ -445,76 +422,8 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          {/* Delete account (Contributor & Expert) */}
-          {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
-            <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Xoá tài khoản</h2>
-                  <p className="text-neutral-700 font-medium text-sm">
-                    {user.role === UserRole.CONTRIBUTOR
-                      ? 'Xóa tài khoản sẽ đăng xuất và xóa dữ liệu tài khoản khỏi hệ thống. Hành động không thể hoàn tác.'
-                      : 'Chuyên gia xóa tài khoản cần được Quản trị viên duyệt. Sau khi duyệt, tài khoản sẽ bị xóa khỏi hệ thống.'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDeleteAccountConfirm(true)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer flex items-center gap-2"
-              >
-                <UserMinus className="w-4 h-4" strokeWidth={2.5} />
-                Xoá tài khoản
-              </button>
-            </div>
-          )}
-
-          {/* Terms and Conditions Link */}
-          <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
-          >
-            <div className="bg-neutral-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
-              <FileText className="h-6 w-6 text-neutral-600" strokeWidth={2.5} />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-neutral-900">Điều khoản và Điều kiện</h3>
-            <p className="text-neutral-700 font-medium mb-6">
-              Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
-            </p>
-            <Link
-              to="/terms"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
-            >
-              <FileText className="h-5 w-5" strokeWidth={2.5} />
-              Xem Điều khoản và Điều kiện
-            </Link>
-          </div>
         </div>
       </div>
-
-      {/* Delete Account Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteAccountConfirm}
-        onClose={() => setShowDeleteAccountConfirm(false)}
-        onConfirm={handleDeleteAccountConfirm}
-        title="Xác nhận xóa tài khoản"
-        message={
-          user?.role === UserRole.CONTRIBUTOR
-            ? 'Bạn có chắc chắn muốn xóa tài khoản khỏi hệ thống?'
-            : 'Bạn có chắc chắn muốn gửi yêu cầu xóa tài khoản đến Quản trị viên?'
-        }
-        description={
-          user?.role === UserRole.CONTRIBUTOR
-            ? 'Tài khoản và dữ liệu liên quan sẽ bị xóa. Hành động này không thể hoàn tác.'
-            : 'Sau khi Quản trị viên duyệt, tài khoản của bạn sẽ bị xóa khỏi hệ thống.'
-        }
-        confirmText={user?.role === UserRole.CONTRIBUTOR ? 'Xóa tài khoản' : 'Gửi yêu cầu'}
-        cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
-      />
     </div>
   );
 }

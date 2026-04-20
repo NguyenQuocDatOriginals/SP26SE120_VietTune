@@ -337,6 +337,17 @@ body::-webkit-scrollbar-thumb:hover,
   }
 }
 
+/* OTP step inside LoginModal — fade backdrop + scale card (~200ms); respect reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .login-otp-overlay {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .login-otp-card {
+    animation: slideUp 0.2s ease-out;
+  }
+}
+
 /* Water ripple animation for waveform reflection */
 @keyframes waterRipple {
   0%,

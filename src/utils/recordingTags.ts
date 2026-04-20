@@ -20,12 +20,12 @@ export function getRegionDisplayName(
   recordingRegion: Region | undefined,
   originalLocalData?: OriginalLocalDataForRegion | null,
 ): string {
-  if (!recordingRegion || !REGION_NAMES[recordingRegion]) return 'Không xác định';
   if (originalLocalData) {
     const regionStr =
       originalLocalData.region?.trim() || originalLocalData.culturalContext?.region?.trim();
-    if (!regionStr) return 'Không xác định';
+    if (regionStr) return regionStr;
   }
+  if (!recordingRegion || !REGION_NAMES[recordingRegion]) return 'Không xác định';
   return REGION_NAMES[recordingRegion];
 }
 

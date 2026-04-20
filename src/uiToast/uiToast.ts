@@ -1,4 +1,3 @@
-import axios from 'axios';
 import toast, { type ToastOptions } from 'react-hot-toast';
 
 import { interpolate } from './interpolate';
@@ -108,20 +107,18 @@ export const uiToast = {
 
   /**
    * Use in catch blocks when you choose to surface an error.
-   * Prefers payload from `attachNormalizedApiError` (Axios interceptor).
+   * Dùng `getNormalizedApiError` (body lỗi HTTP hoặc đã gắn qua `attachNormalizedApiError`).
    */
   fromApiError(
     err: unknown,
     fallbackKey: MessageKey = 'common.unknown',
     options?: ToastOptions,
   ): string {
-    if (axios.isAxiosError(err)) {
-      const n = getNormalizedApiError(err) ?? null;
-      if (n) {
-        const key =
-          n.httpStatus != null ? statusToMessageKey(n.httpStatus) : codeToMessageKey(n.code);
-        return toast.error(resolveCatalogMessage(key), baseOptions(options));
-      }
+    const n = getNormalizedApiError(err);
+    if (n) {
+      const key =
+        n.httpStatus != null ? statusToMessageKey(n.httpStatus) : codeToMessageKey(n.code);
+      return toast.error(resolveCatalogMessage(key), baseOptions(options));
     }
     return toast.error(resolveCatalogMessage(fallbackKey), baseOptions(options));
   },

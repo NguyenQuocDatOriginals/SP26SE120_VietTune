@@ -1,6 +1,4 @@
-import { AxiosError } from 'axios';
-
-import { api } from '@/services/api';
+import { legacyApi } from '@/api/legacyHttp';
 import type { ServiceApiClient } from '@/services/serviceApiClient';
 import { logServiceWarn } from '@/services/serviceLogger';
 
@@ -46,13 +44,17 @@ export function createMetadataSuggestService(client: ServiceApiClient) {
         });
         return normalizeResponse(data ?? {});
       } catch (err) {
+        const data = (err as { response?: { data?: unknown } })?.response?.data;
         const msg =
-          (err as AxiosError)?.response?.data != null &&
-          typeof (err as AxiosError).response?.data === 'object' &&
-          'message' in ((err as AxiosError).response!.data as object)
-            ? (((err as AxiosError).response!.data as { message?: string })?.message ??
-              'Lỗi không xác định')
-            : ((err as Error)?.message ?? 'Không kết nối được dịch vụ gợi ý.');
+          data != null &&
+          typeof data === 'object' &&
+          data !== null &&
+          'message' in data &&
+          typeof (data as { message?: unknown }).message === 'string'
+            ? (data as { message: string }).message
+            : err instanceof Error
+              ? err.message
+              : 'Không kết nối được dịch vụ gợi ý.';
         logServiceWarn('MetadataSuggest API error', err);
         return { message: msg };
       }
@@ -60,5 +62,5 @@ export function createMetadataSuggestService(client: ServiceApiClient) {
   };
 }
 
-const metadataSuggestService = createMetadataSuggestService(api);
+const metadataSuggestService = createMetadataSuggestService(legacyApi);
 export const suggestMetadata = metadataSuggestService.suggestMetadata;

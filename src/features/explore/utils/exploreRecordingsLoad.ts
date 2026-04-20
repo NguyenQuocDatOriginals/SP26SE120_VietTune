@@ -1,9 +1,8 @@
-import axios from 'axios';
-
 import type { ExploreSearchMode } from '@/components/features/ExploreSearchHeader';
 import { applyGuestFilters } from '@/features/explore/utils/exploreGuestFilters';
 import { recordingService } from '@/services/recordingService';
 import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
+import { fetchRecordingsSearchByFilter } from '@/services/researcherRecordingFilterSearch';
 import { semanticSearchService } from '@/services/semanticSearchService';
 import type { Recording, SearchFilters } from '@/types';
 
@@ -29,9 +28,11 @@ function asApiResponse(value: unknown): ApiResponseType {
 }
 
 export function isExploreRequestAborted(e: unknown): boolean {
-  if (axios.isCancel(e)) return true;
-  if (axios.isAxiosError(e)) {
-    return e.code === 'ERR_CANCELED' || e.name === 'CanceledError';
+  if (e && typeof e === 'object') {
+    const name = (e as { name?: string }).name;
+    if (name === 'AbortError' || name === 'CanceledError') return true;
+    const code = (e as { code?: string }).code;
+    if (code === 'ERR_CANCELED') return true;
   }
   return false;
 }
@@ -57,6 +58,30 @@ function sortByUploadedDesc(items: Recording[]): Recording[] {
   return [...items].sort(
     (a, b) => new Date(b.uploadedDate).getTime() - new Date(a.uploadedDate).getTime(),
   );
+}
+
+async function fetchApprovedLocalFallback(): Promise<Recording[]> {
+  try {
+    const { getLocalRecordingMetaList, getLocalRecordingFull } = await import('@/services/recordingStorage');
+    const { migrateVideoDataToVideoData } = await import('@/utils/helpers');
+    const { convertLocalToRecording } = await import('@/utils/localRecordingToRecording');
+    const { ModerationStatus } = await import('@/types');
+
+    const meta = await getLocalRecordingMetaList();
+    const migrated = migrateVideoDataToVideoData(meta as import('@/types').LocalRecording[]);
+    const approved = migrated.filter(
+      (r) =>
+        r.moderation &&
+        typeof r.moderation === 'object' &&
+        'status' in r.moderation &&
+        (r.moderation as { status?: string }).status === ModerationStatus.APPROVED,
+    );
+    const fullItems = await Promise.all(approved.map((r) => getLocalRecordingFull(r.id ?? '')));
+    const locals = fullItems.filter((r): r is import('@/types').LocalRecording => r != null);
+    return Promise.all(locals.map((r) => convertLocalToRecording(r)));
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -114,22 +139,69 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
       const res = await recordingService.searchRecordings(activeFilters, currentPage, 20, apiOpts);
       response = asApiResponse(res);
     } else {
-      const res = await recordingService.getRecordings(currentPage, 20, apiOpts);
-      response = asApiResponse(res);
+      // Authenticated default Explore view should prioritize verified submissions.
+      let verified: Recording[] = [];
+      try {
+        verified = await fetchVerifiedSubmissionsAsRecordings({ signal });
+      } catch {
+        verified = [];
+      }
+      if (verified.length === 0) {
+        try {
+          // Backup source for verified catalog when submission-based endpoint is restricted.
+          verified = await fetchRecordingsSearchByFilter({
+            page: 1,
+            pageSize: 500,
+          });
+        } catch {
+          verified = [];
+        }
+      }
+      if (verified.length === 0) {
+        verified = await fetchApprovedLocalFallback();
+      }
+      const sorted = sortByUploadedDesc(verified);
+      const pageSize = 20;
+      const start = Math.max(0, (currentPage - 1) * pageSize);
+      const items = sorted.slice(start, start + pageSize);
+      response = {
+        items,
+        total: sorted.length,
+        totalPages: Math.max(1, Math.ceil(sorted.length / pageSize)),
+      };
     }
 
     const apiItems = Array.isArray(response?.items) ? response.items : [];
     const apiTotal = typeof response?.total === 'number' ? response.total : apiItems.length;
     let dataSource: ExploreDataSource = 'empty';
+    const hasActiveFilters = Object.keys(exploreMode === 'semantic' ? facetOnly : filters).length > 0;
 
     if (exploreMode === 'semantic' && sqActive) {
       dataSource = apiItems.length > 0 ? 'searchApi' : 'empty';
     } else if (!isAuthenticated) {
       dataSource = apiItems.length > 0 ? 'recordingGuest' : 'empty';
-    } else if (Object.keys(exploreMode === 'semantic' ? facetOnly : filters).length > 0) {
+    } else if (hasActiveFilters) {
       dataSource = apiItems.length > 0 ? 'searchApi' : 'empty';
     } else {
       dataSource = apiItems.length > 0 ? 'recordingApi' : 'empty';
+    }
+
+    // Default "Bản thu mới nhất": if listing API returns empty, fallback to verified submissions.
+    const isDefaultLatestView = exploreMode !== 'semantic' && !sqActive && !hasActiveFilters;
+    if (isDefaultLatestView && apiItems.length === 0) {
+      try {
+        const fallback = await fetchVerifiedSubmissionsAsRecordings({ signal });
+        if (fallback.length > 0) {
+          const sortedFallback = sortByUploadedDesc(fallback);
+          return {
+            recordings: sortedFallback.slice(0, 20),
+            totalResults: sortedFallback.length,
+            dataSource: 'archiveFallback',
+          };
+        }
+      } catch {
+        // Keep empty result if fallback is unavailable.
+      }
     }
 
     return {
@@ -144,29 +216,7 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
       const apiFallback = await fetchVerifiedSubmissionsAsRecordings({ signal });
       if (signal?.aborted) throw error;
 
-      let localFallback: Recording[] = [];
-      try {
-        const { getLocalRecordingMetaList, getLocalRecordingFull } =
-          await import('@/services/recordingStorage');
-        const { migrateVideoDataToVideoData } = await import('@/utils/helpers');
-        const { convertLocalToRecording } = await import('@/utils/localRecordingToRecording');
-        const { ModerationStatus } = await import('@/types');
-
-        const meta = await getLocalRecordingMetaList();
-        const migrated = migrateVideoDataToVideoData(meta as import('@/types').LocalRecording[]);
-        const approved = migrated.filter(
-          (r) =>
-            r.moderation &&
-            typeof r.moderation === 'object' &&
-            'status' in r.moderation &&
-            (r.moderation as { status?: string }).status === ModerationStatus.APPROVED,
-        );
-        const fullItems = await Promise.all(approved.map((r) => getLocalRecordingFull(r.id ?? '')));
-        const locals = fullItems.filter((r): r is import('@/types').LocalRecording => r != null);
-        localFallback = await Promise.all(locals.map((r) => convertLocalToRecording(r)));
-      } catch (e) {
-        console.warn('Local fallback failed', e);
-      }
+      const localFallback = await fetchApprovedLocalFallback();
 
       const combined = [...apiFallback, ...localFallback];
       const uniqueFallbackMap = new Map<string, Recording>();

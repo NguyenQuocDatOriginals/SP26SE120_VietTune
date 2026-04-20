@@ -8,7 +8,8 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useAuthStore } from '@/stores/authStore';
 import { ADMIN_ROUTE_POLICY, evaluateGuardAccess, logGuardDecision } from '@/utils/routeAccess';
 export default function AdminGuard() {
-  const { user, isLoading } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const navigate = useNavigate();
   const location = useLocation();
   const decision = useMemo(

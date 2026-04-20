@@ -16,8 +16,7 @@ export default function AboutPage() {
 
         <div className="prose max-w-none">
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Sứ mệnh</h2>
             <p className="text-neutral-700 font-medium leading-relaxed mb-4">
@@ -36,8 +35,7 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
             >
               <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Target className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
@@ -51,8 +49,7 @@ export default function AboutPage() {
             </div>
 
             <div
-              className="rounded-2xl shadow-md border border-neutral-200 p-6"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl shadow-md border border-neutral-200 p-6 bg-surface-panel"
             >
               <div className="bg-secondary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Users className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
@@ -66,8 +63,7 @@ export default function AboutPage() {
           </div>
 
           <div
-            className="rounded-2xl border border-neutral-200/80 p-6 mb-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 p-6 mb-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <div className="bg-primary-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
               <Heart className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
@@ -80,8 +76,7 @@ export default function AboutPage() {
           </div>
 
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Tính năng chính</h2>
             <ul className="space-y-3 text-neutral-700">
@@ -117,8 +112,7 @@ export default function AboutPage() {
 
           {/* Terms and Conditions Link */}
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl bg-surface-panel"
           >
             <div className="bg-neutral-100/90 rounded-full w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
               <FileText className="h-6 w-6 text-neutral-600" strokeWidth={2.5} />

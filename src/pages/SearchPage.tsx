@@ -6,10 +6,13 @@ import BackButton from '@/components/common/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import Pagination from '@/components/common/Pagination';
 import AudioPlayer from '@/components/features/AudioPlayer';
+import ExportDatasetDialog from '@/components/features/research/ExportDatasetDialog';
 import SearchBar from '@/components/features/SearchBar';
 import VideoPlayer from '@/components/features/VideoPlayer';
 import { recordingService } from '@/services/recordingService';
 import { Recording, SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
+import { cn } from '@/utils/helpers';
+import { SURFACE_CARD } from '@/utils/surfaceTokens';
 import { isYouTubeUrl } from '@/utils/youtube';
 
 // Build SearchFilters from URL search params (restore filter state from shareable links)
@@ -76,6 +79,11 @@ export default function SearchPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>(initialFiltersFromUrl);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const searchSurfaceClassName = cn(
+    SURFACE_CARD,
+    'rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl',
+  );
 
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
@@ -111,7 +119,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (hasSearched) {
-      fetchRecordings();
+      void fetchRecordings();
     }
   }, [fetchRecordings, hasSearched]);
 
@@ -154,8 +162,7 @@ export default function SearchPage() {
 
         {/* Main Search Form — same card style as SemanticSearchPage */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className={cn(searchSurfaceClassName, 'p-8 mb-8')}
         >
           <SearchBar onSearch={handleSearch} initialFilters={filters} />
         </div>
@@ -163,8 +170,7 @@ export default function SearchPage() {
         {/* Search Results — same card style as SemanticSearchPage */}
         {hasSearched && (
           <div
-            className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className={cn(searchSurfaceClassName, 'p-8 mb-8')}
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
               <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -204,50 +210,11 @@ export default function SearchPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => {
-                      const payload = recordings.map((r) => ({
-                        id: r.id,
-                        title: r.title,
-                        titleVietnamese: r.titleVietnamese,
-                        description: r.description,
-                        ethnicity: r.ethnicity
-                          ? { name: r.ethnicity.name, nameVietnamese: r.ethnicity.nameVietnamese }
-                          : null,
-                        region: r.region,
-                        recordingType: r.recordingType,
-                        duration: r.duration,
-                        instruments: r.instruments?.map((i) => i.nameVietnamese || i.name) ?? [],
-                        performers: r.performers?.map((p) => p.nameVietnamese || p.name) ?? [],
-                        uploadedDate: r.uploadedDate,
-                        tags: r.tags,
-                        metadata: r.metadata,
-                        verificationStatus: r.verificationStatus,
-                      }));
-                      const blob = new Blob(
-                        [
-                          JSON.stringify(
-                            {
-                              exportedAt: new Date().toISOString(),
-                              total: payload.length,
-                              recordings: payload,
-                            },
-                            null,
-                            2,
-                          ),
-                        ],
-                        { type: 'application/json' },
-                      );
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `viettune-search-export-${new Date().toISOString().slice(0, 10)}.json`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
+                    onClick={() => setShowExportDialog(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-300/80 bg-primary-50/90 text-primary-700 hover:bg-primary-100/90 font-medium transition-all duration-200 cursor-pointer focus:outline-none"
                   >
                     <Download className="h-4 w-4" strokeWidth={2.5} />
-                    Xuất dữ liệu (JSON)
+                    Xuất dữ liệu
                   </button>
                 </div>
                 <div className="space-y-4 mb-8">
@@ -311,8 +278,7 @@ export default function SearchPage() {
         {/* Initial State - Search Tips */}
         {!hasSearched && (
           <div
-            className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8"
-            style={{ backgroundColor: '#FFFCF5' }}
+            className={cn(searchSurfaceClassName, 'p-8 mb-8')}
           >
             <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
               <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -340,6 +306,11 @@ export default function SearchPage() {
             </ul>
           </div>
         )}
+        <ExportDatasetDialog
+          open={showExportDialog}
+          onClose={() => setShowExportDialog(false)}
+          recordings={recordings}
+        />
       </div>
     </div>
   );

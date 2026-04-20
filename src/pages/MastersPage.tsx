@@ -13,8 +13,7 @@ export default function MastersPage() {
 
         {/* Introduction */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Những người giữ lửa truyền thống
@@ -31,8 +30,7 @@ export default function MastersPage() {
 
         {/* Roles and Significance */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Vai trò của nghệ nhân âm nhạc
@@ -103,8 +101,7 @@ export default function MastersPage() {
 
         {/* Notable Traditions */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Các truyền thống âm nhạc tiêu biểu và nghệ nhân
@@ -176,8 +173,7 @@ export default function MastersPage() {
 
         {/* Challenges and Preservation */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Thách thức của việc truyền thống
@@ -232,8 +228,7 @@ export default function MastersPage() {
 
         {/* How to Contribute */}
         <div
-          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: '#FFFCF5' }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold text-neutral-900 mb-4">
             Đóng góp tài liệu hóa nghệ nhân

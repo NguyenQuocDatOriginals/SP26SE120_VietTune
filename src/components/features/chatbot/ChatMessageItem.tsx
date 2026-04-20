@@ -1,5 +1,6 @@
 import { Bot, BookOpen, Music, CheckCircle2, Flag } from 'lucide-react';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
 import { INTELLIGENCE_NAME } from '@/config/constants';
 import { Message } from '@/types/chat';
@@ -9,10 +10,29 @@ interface ChatMessageItemProps {
   onToggleFlag?: (messageId: string, currentFlagged: boolean) => void;
 }
 
-export default function ChatMessageItem({ message, onToggleFlag }: ChatMessageItemProps) {
+function parseKbEntryIds(json: string | null | undefined): string[] {
+  if (!json?.trim()) return [];
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const ids: string[] = [];
+    for (const item of parsed) {
+      if (typeof item === 'string' && item.trim()) {
+        ids.push(item.trim());
+      } else if (item && typeof item === 'object' && 'id' in item) {
+        const id = (item as { id?: unknown }).id;
+        if (typeof id === 'string' && id.trim()) ids.push(id.trim());
+      }
+    }
+    return [...new Set(ids)];
+  } catch {
+    return [];
+  }
+}
+
+function ChatMessageItem({ message, onToggleFlag }: ChatMessageItemProps) {
   const sources = useMemo(() => {
     let recordings: string[] = [];
-    let kbEntries: string[] = [];
     try {
       if (message.sourceRecordingIdsJson) {
         recordings = JSON.parse(message.sourceRecordingIdsJson);
@@ -20,13 +40,7 @@ export default function ChatMessageItem({ message, onToggleFlag }: ChatMessageIt
     } catch {
       // ignore
     }
-    try {
-      if (message.sourceKBEntryIdsJson) {
-        kbEntries = JSON.parse(message.sourceKBEntryIdsJson);
-      }
-    } catch {
-      // ignore
-    }
+    const kbEntries = parseKbEntryIds(message.sourceKBEntryIdsJson);
     return { recordings, kbEntries };
   }, [message.sourceRecordingIdsJson, message.sourceKBEntryIdsJson]);
 
@@ -97,9 +111,23 @@ export default function ChatMessageItem({ message, onToggleFlag }: ChatMessageIt
               </div>
             )}
             {sources.kbEntries.length > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary-50 text-primary-700 rounded-lg text-[11px] font-medium border border-primary-100">
-                <BookOpen className="w-3 h-3" />
-                <span>{sources.kbEntries.length} Tài liệu tham khảo</span>
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary-50 text-primary-700 rounded-lg text-[11px] font-medium border border-primary-100 w-fit">
+                  <BookOpen className="w-3 h-3" />
+                  <span>{sources.kbEntries.length} Tài liệu tham khảo</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {sources.kbEntries.map((entryId, idx) => (
+                    <Link
+                      key={entryId}
+                      to={`/kb/entry/${encodeURIComponent(entryId)}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-primary-200 bg-white px-2 py-1 text-[11px] font-medium text-primary-700 hover:bg-primary-50 transition-colors"
+                    >
+                      <BookOpen className="w-3 h-3 shrink-0" />
+                      {sources.kbEntries.length > 1 ? `Tài liệu ${idx + 1}` : 'Mở tài liệu'}
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -126,3 +154,5 @@ export default function ChatMessageItem({ message, onToggleFlag }: ChatMessageIt
     </div>
   );
 }
+
+export default memo(ChatMessageItem);

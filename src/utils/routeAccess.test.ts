@@ -5,6 +5,7 @@ import {
   RESEARCHER_ROUTE_POLICY,
   evaluateGuardAccess,
   getDefaultPostLoginPath,
+  parseSafeRedirectParam,
   resolvePostLoginPath,
 } from './routeAccess';
 
@@ -57,5 +58,13 @@ describe('routeAccess', () => {
     expect(resolvePostLoginPath(contributor, '/moderation')).toBe('/');
     expect(resolvePostLoginPath(contributor, '/explore')).toBe('/explore');
     expect(getDefaultPostLoginPath(makeUser(UserRole.ADMIN))).toBe('/admin');
+  });
+
+  it('parseSafeRedirectParam rejects open redirects', () => {
+    expect(parseSafeRedirectParam('/explore')).toBe('/explore');
+    expect(parseSafeRedirectParam('//evil.com')).toBe(null);
+    expect(parseSafeRedirectParam('https://evil.com')).toBe(null);
+    expect(parseSafeRedirectParam(null)).toBe(null);
+    expect(parseSafeRedirectParam('')).toBe(null);
   });
 });

@@ -17,11 +17,10 @@ export default function Card({ children, className, variant = 'default' }: CardP
   return (
     <div
       className={clsx(
-        'rounded-2xl p-6 transition-all duration-300 hover:shadow-xl',
+        'rounded-2xl p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel',
         variants[variant],
         className,
       )}
-      style={{ backgroundColor: '#FFFCF5' }}
     >
       {children}
     </div>

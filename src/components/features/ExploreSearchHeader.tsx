@@ -100,7 +100,7 @@ export default function ExploreSearchHeader({
   return (
     <div
       className={cn(
-        'mb-6 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/90 to-secondary-100/50 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6',
+        'mb-6 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/90 to-secondary-100/50 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6',
         className,
       )}
     >

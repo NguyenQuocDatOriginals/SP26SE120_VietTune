@@ -149,6 +149,9 @@ type MetadataStepSectionProps = {
   getRegionName: (regionCode: string) => string;
   gpsLoading: boolean;
   gpsError: string | null;
+  capturedGpsLat: number | null;
+  capturedGpsLon: number | null;
+  capturedGpsAccuracy: number | null;
   handleGetGpsLocation: () => void;
   aiSuggestLoading: boolean;
   aiSuggestError: string | null;
@@ -240,6 +243,9 @@ export default function MetadataStepSection({
   getRegionName,
   gpsLoading,
   gpsError,
+  capturedGpsLat,
+  capturedGpsLon,
+  capturedGpsAccuracy,
   handleGetGpsLocation,
   aiSuggestLoading,
   aiSuggestError,
@@ -254,10 +260,24 @@ export default function MetadataStepSection({
   CollapsibleSectionComponent,
 }: MetadataStepSectionProps) {
   if (!show) return null;
+  const hasGps = capturedGpsLat != null && capturedGpsLon != null;
+  const gpsAccuracyLabel =
+    capturedGpsAccuracy == null
+      ? null
+      : capturedGpsAccuracy < 50
+        ? 'Chinh xac cao'
+        : capturedGpsAccuracy <= 200
+          ? 'Trung binh'
+          : 'Thap - nen kiem tra lai';
+  const mapEmbedUrl = hasGps
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${capturedGpsLon - 0.01},${
+        capturedGpsLat - 0.01
+      },${capturedGpsLon + 0.01},${capturedGpsLat + 0.01}&marker=${capturedGpsLat},${capturedGpsLon}`
+    : null;
 
   return (
     <>
-      <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl">
+      <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl">
         <SectionHeaderComponent
           icon={Music}
           title="Thông tin mô tả cơ bản"
@@ -297,8 +317,7 @@ export default function MetadataStepSection({
                   setArtistUnknown(e.target.checked);
                   if (e.target.checked) setArtist('');
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none bg-surface-panel"
                 disabled={isFormDisabled}
               />
               Không rõ
@@ -327,8 +346,7 @@ export default function MetadataStepSection({
                   setComposerUnknown(e.target.checked);
                   if (e.target.checked) setComposer('');
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none bg-surface-panel"
                 disabled={isFormDisabled}
               />
               Dân gian/Không rõ tác giả
@@ -368,8 +386,7 @@ export default function MetadataStepSection({
                     setCustomLanguage('');
                   }
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none bg-surface-panel"
                 disabled={isFormDisabled}
               />
               Không có ngôn ngữ
@@ -393,8 +410,7 @@ export default function MetadataStepSection({
                   setDateEstimated(e.target.checked);
                   if (e.target.checked) setRecordingDate('');
                 }}
-                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none bg-surface-panel"
                 disabled={isFormDisabled}
               />
               Ngày ước tính/không chính xác
@@ -438,19 +454,8 @@ export default function MetadataStepSection({
                     className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all border border-neutral-200 ${
                       performanceType === pt.key
                         ? 'bg-primary-600 text-white shadow-md'
-                        : 'text-neutral-700 hover:border-primary-400'
+                        : 'text-neutral-700 hover:border-primary-400 bg-surface-panel hover:bg-[#F5F0E8]'
                     }`}
-                    style={performanceType !== pt.key ? { backgroundColor: '#FFFCF5' } : undefined}
-                    onMouseEnter={(e) => {
-                      if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = '#F5F0E8';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (performanceType !== pt.key) {
-                        e.currentTarget.style.backgroundColor = '#FFFCF5';
-                      }
-                    }}
                   >
                     {pt.label}
                   </button>
@@ -526,15 +531,8 @@ export default function MetadataStepSection({
                       className={`px-4 py-2 rounded-xl text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm inline-block ${
                         isFormDisabled
                           ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:shadow-md cursor-pointer'
-                      }`}
-                      style={{ backgroundColor: '#FFFCF5' }}
-                      onMouseEnter={(e) => {
-                        if (!isFormDisabled) e.currentTarget.style.backgroundColor = '#F5F0E8';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isFormDisabled) e.currentTarget.style.backgroundColor = '#FFFCF5';
-                      }}
+                          : 'hover:shadow-md cursor-pointer hover:bg-[#F5F0E8]'
+                      } bg-surface-panel`}
                     >
                       Chọn ảnh
                       <input
@@ -593,15 +591,8 @@ export default function MetadataStepSection({
                       className={`px-4 py-2 rounded-xl text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm inline-block ${
                         isFormDisabled
                           ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:shadow-md cursor-pointer'
-                      }`}
-                      style={{ backgroundColor: '#FFFCF5' }}
-                      onMouseEnter={(e) => {
-                        if (!isFormDisabled) e.currentTarget.style.backgroundColor = '#F5F0E8';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isFormDisabled) e.currentTarget.style.backgroundColor = '#FFFCF5';
-                      }}
+                          : 'hover:shadow-md cursor-pointer hover:bg-[#F5F0E8]'
+                      } bg-surface-panel`}
                     >
                       Chọn file
                       <input
@@ -787,6 +778,29 @@ export default function MetadataStepSection({
                   <AlertCircle className="w-3.5 h-3.5" />
                   {gpsError}
                 </p>
+              )}
+              {capturedGpsLat != null && capturedGpsLon != null && (
+                <p className="text-xs text-green-700 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" />
+                  {`Da gan GPS: ${capturedGpsLat.toFixed(6)}, ${capturedGpsLon.toFixed(6)}`}
+                </p>
+              )}
+              {capturedGpsAccuracy != null && (
+                <p className="text-xs text-neutral-700">
+                  {`Do chinh xac: ~${Math.round(capturedGpsAccuracy)}m${
+                    gpsAccuracyLabel ? ` (${gpsAccuracyLabel})` : ''
+                  }`}
+                </p>
+              )}
+              {mapEmbedUrl && (
+                <div className="pt-2">
+                  <iframe
+                    title="GPS map preview"
+                    src={mapEmbedUrl}
+                    className="h-44 w-full rounded-xl border border-secondary-200/70"
+                    loading="lazy"
+                  />
+                </div>
               )}
             </div>
           </div>

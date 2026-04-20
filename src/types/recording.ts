@@ -1,4 +1,4 @@
-import { ModerationStatus } from '@/types/moderation';
+import type { ApiSubmissionStatus } from '@/types/moderation';
 import type { Ethnicity, Instrument, Performer, Region } from '@/types/reference';
 import type { User } from '@/types/user';
 
@@ -69,22 +69,6 @@ export enum VerificationStatus {
   UNDER_REVIEW = 'UNDER_REVIEW',
 }
 
-export interface UploadRecordingForm {
-  title: string;
-  titleVietnamese?: string;
-  description?: string;
-  ethnicityId: string;
-  region: Region;
-  recordingType: RecordingType;
-  audioFile: File;
-  coverImage?: File;
-  instrumentIds: string[];
-  performerIds: string[];
-  recordedDate?: string;
-  tags: string[];
-  metadata: Partial<RecordingMetadata>;
-}
-
 export interface LocalRecording {
   id?: string;
   submissionId?: string;
@@ -120,11 +104,14 @@ export interface LocalRecording {
   viewCount?: number;
   likeCount?: number;
   downloadCount?: number;
+  gpsLatitude?: number | null;
+  gpsLongitude?: number | null;
   basicInfo?: {
     title?: string;
     artist?: string;
     genre?: string;
     recordingDate?: string;
+    recordingLocation?: string;
   };
   culturalContext?: {
     region?: string;
@@ -139,11 +126,11 @@ export interface LocalRecording {
   youtubeUrl?: string | null;
   mediaType?: 'audio' | 'video' | 'youtube';
   moderation?: {
-    status?: ModerationStatus | string;
+    /** Backend submission status (OpenAPI enum: 0..5). */
+    status?: ApiSubmissionStatus;
     claimedBy?: string | null;
     claimedByName?: string | null;
     claimedAt?: string | null;
-    assignBlockedByRbac?: boolean;
     reviewerId?: string | null;
     reviewerName?: string | null;
     reviewedAt?: string | null;

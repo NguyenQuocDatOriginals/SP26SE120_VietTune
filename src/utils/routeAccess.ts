@@ -26,7 +26,7 @@ export const ADMIN_ROUTE_POLICY: RouteGuardPolicy = {
 };
 
 export const RESEARCHER_ROUTE_POLICY: RouteGuardPolicy = {
-  allowedRoles: [UserRole.RESEARCHER, UserRole.ADMIN],
+  allowedRoles: [UserRole.RESEARCHER, UserRole.ADMIN, UserRole.EXPERT],
   unauthorizedRedirectTo: '/403',
   inactiveRedirectTo: '/',
   requireActive: true,
@@ -38,6 +38,13 @@ export function buildLoginRedirectPath(pathname: string): string {
 
 export function isSafeInternalPath(path: string): boolean {
   return path.startsWith('/') && !path.startsWith('//');
+}
+
+/** Parse `?redirect=` (or modal `redirect`) for login — rejects open redirects. */
+export function parseSafeRedirectParam(value: string | null | undefined): string | null {
+  if (value == null || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return isSafeInternalPath(trimmed) ? trimmed : null;
 }
 
 export function resolveSafeRedirectTarget(
@@ -115,9 +122,11 @@ function isRedirectAllowedForRole(path: string, role: UserRole): boolean {
   if (p.startsWith('/moderation') || p.startsWith('/approved-recordings')) {
     return role === UserRole.EXPERT || role === UserRole.ADMIN;
   }
-  // Researcher-only routes
+  // Researcher portal (Researchers, Experts, Admin)
   if (p.startsWith('/researcher')) {
-    return role === UserRole.RESEARCHER || role === UserRole.ADMIN;
+    return (
+      role === UserRole.RESEARCHER || role === UserRole.ADMIN || role === UserRole.EXPERT
+    );
   }
   // All other internal paths are allowed (public + contributor)
   return true;
@@ -144,7 +153,7 @@ export function logGuardDecision(
     decision.status === 'redirect'
       ? { reason: decision.reason, redirectTo: decision.redirectTo }
       : {};
-  console.debug(`[route-guard] ${guardName}`, {
+  console.warn(`[route-guard] ${guardName}`, {
     pathname,
     status: decision.status,
     ...detail,

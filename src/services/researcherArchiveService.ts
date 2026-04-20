@@ -1,4 +1,5 @@
-import { api } from '@/services/api';
+import { apiFetch, apiOk, asApiEnvelope } from '@/api';
+import type { ApiSubmissionGetByStatusQuery } from '@/api';
 import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import {
   extractSubmissionRows,
@@ -13,6 +14,15 @@ import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
  * Override with `VITE_RESEARCHER_VERIFIED_SUBMISSION_STATUS` if needed.
  */
 const DEFAULT_VERIFIED = 2;
+
+type SubmissionStatusListApiResponse =
+  | Record<string, unknown>[]
+  | {
+      data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      Data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      items?: Record<string, unknown>[];
+      Items?: Record<string, unknown>[];
+    };
 
 function verifiedStatusCodes(): number[] {
   const raw =
@@ -33,10 +43,16 @@ export async function fetchVerifiedSubmissionsAsRecordings(opts?: {
   const signal = opts?.signal;
   const lookupPromise = buildSubmissionLookupMaps();
   const submissionPromises = statuses.map((status) =>
-    api.get<unknown>('/Submission/get-by-status', {
-      params: { status, page: 1, pageSize: 500 },
-      signal,
-    }),
+    apiOk(
+      asApiEnvelope<SubmissionStatusListApiResponse>(
+        apiFetch.GET('/api/Submission/get-by-status', {
+          params: {
+            query: { status, page: 1, pageSize: 500 } as ApiSubmissionGetByStatusQuery,
+          },
+          signal,
+        }),
+      ),
+    ),
   );
   const [lookups, ...responses] = await Promise.all([lookupPromise, ...submissionPromises]);
 

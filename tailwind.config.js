@@ -49,6 +49,19 @@ export default {
           100: "#FFF2D6",
           200: "#FFECC4",
         },
+        /** Panel/card cream — use `bg-surface-panel`, `from-surface-panel`, etc. */
+        surface: {
+          panel: "#FFFCF5",
+        },
+      },
+      keyframes: {
+        "noti-fade-in": {
+          from: { opacity: "0", transform: "translateY(4px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "noti-fade-in": "noti-fade-in 0.35s ease-out forwards",
       },
     },
   },

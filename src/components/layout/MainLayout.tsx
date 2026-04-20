@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import Footer from './Footer';
 import Header from './Header';
 
 import ErrorBoundary from '@/components/common/ErrorBoundary';
+import NotificationFeedBootstrap from '@/components/common/NotificationFeedBootstrap';
+import backgroundImage from '@/components/image/background.png';
 import { setItem } from '@/services/storageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
@@ -12,7 +14,22 @@ import { UserRole } from '@/types';
 export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const backgroundAttachment = useMemo(() => {
+    if (typeof navigator === 'undefined') return 'fixed';
+
+    const ua = navigator.userAgent || '';
+    const platform = navigator.platform || '';
+    const maxTouchPoints = navigator.maxTouchPoints || 0;
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && maxTouchPoints > 1);
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // iOS Safari does not reliably support fixed attachment; use scroll fallback.
+    return isIOS || prefersReducedMotion ? 'scroll' : 'fixed';
+  }, []);
 
   // Researcher: trang chủ là Cổng nghiên cứu — chuyển "/" sang "/researcher" nếu đã xác thực và kích hoạt
   useEffect(() => {
@@ -41,14 +58,23 @@ export default function MainLayout() {
     }
   }, [location, user?.role]);
 
+  const mainBackgroundStyle = useMemo(
+    () => ({
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: 'cover' as const,
+      backgroundPosition: 'top center' as const,
+      backgroundRepeat: 'no-repeat' as const,
+      backgroundAttachment,
+    }),
+    [backgroundAttachment],
+  );
+
   return (
-    <div
-      className="flex flex-col min-h-screen min-w-0 overflow-x-hidden"
-      style={{ backgroundColor: '#FFF2D6' }}
-    >
+    <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden bg-[#FFF2D6]">
+      <NotificationFeedBootstrap />
       <Header />
       {/* Đủ chừa fixed header (pt-4 + nav có thể wrap 2 dòng); lg:pt-[4.75rem] trước đây quá thấp → nội dung/Hồ sơ bị che */}
-      <main className="flex-grow min-w-0 w-full pt-32 lg:pt-40">
+      <main className="flex-grow min-w-0 w-full pt-32 lg:pt-40" style={mainBackgroundStyle}>
         <ErrorBoundary region="main">
           <Outlet />
         </ErrorBoundary>

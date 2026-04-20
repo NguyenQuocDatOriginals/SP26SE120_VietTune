@@ -81,10 +81,9 @@ export default function WaveformProgressBar({
       <div className="relative">
         {/* Main Waveform */}
         <div
-          className="relative w-full h-16 cursor-pointer group"
+          className="relative w-full h-16 cursor-pointer group bg-surface-panel"
           onClick={handleClick}
           onMouseDown={handleMouseDown}
-          style={{ backgroundColor: '#FFFCF5' }}
         >
           <div className="flex items-end justify-between h-full gap-0.5 px-1">
             {barHeights.map((baseHeight, index) => {

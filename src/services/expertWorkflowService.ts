@@ -1,16 +1,18 @@
 /**
  * Phase 1: base list GET /Submission/my + local overlay (EXPERT_MODERATION_STATE).
- * Phase 2 (VITE_EXPERT_API_PHASE2=true): queue from get-by-status or Admin submissions;
+ * Phase 2 (VITE_EXPERT_API_PHASE2=true): queue from get-by-status + get-by-reviewer;
  * claim/unclaim/approve/reject call server first, then overlay (notes / verification).
  */
 
 import { EXPERT_API_PHASE2, EXPERT_QUEUE_SOURCE } from '@/config/expertWorkflowPhase';
 import {
   approveSubmissionOnServer,
-  assignSubmissionReviewer,
+  assignReviewerSubmission,
   fetchExpertQueueBase,
+  fetchSubmissionsByReviewer,
   postExpertModerationAuditLog,
   rejectSubmissionOnServer,
+  unassignReviewerSubmission,
 } from '@/services/expertModerationApi';
 import { getLocalRecordingMetaList } from '@/services/recordingStorage';
 import { logServiceWarn } from '@/services/serviceLogger';
@@ -46,6 +48,7 @@ export interface ModerationVerificationData {
     crossChecked: boolean;
     sourcesVerified: boolean;
     finalApproval: boolean;
+    sensitiveContent?: boolean;
     finalNotes?: string;
     completedAt?: string;
   };
@@ -67,8 +70,6 @@ export interface LocalModerationState {
   /** Phase 1 Spike: expert-facing notes (approve / reject confirm); Phase 2 → API audit. */
   notes?: string;
   contributorEditLocked?: boolean;
-  /** Phase 2: POST assign returned 403 — claim exists in overlay only (local/mock). */
-  assignBlockedByRbac?: boolean;
 }
 
 /** Per-submission patch stored under EXPERT_MODERATION_STATE. */
@@ -150,13 +151,22 @@ function mergeBaseWithPatch(
 }
 
 export type ClaimSubmissionResult =
-  | { success: true; serverAssignSynced?: boolean; assignBlockedByRbac?: boolean }
-  | { success: false };
+  | { success: true; serverAssignSynced?: boolean }
+  | { success: false; httpStatus?: number; errorMessage?: string };
 
 export type ExpertOverlaySnapshot = ExpertSubmissionLocalPatch | undefined;
 
 function deepClonePatch(patch: ExpertSubmissionLocalPatch): ExpertSubmissionLocalPatch {
   return JSON.parse(JSON.stringify(patch)) as ExpertSubmissionLocalPatch;
+}
+
+function dedupeRecordingsById(items: LocalRecording[]): LocalRecording[] {
+  const byId = new Map<string, LocalRecording>();
+  for (const item of items) {
+    if (!item.id) continue;
+    byId.set(item.id, item);
+  }
+  return Array.from(byId.values());
 }
 
 async function applyApproveToMap(
@@ -184,7 +194,6 @@ async function applyApproveToMap(
       verificationData,
     ),
   };
-  delete moderation.assignBlockedByRbac;
   if (trimmedNotes) moderation.notes = trimmedNotes;
   else delete moderation.notes;
   map[submissionId] = {
@@ -218,7 +227,6 @@ async function applyRejectToMap(
     claimedBy: null,
     claimedByName: null,
   };
-  delete moderation.assignBlockedByRbac;
   if (trimmedExpertNotes) moderation.notes = trimmedExpertNotes;
   else delete moderation.notes;
   map[submissionId] = {
@@ -273,12 +281,30 @@ export const expertWorkflowService = {
 
   /**
    * Phase 1 Spike: API base list + local overlay merge.
-   * Phase 2: point base fetch to Admin submissions; keep overlay merge optional for optimistic UI.
+   * Phase 2: merge pending queue with reviewer-owned queue from server.
    */
-  async getQueue(): Promise<LocalRecording[]> {
-    const baseList = EXPERT_API_PHASE2
-      ? await fetchExpertQueueBase(EXPERT_QUEUE_SOURCE)
-      : await getLocalRecordingMetaList();
+  async getQueue(expertId?: string): Promise<LocalRecording[]> {
+    let baseList: LocalRecording[];
+    if (EXPERT_API_PHASE2) {
+      let pending: LocalRecording[] = [];
+      try {
+        pending = await fetchExpertQueueBase(EXPERT_QUEUE_SOURCE);
+      } catch (err) {
+        logServiceWarn('[expertWorkflowService] getQueue pending fetch failed', err);
+      }
+      let reviewerOwned: LocalRecording[] = [];
+      if (expertId) {
+        try {
+          reviewerOwned = await fetchSubmissionsByReviewer(expertId);
+        } catch (err) {
+          logServiceWarn('[expertWorkflowService] getQueue reviewer fetch failed', err);
+        }
+      }
+      // Keep one row per submission id when combining pending + reviewer queues.
+      baseList = dedupeRecordingsById([...pending, ...reviewerOwned]);
+    } else {
+      baseList = await getLocalRecordingMetaList();
+    }
     const map = await readMap();
     return baseList.map((item) => {
       const id = item.id;
@@ -294,10 +320,7 @@ export const expertWorkflowService = {
     return mergeBaseWithPatch(base, map[base.id] ?? null);
   },
 
-  /**
-   * Claim submission: Phase 2 calls POST /Admin/submissions/{id}/assign first.
-   * On 403 Forbidden (RBAC): logs warning, applies local overlay only and returns success with assignBlockedByRbac.
-   */
+  /** Claim submission: Phase 2 calls PUT /Submission/assign-reviewer-submission first. */
   async claimSubmission(
     submissionId: string,
     expertId: string,
@@ -305,21 +328,17 @@ export const expertWorkflowService = {
   ): Promise<ClaimSubmissionResult> {
     try {
       let serverAssignSynced = !EXPERT_API_PHASE2;
-      let assignBlockedByRbac = false;
 
       if (EXPERT_API_PHASE2) {
-        const assignResult = await assignSubmissionReviewer(submissionId, expertId);
+        const assignResult = await assignReviewerSubmission(submissionId, expertId);
         if (assignResult.ok) {
           serverAssignSynced = true;
-        } else if (assignResult.forbidden) {
-          logServiceWarn(
-            '[expertWorkflowService] Claim: server assign returned 403 — using local overlay only (mock claim). submissionId=',
-            submissionId,
-          );
-          serverAssignSynced = false;
-          assignBlockedByRbac = true;
         } else {
-          return { success: false };
+          const msg =
+            assignResult.error instanceof Error
+              ? assignResult.error.message
+              : String(assignResult.error ?? '');
+          return { success: false, httpStatus: assignResult.httpStatus, errorMessage: msg };
         }
       }
 
@@ -333,8 +352,6 @@ export const expertWorkflowService = {
         claimedAt: new Date().toISOString(),
         verificationStep: prev.verificationStep ?? 1,
       };
-      if (assignBlockedByRbac) moderation.assignBlockedByRbac = true;
-      else delete moderation.assignBlockedByRbac;
 
       map[submissionId] = {
         ...map[submissionId],
@@ -346,7 +363,6 @@ export const expertWorkflowService = {
         return {
           success: true,
           serverAssignSynced,
-          assignBlockedByRbac,
         };
       }
       return { success: true };
@@ -359,17 +375,8 @@ export const expertWorkflowService = {
   async unclaimSubmission(submissionId: string): Promise<boolean> {
     try {
       if (EXPERT_API_PHASE2) {
-        const res = await assignSubmissionReviewer(submissionId, null);
-        if (!res.ok) {
-          if (res.forbidden) {
-            logServiceWarn(
-              '[expertWorkflowService] Unclaim: server unassign returned 403 — clearing local overlay only. submissionId=',
-              submissionId,
-            );
-          } else {
-            return false;
-          }
-        }
+        const res = await unassignReviewerSubmission(submissionId);
+        if (!res.ok) return false;
       }
       const map = await readMap();
       const prev = map[submissionId]?.moderation ?? {};
@@ -382,7 +389,6 @@ export const expertWorkflowService = {
           claimedByName: null,
           claimedAt: null,
           verificationStep: undefined,
-          assignBlockedByRbac: undefined,
           // Phase 1 Spike: null clears checklist after JSON round-trip (undefined would be dropped).
           verificationData: null,
         },

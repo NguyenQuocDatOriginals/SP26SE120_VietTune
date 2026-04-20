@@ -1,7 +1,6 @@
-import axios from 'axios';
-
+import { legacyPostJsonAsText } from '@/api/legacyHttp';
 import { VIETTUNE_AI_BASE_URL } from '@/config/constants';
-import { createAiApiClient } from '@/services/aiApiClient';
+import { getHttpStatus } from '@/utils/httpError';
 
 const baseURL = VIETTUNE_AI_BASE_URL.replace(/\/$/, '');
 const timeout = 45000;
@@ -103,19 +102,22 @@ function stringifyProblemDetails(data: unknown): string | null {
 }
 
 function getErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const data = err.response?.data;
+  const status = getHttpStatus(err);
+  const data = (err as { response?: { data?: unknown } }).response?.data;
+  if (status != null || data !== undefined) {
     const fromBody = extractReply(data) ?? stringifyProblemDetails(data);
     if (fromBody) return fromBody;
-    const status = err.response?.status;
     if (status === 401) return 'Cần đăng nhập để sử dụng tính năng này.';
     if (status === 403) return 'Bạn không có quyền truy cập.';
     if (status === 404) return 'Endpoint chat không tồn tại. Kiểm tra cấu hình backend.';
     if (status && status >= 400) return `Lỗi từ server (${status}). Thử lại sau.`;
-    if (err.code === 'ERR_NETWORK' || err.message?.toLowerCase().includes('network'))
-      return 'Không thể kết nối đến server. Kiểm tra mạng hoặc CORS (backend cần cho phép origin của bạn).';
   }
-  if (err instanceof Error && err.message) return err.message;
+  if (err instanceof Error) {
+    if (err.name === 'AbortError') return 'Hết thời gian chờ phản hồi. Thử lại sau.';
+    if (err.message?.toLowerCase().includes('network'))
+      return 'Không thể kết nối đến server. Kiểm tra mạng hoặc CORS (backend cần cho phép origin của bạn).';
+    if (err.message) return err.message;
+  }
   return 'Lỗi không xác định. Thử lại sau.';
 }
 
@@ -133,7 +135,6 @@ export async function sendResearcherChatMessage(userMessage: string): Promise<st
   const configuredPath = (import.meta.env.VITE_VIETTUNE_AI_CHAT_PATH as string | undefined)?.trim();
   const defaultPath = baseURL.toLowerCase().endsWith('/api') ? '/Chat' : '/api/Chat';
   const path = configuredPath || defaultPath;
-  const client = createAiApiClient({ baseURL, timeout });
 
   const message = userMessage.trim();
   const payloads = buildPayloads(message);
@@ -141,19 +142,16 @@ export async function sendResearcherChatMessage(userMessage: string): Promise<st
 
   for (const body of payloads) {
     try {
-      // Luôn lấy body dạng text để tránh axios parse sai (backend có thể trả text/plain hoặc JSON)
-      const res = await client.post<string>(path, body, { responseType: 'text' });
-      const raw = typeof res.data === 'string' ? res.data.trim() : '';
+      const raw = await legacyPostJsonAsText(baseURL, path, body, { timeout });
 
       if (raw) {
-        // Thử parse JSON (backend có thể trả application/json nhưng axios trả raw khi responseType: 'text')
         if (raw.startsWith('{') || raw.startsWith('[')) {
           try {
             const parsed = JSON.parse(raw) as unknown;
             const reply = extractReply(parsed);
             if (reply) return reply;
           } catch {
-            // Không phải JSON hợp lệ → dùng nguyên raw
+            // ignore
           }
         }
         return raw;
@@ -161,7 +159,7 @@ export async function sendResearcherChatMessage(userMessage: string): Promise<st
       return 'Bot chưa trả lời. Bạn thử đặt câu hỏi khác hoặc thử lại sau.';
     } catch (err) {
       lastError = err;
-      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      const status = getHttpStatus(err);
       if (status !== 400) break;
     }
   }

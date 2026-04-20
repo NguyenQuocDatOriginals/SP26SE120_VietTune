@@ -8,6 +8,7 @@ import logo from '@/components/image/VietTune logo.png';
 import { authService } from '@/services/authService';
 import { ConfirmAccountForm } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
+
 export default function ConfirmAccountPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +25,7 @@ export default function ConfirmAccountPage() {
   const onSubmit = async (data: ConfirmAccountForm) => {
     setIsLoading(true);
     try {
-      const result = await authService.confirmEmail(data.otp);
+      const result = await authService.confirmEmail(data.otp.trim());
 
       // Since axios only resolves on 2xx, reaching here means success at HTTP level
       const msg =
@@ -50,7 +51,7 @@ export default function ConfirmAccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff2d6] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-4">
       <div className="absolute top-6 left-6">
         <BackButton />
       </div>
@@ -81,17 +82,16 @@ export default function ConfirmAccountPage() {
             <Input
               label="Mã OTP"
               placeholder="Nhập mã OTP (6 chữ số)"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              maxLength={6}
               className="rounded-xl border-neutral-300 py-3.5 focus:border-primary-500 shadow-none ring-0 focus:ring-2 focus:ring-primary-500/20"
               {...register('otp', {
                 required: 'Mã OTP là bắt buộc',
-                minLength: {
-                  value: 6,
-                  message: 'Mã OTP phải có 6 ký tự',
-                },
-                maxLength: {
-                  value: 6,
-                  message: 'Mã OTP phải có 6 ký tự',
-                },
+                validate: (v) =>
+                  /^\d{6}$/.test(String(v ?? '').trim()) ||
+                  'Mã OTP phải gồm đúng 6 chữ số',
               })}
               error={errors.otp?.message}
             />

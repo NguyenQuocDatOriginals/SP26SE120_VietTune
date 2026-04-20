@@ -8,7 +8,7 @@ import { UserRole } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
 
 export default function Footer() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const isExpert = user?.role === UserRole.EXPERT;
   const handleCopyEmail = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();

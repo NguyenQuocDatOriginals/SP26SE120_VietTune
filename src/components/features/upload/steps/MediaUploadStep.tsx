@@ -82,7 +82,7 @@ export default function MediaUploadStep({
 
   return (
     <div
-      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
+      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
       aria-disabled={isFormDisabled}
     >
       {(!isEditMode || !existingMediaSrc) && (
@@ -111,25 +111,12 @@ export default function MediaUploadStep({
               className={`flex min-h-[44px] items-center justify-center rounded-full border border-secondary-200/60 px-4 py-2 text-sm shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 ${
                 mediaType === 'audio'
                   ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
-                  : 'text-neutral-800 bg-secondary-50/90'
+                  : 'text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]'
               } ${
                 isFormDisabled || (file != null && mediaType === 'video')
                   ? 'opacity-50 cursor-not-allowed'
                   : 'cursor-pointer'
               }`}
-              style={mediaType !== 'audio' ? { backgroundColor: '#FFFCF5' } : undefined}
-              onMouseEnter={(e) => {
-                if (isFormDisabled || (file != null && mediaType === 'video')) return;
-                if (mediaType !== 'audio') {
-                  e.currentTarget.style.backgroundColor = '#F5F0E8';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isFormDisabled) return;
-                if (mediaType !== 'audio') {
-                  e.currentTarget.style.backgroundColor = '#FFFCF5';
-                }
-              }}
             >
               <div className="flex items-center gap-2">
                 <FileAudio className="h-4 w-4" strokeWidth={2.5} />
@@ -146,25 +133,12 @@ export default function MediaUploadStep({
               className={`flex min-h-[44px] items-center justify-center rounded-full border border-secondary-200/60 px-4 py-2 text-sm shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 ${
                 mediaType === 'video'
                   ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
-                  : 'text-neutral-800 bg-secondary-50/90'
+                  : 'text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]'
               } ${
                 isFormDisabled || (file != null && mediaType === 'audio')
                   ? 'opacity-50 cursor-not-allowed'
                   : 'cursor-pointer'
               }`}
-              style={mediaType !== 'video' ? { backgroundColor: '#FFFCF5' } : undefined}
-              onMouseEnter={(e) => {
-                if (isFormDisabled || (file != null && mediaType === 'audio')) return;
-                if (mediaType !== 'video') {
-                  e.currentTarget.style.backgroundColor = '#F5F0E8';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (isFormDisabled) return;
-                if (mediaType !== 'video') {
-                  e.currentTarget.style.backgroundColor = '#FFFCF5';
-                }
-              }}
             >
               <div className="flex items-center gap-2">
                 <Video className="h-4 w-4" strokeWidth={2.5} />
@@ -284,6 +258,8 @@ export default function MediaUploadStep({
                   <div className="mt-5 w-full max-w-sm mx-auto space-y-4">
                     {mediaType === 'audio' && !isEditMode && (
                       <label
+                        htmlFor="media-upload-ai-analysis"
+                        aria-label="Bật phân tích AI để tự động điền loại hình hát, dân tộc, nhạc cụ"
                         className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer shadow-sm hover:shadow-md ${
                           useAiAnalysis
                             ? 'bg-primary-50/70 border-primary-300 ring-1 ring-primary-200'
@@ -292,6 +268,7 @@ export default function MediaUploadStep({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
+                          id="media-upload-ai-analysis"
                           type="checkbox"
                           checked={useAiAnalysis}
                           onChange={(e) => onUseAiAnalysisChange(e.target.checked)}
@@ -312,8 +289,9 @@ export default function MediaUploadStep({
                             AI Phân tích {useAiAnalysis && '(Tự động điền)'}
                           </div>
                           <p className="text-neutral-500 text-xs mt-1 leading-snug">
-                            Tính năng tự động điền: AI dự đoán tiêu đề, loại hình hát, dân tộc, và
-                            dụng cụ âm nhạc. Có thể tốn thêm thời gian.
+                            Tính năng tự động điền: AI gợi ý loại hình hát, dân tộc, nhạc cụ, v.v.
+                            Tiêu đề và nhạc sĩ/tác giả do bạn nhập — không tự điền từ AI. Có thể tốn
+                            thêm thời gian.
                           </p>
                         </div>
                       </label>

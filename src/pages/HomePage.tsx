@@ -1,4 +1,4 @@
-import { ArrowRight, TrendingUp, Clock, FileText, X } from 'lucide-react';
+import { ArrowRight, TrendingUp, Clock, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,15 +8,16 @@ import logo from '@/components/image/VietTune logo.png';
 import { recordingService } from '@/services/recordingService';
 import { getLocalRecordingFull, getLocalRecordingMetaList } from '@/services/recordingStorage';
 import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
+import { useLoginModalStore } from '@/stores/loginModalStore';
 import { Recording, ModerationStatus, VerificationStatus, type LocalRecording } from '@/types';
 import { migrateVideoDataToVideoData } from '@/utils/helpers';
 import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
+import { SURFACE_PANEL_GRADIENT } from '@/utils/surfaceTokens';
 
 const MemoRecordingCardCompact = memo(RecordingCardCompact);
 
 /** Khối nội dung cùng họ với Explore (PLAN-homepage-explore Phase 1). */
-const exploreLikePanel =
-  'rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl';
+const exploreLikePanel = SURFACE_PANEL_GRADIENT;
 
 /** Hiển thị 2 panel lưới bản thu (phổ biến / mới). Đặt `true` nếu muốn bật lại + gọi API. */
 const SHOW_HOME_RECORDING_HIGHLIGHTS = false;
@@ -126,7 +127,8 @@ export default function HomePage() {
   const [isSimulatingSearch, setIsSimulatingSearch] = useState(false);
   const [isGatewayModalOpen, setIsGatewayModalOpen] = useState(false);
   const simulateTimerRef = useRef<number | null>(null);
-  const loginCtaRef = useRef<HTMLAnchorElement | null>(null);
+  const loginCtaRef = useRef<HTMLButtonElement | null>(null);
+  const openLoginModal = useLoginModalStore((s) => s.openLoginModal);
   useEffect(() => {
     if (SHOW_HOME_RECORDING_HIGHLIGHTS) {
       void fetchRecordings();
@@ -248,7 +250,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-50 via-[#F9F5EF] to-secondary-50/35">
+    <div className="min-h-screen bg-transparent">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Hero Section with Features */}
         <div className={`${exploreLikePanel} mb-10 p-8 md:p-14 lg:p-16`}>
@@ -357,24 +359,6 @@ export default function HomePage() {
             </ul>
           </div>
         )}
-
-        {/* Terms — cùng họ panel Explore (Phase 4) */}
-        <div className={`${exploreLikePanel} p-6 text-center sm:p-8`}>
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-100/90 to-secondary-100/90 shadow-sm ring-1 ring-secondary-200/40">
-            <FileText className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
-          </div>
-          <h3 className="text-xl font-semibold mb-3 text-neutral-900">Điều khoản và Điều kiện</h3>
-          <p className="text-neutral-700 mb-6 font-medium leading-relaxed">
-            Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.
-          </p>
-          <Link
-            to="/terms"
-            className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 font-semibold text-white shadow-xl shadow-primary-600/40 transition-all duration-300 hover:from-primary-500 hover:to-primary-600 hover:shadow-2xl hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50"
-          >
-            <FileText className="h-5 w-5 shrink-0" strokeWidth={2.5} />
-            Xem Điều khoản và Điều kiện
-          </Link>
-        </div>
       </div>
 
       {/* Login/Register Gateway Modal */}
@@ -385,7 +369,7 @@ export default function HomePage() {
           role="presentation"
         >
           <div
-            className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-[#FFFCF5] via-cream-50/80 to-secondary-50/50 p-6 pt-10 text-center shadow-lg backdrop-blur-sm sm:p-8 sm:pt-8"
+            className={`${SURFACE_PANEL_GRADIENT} relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-200 p-6 pt-10 text-center sm:p-8 sm:pt-8`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="gateway-modal-title"
@@ -415,13 +399,17 @@ export default function HomePage() {
             </p>
 
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
+              <button
                 ref={loginCtaRef}
-                to="/login"
-                className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 px-5 py-3 font-semibold text-white shadow-xl shadow-primary-600/35 transition-all hover:from-primary-500 hover:to-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50 sm:w-auto"
+                type="button"
+                onClick={() => {
+                  setIsGatewayModalOpen(false);
+                  openLoginModal();
+                }}
+                className="inline-flex min-h-[44px] w-full cursor-pointer items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 px-5 py-3 font-semibold text-white shadow-xl shadow-primary-600/35 transition-all hover:from-primary-500 hover:to-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50 sm:w-auto"
               >
                 Đăng nhập
-              </Link>
+              </button>
               <Link
                 to="/register"
                 className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-secondary-300/70 bg-gradient-to-br from-secondary-100 to-secondary-200/75 px-5 py-3 font-semibold text-primary-900 shadow-sm transition-colors hover:from-secondary-200 hover:to-secondary-300/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-50 sm:w-auto"

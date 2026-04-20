@@ -1,9 +1,16 @@
-import { api } from './api';
-
+import { apiFetchLoose, apiOk, asApiEnvelope } from '@/api';
+import type {
+  ApiAuthConfirmEmailQuery,
+  ApiAuthForgotPasswordModel,
+  ApiAuthLoginModel,
+  ApiAuthRegisterModel,
+} from '@/api';
+import { legacyGet, legacyPost, legacyPut } from '@/api/legacyHttp';
 import { logServiceError, logServiceWarn } from '@/services/serviceLogger';
 import { getItem, setItem, removeItem, sessionSetItem } from '@/services/storageService';
 import { User, LoginForm, RegisterForm, ApiResponse, UserRole } from '@/types';
 import { uiToast } from '@/uiToast';
+import { isJwtExpired } from '@/utils/jwtExpiry';
 
 export const authService = {
   // Login
@@ -18,9 +25,14 @@ export const authService = {
       isActive: boolean;
     }
     try {
-      const response = await api.post<LoginResponse | { data: LoginResponse }>(
-        '/auth/login',
-        credentials,
+      const payload: ApiAuthLoginModel = {
+        email: (credentials.email ?? '').trim(),
+        password: credentials.password,
+      };
+      const response = await apiOk<LoginResponse | { data: LoginResponse }>(
+        asApiEnvelope<LoginResponse | { data: LoginResponse }>(
+          apiFetchLoose.POST('/api/Auth/login', { body: payload }),
+        ),
       );
 
       // Handle both { token, ... } and { data: { token, ... } } structures
@@ -62,6 +74,15 @@ export const authService = {
       }
       throw new Error('Invalid response from server');
     } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 400 || status === 401) {
+        const err = new Error('Invalid credentials');
+        (err as { response?: { status?: number; data?: { message?: string } } }).response = {
+          status,
+          data: { message: 'Sai tài khoản hoặc mật khẩu' },
+        };
+        throw err;
+      }
       logServiceError('Login error', error);
       throw error;
     }
@@ -69,10 +90,20 @@ export const authService = {
 
   // Register
   register: async (data: RegisterForm) => {
-    const response = await api.post<ApiResponse<unknown>>('/auth/register', data);
+    const payload: ApiAuthRegisterModel = {
+      email: data.email,
+      password: data.password,
+      fullName: data.fullName,
+      phoneNumber: data.phoneNumber,
+    };
+    const response = await apiOk<unknown>(
+      asApiEnvelope<unknown>(
+        apiFetchLoose.POST('/api/Auth/register-contributor', { body: payload }),
+      ),
+    );
     return {
       success: true,
-      data: response.data,
+      data: response,
       message: 'Registration successful',
     };
   },
@@ -80,7 +111,17 @@ export const authService = {
   // Register Researcher
   registerResearcher: async (data: import('@/types').RegisterResearcherForm) => {
     try {
-      const response = await api.post<ApiResponse<unknown>>('/auth/register-researcher', data);
+      const payload: ApiAuthRegisterModel = {
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
+        phoneNumber: data.phoneNumber,
+      };
+      const response = await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.POST('/api/Auth/register-researcher', { body: payload }),
+        ),
+      );
       return response;
     } catch (error: unknown) {
       const axiosLike = error as {
@@ -97,7 +138,7 @@ export const authService = {
   // Verify OTP / Confirm Account (POST - keeping for compatibility if needed, but adding confirmEmail)
   verifyOtp: async (email: string, otp: string) => {
     try {
-      const response = await api.post<ApiResponse<unknown>>('/auth/verify-otp', {
+      const response = await legacyPost<ApiResponse<unknown>>('/auth/verify-otp', {
         email,
         otp,
       });
@@ -111,14 +152,25 @@ export const authService = {
   // Confirm Email (GET)
   confirmEmail: async (token: string) => {
     try {
-      const response = await api.get<ApiResponse<unknown>>(`/auth/confirm-email`, {
-        params: { token },
-      });
-      return response;
+      const params: ApiAuthConfirmEmailQuery = { token };
+      return await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.GET('/api/Auth/confirm-email', { params: { query: params } }),
+        ),
+      );
     } catch (error) {
       logServiceError('Confirm email error', error);
       throw error;
     }
+  },
+
+  forgotPassword: async (email: string) => {
+    const payload: ApiAuthForgotPasswordModel = { email: email.trim() };
+    return await apiOk<unknown>(
+      asApiEnvelope<unknown>(
+        apiFetchLoose.POST('/api/Auth/forgot-password', { body: payload }),
+      ),
+    );
   },
 
   // Logout: only clear storage. Navigation to /login is handled by the caller
@@ -131,12 +183,12 @@ export const authService = {
 
   // Get current user
   getCurrentUser: async () => {
-    return api.get<ApiResponse<User>>('/auth/me');
+    return legacyGet<ApiResponse<User>>('/auth/me');
   },
 
   // Update profile
   updateProfile: async (data: Partial<User>) => {
-    return api.put<ApiResponse<User>>('/auth/profile', data);
+    return legacyPut<ApiResponse<User>>('/auth/profile', data);
   },
 
   // Queue a pending profile update for retry when server becomes available
@@ -163,7 +215,7 @@ export const authService = {
       for (const id of ids) {
         try {
           const data = pending[id];
-          const res = await api.put<ApiResponse<User>>('/auth/profile', data);
+          const res = await legacyPut<ApiResponse<User>>('/auth/profile', data);
           if (res && res.data) {
             // Update local stored user and overrides
             const serverUser = res.data as User;
@@ -201,7 +253,7 @@ export const authService = {
 
   // Change password
   changePassword: async (oldPassword: string, newPassword: string) => {
-    return api.post<ApiResponse<void>>('/auth/change-password', {
+    return legacyPost<ApiResponse<void>>('/auth/change-password', {
       oldPassword,
       newPassword,
     });
@@ -220,9 +272,18 @@ export const authService = {
     }
   },
 
-  // Check if authenticated
   isAuthenticated: (): boolean => {
-    return !!getItem('access_token');
+    const token = getItem('access_token');
+    if (!token) return false;
+    return !isJwtExpired(token);
+  },
+
+  async clearExpiredCredentialsIfNeeded(): Promise<boolean> {
+    const token = getItem('access_token');
+    if (!token || !isJwtExpired(token)) return false;
+    await removeItem('access_token');
+    await removeItem('user');
+    return true;
   },
 
   // Demo login helper — available in DEV only to prevent misuse in production

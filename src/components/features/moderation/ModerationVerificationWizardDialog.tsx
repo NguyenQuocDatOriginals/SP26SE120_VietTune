@@ -1,11 +1,12 @@
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, Ref } from 'react';
 import { createPortal } from 'react-dom';
 
 import AudioPlayer from '@/components/features/AudioPlayer';
 import VideoPlayer from '@/components/features/VideoPlayer';
 import { EXPERT_API_PHASE2 } from '@/config/expertWorkflowPhase';
+import { MODERATION_EXPERT_TEXTAREA_MAX_LENGTH } from '@/config/validationConstants';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import { buildRecordingForModerationWizard } from '@/features/moderation/utils/buildRecordingForModerationWizard';
 import { resolveCulturalContextForDisplay } from '@/features/moderation/utils/resolveReferenceDisplayStrings';
@@ -35,9 +36,25 @@ const overlayBackdropStyle: CSSProperties = {
   position: 'fixed',
 };
 
-function WizardMediaBlock({ item }: { item: LocalRecordingMini }) {
+function WizardMediaBlock({
+  item,
+  culturalContextForDisplay,
+}: {
+  item: LocalRecordingMini;
+  /** Resolved UUID→tên; khi có thì tag + Recording khớp chi tiết submission. */
+  culturalContextForDisplay?: LocalRecordingMini['culturalContext'];
+}) {
   let mediaSrc: string | undefined;
   let isVideo = false;
+
+  const trimStr = (s: string | null | undefined) => {
+    const t = typeof s === 'string' ? s.trim() : '';
+    return t.length > 0 ? t : undefined;
+  };
+
+  /** Phase 2 queue: URL từ API nằm ở `audioUrl` / `videoData`; bản cục bộ có thể dùng `audioData` (data URL). */
+  const videoSrc = trimStr(item.videoData ?? undefined);
+  const audioSrc = trimStr(item.audioUrl ?? undefined) ?? trimStr(item.audioData ?? undefined);
 
   if (item.mediaType === 'youtube' && item.youtubeUrl && item.youtubeUrl.trim()) {
     mediaSrc = item.youtubeUrl.trim();
@@ -50,28 +67,18 @@ function WizardMediaBlock({ item }: { item: LocalRecordingMini }) {
   ) {
     mediaSrc = item.youtubeUrl.trim();
     isVideo = true;
-  } else if (item.mediaType === 'video') {
-    if (item.videoData && typeof item.videoData === 'string' && item.videoData.trim().length > 0) {
-      mediaSrc = item.videoData;
-      isVideo = true;
-    }
-  } else if (item.mediaType === 'audio') {
-    if (item.audioData && typeof item.audioData === 'string' && item.audioData.trim().length > 0) {
-      mediaSrc = item.audioData;
-      isVideo = false;
-    }
-  } else {
-    if (item.videoData && typeof item.videoData === 'string' && item.videoData.trim().length > 0) {
-      mediaSrc = item.videoData;
-      isVideo = true;
-    } else if (
-      item.audioData &&
-      typeof item.audioData === 'string' &&
-      item.audioData.trim().length > 0
-    ) {
-      mediaSrc = item.audioData;
-      isVideo = mediaSrc.startsWith('data:video/');
-    }
+  } else if (item.mediaType === 'video' && videoSrc) {
+    mediaSrc = videoSrc;
+    isVideo = true;
+  } else if (item.mediaType === 'audio' && audioSrc) {
+    mediaSrc = audioSrc;
+    isVideo = false;
+  } else if (videoSrc) {
+    mediaSrc = videoSrc;
+    isVideo = true;
+  } else if (audioSrc) {
+    mediaSrc = audioSrc;
+    isVideo = mediaSrc.startsWith('data:video/');
   }
 
   if (!mediaSrc || mediaSrc.trim().length === 0) {
@@ -79,21 +86,23 @@ function WizardMediaBlock({ item }: { item: LocalRecordingMini }) {
       <div className="space-y-2">
         <p className="text-neutral-500">Không có bản thu nào để phát</p>
         <p className="text-xs text-neutral-400">
-          MediaType: {item.mediaType || 'Không xác định'} | YouTube URL:{' '}
-          {item.youtubeUrl ? 'Có' : 'Không'} | VideoData:{' '}
-          {item.videoData ? `Có (${item.videoData.length} ký tự)` : 'Không'} | AudioData:{' '}
+          MediaType: {item.mediaType || 'Không xác định'} | YouTube: {item.youtubeUrl ? 'Có' : 'Không'}{' '}
+          | Video: {item.videoData ? `Có (${item.videoData.length} ký tự)` : 'Không'} | Audio URL:{' '}
+          {item.audioUrl ? `Có (${item.audioUrl.length} ký tự)` : 'Không'} | AudioData:{' '}
           {item.audioData ? `Có (${item.audioData.length} ký tự)` : 'Không'}
         </p>
         {item.mediaType === 'video' && !item.videoData && (
           <p className="text-xs text-red-400 mt-2">
-            ⚠️ Video cần có videoData để phát. Vui lòng đợi migration hoàn tất hoặc liên hệ admin.
+            Lưu ý: Video cần có đường dẫn (videoData) để phát. Nếu lỗi kéo dài, liên hệ quản trị.
           </p>
         )}
       </div>
     );
   }
 
-  const convertedRecording = buildRecordingForModerationWizard(item);
+  const convertedRecording = buildRecordingForModerationWizard(item, {
+    culturalContext: culturalContextForDisplay ?? item.culturalContext,
+  });
   if (isVideo) {
     return (
       <VideoPlayer
@@ -165,19 +174,25 @@ export function ModerationVerificationWizardDialog({
   const [resolvedCulturalContext, setResolvedCulturalContext] = useState<
     LocalRecordingMini['culturalContext'] | null
   >(null);
+  const culturalContextKey = culturalContextDepsKey(item.culturalContext);
+  const itemRef = useRef(item);
+  itemRef.current = item;
   useEffect(() => {
-    const ctx = item.culturalContext;
+    const ctx = itemRef.current.culturalContext;
     setResolvedCulturalContext(null);
     if (!ctx) return;
     let cancelled = false;
-    void resolveCulturalContextForDisplay(ctx).then((next) => {
-      if (!cancelled && next) setResolvedCulturalContext(next);
-    });
+    void resolveCulturalContextForDisplay(ctx)
+      .then((next) => {
+        if (!cancelled && next) setResolvedCulturalContext(next);
+      })
+      .catch((err) => {
+        console.warn('resolveCulturalContextForDisplay failed', err);
+      });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.id, culturalContextDepsKey(item.culturalContext)]);
+  }, [culturalContextKey, item.id]);
   const step1CulturalContext =
     item.culturalContext != null ? (resolvedCulturalContext ?? item.culturalContext) : undefined;
 
@@ -195,9 +210,8 @@ export function ModerationVerificationWizardDialog({
         aria-labelledby="verification-dialog-title"
         aria-describedby={`verification-step-description-${currentStep}`}
         tabIndex={-1}
-        className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-5xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-8 outline-none focus:outline-none"
+        className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-5xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-8 outline-none focus:outline-none"
         style={{
-          backgroundColor: '#FFF2D6',
           animation: 'slideUp 0.3s ease-out',
           maxHeight: 'calc(100vh - 4rem)',
         }}
@@ -219,22 +233,8 @@ export function ModerationVerificationWizardDialog({
 
         <div className="overflow-y-auto p-6 max-h-[80vh]">
           <div className="space-y-6">
-            {item.moderation?.assignBlockedByRbac && (
-              <div
-                className="rounded-xl border border-amber-500/70 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm"
-                role="status"
-              >
-                <p className="font-semibold text-amber-900">Chế độ chỉ trên trình duyệt (local)</p>
-                <p className="mt-1 text-amber-900/90">
-                  Máy chủ từ chối gán chuyên gia (403 — quyền Admin API có thể chưa bật). Bạn vẫn có
-                  thể làm việc trên máy này; trạng thái claim có thể không khớp với máy chủ hoặc
-                  phiên khác.
-                </p>
-              </div>
-            )}
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-md p-4 sm:p-5"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl border border-neutral-200/80 shadow-md p-4 sm:p-5 bg-surface-panel"
             >
               <label
                 htmlFor={`expert-review-notes-dialog-${submissionId}`}
@@ -255,6 +255,7 @@ export function ModerationVerificationWizardDialog({
                 value={expertReviewNotesDraft}
                 onChange={(e) => onExpertReviewNotesChange(e.target.value)}
                 rows={4}
+                maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
                 placeholder="Theo dõi ngữ cảnh, nguồn tham chiếu, cảnh báo cho admin…"
                 aria-describedby={`expert-review-notes-dialog-hint-${submissionId}`}
                 className="w-full rounded-xl border border-neutral-200/90 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-400/60 resize-y min-h-[96px]"
@@ -262,8 +263,7 @@ export function ModerationVerificationWizardDialog({
             </div>
 
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
               role="region"
               aria-labelledby={`verification-media-heading-${submissionId}`}
             >
@@ -273,12 +273,14 @@ export function ModerationVerificationWizardDialog({
               >
                 Bản thu
               </h3>
-              <WizardMediaBlock item={item} />
+              <WizardMediaBlock
+                item={item}
+                culturalContextForDisplay={step1CulturalContext ?? item.culturalContext}
+              />
             </div>
 
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
             >
               <h3 className="text-lg font-semibold text-neutral-900 mb-4">Thông tin cơ bản</h3>
               <div className="space-y-2 text-sm">
@@ -328,8 +330,7 @@ export function ModerationVerificationWizardDialog({
 
             {step1CulturalContext && (
               <div
-                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
               >
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Bối cảnh văn hóa</h3>
                 <div className="space-y-2 text-sm">
@@ -370,8 +371,7 @@ export function ModerationVerificationWizardDialog({
 
             {item.additionalNotes && (
               <div
-                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
               >
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Ghi chú bổ sung</h3>
                 <div className="space-y-2 text-sm">
@@ -410,8 +410,7 @@ export function ModerationVerificationWizardDialog({
 
             {item.adminInfo && (
               <div
-                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-                style={{ backgroundColor: '#FFFCF5' }}
+                className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
               >
                 <h3 className="text-lg font-semibold text-neutral-900 mb-4">Thông tin quản trị</h3>
                 <div className="space-y-2 text-sm">
@@ -440,8 +439,7 @@ export function ModerationVerificationWizardDialog({
             )}
 
             <div
-              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl"
-              style={{ backgroundColor: '#FFFCF5' }}
+              className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
               role="region"
               aria-labelledby={`verification-step-heading-${currentStep}`}
             >
@@ -545,6 +543,7 @@ export function ModerationVerificationWizardDialog({
                       value={formSlice?.step1?.notes || ''}
                       onChange={(e) => onUpdateVerificationForm(1, 'notes', e.target.value)}
                       rows={3}
+                      maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
                       className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
                       placeholder="Ghi chú về các vấn đề cần lưu ý hoặc cần bổ sung..."
                     />
@@ -610,6 +609,7 @@ export function ModerationVerificationWizardDialog({
                       value={formSlice?.step2?.expertNotes || ''}
                       onChange={(e) => onUpdateVerificationForm(2, 'expertNotes', e.target.value)}
                       rows={4}
+                      maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
                       className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
                       placeholder="Đánh giá chi tiết về giá trị văn hóa, tính xác thực, và độ chính xác của bản thu..."
                     />
@@ -668,15 +668,34 @@ export function ModerationVerificationWizardDialog({
                         đồng ý phê duyệt bản thu này
                       </span>
                     </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        aria-label="Nội dung nhạy cảm: Đề xuất áp dụng hạn chế công bố cho bản ghi này"
+                        checked={formSlice?.step3?.sensitiveContent || false}
+                        onChange={(e) =>
+                          onUpdateVerificationForm(3, 'sensitiveContent', e.target.checked)
+                        }
+                        className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 cursor-pointer"
+                      />
+                      <span className="text-neutral-700">
+                        Nội dung nhạy cảm: Đề xuất áp dụng hạn chế công bố cho bản ghi này
+                      </span>
+                    </div>
                   </div>
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    <label
+                      htmlFor="verification-final-notes"
+                      className="block text-sm font-medium text-neutral-700 mb-2"
+                    >
                       Ghi chú cuối cùng <span className="text-sm text-neutral-500">(Tùy chọn)</span>
                     </label>
                     <textarea
+                      id="verification-final-notes"
                       value={formSlice?.step3?.finalNotes || ''}
                       onChange={(e) => onUpdateVerificationForm(3, 'finalNotes', e.target.value)}
                       rows={4}
+                      maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
                       className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
                       placeholder="Ghi chú cuối cùng về quá trình kiểm duyệt, các điểm đáng chú ý..."
                     />

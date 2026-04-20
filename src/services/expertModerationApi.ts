@@ -1,24 +1,40 @@
-import axios from 'axios';
-
-import { EXPERT_QUEUE_USE_MOCK, type ExpertQueueSource } from '@/config/expertWorkflowPhase';
+import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
+import type {
+  ApiSubmissionActionQuery,
+  ApiSubmissionGetByStatusQuery,
+} from '@/api';
+import { type ExpertQueueSource } from '@/config/expertWorkflowPhase';
 import { macroRegionDisplayNameFromProvinceRegionCode } from '@/config/provinceRegionCodes';
-import apiClient, { api } from '@/services/api';
-import { buildMockExpertQueue } from '@/services/expertModerationMock';
 import { referenceDataService } from '@/services/referenceDataService';
 import { logServiceWarn } from '@/services/serviceLogger';
 import {
   extractSubmissionRows,
+  mapApiSubmissionStatusToModeration,
   mapSubmissionToLocalRecording,
   type SubmissionLookupMaps,
 } from '@/services/submissionApiMapper';
 import type { LocalRecording } from '@/types';
+import { ModerationStatus } from '@/types';
+import { toModerationUiStatus } from '@/types/moderation';
 import { mutationFail, mutationOk } from '@/types/mutationResult';
 import type { MutationResult } from '@/types/mutationResult';
+import { getHttpStatus } from '@/utils/httpError';
+import { isUuid } from '@/utils/validation';
 
 const DEFAULT_PAGE_SIZE = 200;
 const LOOKUP_TTL_MS = 15 * 60 * 1000;
 let lookupCache: { ts: number; data: SubmissionLookupMaps } | null = null;
 let lookupInflight: Promise<SubmissionLookupMaps> | null = null;
+
+type SubmissionApiRow = Record<string, unknown>;
+type SubmissionApiListResponse =
+  | SubmissionApiRow[]
+  | {
+      data?: SubmissionApiRow[] | { items?: SubmissionApiRow[]; Items?: SubmissionApiRow[] };
+      Data?: SubmissionApiRow[] | { items?: SubmissionApiRow[]; Items?: SubmissionApiRow[] };
+      items?: SubmissionApiRow[];
+      Items?: SubmissionApiRow[];
+    };
 
 function normalizeId(v: unknown): string {
   return String(v ?? '')
@@ -90,17 +106,27 @@ async function getSubmissionsByStatus(params: {
 }): Promise<LocalRecording[]> {
   const lookups = params.lookups ?? (await buildSubmissionLookupMaps());
   try {
-    const res = await api.get<unknown>('/Submission/get-by-status', {
-      params: {
-        ...(params.status !== undefined ? { status: params.status } : {}),
-        page: params.page ?? 1,
-        pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
-      },
-    });
+    const statusParam: ApiSubmissionGetByStatusQuery['status'] =
+      params.status === 0 || params.status === 1 || params.status === 2 || params.status === 3 || params.status === 4 || params.status === 5
+        ? params.status
+        : undefined;
+    const res = await apiOk(
+      asApiEnvelope<SubmissionApiListResponse>(
+        apiFetch.GET('/api/Submission/get-by-status', {
+          params: {
+            query: openApiQueryRecord({
+              ...(statusParam !== undefined ? { status: statusParam } : {}),
+              page: params.page ?? 1,
+              pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
+            }),
+          },
+        }),
+      ),
+    );
     return extractSubmissionRows(res).map((row) => mapSubmissionToLocalRecording(row, lookups));
   } catch (err: unknown) {
     // Backend returns 400 when no records match the status filter (instead of 200 + [])
-    const status = (err as { response?: { status?: number } })?.response?.status;
+    const status = getHttpStatus(err);
     if (status === 400 || status === 404) return [];
     throw err; // Propagate unexpected errors
   }
@@ -114,33 +140,76 @@ async function getAdminSubmissions(params: {
   lookups?: SubmissionLookupMaps;
 }): Promise<LocalRecording[]> {
   const lookups = params.lookups ?? (await buildSubmissionLookupMaps());
-  const res = await api.get<unknown>('/Admin/submissions', {
-    params: {
-      page: params.page ?? 1,
-      pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
-      ...(params.status ? { status: params.status } : {}),
-      ...(params.reviewer ? { reviewer: params.reviewer } : {}),
-    },
-  });
+  const res = await apiOk(
+    asApiEnvelope<SubmissionApiListResponse>(
+      apiFetch.GET('/api/Admin/submissions', {
+        params: {
+          query: openApiQueryRecord({
+            page: params.page ?? 1,
+            pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
+            ...(params.status ? { status: params.status } : {}),
+            ...(params.reviewer ? { reviewer: params.reviewer } : {}),
+          }),
+        },
+      }),
+    ),
+  );
   return extractSubmissionRows(res).map((row) => mapSubmissionToLocalRecording(row, lookups));
 }
 
-export async function fetchExpertQueueBase(source: ExpertQueueSource): Promise<LocalRecording[]> {
-  if (EXPERT_QUEUE_USE_MOCK) {
-    return buildMockExpertQueue();
+function dedupeByRecordingId(rows: LocalRecording[]): LocalRecording[] {
+  const map = new Map<string, LocalRecording>();
+  for (const row of rows) {
+    const id = String(row.id ?? '').trim();
+    if (!id) continue;
+    if (!map.has(id)) map.set(id, row);
   }
-  const lookups = await buildSubmissionLookupMaps();
-  if (source === 'admin') {
-    return getAdminSubmissions({ page: 1, pageSize: DEFAULT_PAGE_SIZE, lookups });
-  }
-  // Moderation queue requirement: only fetch submissions with backend status = 1.
-  // Keep a single source of truth from API instead of mixing multiple statuses.
-  return getSubmissionsByStatus({
+  return [...map.values()];
+}
+
+/**
+ * Backend environments disagree on pending code (some use 1, some use 0).
+ * Fallback sequence keeps queue visible without forcing environment-specific config.
+ */
+async function getPendingQueueByStatusWithFallback(
+  lookups: SubmissionLookupMaps,
+): Promise<LocalRecording[]> {
+  const primary = await getSubmissionsByStatus({
     status: 1,
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
     lookups,
   });
+  if (primary.length > 0) return primary;
+
+  const legacyPending = await getSubmissionsByStatus({
+    status: 0,
+    page: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    lookups,
+  });
+  if (legacyPending.length > 0) return legacyPending;
+
+  // Final fallback: get all statuses then keep pending-like values via shared mapper.
+  const unfiltered = await getSubmissionsByStatus({
+    page: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    lookups,
+  });
+  const pendingOnly = unfiltered.filter(
+    (row) =>
+      toModerationUiStatus(mapApiSubmissionStatusToModeration(row.moderation?.status)) ===
+      ModerationStatus.PENDING_REVIEW,
+  );
+  return dedupeByRecordingId(pendingOnly);
+}
+
+export async function fetchExpertQueueBase(source: ExpertQueueSource): Promise<LocalRecording[]> {
+  const lookups = await buildSubmissionLookupMaps();
+  if (source === 'admin') {
+    return getAdminSubmissions({ page: 1, pageSize: DEFAULT_PAGE_SIZE, lookups });
+  }
+  return getPendingQueueByStatusWithFallback(lookups);
 }
 
 /**
@@ -152,74 +221,113 @@ export async function fetchApprovedSubmissionsForExpert(): Promise<LocalRecordin
   try {
     return await getSubmissionsByStatus({ status: 2, page: 1, pageSize: DEFAULT_PAGE_SIZE });
   } catch (err: unknown) {
-    const status = (err as { response?: { status?: number } })?.response?.status;
+    const status = getHttpStatus(err);
     if (status === 400 || status === 404) return [];
     logServiceWarn('[expertModerationApi] fetchApprovedSubmissionsForExpert failed', status);
     return [];
   }
 }
 
-/** Result of POST /Admin/submissions/{id}/assign — never throws. */
-export type AssignReviewerResult =
-  | { ok: true }
-  | { ok: false; forbidden: boolean; httpStatus?: number };
-
 /**
- * POST /Admin/submissions/{id}/assign — wrapped in try/catch.
- * On 403 Forbidden: returns `{ ok: false, forbidden: true }` and logs a console warning (RBAC not ready).
+ * GET /Submission/get-by-reviewer?reviewerId=...
+ * Returns [] when backend reports no rows (400/404).
  */
-export async function assignSubmissionReviewer(
-  submissionId: string,
-  reviewerId: string | null,
-): Promise<AssignReviewerResult> {
+export async function fetchSubmissionsByReviewer(
+  reviewerId: string,
+  lookups?: SubmissionLookupMaps,
+): Promise<LocalRecording[]> {
+  const resolvedLookups = lookups ?? (await buildSubmissionLookupMaps());
   try {
-    await apiClient.post(`/Admin/submissions/${submissionId}/assign`, {
-      reviewerId,
-    });
-    return { ok: true };
+    const res = await apiOk(
+      asApiEnvelope<SubmissionApiListResponse>(
+        apiFetch.GET('/api/Submission/get-by-reviewer', {
+          params: { query: { reviewerId } },
+        }),
+      ),
+    );
+    return extractSubmissionRows(res).map((row) => mapSubmissionToLocalRecording(row, resolvedLookups));
   } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const status = err.response?.status;
-      if (status === 403) {
-        logServiceWarn(
-          '[expertModerationApi] Assign reviewer forbidden (403). RBAC may not allow this role yet. submissionId=',
-          { submissionId, reviewerId },
-        );
-        return { ok: false, forbidden: true, httpStatus: 403 };
-      }
-      logServiceWarn('[expertModerationApi] Assign reviewer failed', {
-        submissionId,
-        reviewerId,
-        status,
-        message: err.message,
-      });
-      return { ok: false, forbidden: false, httpStatus: status };
+    const status = getHttpStatus(err);
+    if (status === 400 || status === 404) return [];
+    throw err;
+  }
+}
+
+/** PUT /Submission/assign-reviewer-submission */
+export async function assignReviewerSubmission(
+  submissionId: string,
+  reviewerId: string,
+): Promise<MutationResult> {
+  try {
+    if (!isUuid(submissionId) || !isUuid(reviewerId)) {
+      return mutationFail(new Error('ID không hợp lệ.'), 400);
     }
-    logServiceWarn('[expertModerationApi] Assign reviewer unexpected error', err);
-    return { ok: false, forbidden: false };
+    const params: ApiSubmissionActionQuery & { reviewerId: string } = { submissionId, reviewerId };
+    await apiOk(
+      asApiEnvelope<unknown>(
+        apiFetch.PUT('/api/Submission/assign-reviewer-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
+    );
+    return mutationOk();
+  } catch (err: unknown) {
+    const httpStatus = getHttpStatus(err);
+    return mutationFail(err, httpStatus);
+  }
+}
+
+/** PUT /Submission/unassign-reviewer-submission */
+export async function unassignReviewerSubmission(submissionId: string): Promise<MutationResult> {
+  try {
+    if (!isUuid(submissionId)) {
+      return mutationFail(new Error('ID không hợp lệ.'), 400);
+    }
+    const params: ApiSubmissionActionQuery = { submissionId };
+    await apiOk(
+      asApiEnvelope<unknown>(
+        apiFetch.PUT('/api/Submission/unassign-reviewer-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
+    );
+    return mutationOk();
+  } catch (err: unknown) {
+    const httpStatus = getHttpStatus(err);
+    return mutationFail(err, httpStatus);
   }
 }
 
 export async function approveSubmissionOnServer(submissionId: string): Promise<MutationResult> {
   try {
-    await api.put('/Submission/approve-submission', undefined, {
-      params: { submissionId },
-    });
+    const params: ApiSubmissionActionQuery = { submissionId };
+    await apiOk(
+      asApiEnvelope<unknown>(
+        apiFetch.PUT('/api/Submission/approve-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
+    );
     return mutationOk();
   } catch (err: unknown) {
-    const httpStatus = axios.isAxiosError(err) ? err.response?.status : undefined;
+    const httpStatus = getHttpStatus(err);
     return mutationFail(err, httpStatus);
   }
 }
 
 export async function rejectSubmissionOnServer(submissionId: string): Promise<MutationResult> {
   try {
-    await api.put('/Submission/reject-submission', undefined, {
-      params: { submissionId },
-    });
+    const params: ApiSubmissionActionQuery = { submissionId };
+    await apiOk(
+      asApiEnvelope<unknown>(
+        apiFetch.PUT('/api/Submission/reject-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
+    );
     return mutationOk();
   } catch (err: unknown) {
-    const httpStatus = axios.isAxiosError(err) ? err.response?.status : undefined;
+    const httpStatus = getHttpStatus(err);
     return mutationFail(err, httpStatus);
   }
 }
@@ -242,15 +350,21 @@ export async function postExpertModerationAuditLog(
       expertNotes: params.notesSummary,
       source: 'expert_moderation',
     });
-    await api.post('/AuditLog', {
-      userId: params.userId,
-      entityType: 'Submission',
-      entityId: params.submissionId,
-      action: params.action,
-      oldValuesJson: null,
-      newValuesJson,
-      createdAt: new Date().toISOString(),
-    });
+    await apiOk(
+      asApiEnvelope<unknown>(
+        apiFetch.POST('/api/AuditLog', {
+          body: {
+            userId: params.userId,
+            entityType: 'Submission',
+            entityId: params.submissionId,
+            action: params.action,
+            oldValuesJson: null,
+            newValuesJson,
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      ),
+    );
     return true;
   } catch (err) {
     logServiceWarn('[expertModerationApi] Audit log POST failed', err);

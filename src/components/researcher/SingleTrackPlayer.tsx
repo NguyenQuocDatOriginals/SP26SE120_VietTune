@@ -94,7 +94,7 @@ export default function SingleTrackPlayer({ recording, className = '' }: SingleT
   if (!src) {
     return (
       <div
-        className={`rounded-2xl border border-primary-200/70 bg-[#FFFCF5] p-4 shadow-sm ${className}`}
+        className={`rounded-2xl border border-primary-200/70 bg-surface-panel p-4 shadow-sm ${className}`}
       >
         <p className="text-sm text-neutral-600">Bản thu này chưa có nguồn âm thanh để phát.</p>
       </div>
@@ -103,7 +103,7 @@ export default function SingleTrackPlayer({ recording, className = '' }: SingleT
 
   return (
     <div
-      className={`rounded-2xl border border-primary-200/80 bg-[#FFFCF5] p-4 shadow-md ${className}`}
+      className={`rounded-2xl border border-primary-200/80 bg-surface-panel p-4 shadow-md ${className}`}
     >
       <div className="flex items-start gap-3">
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 sm:h-28 sm:w-28">

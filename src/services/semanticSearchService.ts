@@ -1,5 +1,5 @@
-import { api } from './api';
-
+import { apiFetch, apiOk, asApiEnvelope } from '@/api';
+import type { ApiSemanticSearchQuery } from '@/api';
 import { Recording } from '@/types';
 
 export interface SemanticSearchResult {
@@ -20,13 +20,18 @@ export interface SemanticSearchRequestParams {
 export const searchSemantic = async (
   params: SemanticSearchRequestParams,
 ): Promise<SemanticSearchResult[]> => {
-  return api.get<SemanticSearchResult[]>('/api/search/semantic', {
-    params: {
-      q: params.q,
-      topK: params.topK ?? 10,
-      minScore: params.minScore ?? 0.5,
-    },
-  });
+  const query: ApiSemanticSearchQuery = {
+    q: params.q,
+    topK: params.topK ?? 10,
+    minScore: params.minScore ?? 0.5,
+  };
+  return apiOk(
+    asApiEnvelope<SemanticSearchResult[]>(
+      apiFetch.GET('/api/search/semantic', {
+        params: { query },
+      }),
+    ),
+  );
 };
 
 export const semanticSearchService = {

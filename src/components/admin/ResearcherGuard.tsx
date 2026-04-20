@@ -12,13 +12,13 @@ import {
   logGuardDecision,
 } from '@/utils/routeAccess';
 
-/** Card & button styles đồng bộ UploadPage / UploadMusic: rounded-2xl, #FFFCF5, rounded-full, shadow-lg */
+/** Card styles đồng bộ UploadPage / UploadMusic: rounded-2xl, cream panel, shadow-lg */
 const cardClass =
-  'w-full max-w-md border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl p-4 sm:p-6 lg:p-8';
-const cardStyle = { backgroundColor: '#FFFCF5' };
+  'w-full max-w-md border border-neutral-200/80 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl p-4 sm:p-6 lg:p-8 bg-surface-panel';
 
 export default function ResearcherGuard() {
-  const { user, isLoading } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const navigate = useNavigate();
   const location = useLocation();
   const decision = useMemo(
@@ -51,7 +51,7 @@ export default function ResearcherGuard() {
   ) {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] min-w-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className={`${cardClass} text-center`} style={cardStyle}>
+        <div className={`${cardClass} text-center`}>
           <div className="flex flex-col items-center gap-6">
             <div className="p-2 bg-primary-600/20 rounded-lg flex-shrink-0">
               <LogIn className="w-5 h-5 text-primary-600" strokeWidth={2.5} />
@@ -74,7 +74,7 @@ export default function ResearcherGuard() {
   if (decision.status === 'redirect' && decision.reason === 'inactive' && isPendingApproval) {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] min-w-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className={`${cardClass} text-center`} style={cardStyle}>
+        <div className={`${cardClass} text-center`}>
           <div className="flex flex-col items-center gap-6">
             <div className="p-2 bg-primary-600/20 rounded-lg flex-shrink-0">
               <ShieldAlert className="w-5 h-5 text-primary-600" strokeWidth={2.5} />
@@ -103,7 +103,7 @@ export default function ResearcherGuard() {
   if (decision.status === 'redirect' && decision.reason === 'unauthorized') {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] min-w-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className={`${cardClass} text-center`} style={cardStyle}>
+        <div className={`${cardClass} text-center`}>
           <div className="flex flex-col items-center gap-6">
             <div className="p-2 bg-primary-600/20 rounded-lg flex-shrink-0">
               <ShieldAlert className="w-5 h-5 text-primary-600" strokeWidth={2.5} />
@@ -126,7 +126,7 @@ export default function ResearcherGuard() {
   if (decision.status === 'redirect' && decision.reason === 'inactive') {
     return (
       <div className="min-h-[calc(100vh-4.5rem)] min-w-0 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className={`${cardClass} text-center`} style={cardStyle}>
+        <div className={`${cardClass} text-center`}>
           <div className="flex flex-col items-center gap-6">
             <div className="p-2 bg-primary-600/20 rounded-lg flex-shrink-0">
               <ShieldAlert className="w-5 h-5 text-primary-600" strokeWidth={2.5} />
@@ -144,10 +144,7 @@ export default function ResearcherGuard() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer focus:outline-none text-neutral-800"
-                style={{ backgroundColor: '#FFFCF5' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F0E8')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFCF5')}
+                className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer focus:outline-none text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]"
               >
                 Quay lại
               </button>

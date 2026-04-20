@@ -1,9 +1,11 @@
-import axios from 'axios';
-
-import { api } from './api';
-
-import { API_BASE_URL } from '@/config/constants';
-import type { RecordingDto } from '@/services/recordingDto';
+import { apiFetch, apiFetchLoose, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
+import type {
+  ApiRecordingListQuery,
+  ApiRecordingSearchByFilterQuery,
+  ApiSubmissionDto,
+} from '@/api';
+import type { RecordingUploadDto } from '@/api';
+import { legacyGetAnonymous } from '@/api/legacyHttp';
 import {
   Recording,
   SearchFilters,
@@ -16,14 +18,7 @@ import {
   UserRole,
   InstrumentCategory,
 } from '@/types';
-
-const guestApiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import { pickContributorFieldsFromApiRow } from '@/utils/contributorFields';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -104,6 +99,12 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
   );
   const rawTags = pickStringArray(normalized, ['tags', 'tagNames', 'metadataTags', 'keywords']);
 
+  const contrib = pickContributorFieldsFromApiRow(normalized);
+  const uploaderIdFlat = pickString(normalized, ['uploaderId', 'uploadedById']);
+  const uploaderDisplayName =
+    contrib.fullName || pickString(normalized, ['uploaderName', 'uploadedByName']) || 'Guest';
+  const uploaderHandle = contrib.username || '';
+
   return {
     id,
     title,
@@ -136,10 +137,10 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
     recordedDate: pickString(normalized, ['recordedDate', 'recordingDate']),
     uploadedDate,
     uploader: {
-      id: pickString(normalized, ['uploaderId', 'uploadedById']) || 'guest-uploader',
-      username: pickString(normalized, ['uploaderName', 'uploadedByName']) || 'guest',
+      id: contrib.id || uploaderIdFlat || 'guest-uploader',
+      username: uploaderHandle,
       email: '',
-      fullName: pickString(normalized, ['uploaderName', 'uploadedByName']) || 'Guest',
+      fullName: uploaderDisplayName,
       role: UserRole.USER,
       createdAt: uploadedDate,
       updatedAt: uploadedDate,
@@ -204,16 +205,33 @@ function toGuestPaginatedResponse(
   };
 }
 
+type RecordingSearchByFilterResponse =
+  | Record<string, unknown>[]
+  | {
+      data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      Data?: Record<string, unknown>[] | { items?: Record<string, unknown>[]; Items?: Record<string, unknown>[] };
+      items?: Record<string, unknown>[];
+      Items?: Record<string, unknown>[];
+      records?: Record<string, unknown>[];
+      result?: Record<string, unknown>[] | { items?: Record<string, unknown>[] };
+      value?: Record<string, unknown>[];
+    };
+
 export const recordingService = {
-  // Get all recordings with pagination (backend: GET /api/Recording)
   getRecordings: async (
     page: number = 1,
     pageSize: number = 20,
     opts?: { signal?: AbortSignal },
   ) => {
-    return api.get<PaginatedResponse<Recording>>(`/Recording?page=${page}&pageSize=${pageSize}`, {
-      signal: opts?.signal,
-    });
+    const params: ApiRecordingListQuery = { page, pageSize };
+    return apiOk(
+      asApiEnvelope<PaginatedResponse<Recording>>(
+        apiFetch.GET('/api/Recording', {
+          params: { query: openApiQueryRecord(params) },
+          signal: opts?.signal,
+        }),
+      ),
+    );
   },
 
   /**
@@ -225,16 +243,14 @@ export const recordingService = {
     pageSize: number = 20,
     opts?: { signal?: AbortSignal },
   ) => {
-    const qs = `?page=${page}&pageSize=${pageSize}`;
-    const reqOpts = { signal: opts?.signal };
+    const reqOpts = { signal: opts?.signal, params: { page, pageSize } };
     try {
-      const response = await guestApiClient.get<unknown>(`/RecordingGuest${qs}`, reqOpts);
-      return toGuestPaginatedResponse(response.data, page, pageSize);
+      const data = await legacyGetAnonymous<unknown>('/RecordingGuest', reqOpts);
+      return toGuestPaginatedResponse(data, page, pageSize);
     } catch (primaryErr) {
       try {
-        // Compatibility fallback for backends exposing camelCase route.
-        const fallbackRes = await guestApiClient.get<unknown>(`/recordingGuest${qs}`, reqOpts);
-        return toGuestPaginatedResponse(fallbackRes.data, page, pageSize);
+        const data = await legacyGetAnonymous<unknown>('/recordingGuest', reqOpts);
+        return toGuestPaginatedResponse(data, page, pageSize);
       } catch {
         throw primaryErr;
       }
@@ -242,18 +258,30 @@ export const recordingService = {
   },
 
   /** Researcher: GET /api/Recording/search-by-filter — verified catalog with ID metadata filters. */
-  searchRecordingsByFilter: async (query: Record<string, string | number | undefined>) => {
+  searchRecordingsByFilter: async (query: ApiRecordingSearchByFilterQuery) => {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === '') continue;
       params.set(k, String(v));
     }
-    return api.get<unknown>(`/Recording/search-by-filter?${params.toString()}`);
+    return apiOk(
+      asApiEnvelope<RecordingSearchByFilterResponse>(
+        apiFetch.GET('/api/Recording/search-by-filter', {
+          params: { query: openApiQueryRecord(query) },
+        }),
+      ),
+    );
   },
 
   // Get recording by ID (backend: GET /api/Recording/{id})
   getRecordingById: async (id: string) => {
-    return api.get<ApiResponse<Recording>>(`/Recording/${id}`);
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording>>(
+        apiFetch.GET('/api/Recording/{id}', {
+          params: { path: { id } },
+        }),
+      ),
+    );
   },
 
   // Search recordings (backend: GET /api/Search/songs with query params)
@@ -270,19 +298,46 @@ export const recordingService = {
     if (filters.regions?.length) params.append('region', filters.regions.join(','));
     if (filters.recordingTypes?.length) params.append('type', filters.recordingTypes.join(','));
     if (filters.tags?.length) params.append('tags', filters.tags.join(','));
-    return api.get<PaginatedResponse<Recording>>(`/Search/songs?${params.toString()}`, {
-      signal: opts?.signal,
-    });
+    return apiOk(
+      asApiEnvelope<PaginatedResponse<Recording>>(
+        apiFetch.GET('/api/Search/songs', {
+          params: {
+            query: openApiQueryRecord({
+              q: filters.query,
+              page,
+              pageSize,
+              region: filters.regions?.join(','),
+              type: filters.recordingTypes?.join(','),
+              tags: filters.tags?.join(','),
+            }),
+          },
+          signal: opts?.signal,
+        }),
+      ),
+    );
   },
 
   // Upload new recording (backend: POST /api/Recording with JSON body)
   uploadRecording: async (data: Partial<Recording>) => {
-    return api.post<ApiResponse<Recording>>('/Recording', data);
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording>>(
+        apiFetchLoose.POST('/api/Recording', {
+          body: data as unknown,
+        }),
+      ),
+    );
   },
 
   // Update recording (backend: PUT /api/Recording/{id}/upload — OpenAPI RecordingDto)
-  updateRecording: async (id: string, data: RecordingDto) => {
-    return api.put<ApiResponse<Recording>>(`/Recording/${id}/upload`, data);
+  updateRecording: async (id: string, data: RecordingUploadDto) => {
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording>>(
+        apiFetch.PUT('/api/Recording/{id}/upload', {
+          params: { path: { id } },
+          body: data as never,
+        }),
+      ),
+    );
   },
 
   // Create submission (backend: POST /api/Submission/create-submission)
@@ -291,36 +346,69 @@ export const recordingService = {
     videoFileUrl?: string;
     uploadedById: string;
   }) => {
-    return api.post<{
-      isSuccess: boolean;
-      message: string;
-      data: {
-        audioFileUrl?: string;
-        videoFileUrl?: string;
-        uploadedById: string;
-        submissionId: string;
-        recordingId: string;
-      };
-    }>('/Submission/create-submission', data);
+    const payload: ApiSubmissionDto & { videoFileUrl?: string } = {
+      audioFileUrl: data.audioFileUrl ?? null,
+      uploadedById: data.uploadedById,
+      videoFileUrl: data.videoFileUrl,
+    };
+    return apiOk(
+      asApiEnvelope<{
+        isSuccess: boolean;
+        message: string;
+        data: {
+          audioFileUrl?: string;
+          videoFileUrl?: string;
+          uploadedById: string;
+          submissionId: string;
+          recordingId: string;
+        };
+      }>(
+        apiFetch.POST('/api/Submission/create-submission', {
+          body: payload,
+        }),
+      ),
+    );
   },
 
   // Delete recording (backend: DELETE /api/Recording/{id})
   deleteRecording: async (id: string) => {
-    return api.delete<ApiResponse<void>>(`/Recording/${id}`);
+    return apiOk(
+      asApiEnvelope<ApiResponse<void>>(
+        apiFetchLoose.DELETE(`/api/Recording/${encodeURIComponent(id)}`, {}),
+      ),
+    );
   },
 
   // Get popular recordings (backend: GET /api/Song/popular)
   getPopularRecordings: async (limit: number = 10) => {
-    return api.get<ApiResponse<Recording[]>>(`/Song/popular?pageSize=${limit}`);
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording[]>>(
+        apiFetch.GET('/api/Song/popular', {
+          params: { query: { limit } },
+        }),
+      ),
+    );
   },
 
   // Get recent recordings (backend: GET /api/Song/recent)
   getRecentRecordings: async (limit: number = 10) => {
-    return api.get<ApiResponse<Recording[]>>(`/Song/recent?pageSize=${limit}`);
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording[]>>(
+        apiFetch.GET('/api/Song/recent', {
+          params: { query: { limit } },
+        }),
+      ),
+    );
   },
 
   // Get featured recordings (backend: GET /api/Song/featured)
   getFeaturedRecordings: async (limit: number = 10) => {
-    return api.get<ApiResponse<Recording[]>>(`/Song/featured?pageSize=${limit}`);
+    return apiOk(
+      asApiEnvelope<ApiResponse<Recording[]>>(
+        apiFetch.GET('/api/Song/featured', {
+          params: { query: { limit } },
+        }),
+      ),
+    );
   },
 };

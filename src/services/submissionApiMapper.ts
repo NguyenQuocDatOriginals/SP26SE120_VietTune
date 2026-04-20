@@ -1,5 +1,6 @@
 import type { LocalRecording } from '@/types';
-import { ModerationStatus } from '@/types';
+import { ModerationStatus, toApiSubmissionStatus, toModerationUiStatus, type ApiSubmissionStatus } from '@/types';
+import { pickContributorFieldsFromApiRow } from '@/utils/contributorFields';
 
 export interface SubmissionLookupMaps {
   ethnicById?: Record<string, string>;
@@ -44,59 +45,8 @@ function macroRegionLabelFromGeo(
   return label?.trim() || undefined;
 }
 
-/**
- * Maps backend SubmissionStatus (int) → UI enum.
- * Current backend payload for moderation queue uses `status = 1` as Pending.
- */
-const SUBMISSION_STATUS_INT: Record<number, ModerationStatus> = {
-  0: ModerationStatus.PENDING_REVIEW,
-  1: ModerationStatus.PENDING_REVIEW,
-  2: ModerationStatus.APPROVED,
-  3: ModerationStatus.REJECTED,
-  4: ModerationStatus.TEMPORARILY_REJECTED,
-};
-
-export function mapApiSubmissionStatusToModeration(raw: unknown): ModerationStatus | string {
-  if (raw === null || raw === undefined) return ModerationStatus.PENDING_REVIEW;
-  if (typeof raw === 'string') {
-    const v = raw.trim();
-    if (/^\d+$/.test(v)) {
-      const n = Number(v);
-      const mapped = SUBMISSION_STATUS_INT[n];
-      return mapped ?? ModerationStatus.PENDING_REVIEW;
-    }
-    const normalized = v.toLowerCase().replace(/[\s-]+/g, '_');
-    if (normalized === 'pending' || normalized === 'pending_review') {
-      return ModerationStatus.PENDING_REVIEW;
-    }
-    if (normalized === 'in_review' || normalized === 'reviewing') {
-      return ModerationStatus.IN_REVIEW;
-    }
-    if (normalized === 'approved' || normalized === 'accept') {
-      return ModerationStatus.APPROVED;
-    }
-    if (
-      normalized === 'rejected' ||
-      normalized === 'reject' ||
-      normalized === 'permanently_rejected'
-    ) {
-      return ModerationStatus.REJECTED;
-    }
-    if (
-      normalized === 'temporarily_rejected' ||
-      normalized === 'temp_rejected' ||
-      normalized === 'revision_required'
-    ) {
-      return ModerationStatus.TEMPORARILY_REJECTED;
-    }
-    if ((Object.values(ModerationStatus) as string[]).includes(v)) return v as ModerationStatus;
-    return v;
-  }
-  if (typeof raw === 'number' && Number.isFinite(raw)) {
-    const mapped = SUBMISSION_STATUS_INT[raw];
-    return mapped ?? ModerationStatus.PENDING_REVIEW;
-  }
-  return ModerationStatus.PENDING_REVIEW;
+export function mapApiSubmissionStatusToModeration(raw: unknown): ApiSubmissionStatus | undefined {
+  return toApiSubmissionStatus(raw);
 }
 
 /** Normalize list payloads from various VietTune API envelope shapes. */
@@ -143,7 +93,8 @@ export function mapSubmissionToLocalRecording(
     (x.videoFileUrl as string | undefined) ??
     undefined;
   const statusRaw = x.status;
-  const moderationStatus = mapApiSubmissionStatusToModeration(statusRaw);
+  const apiStatus = mapApiSubmissionStatusToModeration(statusRaw);
+  const moderationStatus = toModerationUiStatus(apiStatus);
   const reviewerId =
     (x.reviewerId as string | undefined) ??
     (x.assignedReviewerId as string | undefined) ??
@@ -151,12 +102,6 @@ export function mapSubmissionToLocalRecording(
 
   const claimedBy =
     moderationStatus === ModerationStatus.IN_REVIEW && reviewerId ? reviewerId : undefined;
-  const decisionReviewerId =
-    moderationStatus === ModerationStatus.APPROVED ||
-    moderationStatus === ModerationStatus.REJECTED ||
-    moderationStatus === ModerationStatus.TEMPORARILY_REJECTED
-      ? reviewerId
-      : undefined;
 
   const instrumentIds = Array.isArray(rec?.instrumentIds) ? (rec?.instrumentIds as unknown[]) : [];
   const instrumentObjects = Array.isArray(rec?.instruments)
@@ -203,6 +148,20 @@ export function mapSubmissionToLocalRecording(
     explicitRegion ||
     undefined;
 
+  const contribSubmission = pickContributorFieldsFromApiRow(x);
+  const contribRecording = pickContributorFieldsFromApiRow(rec ?? undefined);
+  const uploaderId =
+    contribRecording.id ||
+    contribSubmission.id ||
+    String(
+      (rec?.uploadedById as string | undefined) ||
+        (x.uploadedById as string | undefined) ||
+        (x.contributorId as string | undefined) ||
+        '',
+    ).trim();
+  const contributorFullName = contribRecording.fullName ?? contribSubmission.fullName;
+  const contributorUsername = contribRecording.username ?? contribSubmission.username;
+
   const mapped: LocalRecording = {
     id,
     ...(submissionId ? { submissionId } : {}),
@@ -211,9 +170,12 @@ export function mapSubmissionToLocalRecording(
     audioUrl: audioFileUrl,
     videoData: videoFileUrl,
     moderation: {
-      status: moderationStatus,
+      status: apiStatus,
       ...(claimedBy ? { claimedBy } : {}),
-      ...(decisionReviewerId ? { reviewerId: decisionReviewerId } : {}),
+      /** Pass through when API sends it so expert queue filters (`reviewerId === userId`) match assigned items. */
+      ...(reviewerId && String(reviewerId).trim()
+        ? { reviewerId: String(reviewerId).trim() }
+        : {}),
     },
     uploadedDate: (x.createdAt as string) || (x.submittedAt as string) || new Date().toISOString(),
     basicInfo: {
@@ -224,12 +186,9 @@ export function mapSubmissionToLocalRecording(
         (x.submittedBy as string | undefined),
     },
     uploader: {
-      id:
-        (rec?.uploadedById as string | undefined) ||
-        (x.uploadedById as string | undefined) ||
-        (x.contributorId as string | undefined) ||
-        '',
-      username: (x.submittedBy as string | undefined) || undefined,
+      id: uploaderId,
+      ...(contributorFullName ? { fullName: contributorFullName } : {}),
+      ...(contributorUsername ? { username: contributorUsername } : {}),
     },
     culturalContext: {
       ethnicity: ethnicityFromApi,

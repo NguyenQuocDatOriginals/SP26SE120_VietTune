@@ -10,10 +10,11 @@ import { getItem, setItem } from '@/services/storageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole, type User } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
+import { validatePassword } from '@/utils/validation';
 
 export default function CreateExpertPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [expertForm, setExpertForm] = useState({
     username: '',
     email: '',
@@ -58,8 +59,9 @@ export default function CreateExpertPage() {
     }
     if (!expertForm.password) {
       errors.password = 'Mật khẩu là bắt buộc';
-    } else if (expertForm.password.length < 6) {
-      errors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else {
+      const pw = validatePassword(expertForm.password);
+      if (!pw.valid) errors.password = pw.errors[0];
     }
     if (!expertForm.confirmPassword) {
       errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
@@ -207,7 +209,7 @@ export default function CreateExpertPage() {
                   }}
                   error={expertFormErrors.password}
                   required
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                  placeholder="Tối thiểu 6 ký tự, chữ hoa, chữ thường, chữ số"
                 />
                 <Input
                   label="Xác nhận mật khẩu"

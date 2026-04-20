@@ -70,7 +70,7 @@ function RecordingCardCompact({
   return (
     <article
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-2xl border border-secondary-200/70 bg-gradient-to-b from-[#FFFCF5] via-cream-50/80 to-secondary-50/45 shadow-md transition-all duration-300',
+        'group flex h-full flex-col overflow-hidden rounded-2xl border border-secondary-200/70 bg-gradient-to-b from-surface-panel via-cream-50/80 to-secondary-50/45 shadow-md transition-all duration-300',
         'hover:border-secondary-300/80 hover:shadow-lg',
         'focus-within:ring-2 focus-within:ring-secondary-400 focus-within:ring-offset-2 focus-within:ring-offset-cream-50',
         className,

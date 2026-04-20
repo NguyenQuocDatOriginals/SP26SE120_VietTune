@@ -21,6 +21,6 @@ export function logServiceWarn(message: string, detail?: unknown): void {
 
 export function logServiceInfo(message: string, detail?: unknown): void {
   if (import.meta.env.DEV) {
-    console.info(message, detail);
+    console.warn(message, detail);
   }
 }
