@@ -74,7 +74,7 @@ Run `dotnet test --filter "SubmissionServiceTests"` — all must be green.
 Fix any errors before proceeding.
 
 Then create the file:
-VietTuneArchive.Tests/Unit/Services/SUBMISSION_TEST_REPORT.md
+VietTuneArchive.Tests/Report/SUBMISSION_TEST_REPORT.md
 
 The report must include:
 - Date generated
