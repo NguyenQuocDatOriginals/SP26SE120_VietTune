@@ -328,3 +328,5 @@ app.MapControllers();
 app.MapHub<NotificationHub>(builder.Configuration["SignalR:HubPath"] ?? "/notificationHub");
 
 app.Run();
+
+public partial class Program {}
