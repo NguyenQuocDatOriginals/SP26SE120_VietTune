@@ -1,120 +1,193 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, Lightbulb } from "lucide-react";
-import BackButton from "@/components/common/BackButton";
-import { INTELLIGENCE_NAME } from "@/config/constants";
-import { sendResearcherChatMessage } from "@/services/researcherChatService";
+import { Send, History } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 
-type MessageRole = "user" | "assistant";
-
-interface Message {
-  id: string;
-  role: MessageRole;
-  content: string;
-  timestamp: Date;
-}
+import BackButton from '@/components/common/BackButton';
+import ChatMessageItem from '@/components/features/chatbot/ChatMessageItem';
+import ChatSidebar from '@/components/features/chatbot/ChatSidebar';
+import { INTELLIGENCE_NAME } from '@/config/constants';
+import { CHAT_INPUT_COUNTER_FROM, CHAT_INPUT_MAX_LENGTH } from '@/config/validationConstants';
+import { useAuth } from '@/contexts/AuthContext';
+import { useChatbotSession } from '@/hooks/useChatbotSession';
+import { createQAConversation, type QAConversationRequest } from '@/services/qaConversationService';
+import {
+  createQAMessage,
+  fetchConversationMessages,
+  flagMessage,
+  unflagMessage,
+} from '@/services/qaMessageService';
+import { sendResearcherChatMessage } from '@/services/researcherChatService';
+import { Message } from '@/types/chat';
 
 /** Tin chào — đồng bộ với tab Hỏi Đáp AI (ResearcherPortalPage). */
 const WELCOME_MESSAGE =
-  "Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Bạn muốn tìm hiểu về điều gì?";
+  'Xin chào! Tôi có thể giúp bạn tìm hiểu về âm nhạc truyền thống Việt Nam. Bạn muốn tìm hiểu về điều gì?';
 
 /** Fallback khi API lỗi hoặc không trả về nội dung. */
 const FALLBACK_REPLY =
-  "Xin lỗi, tôi chưa thể trả lời. Vui lòng kiểm tra kết nối backend (VietTune API + Gemini) và thử lại.";
-
-/** Câu hỏi gợi ý — đồng bộ với ResearcherPortalPage (tab Hỏi đáp thông minh). */
-const QUICK_QUESTIONS = [
-  "Đàn bầu có đặc điểm gì?",
-  "So sánh nhạc cưới Tày và Thái",
-  "T'rưng được chế tạo như thế nào?",
-  "Hát Xoan xuất hiện khi nào?",
-];
+  'Xin lỗi, tôi chưa thể trả lời. Vui lòng kiểm tra kết nối backend (VietTune API + Gemini) và thử lại.';
 
 export default function ChatbotPage() {
+  const { user } = useAuth();
+  const { history, isLoadingHistory, loadHistory } = useChatbotSession(user?.id);
+  const [conversationId, setConversationId] = useState<string>(() => crypto.randomUUID());
+  const [isFirstMessage, setIsFirstMessage] = useState<boolean>(true);
+  const [chatTitle, setChatTitle] = useState('Cuộc trò chuyện mới');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>(() => [
     {
-      id: "welcome",
-      role: "assistant",
+      id: 'welcome',
+      role: 'assistant',
       content: WELCOME_MESSAGE,
       timestamp: new Date(),
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  const handleToggleFlag = async (msgId: string, currentFlagged: boolean) => {
+    try {
+      if (currentFlagged) {
+        await unflagMessage(msgId);
+      } else {
+        await flagMessage(msgId);
+      }
+      setMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, flaggedByExpert: !currentFlagged } : m)),
+      );
+    } catch (error) {
+      console.error('Lỗi khi cắm cờ:', error);
+    }
+  };
+
+  const handleSelectConversation = async (conv: QAConversationRequest) => {
+    setConversationId(conv.id);
+    setIsFirstMessage(false);
+    setChatTitle(conv.title || 'Cuộc trò chuyện mới');
+    setIsLoadingMessages(true);
+
+    // Khởi tạo trạng thái rỗng trong lúc chờ
+    setMessages([]);
+
+    const remoteMsgs = await fetchConversationMessages(conv.id);
+    if (remoteMsgs && remoteMsgs.length > 0) {
+      const mapped: Message[] = remoteMsgs.map((m) => ({
+        id: m.id,
+        role: m.role === 0 ? 'user' : 'assistant',
+        content: m.content,
+        timestamp: new Date(m.createdAt),
+        sourceRecordingIdsJson: m.sourceRecordingIdsJson,
+        sourceKBEntryIdsJson: m.sourceKBEntryIdsJson,
+        expertCorrection: m.expertCorrection,
+        flaggedByExpert: m.flaggedByExpert,
+      }));
+      setMessages(mapped);
+    }
+
+    setIsLoadingMessages(false);
+    // On mobile, close sidebar after selecting
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  const handleNewChat = () => {
+    setConversationId(crypto.randomUUID());
+    setIsFirstMessage(true);
+    setChatTitle('Cuộc trò chuyện mới');
+    setMessages([
+      {
+        id: 'welcome',
+        role: 'assistant',
+        content: WELCOME_MESSAGE,
+        timestamp: new Date(),
+      },
+    ]);
+    setInput('');
+  };
 
   const sendMessage = async () => {
     const text = input.trim();
     if (!text) return;
 
+    const userMsgId = crypto.randomUUID();
+    const userTimestamp = new Date();
     const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
+      id: userMsgId,
+      role: 'user',
       content: text,
-      timestamp: new Date(),
+      timestamp: userTimestamp,
     };
+
     setMessages((prev) => [...prev, userMsg]);
-    setInput("");
+    setInput('');
     setIsTyping(true);
 
     try {
+      if (isFirstMessage) {
+        setChatTitle(text);
+        await createQAConversation({
+          id: conversationId,
+          userId: user?.id || '00000000-0000-0000-0000-000000000000',
+          title: text,
+          createdAt: userTimestamp.toISOString(),
+        });
+        setIsFirstMessage(false);
+        void loadHistory(); // Refresh history list
+      }
+
+      await createQAMessage({
+        id: userMsgId,
+        conversationId: conversationId,
+        role: 0,
+        content: text,
+        sourceRecordingIdsJson: '[]',
+        sourceKBEntryIdsJson: '[]',
+        confidenceScore: 0,
+        flaggedByExpert: false,
+        correctedByExpertId: null,
+        expertCorrection: null,
+        createdAt: userTimestamp.toISOString(),
+      });
+
       const reply = await sendResearcherChatMessage(text);
       const content = reply?.trim() || FALLBACK_REPLY;
+      const botMsgId = crypto.randomUUID();
+      const botTimestamp = new Date();
       const botMsg: Message = {
-        id: `bot-${Date.now()}`,
-        role: "assistant",
+        id: botMsgId,
+        role: 'assistant',
         content,
-        timestamp: new Date(),
+        timestamp: botTimestamp,
       };
+
       setMessages((prev) => [...prev, botMsg]);
+
+      await createQAMessage({
+        id: botMsgId,
+        conversationId: conversationId,
+        role: 1,
+        content: content,
+        sourceRecordingIdsJson: '[]',
+        sourceKBEntryIdsJson: '[]',
+        confidenceScore: 0,
+        flaggedByExpert: false,
+        correctedByExpertId: null,
+        expertCorrection: null,
+        createdAt: botTimestamp.toISOString(),
+      });
     } catch {
       setMessages((prev) => [
         ...prev,
         {
-          id: `bot-${Date.now()}`,
-          role: "assistant",
-          content: FALLBACK_REPLY,
-          timestamp: new Date(),
-        },
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const askQuestion = async (question: string) => {
-    const text = question.trim();
-    if (!text) return;
-
-    const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setIsTyping(true);
-
-    try {
-      const reply = await sendResearcherChatMessage(text);
-      const content = reply?.trim() || FALLBACK_REPLY;
-      const botMsg: Message = {
-        id: `bot-${Date.now()}`,
-        role: "assistant",
-        content,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `bot-${Date.now()}`,
-          role: "assistant",
+          id: crypto.randomUUID(),
+          role: 'assistant',
           content: FALLBACK_REPLY,
           timestamp: new Date(),
         },
@@ -125,7 +198,7 @@ export default function ChatbotPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void sendMessage();
     }
@@ -133,7 +206,7 @@ export default function ChatbotPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             {INTELLIGENCE_NAME}
@@ -141,70 +214,64 @@ export default function ChatbotPage() {
           <BackButton />
         </div>
 
-        {/* Chatbox — UI/UX đồng bộ với ResearcherPortalPage (tab Hỏi đáp thông minh) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 flex flex-col rounded-2xl border-2 border-primary-200/80 bg-white shadow-lg overflow-hidden min-h-[500px] max-h-[700px]">
-            <div className="bg-gradient-to-r from-primary-700 to-primary-600 text-white px-4 sm:px-6 py-4 border-b-2 border-primary-800">
-              <h2 className="text-lg font-semibold">{INTELLIGENCE_NAME}</h2>
-              <p className="text-secondary-200 text-sm mt-0.5">
-                Hệ thống được đào tạo trên cơ sở tri thức đã xác minh
-              </p>
+        {/* Chat Layout with Sidebar */}
+        <div className="flex gap-4 sm:gap-6 h-[700px] relative w-full overflow-hidden">
+          <ChatSidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+            history={history}
+            isLoadingHistory={isLoadingHistory}
+            conversationId={conversationId}
+            onSelectConversation={(conv) => void handleSelectConversation(conv)}
+            onNewChat={handleNewChat}
+          />
+
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col rounded-2xl border-2 border-primary-200/80 bg-white shadow-lg overflow-hidden transition-all duration-300 min-w-0">
+            <div className="bg-gradient-to-r from-primary-700 to-primary-600 text-white px-4 sm:px-6 py-4 border-b-2 border-primary-800 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
+                    {chatTitle}
+                  </h2>
+                  <p className="text-secondary-200 text-sm mt-0.5 truncate max-w-[200px] sm:max-w-md lg:max-w-xl">
+                    {INTELLIGENCE_NAME}
+                  </p>
+                </div>
+              </div>
             </div>
+
             <div
               ref={listRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{
-                background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1F3 100%)",
-              }}
+              className="flex-1 overflow-y-auto bg-gradient-to-br from-surface-panel to-[#FFF1F3] p-4 space-y-4"
             >
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                      m.role === "user"
-                        ? "bg-primary-600 text-white shadow-md"
-                        : "bg-white border-2 border-secondary-200/80 text-neutral-700 shadow-sm"
-                    }`}
-                  >
-                    {m.role === "assistant" && (
-                      <div className="flex items-center gap-2 text-xs font-semibold text-primary-600 mb-1.5">
-                        <Bot className="w-4 h-4" strokeWidth={2.5} />
-                        {INTELLIGENCE_NAME}
-                      </div>
-                    )}
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {m.role === "user"
-                        ? m.content
-                        : m.content.split("**").map((part, i) =>
-                            i % 2 === 1 ? (
-                              <strong key={i} className="font-semibold text-neutral-900">
-                                {part}
-                              </strong>
-                            ) : (
-                              <span key={i}>{part}</span>
-                            )
-                          )}
-                    </p>
-                  </div>
+              {isLoadingMessages ? (
+                <div className="flex justify-center h-full items-center text-neutral-500 font-medium">
+                  Đang tải tin nhắn...
                 </div>
-              ))}
+              ) : messages.length === 0 ? (
+                <div className="flex justify-center items-center h-full text-neutral-500 italic text-sm">
+                  Không có tin nhắn nào.
+                </div>
+              ) : (
+                messages.map((m) => (
+                  <ChatMessageItem key={m.id} message={m} onToggleFlag={handleToggleFlag} />
+                ))
+              )}
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="rounded-2xl px-4 py-3 bg-white border-2 border-secondary-200/80 shadow-sm flex gap-1.5">
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "0ms" }}
+                      style={{ animationDelay: '0ms' }}
                     />
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "150ms" }}
+                      style={{ animationDelay: '150ms' }}
                     />
                     <span
                       className="w-2 h-2 rounded-full bg-neutral-400 animate-bounce"
-                      style={{ animationDelay: "300ms" }}
+                      style={{ animationDelay: '300ms' }}
                     />
                   </div>
                 </div>
@@ -217,6 +284,7 @@ export default function ChatbotPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  maxLength={CHAT_INPUT_MAX_LENGTH}
                   placeholder="Hỏi về nhạc cụ, phong cách biểu diễn, lịch sử,..."
                   className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border-2 border-primary-200/80 focus:border-primary-500 outline-none text-neutral-900 placeholder-neutral-500"
                   aria-label="Tin nhắn"
@@ -225,39 +293,35 @@ export default function ChatbotPage() {
                   type="button"
                   onClick={() => void sendMessage()}
                   disabled={!input.trim() || isTyping}
-                  className="p-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none text-white transition-colors cursor-pointer"
+                  className="p-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:pointer-events-none text-white transition-colors cursor-pointer flex items-center justify-center"
                   aria-label="Gửi"
                 >
                   <Send className="w-5 h-5" strokeWidth={2.5} />
                 </button>
               </div>
+              {input.length >= CHAT_INPUT_COUNTER_FROM ? (
+                <p
+                  className={`mt-1.5 text-right text-xs tabular-nums ${
+                    input.length >= CHAT_INPUT_MAX_LENGTH ? 'font-semibold text-amber-800' : 'text-neutral-600'
+                  }`}
+                >
+                  {input.length} / {CHAT_INPUT_MAX_LENGTH}
+                </p>
+              ) : null}
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div
-              className="rounded-2xl border-2 border-primary-200/80 bg-white p-4 shadow-md"
-              style={{ backgroundColor: "#FFFCF5" }}
+          {/* Mobile Overlay button when sidebar is closed */}
+          {!isSidebarOpen && (
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden absolute bottom-24 left-4 z-10 p-3 bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200/80 rounded-full shadow-xl transition-colors"
+              title="Mở lịch sử trò chuyện"
             >
-              <h3 className="flex items-center gap-2 text-base font-semibold text-primary-800 mb-3">
-                <Lightbulb className="w-5 h-5 text-secondary-600" strokeWidth={2.5} />
-                Câu hỏi gợi ý
-              </h3>
-              <div className="flex flex-col gap-2">
-                {QUICK_QUESTIONS.map((q, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => void askQuestion(q)}
-                    disabled={isTyping}
-                    className="w-full text-left px-3 py-2.5 rounded-xl bg-primary-50 border border-primary-200/80 text-primary-800 font-medium text-sm hover:bg-primary-100 hover:border-primary-300 transition-all cursor-pointer disabled:opacity-60"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+              <History className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>

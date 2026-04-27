@@ -1,22 +1,22 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { Sparkles, Search, Music, ArrowRight } from "lucide-react";
-import BackButton from "@/components/common/BackButton";
-import { Recording } from "@/types";
-import { recordingService } from "@/services/recordingService";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
-import RecordingCard from "@/components/features/RecordingCard";
+import { Sparkles, Search, Music, ArrowRight } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
+import BackButton from '@/components/common/BackButton';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import RecordingCard from '@/components/features/RecordingCard';
+import { recordingService } from '@/services/recordingService';
+import { Recording } from '@/types';
 
 const SUGGESTED_QUERIES = [
-  "dân ca quan họ Bắc Ninh",
-  "nhạc cụ đàn bầu đàn tranh",
-  "hát then dân tộc Tày",
-  "ca trù Hà Nội",
-  "hò ví giặm Nghệ Tĩnh",
-  "cồng chiêng Tây Nguyên",
-  "chầu văn hầu bóng",
-  "đờn ca tài tử Nam Bộ",
+  'dân ca quan họ Bắc Ninh',
+  'nhạc cụ đàn bầu đàn tranh',
+  'hát then dân tộc Tày',
+  'ca trù Hà Nội',
+  'hò ví giặm Nghệ Tĩnh',
+  'cồng chiêng Tây Nguyên',
+  'chầu văn hầu bóng',
+  'đờn ca tài tử Nam Bộ',
 ];
 
 /**
@@ -27,7 +27,7 @@ export default function SemanticSearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const qFromUrl = searchParams.get("q") ?? "";
+  const qFromUrl = searchParams.get('q') ?? '';
   const [query, setQuery] = useState(qFromUrl);
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<Recording[]>([]);
@@ -39,29 +39,31 @@ export default function SemanticSearchPage() {
   const tokenize = useCallback((text: string): string[] => {
     return text
       .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
       .split(/\s+/)
       .filter(Boolean);
   }, []);
 
-  const scoreRecording = useCallback(
-    (r: Recording, tokens: string[]): number => {
-      const title = (r.title || "") + " " + (r.titleVietnamese || "");
-      const desc = r.description || "";
-      const ethnicityName = typeof r.ethnicity === "object" && r.ethnicity !== null
-        ? (r.ethnicity.name || "") + " " + (r.ethnicity.nameVietnamese || "")
-        : "";
-      const tags = (r.tags || []).join(" ");
-      const searchable = [title, desc, ethnicityName, tags].join(" ").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
-      let score = 0;
-      for (const t of tokens) {
-        if (searchable.includes(t)) score += 1;
-      }
-      return score;
-    },
-    []
-  );
+  const scoreRecording = useCallback((r: Recording, tokens: string[]): number => {
+    const title = (r.title || '') + ' ' + (r.titleVietnamese || '');
+    const desc = r.description || '';
+    const ethnicityName =
+      typeof r.ethnicity === 'object' && r.ethnicity !== null
+        ? (r.ethnicity.name || '') + ' ' + (r.ethnicity.nameVietnamese || '')
+        : '';
+    const tags = (r.tags || []).join(' ');
+    const searchable = [title, desc, ethnicityName, tags]
+      .join(' ')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
+    let score = 0;
+    for (const t of tokens) {
+      if (searchable.includes(t)) score += 1;
+    }
+    return score;
+  }, []);
 
   const runSearchWithQuery = useCallback(
     (q: string) => {
@@ -79,7 +81,7 @@ export default function SemanticSearchPage() {
       setResults(scored);
       setIsSearching(false);
     },
-    [allRecordings, tokenize, scoreRecording, setSearchParams]
+    [allRecordings, tokenize, scoreRecording, setSearchParams],
   );
 
   const runSearch = useCallback(() => {
@@ -94,12 +96,12 @@ export default function SemanticSearchPage() {
         const res = await recordingService.getRecordings(1, 500);
         apiItems = Array.isArray(res?.items) ? res.items : [];
       } catch (err) {
-        console.error("Failed to fetch recordings for semantic search:", err);
+        console.error('Failed to fetch recordings for semantic search:', err);
       }
       if (cancelled) return;
       setAllRecordings(apiItems);
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
@@ -120,12 +122,12 @@ export default function SemanticSearchPage() {
       runSearchWithQuery(qFromUrl.trim());
     } catch (err) {
       hasRestoredRef.current = false;
-      console.error("SemanticSearchPage restore search failed:", err);
+      console.error('SemanticSearchPage restore search failed:', err);
     }
   }, [qFromUrl, allRecordings.length, runSearchWithQuery]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") runSearch();
+    if (e.key === 'Enter') runSearch();
   };
 
   return (
@@ -141,8 +143,7 @@ export default function SemanticSearchPage() {
 
         {/* Main search card — same style as UploadPage main form card */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: "#FFFCF5" }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -151,14 +152,17 @@ export default function SemanticSearchPage() {
             Mô tả bằng ngôn ngữ tự nhiên
           </h2>
           <p className="text-neutral-600 font-medium leading-relaxed mb-4">
-            Viết câu hỏi hoặc mô tả bản thu bạn muốn tìm. Hệ thống sẽ gợi ý bản ghi phù hợp theo nghĩa.
+            Viết câu hỏi hoặc mô tả bản thu bạn muốn tìm. Hệ thống sẽ gợi ý bản ghi phù hợp theo
+            nghĩa.
           </p>
 
           <div
-            className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-xl focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4"
-            style={{ backgroundColor: "#FFFCF5" }}
+            className="relative w-full min-h-[48px] px-4 py-2.5 border border-neutral-400/80 rounded-xl focus-within:border-primary-500 focus-within:border-transparent transition-all duration-200 shadow-sm hover:shadow-md mb-4 bg-surface-panel"
           >
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500" strokeWidth={2} />
+            <Search
+              className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-500"
+              strokeWidth={2}
+            />
             <input
               type="text"
               value={query}
@@ -192,8 +196,7 @@ export default function SemanticSearchPage() {
 
         {/* Suggested queries — same card style as UploadPage guidelines block */}
         <div
-          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8"
-          style={{ backgroundColor: "#FFFCF5" }}
+          className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl mb-8 bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -210,14 +213,7 @@ export default function SemanticSearchPage() {
                   setQuery(s);
                   runSearchWithQuery(s);
                 }}
-                className="px-4 py-2 rounded-xl border border-neutral-400/80 text-neutral-900 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:border-primary-500"
-                style={{ backgroundColor: "#FFFCF5" }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#FFF7E6";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#FFFCF5";
-                }}
+                className="px-4 py-2 rounded-xl border border-neutral-400/80 text-neutral-900 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer focus:outline-none focus:border-primary-500 bg-surface-panel hover:bg-cream-50"
               >
                 {s}
               </button>
@@ -227,8 +223,7 @@ export default function SemanticSearchPage() {
 
         {/* Results — same card style */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl"
-          style={{ backgroundColor: "#FFFCF5" }}
+          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <h2 className="text-2xl font-semibold mb-4 text-neutral-900 flex items-center gap-3">
             <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">
@@ -246,13 +241,16 @@ export default function SemanticSearchPage() {
               ) : results.length === 0 ? (
                 <div className="py-10 text-center">
                   <Music className="h-12 w-12 text-neutral-400 mx-auto mb-4" strokeWidth={1.5} />
-                  <h3 className="text-lg font-semibold text-neutral-800 mb-2">Chưa có kết quả phù hợp</h3>
+                  <h3 className="text-lg font-semibold text-neutral-800 mb-2">
+                    Chưa có kết quả phù hợp
+                  </h3>
                   <p className="text-neutral-600 font-medium leading-relaxed max-w-md mx-auto mb-4">
-                    Thử đổi cách diễn đạt hoặc chọn một gợi ý ở trên. Bạn cũng có thể dùng trang Tìm kiếm với bộ lọc chi tiết.
+                    Thử đổi cách diễn đạt hoặc chọn một gợi ý ở trên. Bạn cũng có thể dùng trang Tìm
+                    kiếm với bộ lọc chi tiết.
                   </p>
                   <button
                     type="button"
-                    onClick={() => navigate("/search")}
+                    onClick={() => navigate('/search')}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
                   >
                     Đến trang Tìm kiếm

@@ -3,8 +3,8 @@
  * Used so AudioPlayer, VideoPlayer, and "Thẻ" on RecordingDetailPage show the same tags.
  */
 
-import { Region } from "@/types";
-import { REGION_NAMES } from "@/config/constants";
+import { REGION_NAMES } from '@/config/constants';
+import { Region } from '@/types';
 
 export type OriginalLocalDataForRegion = {
   region?: string;
@@ -18,20 +18,21 @@ export type OriginalLocalDataForRegion = {
  */
 export function getRegionDisplayName(
   recordingRegion: Region | undefined,
-  originalLocalData?: OriginalLocalDataForRegion | null
+  originalLocalData?: OriginalLocalDataForRegion | null,
 ): string {
-  if (!recordingRegion || !REGION_NAMES[recordingRegion]) return "Không xác định";
   if (originalLocalData) {
-    const regionStr = originalLocalData.region?.trim() || originalLocalData.culturalContext?.region?.trim();
-    if (!regionStr) return "Không xác định";
+    const regionStr =
+      originalLocalData.region?.trim() || originalLocalData.culturalContext?.region?.trim();
+    if (regionStr) return regionStr;
   }
+  if (!recordingRegion || !REGION_NAMES[recordingRegion]) return 'Không xác định';
   return REGION_NAMES[recordingRegion];
 }
 
 export const PERFORMANCE_KEY_TO_LABEL: Record<string, string> = {
-  instrumental: "Chỉ nhạc cụ (Instrumental)",
-  acappella: "Chỉ giọng hát không đệm (Acappella)",
-  vocal_accompaniment: "Giọng hát có nhạc đệm (Vocal with accompaniment)",
+  instrumental: 'Chỉ nhạc cụ (Instrumental)',
+  acappella: 'Chỉ giọng hát không đệm (Acappella)',
+  vocal_accompaniment: 'Giọng hát có nhạc đệm (Vocal with accompaniment)',
 };
 
 export type LocalRecordingForTags = {
@@ -53,13 +54,15 @@ export type LocalRecordingForTags = {
  */
 export function buildTagsFromLocal(local: LocalRecordingForTags): string[] {
   if (local.tags && local.tags.length > 0) return local.tags;
-  const genreVal = local.basicInfo?.genre ?? "";
-  const ethnicityVal = local.culturalContext?.ethnicity ?? "";
-  const regionVal = local.culturalContext?.region ?? "";
-  const provinceVal = local.culturalContext?.province ?? "";
-  const eventVal = local.culturalContext?.eventType ?? "";
-  const perfKey = local.culturalContext?.performanceType ?? "";
-  const perfLabel = perfKey ? (PERFORMANCE_KEY_TO_LABEL[perfKey] ?? perfKey) : "";
+  const genreVal = local.basicInfo?.genre ?? '';
+  const ethnicityVal = local.culturalContext?.ethnicity ?? '';
+  const regionVal = local.culturalContext?.region ?? '';
+  const provinceVal = local.culturalContext?.province ?? '';
+  const eventVal = local.culturalContext?.eventType ?? '';
+  const perfKey = local.culturalContext?.performanceType ?? '';
+  const perfLabel = perfKey ? (PERFORMANCE_KEY_TO_LABEL[perfKey] ?? perfKey) : '';
   const inst = local.culturalContext?.instruments ?? [];
-  return [genreVal, ethnicityVal, regionVal, provinceVal, eventVal, perfLabel, ...inst].filter(Boolean);
+  return [genreVal, ethnicityVal, regionVal, provinceVal, eventVal, perfLabel, ...inst].filter(
+    Boolean,
+  );
 }

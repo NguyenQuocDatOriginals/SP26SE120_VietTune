@@ -1,9 +1,12 @@
-import { Recording } from "@/types";
-import { Play, Heart, Download, Eye } from "lucide-react";
-import Badge from "../common/Badge";
-import { RECORDING_TYPE_NAMES } from "@/config/constants";
-import logo from "@/components/image/VietTune logo.png";
-import { Link } from "react-router-dom";
+import { Play, Heart, Download, Eye } from 'lucide-react';
+import { memo } from 'react';
+import { Link } from 'react-router-dom';
+
+import Badge from '../common/Badge';
+
+import logo from '@/components/image/VietTune logo.png';
+import { RECORDING_TYPE_NAMES } from '@/config/constants';
+import { Recording } from '@/types';
 
 interface RecordingCardProps {
   recording: Recording;
@@ -11,14 +14,16 @@ interface RecordingCardProps {
   linkState?: Record<string, unknown>;
 }
 
-export default function RecordingCard({ recording, linkState }: RecordingCardProps) {
+function RecordingCard({ recording, linkState }: RecordingCardProps) {
   if (!recording.id) {
     return null;
   }
 
   return (
     <Link to={`/recordings/${recording.id}`} state={linkState} className="block cursor-pointer">
-      <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300" style={{ backgroundColor: '#FFFCF5' }}>
+      <div
+        className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm overflow-hidden hover:shadow-xl transition-all duration-300 bg-surface-panel"
+      >
         {/* Cover Image */}
         <div className="relative h-48 bg-neutral-100">
           {recording.coverImage ? (
@@ -26,6 +31,10 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
               src={recording.coverImage}
               alt={recording.title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              width={640}
+              height={480}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-neutral-400">
@@ -34,6 +43,10 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
                   src={logo}
                   alt="VietTune Logo"
                   className="w-24 h-24 mb-2 mx-auto object-contain opacity-40"
+                  loading="lazy"
+                  decoding="async"
+                  width={96}
+                  height={96}
                 />
                 <p className="text-sm">Chưa có ảnh bìa</p>
               </div>
@@ -41,16 +54,14 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
           )}
 
           {/* Play button overlay */}
-          <div
-            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center group cursor-pointer"
-          >
+          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center group cursor-pointer">
             <div className="bg-white rounded-full p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-110">
               <Play className="h-8 w-8 text-primary-600" strokeWidth={2.5} />
             </div>
           </div>
 
           {/* Verification badge */}
-          {recording.verificationStatus === "VERIFIED" && (
+          {recording.verificationStatus === 'VERIFIED' && (
             <div className="absolute top-2 right-2">
               <Badge variant="success" size="sm">
                 Đã xác minh
@@ -72,12 +83,13 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
 
           <div className="flex items-center gap-2.5 mb-4 flex-wrap">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-primary-100/90 text-primary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-              {recording.ethnicity?.nameVietnamese ?? "Không xác định"}
+              {recording.ethnicity?.nameVietnamese ?? 'Không xác định'}
             </span>
             <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-secondary-100/90 text-secondary-800 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
-              {recording.recordingType != null && RECORDING_TYPE_NAMES[recording.recordingType] != null
+              {recording.recordingType != null &&
+              RECORDING_TYPE_NAMES[recording.recordingType] != null
                 ? RECORDING_TYPE_NAMES[recording.recordingType]
-                : "Khác"}
+                : 'Khác'}
             </span>
           </div>
 
@@ -98,8 +110,10 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
               </span>
             </div>
             <span className="tabular-nums">
-              {Math.floor((recording.duration ?? 0) / 60).toString().padStart(2, "0")}:
-              {((recording.duration ?? 0) % 60).toString().padStart(2, "0")}
+              {Math.floor((recording.duration ?? 0) / 60)
+                .toString()
+                .padStart(2, '0')}
+              :{((recording.duration ?? 0) % 60).toString().padStart(2, '0')}
             </span>
           </div>
         </div>
@@ -107,3 +121,8 @@ export default function RecordingCard({ recording, linkState }: RecordingCardPro
     </Link>
   );
 }
+
+const MemoizedRecordingCard = memo(RecordingCard);
+MemoizedRecordingCard.displayName = 'RecordingCard';
+
+export default MemoizedRecordingCard;

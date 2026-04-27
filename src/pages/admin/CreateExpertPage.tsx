@@ -1,24 +1,26 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import BackButton from "@/components/common/BackButton";
-import Button from "@/components/common/Button";
-import Card from "@/components/common/Card";
-import Input from "@/components/common/Input";
-import { UserPlus } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
-import { UserRole, type User } from "@/types";
-import { notify } from "@/stores/notificationStore";
-import { getItem, setItem } from "@/services/storageService";
+import { UserPlus } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import BackButton from '@/components/common/BackButton';
+import Button from '@/components/common/Button';
+import Card from '@/components/common/Card';
+import Input from '@/components/common/Input';
+import { getItem, setItem } from '@/services/storageService';
+import { useAuthStore } from '@/stores/authStore';
+import { UserRole, type User } from '@/types';
+import { uiToast, notifyLine } from '@/uiToast';
+import { validatePassword } from '@/utils/validation';
 
 export default function CreateExpertPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [expertForm, setExpertForm] = useState({
-    username: "",
-    email: "",
-    fullName: "",
-    password: "",
-    confirmPassword: "",
+    username: '',
+    email: '',
+    fullName: '',
+    password: '',
+    confirmPassword: '',
   });
   const [expertFormErrors, setExpertFormErrors] = useState<{
     username?: string;
@@ -30,7 +32,7 @@ export default function CreateExpertPage() {
 
   // Redirect if not admin
   if (!user || user.role !== UserRole.ADMIN) {
-    navigate("/");
+    navigate('/');
     return null;
   }
 
@@ -43,27 +45,28 @@ export default function CreateExpertPage() {
       confirmPassword?: string;
     } = {};
     if (!expertForm.username.trim()) {
-      errors.username = "Tên người dùng là bắt buộc";
+      errors.username = 'Tên người dùng là bắt buộc';
     } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(expertForm.username.trim())) {
-      errors.username = "Tên người dùng 3-20 ký tự, chỉ chữ, số và dấu gạch dưới";
+      errors.username = 'Tên người dùng 3-20 ký tự, chỉ chữ, số và dấu gạch dưới';
     }
     if (!expertForm.email.trim()) {
-      errors.email = "Email là bắt buộc";
+      errors.email = 'Email là bắt buộc';
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(expertForm.email.trim())) {
-      errors.email = "Địa chỉ email không hợp lệ";
+      errors.email = 'Địa chỉ email không hợp lệ';
     }
     if (!expertForm.fullName.trim()) {
-      errors.fullName = "Họ và tên là bắt buộc";
+      errors.fullName = 'Họ và tên là bắt buộc';
     }
     if (!expertForm.password) {
-      errors.password = "Mật khẩu là bắt buộc";
-    } else if (expertForm.password.length < 6) {
-      errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+      errors.password = 'Mật khẩu là bắt buộc';
+    } else {
+      const pw = validatePassword(expertForm.password);
+      if (!pw.valid) errors.password = pw.errors[0];
     }
     if (!expertForm.confirmPassword) {
-      errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+      errors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     } else if (expertForm.confirmPassword !== expertForm.password) {
-      errors.confirmPassword = "Mật khẩu không khớp";
+      errors.confirmPassword = 'Mật khẩu không khớp';
     }
     setExpertFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -74,13 +77,13 @@ export default function CreateExpertPage() {
 
     try {
       // Check if username already exists
-      const oRaw = getItem("users_overrides");
+      const oRaw = getItem('users_overrides');
       const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
       const existingUser = Object.values(overrides).find(
-        (u) => u.username.toLowerCase() === expertForm.username.trim().toLowerCase()
+        (u) => u.username.toLowerCase() === expertForm.username.trim().toLowerCase(),
       );
       if (existingUser) {
-        setExpertFormErrors({ username: "Tên người dùng đã tồn tại" });
+        setExpertFormErrors({ username: 'Tên người dùng đã tồn tại' });
         return;
       }
 
@@ -98,31 +101,33 @@ export default function CreateExpertPage() {
 
       // Save to users_overrides
       overrides[newExpertId] = newExpert;
-      void setItem("users_overrides", JSON.stringify(overrides));
+      void setItem('users_overrides', JSON.stringify(overrides));
 
       // Store password for demo (Chuyên gia đổi mật khẩu sau trong ProfilePage)
       try {
-        const pRaw = getItem("demo_passwords");
+        const pRaw = getItem('demo_passwords');
         const passwords = pRaw ? (JSON.parse(pRaw) as Record<string, string>) : {};
         passwords[newExpertId] = expertForm.password;
-        void setItem("demo_passwords", JSON.stringify(passwords));
+        void setItem('demo_passwords', JSON.stringify(passwords));
       } catch (err) {
-        console.warn("Failed to store expert password", err);
+        console.warn('Failed to store expert password', err);
       }
 
       // Reset form
       setExpertForm({
-        username: "",
-        email: "",
-        fullName: "",
-        password: "",
-        confirmPassword: "",
+        username: '',
+        email: '',
+        fullName: '',
+        password: '',
+        confirmPassword: '',
       });
       setExpertFormErrors({});
 
-      notify.success("Thành công", `Đã tạo tài khoản Chuyên gia "${newExpert.username}" thành công.`);
+      uiToast.success(
+        notifyLine('Thành công', `Đã tạo tài khoản Chuyên gia "${newExpert.username}" thành công.`),
+      );
     } catch (e) {
-      notify.error("Lỗi", "Không thể tạo tài khoản Chuyên gia.");
+      uiToast.error(notifyLine('Lỗi', 'Không thể tạo tài khoản Chuyên gia.'));
     }
   };
 
@@ -130,7 +135,9 @@ export default function CreateExpertPage() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">Cấp tài khoản Chuyên gia</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
+            Cấp tài khoản Chuyên gia
+          </h1>
           <BackButton />
         </div>
 
@@ -142,7 +149,8 @@ export default function CreateExpertPage() {
             Tạo tài khoản mới
           </h2>
           <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-            Tạo tài khoản Chuyên gia mới để họ có thể kiểm duyệt và xác minh bản thu âm nhạc truyền thống.
+            Tạo tài khoản Chuyên gia mới để họ có thể kiểm duyệt và xác minh bản thu âm nhạc truyền
+            thống.
           </p>
           <div className="max-w-2xl">
             <div className="space-y-4">
@@ -201,7 +209,7 @@ export default function CreateExpertPage() {
                   }}
                   error={expertFormErrors.password}
                   required
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                  placeholder="Tối thiểu 6 ký tự, chữ hoa, chữ thường, chữ số"
                 />
                 <Input
                   label="Xác nhận mật khẩu"
@@ -235,11 +243,11 @@ export default function CreateExpertPage() {
                   size="lg"
                   onClick={() => {
                     setExpertForm({
-                      username: "",
-                      email: "",
-                      fullName: "",
-                      password: "",
-                      confirmPassword: "",
+                      username: '',
+                      email: '',
+                      fullName: '',
+                      password: '',
+                      confirmPassword: '',
                     });
                     setExpertFormErrors({});
                   }}

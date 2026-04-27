@@ -1,46 +1,47 @@
-import { useEffect, useState, FormEvent } from "react";
-import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
-import { Target, Users, Heart, FileText, X, UserMinus } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
-import { User, UserRole } from "@/types";
-import { notify } from "@/stores/notificationStore";
-import { authService } from "@/services/authService";
-import BackButton from "@/components/common/BackButton";
-import ConfirmationDialog from "@/components/common/ConfirmationDialog";
-import { getItem, setItem } from "@/services/storageService";
-import { accountDeletionService } from "@/services/accountDeletionService";
+import { Target, Users, Heart, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useState, FormEvent } from 'react';
+import { createPortal } from 'react-dom';
+
+import BackButton from '@/components/common/BackButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { authService } from '@/services/authService';
+import { getItem, setItem } from '@/services/storageService';
+import { User, UserRole } from '@/types';
+import { uiToast, notifyLine } from '@/uiToast';
+import { cn } from '@/utils/helpers';
+import { SURFACE_CARD } from '@/utils/surfaceTokens';
 
 export default function ProfilePage() {
-  const { user, setUser, logout } = useAuthStore();
-  const navigate = useNavigate();
-  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const { user, setUser } = useAuth();
 
   // Edit profile modal state
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [formFullName, setFormFullName] = useState("");
-  const [formUsername, setFormUsername] = useState("");
-  const [formEmail, setFormEmail] = useState("");
+  const [formFullName, setFormFullName] = useState('');
+  const [formUsername, setFormUsername] = useState('');
+  const [formEmail, setFormEmail] = useState('');
 
   // Validation state
   const [touchedFullName, setTouchedFullName] = useState(false);
   const [touchedUsername, setTouchedUsername] = useState(false);
   const [touchedEmail, setTouchedEmail] = useState(false);
-  const [errors, setErrors] = useState<{ fullName?: string; username?: string; email?: string }>({});
+  const [errors, setErrors] = useState<{ fullName?: string; username?: string; email?: string }>(
+    {},
+  );
 
   const validate = () => {
     const e: { fullName?: string; username?: string; email?: string } = {};
     const fullNameTrim = formFullName.trim();
-    if (!fullNameTrim) e.fullName = "Họ và tên là bắt buộc.";
-    else if (fullNameTrim.length < 2) e.fullName = "Họ và tên phải có ít nhất 2 ký tự.";
+    if (!fullNameTrim) e.fullName = 'Họ và tên là bắt buộc.';
+    else if (fullNameTrim.length < 2) e.fullName = 'Họ và tên phải có ít nhất 2 ký tự.';
 
     const usernameTrim = formUsername.trim();
-    if (!usernameTrim) e.username = "Tên người dùng là bắt buộc.";
-    else if (!/^[a-zA-Z0-9_]{3,20}$/.test(usernameTrim)) e.username = "Tên người dùng 3-20 ký tự, chỉ chữ, số và dấu gạch dưới.";
+    if (!usernameTrim) e.username = 'Tên người dùng là bắt buộc.';
+    else if (!/^[a-zA-Z0-9_]{3,20}$/.test(usernameTrim))
+      e.username = 'Tên người dùng 3-20 ký tự, chỉ chữ, số và dấu gạch dưới.';
 
     const emailTrim = formEmail.trim();
-    if (!emailTrim) e.email = "Email là bắt buộc.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) e.email = "Email không hợp lệ.";
+    if (!emailTrim) e.email = 'Email là bắt buộc.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) e.email = 'Email không hợp lệ.';
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -58,9 +59,9 @@ export default function ProfilePage() {
   };
 
   const openEdit = () => {
-    setFormFullName(user?.fullName || "");
-    setFormUsername(user?.username || "");
-    setFormEmail(user?.email || "");
+    setFormFullName(user?.fullName || '');
+    setFormUsername(user?.username || '');
+    setFormEmail(user?.email || '');
     // reset validation
     setTouchedFullName(false);
     setTouchedUsername(false);
@@ -76,7 +77,7 @@ export default function ProfilePage() {
     setTouchedUsername(true);
     setTouchedEmail(true);
     if (!validate()) {
-      notify.error("Lỗi", "Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.");
+      uiToast.error(notifyLine('Lỗi', 'Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.'));
       return;
     }
 
@@ -97,87 +98,74 @@ export default function ProfilePage() {
         });
         if (res && res.data) {
           const serverUser = res.data as User;
-          void setItem("user", JSON.stringify(serverUser));
+          void setItem('user', JSON.stringify(serverUser));
           setUser(serverUser);
         } else {
           // fallback to local update
-          void setItem("user", JSON.stringify(updated));
+          void setItem('user', JSON.stringify(updated));
           setUser(updated);
         }
       } catch (err) {
-        console.error("Failed to save profile on server", err);
+        console.error('Failed to save profile on server', err);
         // Queue update for background retry and persist locally
-        authService.queuePendingProfileUpdate(updated.id, {
+        void authService.queuePendingProfileUpdate(updated.id, {
           fullName: updated.fullName,
           username: updated.username,
           email: updated.email,
         });
-        void setItem("user", JSON.stringify(updated));
+        void setItem('user', JSON.stringify(updated));
         setUser(updated);
         // Inform user that changes were saved locally and queued for sync
-        notify.info(
-          "Thông báo",
-          "Không thể lưu hồ sơ lên server ngay bây giờ. Thay đổi đã được lưu cục bộ và sẽ tự động đồng bộ khi có kết nối.",
+        uiToast.info(
+          notifyLine(
+            'Thông báo',
+            'Không thể lưu hồ sơ lên server ngay bây giờ. Thay đổi đã được lưu cục bộ và sẽ tự động đồng bộ khi có kết nối.',
+          ),
         );
       }
     } else {
       // Local/demo mode: persist locally and into overrides so it survives logout/login demo
-      void setItem("user", JSON.stringify(updated));
+      void setItem('user', JSON.stringify(updated));
       setUser(updated);
 
       try {
-        const oRaw = getItem("users_overrides");
+        const oRaw = getItem('users_overrides');
         const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
         if (updated.id) {
           overrides[updated.id] = updated;
-          void setItem("users_overrides", JSON.stringify(overrides));
+          void setItem('users_overrides', JSON.stringify(overrides));
         }
       } catch (err) {
-        console.error("Failed to write user override", err);
+        console.error('Failed to write user override', err);
       }
     }
 
     setIsEditOpen(false);
-    notify.success("Thành công", "Lưu hồ sơ thành công");
+    uiToast.success(notifyLine('Thành công', 'Lưu hồ sơ thành công'));
   };
 
   // Helper: normalize role to friendly Vietnamese label
   const formatRole = (r?: string) => {
-    if (!r) return "Khách";
+    if (!r) return 'Khách';
     const s = String(r).toLowerCase();
-    if (s === UserRole.EXPERT.toLowerCase() || s.includes("expert")) return "Chuyên gia";
-    if (s === UserRole.CONTRIBUTOR.toLowerCase() || s.includes("contrib")) return "Người đóng góp";
-    if (s === UserRole.RESEARCHER.toLowerCase() || s.includes("research")) return "Nhà nghiên cứu";
-    if (s === UserRole.ADMIN.toLowerCase() || s.includes("admin")) return "Quản trị viên";
+    if (s === UserRole.EXPERT.toLowerCase() || s.includes('expert')) return 'Chuyên gia';
+    if (s === UserRole.CONTRIBUTOR.toLowerCase() || s.includes('contrib')) return 'Người đóng góp';
+    if (s === UserRole.RESEARCHER.toLowerCase() || s.includes('research')) return 'Nhà nghiên cứu';
+    if (s === UserRole.ADMIN.toLowerCase() || s.includes('admin')) return 'Quản trị viên';
     return r.charAt(0).toUpperCase() + r.slice(1).toLowerCase();
   };
 
-  const handleDeleteAccountConfirm = async () => {
-    if (!user) return;
-    try {
-      if (user.role === UserRole.CONTRIBUTOR) {
-        await accountDeletionService.deleteAccountContributor(user.id);
-        logout();
-        navigate("/login", { replace: true });
-        notify.success("Thành công", "Tài khoản đã được xóa khỏi hệ thống.");
-      } else if (user.role === UserRole.EXPERT) {
-        await accountDeletionService.requestExpertAccountDeletion({
-          expertId: user.id,
-          expertUsername: user.username,
-          expertFullName: user.fullName,
-        });
-        setShowDeleteAccountConfirm(false);
-        notify.success("Thành công", "Yêu cầu xóa tài khoản đã được gửi đến Quản trị viên. Bạn sẽ được xóa khỏi hệ thống sau khi được duyệt.");
-      }
-    } catch (err) {
-      console.error("Delete account error:", err);
-      notify.error("Lỗi", "Không thể xử lý yêu cầu. Vui lòng thử lại.");
-    }
-  };
+  /** Tránh kẹt position:fixed / overflow từ modal trang khác khi vào Hồ sơ */
+  useLayoutEffect(() => {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+  }, []);
 
   // Disable body scroll when dialogs are open
   useEffect(() => {
-    if (isEditOpen || showDeleteAccountConfirm) {
+    if (isEditOpen) {
       // Save current scroll position
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
@@ -192,7 +180,8 @@ export default function ProfilePage() {
       document.body.style.width = '';
       document.body.style.overflow = '';
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        const n = parseInt(scrollY.replace('px', ''), 10);
+        if (!Number.isNaN(n)) window.scrollTo(0, -n);
       }
     }
     return () => {
@@ -202,22 +191,26 @@ export default function ProfilePage() {
       document.body.style.width = '';
       document.body.style.overflow = '';
     };
-  }, [isEditOpen, showDeleteAccountConfirm]);
+  }, [isEditOpen]);
 
   // Handle ESC key to close dialogs
   useEffect(() => {
-    if (!isEditOpen && !showDeleteAccountConfirm) return;
+    if (!isEditOpen) return;
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isEditOpen) setIsEditOpen(false);
-        if (showDeleteAccountConfirm) setShowDeleteAccountConfirm(false);
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isEditOpen, showDeleteAccountConfirm]);
+  }, [isEditOpen]);
+
+  const profileSurfaceClassName = cn(
+    SURFACE_CARD,
+    'rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl',
+  );
 
   return (
     <div className="min-h-screen">
@@ -228,10 +221,18 @@ export default function ProfilePage() {
         </div>
 
         <div className="prose max-w-none">
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className={cn(profileSurfaceClassName, 'p-8 mb-8')}
+          >
             <div className="flex items-start justify-between">
               <h2 className="text-2xl font-semibold mb-4 text-neutral-900">Thông tin tài khoản</h2>
-              <button type="button" onClick={openEdit} className="px-4 py-2 rounded-xl bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer">Chỉnh sửa hồ sơ</button>
+              <button
+                type="button"
+                onClick={openEdit}
+                className="px-4 py-2 rounded-xl bg-secondary-100/90 hover:bg-secondary-200/90 text-secondary-800 font-medium transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                Chỉnh sửa hồ sơ
+              </button>
             </div>
 
             <p className="text-neutral-700 font-medium leading-relaxed mb-4">
@@ -240,181 +241,189 @@ export default function ProfilePage() {
               <strong>Email:</strong> {user?.email || '—'}
             </p>
             <p className="text-neutral-700 font-medium leading-relaxed">
-              Tại đây bạn có thể quản lý thông tin cá nhân và theo dõi trạng thái các đóng góp mà bạn đã gửi tới VietTune.
+              Tại đây bạn có thể quản lý thông tin cá nhân và theo dõi trạng thái các đóng góp mà
+              bạn đã gửi tới VietTune.
             </p>
           </div>
 
           {/* Edit Profile Modal */}
-          {isEditOpen && createPortal(
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
-              onClick={(e) => { if (e.target === e.currentTarget) setIsEditOpen(false); }}
-              style={{
-                animation: 'fadeIn 0.3s ease-out',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: '100vw',
-                height: '100vh',
-                position: 'fixed',
-              }}
-            >
+          {isEditOpen &&
+            createPortal(
               <div
-                className="rounded-2xl border border-neutral-300/80 shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
-                style={{
-                  backgroundColor: '#FFF2D6',
-                  animation: 'slideUp 0.3s ease-out'
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setIsEditOpen(false);
                 }}
-                onClick={(e) => e.stopPropagation()}
+                style={{
+                  animation: 'fadeIn 0.3s ease-out',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  position: 'fixed',
+                }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-neutral-900">Chỉnh sửa hồ sơ</h3>
-                  <button
-                    onClick={() => setIsEditOpen(false)}
-                    className="p-1.5 rounded-xl hover:bg-neutral-200/50 transition-colors duration-200 text-neutral-600 hover:text-neutral-800 cursor-pointer"
-                    aria-label="Đóng"
-                  >
-                    <X className="h-5 w-5" strokeWidth={2.5} />
-                  </button>
-                </div>
-                <form onSubmit={handleSaveProfile} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-800 mb-2">Họ và tên</label>
-                    <input
-                      type="text"
-                      value={formFullName}
-                      onChange={(e) => { setFormFullName(e.target.value); if (touchedFullName) validate(); }}
-                      onBlur={() => { setTouchedFullName(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                    />
-                    {touchedFullName && errors.fullName && <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>}
+                <div
+                  className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-lg w-full p-6 pointer-events-auto transform"
+                  style={{
+                    animation: 'slideUp 0.3s ease-out',
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-neutral-900">Chỉnh sửa hồ sơ</h3>
+                    <button
+                      onClick={() => setIsEditOpen(false)}
+                      className="p-1.5 rounded-xl hover:bg-neutral-200/50 transition-colors duration-200 text-neutral-600 hover:text-neutral-800 cursor-pointer"
+                      aria-label="Đóng"
+                    >
+                      <X className="h-5 w-5" strokeWidth={2.5} />
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-800 mb-2">Tên người dùng</label>
-                    <input
-                      type="text"
-                      value={formUsername}
-                      onChange={(e) => { setFormUsername(e.target.value); if (touchedUsername) validate(); }}
-                      onBlur={() => { setTouchedUsername(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                    />
-                    {touchedUsername && errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-800 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={formEmail}
-                      onChange={(e) => { setFormEmail(e.target.value); if (touchedEmail) validate(); }}
-                      onBlur={() => { setTouchedEmail(true); validate(); }}
-                      className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl"
-                      style={{ backgroundColor: '#FFFCF5' }}
-                    />
-                    {touchedEmail && errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
-                  </div>
+                  <form onSubmit={handleSaveProfile} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="profile-edit-fullname"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
+                        Họ và tên
+                      </label>
+                      <input
+                        id="profile-edit-fullname"
+                        type="text"
+                        value={formFullName}
+                        onChange={(e) => {
+                          setFormFullName(e.target.value);
+                          if (touchedFullName) validate();
+                        }}
+                        onBlur={() => {
+                          setTouchedFullName(true);
+                          validate();
+                        }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
+                      />
+                      {touchedFullName && errors.fullName && (
+                        <p className="text-sm text-red-600 mt-1">{errors.fullName}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="profile-edit-username"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
+                        Tên người dùng
+                      </label>
+                      <input
+                        id="profile-edit-username"
+                        type="text"
+                        value={formUsername}
+                        onChange={(e) => {
+                          setFormUsername(e.target.value);
+                          if (touchedUsername) validate();
+                        }}
+                        onBlur={() => {
+                          setTouchedUsername(true);
+                          validate();
+                        }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
+                      />
+                      {touchedUsername && errors.username && (
+                        <p className="text-sm text-red-600 mt-1">{errors.username}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="profile-edit-email"
+                        className="block text-sm font-medium text-neutral-800 mb-2"
+                      >
+                        Email
+                      </label>
+                      <input
+                        id="profile-edit-email"
+                        type="email"
+                        value={formEmail}
+                        onChange={(e) => {
+                          setFormEmail(e.target.value);
+                          if (touchedEmail) validate();
+                        }}
+                        onBlur={() => {
+                          setTouchedEmail(true);
+                          validate();
+                        }}
+                        className="w-full px-5 py-3 text-neutral-900 placeholder-neutral-500 border border-neutral-400 focus:outline-none focus:border-primary-500 transition-colors rounded-xl bg-surface-panel"
+                      />
+                      {touchedEmail && errors.email && (
+                        <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+                      )}
+                    </div>
 
-                  <div className="flex justify-end gap-3">
-                    <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer">Hủy</button>
-                    <button disabled={!isValidSnapshot()} type="submit" className="px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">Lưu</button>
-                  </div>
-                </form>
-              </div>
-            </div>, document.body)}
+                    <div className="flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditOpen(false)}
+                        className="px-4 py-2 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        disabled={!isValidSnapshot()}
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      >
+                        Lưu
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>,
+              document.body,
+            )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <div
+              className={cn(profileSurfaceClassName, 'p-6')}
+            >
               <div className="bg-primary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Target className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-neutral-900">Giới thiệu bản thân</h3>
-              <p className="text-neutral-700 font-medium">Một nơi để giới thiệu bản thân, chia sẻ động lực đóng góp và tôn vinh truyền thống âm nhạc của cộng đồng.</p>
+              <p className="text-neutral-700 font-medium">
+                Một nơi để giới thiệu bản thân, chia sẻ động lực đóng góp và tôn vinh truyền thống
+                âm nhạc của cộng đồng.
+              </p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+            <div
+              className={cn(profileSurfaceClassName, 'p-6')}
+            >
               <div className="bg-secondary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
                 <Users className="h-6 w-6 text-secondary-600" strokeWidth={2.5} />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-neutral-900">Sức mạnh cộng đồng</h3>
-              <p className="text-neutral-700 font-medium">Kết nối với chuyên gia và người yêu nhạc để xác minh, duy trì và lan tỏa giá trị văn hóa.</p>
+              <p className="text-neutral-700 font-medium">
+                Kết nối với chuyên gia và người yêu nhạc để xác minh, duy trì và lan tỏa giá trị văn
+                hóa.
+              </p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-neutral-200/80 p-6 mb-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
+          <div
+            className={cn(profileSurfaceClassName, 'p-6 mb-8')}
+          >
             <div className="bg-primary-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 shadow-sm">
               <Heart className="h-6 w-6 text-primary-600" strokeWidth={2.5} />
             </div>
             <h3 className="text-xl font-semibold mb-3 text-neutral-900">Mục tiêu</h3>
-            <p className="text-neutral-700 font-medium">Hỗ trợ việc thu thập, lưu trữ và phổ biến các bản thu truyền thống theo chuẩn khoa học và tôn trọng bản quyền.</p>
+            <p className="text-neutral-700 font-medium">
+              Hỗ trợ việc thu thập, lưu trữ và phổ biến các bản thu truyền thống theo chuẩn khoa học
+              và tôn trọng bản quyền.
+            </p>
           </div>
 
-
-          {/* Delete account (Contributor & Expert) */}
-          {(user?.role === UserRole.CONTRIBUTOR || user?.role === UserRole.EXPERT) && (
-            <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 mb-8 transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-semibold mb-2 text-neutral-900">Xoá tài khoản</h2>
-                  <p className="text-neutral-700 font-medium text-sm">
-                    {user.role === UserRole.CONTRIBUTOR
-                      ? "Xóa tài khoản sẽ đăng xuất và xóa dữ liệu tài khoản khỏi hệ thống. Hành động không thể hoàn tác."
-                      : "Chuyên gia xóa tài khoản cần được Quản trị viên duyệt. Sau khi duyệt, tài khoản sẽ bị xóa khỏi hệ thống."}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDeleteAccountConfirm(true)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer flex items-center gap-2"
-              >
-                <UserMinus className="w-4 h-4" strokeWidth={2.5} />
-                Xoá tài khoản
-              </button>
-            </div>
-          )}
-
-          {/* Terms and Conditions Link */}
-          <div className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-8 text-center transition-all duration-300 hover:shadow-xl" style={{ backgroundColor: '#FFFCF5' }}>
-            <div className="bg-neutral-100/90 rounded-xl w-12 h-12 flex items-center justify-center mb-4 mx-auto shadow-sm">
-              <FileText className="h-6 w-6 text-neutral-600" strokeWidth={2.5} />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-neutral-900">Điều khoản và Điều kiện</h3>
-            <p className="text-neutral-700 font-medium mb-6">Tìm hiểu các quy định và chính sách khi sử dụng nền tảng VietTune.</p>
-            <Link
-              to="/terms"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer"
-            >
-              <FileText className="h-5 w-5" strokeWidth={2.5} />
-              Xem Điều khoản và Điều kiện
-            </Link>
-          </div>
         </div>
       </div>
-
-      {/* Delete Account Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteAccountConfirm}
-        onClose={() => setShowDeleteAccountConfirm(false)}
-        onConfirm={handleDeleteAccountConfirm}
-        title="Xác nhận xóa tài khoản"
-        message={
-          user?.role === UserRole.CONTRIBUTOR
-            ? "Bạn có chắc chắn muốn xóa tài khoản khỏi hệ thống?"
-            : "Bạn có chắc chắn muốn gửi yêu cầu xóa tài khoản đến Quản trị viên?"
-        }
-        description={
-          user?.role === UserRole.CONTRIBUTOR
-            ? "Tài khoản và dữ liệu liên quan sẽ bị xóa. Hành động này không thể hoàn tác."
-            : "Sau khi Quản trị viên duyệt, tài khoản của bạn sẽ bị xóa khỏi hệ thống."
-        }
-        confirmText={user?.role === UserRole.CONTRIBUTOR ? "Xóa tài khoản" : "Gửi yêu cầu"}
-        cancelText="Hủy"
-        confirmButtonStyle="bg-red-600 text-white hover:bg-red-500"
-      />
-
-
     </div>
   );
 }

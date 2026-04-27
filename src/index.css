@@ -68,15 +68,15 @@ a,
 button,
 select,
 option,
-[role="button"],
-[role="listbox"],
-[role="combobox"],
-[role="option"],
-[role="menuitem"],
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-input[type="image"] {
+[role='button'],
+[role='listbox'],
+[role='combobox'],
+[role='option'],
+[role='menuitem'],
+input[type='button'],
+input[type='submit'],
+input[type='reset'],
+input[type='image'] {
   cursor: pointer;
 }
 
@@ -87,19 +87,19 @@ a::after,
 button *,
 button::before,
 button::after,
-[role="button"] *,
-[role="button"]::before,
-[role="button"]::after,
+[role='button'] *,
+[role='button']::before,
+[role='button']::after,
 select *,
 option,
-[role="listbox"] *,
-[role="combobox"] *,
-[role="option"],
-[role="menuitem"] *,
-input[type="button"] *,
-input[type="submit"] *,
-input[type="reset"] *,
-input[type="image"] * {
+[role='listbox'] *,
+[role='combobox'] *,
+[role='option'],
+[role='menuitem'] *,
+input[type='button'] *,
+input[type='submit'] *,
+input[type='reset'] *,
+input[type='image'] * {
   cursor: pointer;
 }
 
@@ -337,9 +337,19 @@ body::-webkit-scrollbar-thumb:hover,
   }
 }
 
+/* OTP step inside LoginModal — fade backdrop + scale card (~200ms); respect reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .login-otp-overlay {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .login-otp-card {
+    animation: slideUp 0.2s ease-out;
+  }
+}
+
 /* Water ripple animation for waveform reflection */
 @keyframes waterRipple {
-
   0%,
   100% {
     transform: translateX(0) scaleY(1);

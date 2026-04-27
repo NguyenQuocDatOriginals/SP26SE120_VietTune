@@ -1,108 +1,101 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import type { User } from "@/types";
-import { authService } from "@/services/authService";
-import { useAuthStore } from "@/stores/authStore";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+
+import { authService } from '@/services/authService';
+import { useAuthStore } from '@/stores/authStore';
+import type { User } from '@/types';
 
 interface AuthContextValue {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
-    setUser: (user: User | null) => void;
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const store = useAuthStore();
-    const [isInitialized, setIsInitialized] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-    // On mount: restore user from storage if not already in store
-    useEffect(() => {
-        const initialize = async () => {
-            try {
-                if (!store.user) {
-                    // Try to restore from stored credentials
-                    const storedUser = authService.getStoredUser();
-                    const hasToken = authService.isAuthenticated();
+  // On mount: restore user from storage if not already in store (getState avoids stale closure / mount-only dep)
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        await authService.clearExpiredCredentialsIfNeeded();
+        const storedUser = authService.getStoredUser();
+        const hasToken = authService.isAuthenticated();
+        useAuthStore.getState().setUser(hasToken && storedUser ? storedUser : null);
+      } catch (err) {
+        console.warn('[AuthContext] Failed to restore user on init:', err);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
 
-                    if (storedUser && hasToken) {
-                        store.setUser(storedUser);
-                    }
-                }
-            } catch (err) {
-                console.warn("[AuthContext] Failed to restore user on init:", err);
-            } finally {
-                setIsInitialized(true);
-            }
-        };
+    void initialize();
+  }, []);
 
-        void initialize();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+  const login = useCallback(async (email: string, password: string) => {
+    await useAuthStore.getState().login(email, password);
+  }, []);
 
-    const login = useCallback(
-        async (email: string, password: string) => {
-            await store.login(email, password);
-        },
-        [store]
-    );
+  const logout = useCallback(() => {
+    useAuthStore.getState().logout();
+  }, []);
 
-    const logout = useCallback(() => {
-        store.logout();
-    }, [store]);
+  const setUser = useCallback((next: User | null) => {
+    useAuthStore.getState().setUser(next);
+  }, []);
 
-    const setUser = useCallback(
-        (user: User | null) => {
-            store.setUser(user);
-        },
-        [store]
-    );
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated,
+      isLoading,
+      login,
+      logout,
+      setUser,
+    }),
+    [user, isAuthenticated, isLoading, login, logout, setUser],
+  );
 
-    // Render nothing until initialization is complete to avoid flash of "logged out" state
-    if (!isInitialized) {
-        return null;
-    }
+  if (!isInitialized) {
+    return null;
+  }
 
-    return (
-        <AuthContext.Provider
-            value={{
-                user: store.user,
-                isAuthenticated: store.isAuthenticated,
-                isLoading: store.isLoading,
-                login,
-                logout,
-                setUser,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 /**
  * Preferred hook for accessing auth state in components.
  * Uses AuthContext if available, falls back to authStore directly.
  */
+// Fast refresh: hook co-located with provider is intentional for this module.
+// eslint-disable-next-line react-refresh/only-export-components -- useAuth must live next to AuthProvider
 export function useAuth(): AuthContextValue {
-    const ctx = useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  const fromStore = useAuthStore(
+    useShallow((s) => ({
+      user: s.user,
+      isAuthenticated: s.isAuthenticated,
+      isLoading: s.isLoading,
+      login: s.login,
+      logout: s.logout,
+      setUser: s.setUser,
+    })),
+  );
 
-    // Fallback: if used outside AuthProvider (shouldn't happen in prod), use store directly
-    const store = useAuthStore();
-    if (!ctx) {
-        console.warn("[useAuth] Used outside <AuthProvider>. Falling back to authStore.");
-        return {
-            user: store.user,
-            isAuthenticated: store.isAuthenticated,
-            isLoading: store.isLoading,
-            login: store.login,
-            logout: store.logout,
-            setUser: store.setUser,
-        };
-    }
+  if (!ctx) {
+    console.warn('[useAuth] Used outside <AuthProvider>. Falling back to authStore.');
+    return fromStore;
+  }
 
-    return ctx;
+  return ctx;
 }
 
 export default AuthContext;

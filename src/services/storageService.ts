@@ -3,10 +3,10 @@
  * Uses in-memory cache for sync reads; all writes persist to IndexedDB.
  */
 
-const DB_NAME = "VietTuneDB";
+const DB_NAME = 'VietTuneDB';
 const DB_VERSION = 1;
-const STORE_NAME = "kv";
-const SESSION_PREFIX = "session_";
+const STORE_NAME = 'kv';
+const SESSION_PREFIX = 'session_';
 
 /** Values larger than this are not kept in memory to avoid OOM (e.g. localRecordings with base64). */
 const MAX_CACHE_VALUE_SIZE = 200 * 1024; // 200KB
@@ -15,7 +15,7 @@ const MAX_CACHE_VALUE_SIZE = 200 * 1024; // 200KB
 const MAX_CACHE_KEYS = 200;
 
 /** Auth-critical keys that must be in cache after hydrate so sync getItem works on app init. */
-const AUTH_KEYS = ["user", "access_token"];
+const AUTH_KEYS = ['user', 'access_token'];
 
 let db: IDBDatabase | null = null;
 const cache = new Map<string, string>();
@@ -38,25 +38,18 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-function getStore(
-  mode: IDBTransactionMode = "readonly",
-): Promise<IDBObjectStore> {
-  return openDB().then((database) => {
-    const tx = database.transaction(STORE_NAME, mode);
-    return tx.objectStore(STORE_NAME);
-  });
+async function getStore(mode: IDBTransactionMode = 'readonly'): Promise<IDBObjectStore> {
+  const database = await openDB();
+  const tx = database.transaction(STORE_NAME, mode);
+  return tx.objectStore(STORE_NAME);
 }
 
 /**
  * Put one key-value into IndexedDB. Used during migration to avoid holding all values in memory.
  */
-function putOne(
-  database: IDBDatabase,
-  key: string,
-  value: string,
-): Promise<void> {
+function putOne(database: IDBDatabase, key: string, value: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const tx = database.transaction(STORE_NAME, "readwrite");
+    const tx = database.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     store.put(value, key);
     tx.oncomplete = () => resolve();
@@ -70,7 +63,7 @@ function putOne(
  * Session keys are stored with prefix "session_" so they can be read via getItem("session_*").
  */
 async function migrateFromLegacy(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
   const database = await openDB();
 
@@ -122,7 +115,7 @@ async function migrateFromLegacy(): Promise<void> {
 async function loadAllIntoCache(): Promise<void> {
   const database = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = database.transaction(STORE_NAME, "readonly");
+    const tx = database.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
     const req = store.openCursor();
     req.onsuccess = () => {
@@ -133,7 +126,7 @@ async function loadAllIntoCache(): Promise<void> {
           return;
         }
         const value = cursor.value as string;
-        if (typeof value === "string" && value.length <= MAX_CACHE_VALUE_SIZE) {
+        if (typeof value === 'string' && value.length <= MAX_CACHE_VALUE_SIZE) {
           cache.set(cursor.key as string, value);
         }
         cursor.continue();
@@ -154,7 +147,7 @@ async function ensureAuthKeysInCache(): Promise<void> {
   for (const key of AUTH_KEYS) {
     if (cache.has(key)) continue;
     const value = await new Promise<string | null>((resolve, reject) => {
-      const tx = database.transaction(STORE_NAME, "readonly");
+      const tx = database.transaction(STORE_NAME, 'readonly');
       const req = tx.objectStore(STORE_NAME).get(key);
       req.onsuccess = () => resolve(req.result ?? null);
       req.onerror = () => reject(req.error);
@@ -170,7 +163,7 @@ async function ensureAuthKeysInCache(): Promise<void> {
  * Must be awaited before rendering the app.
  */
 export async function hydrate(): Promise<void> {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   await openDB();
   await migrateFromLegacy();
   await loadAllIntoCache();
@@ -188,15 +181,14 @@ export function getItem(key: string): string | null {
 /**
  * Async get: from cache or from IndexedDB. Use for large keys (e.g. localRecordings) to avoid OOM.
  */
-export function getItemAsync(key: string): Promise<string | null> {
+export async function getItemAsync(key: string): Promise<string | null> {
   const cached = cache.get(key);
-  if (cached !== undefined) return Promise.resolve(cached);
-  return getStore("readonly").then((store) => {
-    return new Promise<string | null>((resolve, reject) => {
-      const req = store.get(key);
-      req.onsuccess = () => resolve(req.result ?? null);
-      req.onerror = () => reject(req.error);
-    });
+  if (cached !== undefined) return cached;
+  const store = await getStore('readonly');
+  return new Promise<string | null>((resolve, reject) => {
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
   });
 }
 
@@ -216,33 +208,31 @@ function evictCacheIfNeeded(): void {
  * Async set: updates cache immediately and persists to IndexedDB.
  * Large values are not cached to avoid OOM. Cache size is capped by MAX_CACHE_KEYS.
  */
-export function setItem(key: string, value: string): Promise<void> {
+export async function setItem(key: string, value: string): Promise<void> {
   if (value.length <= MAX_CACHE_VALUE_SIZE) {
     cache.set(key, value);
     evictCacheIfNeeded();
   } else {
     cache.delete(key);
   }
-  return getStore("readwrite").then((store) => {
-    return new Promise((resolve, reject) => {
-      const req = store.put(value, key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  const store = await getStore('readwrite');
+  return new Promise((resolve, reject) => {
+    const req = store.put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
   });
 }
 
 /**
  * Async remove: deletes from cache and IndexedDB.
  */
-export function removeItem(key: string): Promise<void> {
+export async function removeItem(key: string): Promise<void> {
   cache.delete(key);
-  return getStore("readwrite").then((store) => {
-    return new Promise((resolve, reject) => {
-      const req = store.delete(key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  const store = await getStore('readwrite');
+  return new Promise((resolve, reject) => {
+    const req = store.delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
   });
 }
 

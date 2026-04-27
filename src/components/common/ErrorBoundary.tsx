@@ -1,6 +1,7 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertTriangle } from "lucide-react";
-import { reportError } from "@/services/errorReporting";
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+
+import ErrorFallback from '@/components/common/ErrorFallback';
+import { reportError } from '@/services/errorReporting';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -15,15 +16,23 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+function isDynamicImportFetchError(error: Error | null): boolean {
+  if (!error?.message) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes('failed to fetch dynamically imported module') ||
+    msg.includes('importing a module script failed')
+  );
+}
+
+const DYNAMIC_IMPORT_RECOVERY_KEY = '__vt_dynamic_import_recovered_once__';
+
 /**
  * React Error Boundary: catches JavaScript errors in the child tree,
  * displays a fallback UI instead of a blank screen, and optionally logs the error.
  * Must be a class component (React does not yet support error boundaries in function components).
  */
-export default class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -34,10 +43,26 @@ export default class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    if (isDynamicImportFetchError(error) && typeof window !== 'undefined') {
+      try {
+        const recovered = window.sessionStorage.getItem(DYNAMIC_IMPORT_RECOVERY_KEY);
+        if (recovered !== '1') {
+          window.sessionStorage.setItem(DYNAMIC_IMPORT_RECOVERY_KEY, '1');
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // Ignore storage access issues and continue fallback rendering.
+      }
+    }
     reportError(error, errorInfo, { region: this.props.region });
   }
 
   handleRetry = (): void => {
+    if (isDynamicImportFetchError(this.state.error) && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null });
   };
 
@@ -47,43 +72,7 @@ export default class ErrorBoundary extends Component<
         return this.props.fallback;
       }
       return (
-        <div
-          className="min-h-screen flex items-center justify-center px-4 bg-neutral-50"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div className="text-center max-w-md">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-600 mb-6">
-              <AlertTriangle className="w-8 h-8" aria-hidden />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-2">
-              Đã xảy ra lỗi
-            </h1>
-            <p className="text-neutral-600 mb-6">
-              Ứng dụng gặp sự cố không mong muốn. Bạn có thể thử lại hoặc quay về trang chủ.
-            </p>
-            {import.meta.env.DEV && this.state.error && (
-              <pre className="text-left text-xs bg-neutral-200 text-neutral-800 p-3 rounded-lg mb-6 overflow-auto max-h-32">
-                {this.state.error.message}
-              </pre>
-            )}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={this.handleRetry}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
-              >
-                Thử lại
-              </button>
-              <a
-                href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold rounded-full transition-all duration-200 cursor-pointer focus:outline-none"
-              >
-                Về trang chủ
-              </a>
-            </div>
-          </div>
-        </div>
+        <ErrorFallback error={this.state.error} onRetry={this.handleRetry} variant="fullPage" />
       );
     }
     return this.props.children;
