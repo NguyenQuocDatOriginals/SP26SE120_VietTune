@@ -15,6 +15,16 @@ namespace VietTuneArchive.Domain.IRepositories
             int pageSize = 10,
             string sortOrder = "desc");
 
+        Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterMultiAsync(
+            IEnumerable<Guid>? ethnicGroupIds,
+            IEnumerable<Guid>? instrumentIds,
+            IEnumerable<Guid>? ceremonyIds,
+            IEnumerable<string>? regionCodes,
+            IEnumerable<Guid>? communeIds,
+            int page = 1,
+            int pageSize = 10,
+            string sortOrder = "desc");
+
         Task<Recording?> GetByIdWithDetailsAsync(Guid recordingId);
     }
 }

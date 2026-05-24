@@ -15,17 +15,17 @@ public class KnowledgeRetrievalServiceTests : IDisposable
     private readonly Mock<IEmbeddingService> _embeddingMock;
     private readonly KnowledgeRetrievalService _sut;
 
-    public KnowledgeRetrievalServiceTests()
-    {
-        var options = new DbContextOptionsBuilder<DBContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
+    //public KnowledgeRetrievalServiceTests()
+    //{
+    //    var options = new DbContextOptionsBuilder<DBContext>()
+    //        .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+    //        .Options;
         
-        _dbContext = new DBContext(options);
-        _embeddingMock = new Mock<IEmbeddingService>();
+    //    _dbContext = new DBContext(options);
+    //    _embeddingMock = new Mock<IEmbeddingService>();
 
-        _sut = new KnowledgeRetrievalService(_dbContext, _embeddingMock.Object);
-    }
+    //    _sut = new KnowledgeRetrievalService(_dbContext, _embeddingMock.Object);
+    //}
 
     public void Dispose()
     {

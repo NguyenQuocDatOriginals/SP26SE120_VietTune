@@ -152,6 +152,90 @@ namespace VietTuneArchive.Domain.Repositories
             return (data, total);
         }
 
+        public async Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterMultiAsync(
+            IEnumerable<Guid>? ethnicGroupIds,
+            IEnumerable<Guid>? instrumentIds,
+            IEnumerable<Guid>? ceremonyIds,
+            IEnumerable<string>? regionCodes,
+            IEnumerable<Guid>? communeIds,
+            int page = 1,
+            int pageSize = 10,
+            string sortOrder = "desc")
+        {
+            // Validate pagination parameters
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
+            if (string.IsNullOrWhiteSpace(sortOrder)) sortOrder = "desc";
+
+            // Convert to lists and filter empty collections
+            var ethnicGroupIdsList = ethnicGroupIds?.Where(g => g != Guid.Empty).ToList() ?? new List<Guid>();
+            var instrumentIdsList = instrumentIds?.Where(g => g != Guid.Empty).ToList() ?? new List<Guid>();
+            var ceremonyIdsList = ceremonyIds?.Where(g => g != Guid.Empty).ToList() ?? new List<Guid>();
+            var regionCodesList = regionCodes?.Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ?? new List<string>();
+            var communeIdsList = communeIds?.Where(g => g != Guid.Empty).ToList() ?? new List<Guid>();
+
+            // Build query
+            var query = _context.Recordings
+                .Include(r => r.Commune)
+                    .ThenInclude(c => c.District)
+                        .ThenInclude(d => d.Province)
+                .Include(r => r.EthnicGroup)
+                .Include(r => r.Ceremony)
+                .Include(r => r.RecordingInstruments)
+                    .ThenInclude(ri => ri.Instrument)
+                .Where(r => r.Status == SubmissionStatus.Approved || r.Status == SubmissionStatus.Embargoed);
+
+            // Apply filters - use OR logic within each field, AND between fields
+            if (ethnicGroupIdsList.Count > 0)
+            {
+                query = query.Where(r => ethnicGroupIdsList.Contains(r.EthnicGroupId ?? Guid.Empty));
+            }
+
+            if (ceremonyIdsList.Count > 0)
+            {
+                query = query.Where(r => ceremonyIdsList.Contains(r.CeremonyId ?? Guid.Empty));
+            }
+
+            if (communeIdsList.Count > 0)
+            {
+                query = query.Where(r => communeIdsList.Contains(r.CommuneId ?? Guid.Empty));
+            }
+
+            // Filter by region codes
+            if (regionCodesList.Count > 0)
+            {
+                query = query.Where(r => regionCodesList.Contains(r.Commune.District.Province.RegionCode));
+            }
+
+            // Filter by instruments
+            if (instrumentIdsList.Count > 0)
+            {
+                query = query.Where(r => r.RecordingInstruments.Any(ri => instrumentIdsList.Contains(ri.InstrumentId)));
+            }
+
+            // Get total count before pagination
+            var total = await query.CountAsync();
+
+            // Apply sorting
+            if (sortOrder.ToLower() == "asc")
+            {
+                query = query.OrderBy(r => r.CreatedAt);
+            }
+            else
+            {
+                query = query.OrderByDescending(r => r.CreatedAt);
+            }
+
+            // Apply pagination
+            var data = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (data, total);
+        }
+
         public async Task<Recording?> GetByIdWithDetailsAsync(Guid recordingId)
         {
             return await _context.Recordings

@@ -62,6 +62,19 @@ namespace VietTuneArchive.API.Controllers
             return BadRequest(result);
         }
 
+        [HttpGet("search-by-filter-multi")]
+        [Authorize(Roles = "Admin,Contributor,Expert,Researcher")]
+        public async Task<IActionResult> SearchByFilterMulti(
+            [FromBody] RecordingFilterMultiDto filter)
+        {
+            var result = await _service.SearchByFilterMultiAsync(filter);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
+
         [HttpGet]
         [Authorize(Roles = "Admin,Contributor,Expert,Researcher")]
         public async Task<ActionResult<PagedResponse<GetRecordingDto>>> GetAll(

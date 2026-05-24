@@ -21,6 +21,7 @@ namespace VietTuneArchive.API.Controllers
         }
 
         [HttpGet("get-by-status")]
+        [Authorize(Roles = "Expert,Admin,Contributor")]
         public async Task<IActionResult> GetSubmissionsByStatus(SubmissionStatus status,
     [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -102,7 +103,7 @@ namespace VietTuneArchive.API.Controllers
         }
 
         [HttpPut("reject-submission")]
-        [Authorize(Roles = "Admin,Expert,Contributor")]
+        [Authorize(Roles = "Admin,Expert")]
         public async Task<IActionResult> RejectSubmission(Guid submissionId)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -166,6 +167,7 @@ namespace VietTuneArchive.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Expert,Admin,Contributor")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _submissionService.GetSubmissionByIdAsync(id);
@@ -178,6 +180,7 @@ namespace VietTuneArchive.API.Controllers
 
         // DELETE: /api/submissions/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Expert,Contributor")]
         public async Task<ActionResult<ServiceResponse<bool>>> Delete(Guid id)
         {
             var result = await _submissionService.DeleteSubmissionAsync(id);
@@ -225,6 +228,7 @@ namespace VietTuneArchive.API.Controllers
         }
 
         [HttpGet("get-all")]
+        [Authorize(Roles = "Admin,Expert,Contributor")]
         public async Task<IActionResult> GetAllSubmissions(
     [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
