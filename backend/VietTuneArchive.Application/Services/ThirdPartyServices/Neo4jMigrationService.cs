@@ -7,8 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Neo4j.Driver;
 using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
+using VietTuneArchive.Application.IServices.IThirdPartyServices;
 
-namespace VietTuneArchive.Services
+namespace VietTuneArchive.Application.Services.ThirdPartyServices
 {
     public class Neo4jMigrationService : INeo4jMigrationService
     {
@@ -77,39 +78,22 @@ namespace VietTuneArchive.Services
         private async Task InitializeConstraintsAsync()
         {
             await using var session = _neo4jDriver.AsyncSession();
-            
-            // Bỏ cụm "IF NOT EXISTS" đi để tương thích ngược với các bản Neo4j cũ
             string[] constraintQueries = new[]
             {
-                "CREATE CONSTRAINT FOR (r:Recording) REQUIRE r.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (i:Instrument) REQUIRE i.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (e:EthnicGroup) REQUIRE e.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (c:Ceremony) REQUIRE c.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (v:VocalStyle) REQUIRE v.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (m:MusicalScale) REQUIRE m.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (t:Tag) REQUIRE t.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (k:KBEntry) REQUIRE k.Id IS UNIQUE",
-                "CREATE CONSTRAINT FOR (loc:Location) REQUIRE loc.Id IS UNIQUE"
+                "CREATE CONSTRAINT FOR (r:Recording) REQUIRE r.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (i:Instrument) REQUIRE i.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (e:EthnicGroup) REQUIRE e.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (c:Ceremony) REQUIRE c.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (v:VocalStyle) REQUIRE v.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (m:MusicalScale) REQUIRE m.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (t:Tag) REQUIRE t.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (k:KBEntry) REQUIRE k.Id IS UNIQUE IF NOT EXISTS",
+                "CREATE CONSTRAINT FOR (loc:Location) REQUIRE loc.Id IS UNIQUE IF NOT EXISTS"
             };
 
             foreach (var query in constraintQueries)
             {
-                try
-                {
-                    await session.ExecuteWriteAsync(async tx => await tx.RunAsync(query));
-                }
-                catch (Exception ex)
-                {
-                    // Nếu constraint đã tồn tại, Neo4j sẽ quăng lỗi. Chúng ta chỉ cần log nhẹ hoặc bỏ qua.
-                    if (ex.Message.Contains("AlreadyExists") || ex.Message.Contains("EquivalentSchemaRuleAlreadyExists"))
-                    {
-                        // Constraint đã có sẵn, an toàn để bỏ qua.
-                        continue;
-                    }
-                    
-                    // Nếu là lỗi khác (ví dụ rớt mạng), thì vẫn throw ra ngoài để dừng hệ thống
-                    throw;
-                }
+                await session.ExecuteWriteAsync(async tx => await tx.RunAsync(query));
             }
         }
 

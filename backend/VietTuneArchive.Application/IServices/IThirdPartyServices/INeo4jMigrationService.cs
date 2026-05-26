@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace VietTuneArchive.Services
+namespace VietTuneArchive.Application.IServices.IThirdPartyServices
 {
     public interface INeo4jMigrationService
     {

@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VietTuneArchive.Services;
+using VietTuneArchive.Application.IServices.IThirdPartyServices;
 
 namespace VietTuneArchive.API.Controllers
 {

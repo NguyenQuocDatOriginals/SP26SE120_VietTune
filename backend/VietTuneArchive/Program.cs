@@ -16,7 +16,8 @@ using VietTuneArchive.Domain.Entities;
 using VietTuneArchive.Domain.IRepositories;
 using VietTuneArchive.Domain.Repositories;
 using VietTuneArchive.Extensions;
-using VietTuneArchive.Services;
+using VietTuneArchive.Application.IServices.IThirdPartyServices;
+using VietTuneArchive.Application.Services.ThirdPartyServices;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
@@ -221,6 +222,7 @@ builder.Services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 builder.Services.AddScoped<IKnowledgeGraphService, KnowledgeGraphService>();
 builder.Services.AddNeo4jGraph(builder.Configuration);
 builder.Services.AddScoped<INeo4jMigrationService, Neo4jMigrationService>();
+builder.Services.AddScoped<IGraphExplorerService, GraphExplorerService>();
 
 
 // ✅ SERVICES - Knowledge Base
