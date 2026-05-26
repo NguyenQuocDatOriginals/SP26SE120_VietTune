@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import DisputeEvidenceUpload from './DisputeEvidenceUpload';
 
 import Button from '@/components/common/Button';
+import { formatViDateTimeShortBangkok } from '@/config/datetimeDisplay';
 import { DISPUTE_RESOLUTION_NOTES_MAX_LENGTH } from '@/config/validationConstants';
 import { copyrightDisputeApi } from '@/services/copyrightDisputeApi';
 import { COPYRIGHT_DISPUTE_STATUS_LABELS } from '@/types/copyrightDispute';
@@ -26,15 +27,7 @@ function readDisputeId(row: CopyrightDisputeDto): string {
 
 function formatDateTime(value?: string | null): string {
   if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatViDateTimeShortBangkok(value);
 }
 
 const RESOLUTION_OPTIONS = [
@@ -43,13 +36,14 @@ const RESOLUTION_OPTIONS = [
   { value: 'rejected', label: 'Tu choi bao cao' },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function DisputeListPanel({ className }: DisputeListPanelProps) {
   const [rows, setRows] = useState<CopyrightDisputeDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<number | 'all'>('all');
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [selectedDisputeId, setSelectedDisputeId] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<CopyrightDisputeDto | null>(null);
@@ -67,7 +61,7 @@ export default function DisputeListPanel({ className }: DisputeListPanelProps) {
     try {
       const res = await copyrightDisputeApi.list({
         page,
-        pageSize,
+        pageSize: PAGE_SIZE,
         status: statusFilter === 'all' ? undefined : statusFilter,
       });
       setRows(res.items ?? []);
@@ -78,7 +72,7 @@ export default function DisputeListPanel({ className }: DisputeListPanelProps) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter]);
+  }, [page, statusFilter]);
 
   const loadDetail = useCallback(async (disputeId: string) => {
     setDetailLoading(true);
@@ -107,7 +101,7 @@ export default function DisputeListPanel({ className }: DisputeListPanelProps) {
     void loadDetail(selectedDisputeId);
   }, [loadDetail, selectedDisputeId]);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil((total || 0) / pageSize)), [pageSize, total]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil((total || 0) / PAGE_SIZE)), [total]);
 
   const handleAssign = useCallback(async () => {
     if (!selectedDisputeId) return;

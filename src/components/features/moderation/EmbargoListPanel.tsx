@@ -1,6 +1,7 @@
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { formatViDateTimeShortBangkok } from '@/config/datetimeDisplay';
 import { embargoApi } from '@/services/embargoApi';
 import { EMBARGO_STATUS_LABELS } from '@/types/embargo';
 import type { EmbargoDto } from '@/types/embargo';
@@ -12,16 +13,10 @@ export interface EmbargoListPanelProps {
 
 function formatDateTime(value?: string | null): string {
   if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatViDateTimeShortBangkok(value);
 }
+
+const PAGE_SIZE = 10;
 
 export default function EmbargoListPanel({ className }: EmbargoListPanelProps) {
   const [rows, setRows] = useState<EmbargoDto[]>([]);
@@ -29,7 +24,6 @@ export default function EmbargoListPanel({ className }: EmbargoListPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<number | 'all'>('all');
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -39,7 +33,7 @@ export default function EmbargoListPanel({ className }: EmbargoListPanelProps) {
     try {
       const res = await embargoApi.list({
         page,
-        pageSize,
+        pageSize: PAGE_SIZE,
         status: statusFilter === 'all' ? undefined : statusFilter,
       });
       setRows(res.items ?? []);
@@ -50,15 +44,15 @@ export default function EmbargoListPanel({ className }: EmbargoListPanelProps) {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter]);
+  }, [page, statusFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const totalPages = useMemo(() => {
-    return Math.max(1, Math.ceil((total || 0) / pageSize));
-  }, [pageSize, total]);
+    return Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+  }, [total]);
 
   const handleLift = useCallback(
     async (row: EmbargoDto) => {

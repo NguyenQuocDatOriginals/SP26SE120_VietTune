@@ -38,11 +38,13 @@ import {
   PERFORMANCE_TYPES,
 } from '@/features/upload/uploadConstants';
 import {
+  getWizardTransitionFieldErrors,
   isUploadFormComplete,
   scrollToFirstUploadError,
   validateUploadFormState,
+  WIZARD_STEP_2_TRANSITION_FIELD_KEYS,
 } from '@/features/upload/uploadFormValidation';
-import { recordingImageService } from '@/services/recordingImageService';
+import { fetchRecordingImageDisplayUrls } from '@/services/recordingImageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
 
@@ -150,15 +152,12 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setTranscription,
     lyricsFile,
     setLyricsFile,
-    instrumentImage,
-    setInstrumentImage,
-    instrumentImagePreview,
-    setInstrumentImagePreview,
-    handleInstrumentImageChange,
     recordingImages,
     recordingImagePreviews,
     existingRecordingImageUrls,
     setExistingRecordingImageUrls,
+    setRecordingImages,
+    setRecordingImagePreviews,
     handleRecordingImagesChange,
     removeRecordingImage,
     collector,
@@ -256,6 +255,11 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   }, [vocalStyle, ethnicity]);
 
   const showWizard = !isEditMode;
+  const isAsyncNavigationBlocked = useMemo(
+    () => isUploadingMedia || Boolean(aiAnalysisLoading) || isAnalyzing,
+    [aiAnalysisLoading, isAnalyzing, isUploadingMedia],
+  );
+
   const {
     uploadWizardStep,
     setUploadWizardStep,
@@ -266,6 +270,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   } = useUploadWizard({
     isFormDisabled,
     isEditMode,
+    isAsyncNavigationBlocked,
     file,
     existingMediaSrc,
     createdRecordingId,
@@ -278,6 +283,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     vocalStyle,
     requiresInstruments,
     instruments,
+    mediaType,
   });
 
   useUploadRecordingLoader(isEditModeParam, recordingId, searchParams, {
@@ -325,19 +331,21 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   });
 
   useEffect(() => {
-    if (!isEditMode || !editingRecordingId) {
+    const rid =
+      editingRecordingId ??
+      (createdRecordingId && createdRecordingId !== 'EDIT_MODE_UPLOADED'
+        ? createdRecordingId
+        : null);
+    if (!rid) {
       setExistingRecordingImageUrls([]);
       return;
     }
     let cancelled = false;
     void (async () => {
       try {
-        const images = await recordingImageService.getByRecording(editingRecordingId);
+        const ordered = await fetchRecordingImageDisplayUrls(rid);
         if (cancelled) return;
-        const urls = images
-          .map((img) => img.imageUrl)
-          .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
-        setExistingRecordingImageUrls(urls);
+        setExistingRecordingImageUrls(ordered);
       } catch {
         if (!cancelled) setExistingRecordingImageUrls([]);
       }
@@ -345,7 +353,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     return () => {
       cancelled = true;
     };
-  }, [editingRecordingId, isEditMode, setExistingRecordingImageUrls]);
+  }, [editingRecordingId, createdRecordingId, isEditMode, setExistingRecordingImageUrls]);
 
   useUploadEditReferenceEffects({
     isEditMode,
@@ -531,68 +539,52 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setSubmitStatus,
     setSubmitMessage,
     setIsSubmitting,
+    setExistingRecordingImageUrls,
+    setRecordingImages,
+    setRecordingImagePreviews,
   });
 
   const handleNextStep = async () => {
-    const newErrors: Record<string, string> = {};
-
-    if (uploadWizardStep === 1) {
-      if (!file && !(isEditMode && !!existingMediaSrc)) {
-        newErrors.file =
-          mediaType === 'audio' ? 'Vui lòng chọn file âm thanh' : 'Vui lòng chọn file video';
-      }
-      if (Object.keys(newErrors).length > 0) {
-        setErrors((prev) => ({ ...prev, ...newErrors }));
-        return;
-      }
-    } else if (uploadWizardStep === 2) {
-      if (!isEditMode) {
-        if (!title.trim()) newErrors.title = 'Vui lòng nhập tiêu đề';
-        if (!artistUnknown && !artist.trim()) {
-          newErrors.artist = "Vui lòng nhập tên nghệ sĩ hoặc chọn 'Không rõ'";
-        }
-        if (!performanceType) {
-          newErrors.performanceType = 'Vui lòng chọn loại hình biểu diễn';
-        }
-        if (
-          (performanceType === 'vocal_accompaniment' || performanceType === 'acappella') &&
-          !vocalStyle
-        ) {
-          newErrors.vocalStyle = 'Vui lòng chọn lối hát / thể loại';
-        }
-        if (requiresInstruments && instruments.length === 0) {
-          newErrors.instruments = 'Vui lòng chọn ít nhất một nhạc cụ';
-        }
-      }
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...newErrors }));
-
-      // Auto scroll to first error field based on error key
-      setTimeout(() => {
-        const firstErrorKey = Object.keys(newErrors)[0];
-        const errorElement =
-          document.getElementById(`field-${firstErrorKey}`) ||
-          document.querySelector(`[name="${firstErrorKey}"]`);
-        if (errorElement) {
-          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 100);
+    if (showWizard && isAsyncNavigationBlocked) {
       return;
     }
 
-    // Clear errors for current step
+    const wizardTransitionCtx = {
+      isEditMode,
+      file,
+      mediaType,
+      title,
+      artist,
+      artistUnknown,
+      composer,
+      composerUnknown,
+      performanceType,
+      vocalStyle,
+      requiresInstruments,
+      instruments,
+      existingMediaSrc,
+    };
+
+    let stepErrors: Record<string, string> = {};
+    if (uploadWizardStep === 1) {
+      stepErrors = getWizardTransitionFieldErrors(wizardTransitionCtx, 1, { isEditMode });
+    } else if (uploadWizardStep === 2) {
+      stepErrors = getWizardTransitionFieldErrors(wizardTransitionCtx, 2, { isEditMode });
+    }
+
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...stepErrors }));
+      scrollToFirstUploadError(stepErrors);
+      return;
+    }
+
     setErrors((prev) => {
       const remainingErrors = { ...prev };
       if (uploadWizardStep === 1) delete remainingErrors.file;
       if (uploadWizardStep === 2) {
-        delete remainingErrors.title;
-        delete remainingErrors.artist;
-        delete remainingErrors.composer;
-        delete remainingErrors.vocalStyle;
+        for (const k of WIZARD_STEP_2_TRANSITION_FIELD_KEYS) {
+          delete remainingErrors[k];
+        }
       }
       return remainingErrors;
     });
@@ -808,11 +800,24 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           <span>Trường bắt buộc</span>
         </div>
 
+        {showWizard && isAsyncNavigationBlocked ? (
+          <p
+            id="upload-wizard-async-hint"
+            role="status"
+            aria-live="polite"
+            className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm font-medium text-amber-950"
+          >
+            Đang tải file hoặc phân tích âm thanh / AI nhạc cụ. Vui lòng chờ hoàn tất trước khi sang bước
+            tiếp hoặc lưu nháp.
+          </p>
+        ) : null}
+
         <UploadWizardStepper
           showWizard={showWizard}
           uploadWizardStep={uploadWizardStep}
           canNavigateToStep={canNavigateToStep}
           onStepChange={setUploadWizardStep}
+          asyncPipelineBusy={isAsyncNavigationBlocked}
         />
 
         {/* Removed duplicate yellow notice for non-Contributor users */}
@@ -908,11 +913,6 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           setVocalStyle={setVocalStyle}
           requiresInstruments={requiresInstruments}
           allowsLyrics={allowsLyrics}
-          instrumentImage={instrumentImage}
-          instrumentImagePreview={instrumentImagePreview}
-          setInstrumentImage={setInstrumentImage}
-          setInstrumentImagePreview={setInstrumentImagePreview}
-          handleInstrumentImageChange={handleInstrumentImageChange}
           lyricsFile={lyricsFile}
           setLyricsFile={setLyricsFile}
           handleLyricsFileChange={handleLyricsFileChange}
@@ -1054,6 +1054,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
               uploadWizardStep={uploadWizardStep}
               isAnalyzing={isAnalyzing}
               isSubmitting={isSubmitting}
+              asyncNavigationBlocked={isAsyncNavigationBlocked}
               isFormDisabled={isFormDisabled}
               isApprovedEdit={isApprovedEdit}
               isFormComplete={isFormComplete}
@@ -1072,6 +1073,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           uploadWizardStep={uploadWizardStep}
           isAnalyzing={isAnalyzing}
           isSubmitting={isSubmitting}
+          asyncNavigationBlocked={isAsyncNavigationBlocked}
           isFormDisabled={isFormDisabled}
           isApprovedEdit={isApprovedEdit}
           isFormComplete={isFormComplete}
