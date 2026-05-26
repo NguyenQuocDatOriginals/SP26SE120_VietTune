@@ -21,7 +21,13 @@ using VietTuneArchive.Application.Services.ThirdPartyServices;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Database");
-builder.Services.AddDbContext<DBContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddSingleton<Neo4jSyncInterceptor>();
+builder.Services.AddDbContext<DBContext>((sp, options) =>
+{
+    var interceptor = sp.GetRequiredService<Neo4jSyncInterceptor>();
+    options.UseNpgsql(connectionString)
+           .AddInterceptors(interceptor);
+});
 //builder.Services.AddDbContext<DBContext>(options => options.UseSqlServer(connectionString));
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!);
@@ -222,6 +228,7 @@ builder.Services.AddScoped<ISemanticSearchService, SemanticSearchService>();
 builder.Services.AddScoped<IKnowledgeGraphService, KnowledgeGraphService>();
 builder.Services.AddNeo4jGraph(builder.Configuration);
 builder.Services.AddScoped<INeo4jMigrationService, Neo4jMigrationService>();
+builder.Services.AddScoped<INeo4jSyncService, Neo4jSyncService>();
 builder.Services.AddScoped<IGraphExplorerService, GraphExplorerService>();
 
 
