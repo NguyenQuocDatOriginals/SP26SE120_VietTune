@@ -11,6 +11,8 @@ namespace VietTuneArchive.Application.IServices
         Task<Result<IEnumerable<GetRecordingDto>>> SearchByTitleApprovedAsync(string title);
         Task<Result<RecordingSearchResultDto>> SearchByFilterAsync(RecordingFilterDto filter);
         Task<Result<RecordingSearchResultDto>> SearchByFilterApprovedAsync(RecordingFilterDto filter);
+        Task<Result<RecordingSearchResultDto>> SearchByFilterMultiAsync(RecordingFilterMultiDto filter);
+        Task<Result<RecordingSearchResultDto>> SearchByFilterMultiApprovedAsync(RecordingFilterMultiDto filter);
         Task<ServiceResponse<List<RecordingDto>>> GetByEthnicGroupAsync(Guid ethnicGroupId);
         Task<ServiceResponse<List<RecordingDto>>> GetByCommuneAsync(Guid communeId);
         Task<ServiceResponse<List<RecordingDto>>> GetByPerformerAsync(string performerName);

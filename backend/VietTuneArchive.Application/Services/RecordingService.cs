@@ -267,6 +267,56 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
+        /// Search recordings by multiple filters
+        /// </summary>
+        public async Task<Result<RecordingSearchResultDto>> SearchByFilterMultiAsync(RecordingFilterMultiDto filter)
+        {
+            try
+            {
+                if (filter == null)
+                    throw new ArgumentNullException(nameof(filter), "Filter cannot be null");
+
+                var (recordings, total) = await _recordingRepository.SearchByFilterMultiAsync(
+                    filter.EthnicGroupIds,
+                    filter.InstrumentIds,
+                    filter.CeremonyIds,
+                    filter.RegionCodes,
+                    filter.CommuneIds,
+                    filter.Page,
+                    filter.PageSize,
+                    filter.SortOrder ?? "desc");
+
+                var dtos = _mapper.Map<List<GetRecordingDto>>(recordings);
+                var result = new RecordingSearchResultDto
+                {
+                    Data = dtos,
+                    Total = total
+                };
+
+                return Result<RecordingSearchResultDto>.Success(
+                    result,
+                    $"Found {total} recordings, returned {dtos.Count}");
+            }
+            catch (Exception ex)
+            {
+                return Result<RecordingSearchResultDto>.Failure($"Failed to search recordings by multiple filters: {ex.Message}");
+            }
+        }
+
+        public async Task<Result<RecordingSearchResultDto>> SearchByFilterMultiApprovedAsync(RecordingFilterMultiDto filter)
+        {
+            var result = await SearchByFilterMultiAsync(filter);
+            if (result.IsSuccess)
+            {
+                var filteredData = result.Data.Data.Where(r => r.Status == SubmissionStatus.Approved).ToList();
+                result.Data.Data = filteredData;
+                result.Data.Total = filteredData.Count; 
+                return Result<RecordingSearchResultDto>.Success(result.Data, $"Found {filteredData.Count} approved recordings");
+            }
+            return result;
+        }
+
+        /// <summary>
         /// Get recordings by ethnic group
         /// </summary>
         public async Task<ServiceResponse<List<RecordingDto>>> GetByEthnicGroupAsync(Guid ethnicGroupId)

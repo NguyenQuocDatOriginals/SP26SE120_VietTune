@@ -91,7 +91,7 @@ namespace VietTuneArchive.Application.Services
                      new Claim(ClaimTypes.Name, user.FullName ?? ""),
                      new Claim(ClaimTypes.Role, user.Role)
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(120),
+                Expires = DateTime.UtcNow.AddMinutes(1380),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
