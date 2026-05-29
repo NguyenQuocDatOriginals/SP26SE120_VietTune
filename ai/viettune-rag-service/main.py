@@ -65,7 +65,9 @@ async def generate(req: GenerateRequest):
                     "messages": messages,
                     "stream": False,
                     "options": {
-                        "temperature": 0.3,
+                        "temperature": 0.1,
+                        "top_p": 0.4,
+                        "repeat_penalty": 1.2,
                         "num_predict": 1024,
                     }
                 }

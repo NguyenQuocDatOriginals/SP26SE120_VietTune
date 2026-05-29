@@ -25,6 +25,16 @@ Standalone service nhận file audio → phát hiện nhạc cụ truyền thố
 Audio file → Librosa load (16kHz) → YAMNet embeddings (1024-dim) → ONNX classifier → Kết quả nhạc cụ + timeline
 ```
 
+> **📌 Giải thích từng bước:**
+>
+> | Bước | Thư viện | Vai trò |
+> |------|----------|---------|
+> | **Audio file** | — | File đầu vào (`.wav`, `.mp3`, `.flac`, `.ogg`) do client upload lên |
+> | **Librosa load (16kHz)** | `librosa` | Đọc file audio và resample về 16.000 Hz — tần số mà YAMNet yêu cầu. Nếu file stereo thì tự convert sang mono |
+> | **YAMNet embeddings (1024-dim)** | `tensorflow` + `tensorflow-hub` | Chạy model YAMNet (pretrained của Google) để trích xuất đặc trưng âm thanh. Mỗi frame ~0.96s được encode thành vector 1024 chiều đại diện cho "âm học" của đoạn đó |
+> | **ONNX classifier** | `onnxruntime` | Đưa vector 1024-dim vào model classifier đã train (file `.onnx`). Model này phân loại từng frame: đàn bầu / đàn tranh / background / … |
+> | **Kết quả nhạc cụ + timeline** | `numpy` | Tổng hợp kết quả các frame → tính confidence tổng thể và dựng timeline (khoảng thời gian xuất hiện của từng nhạc cụ) |
+
 ### Thư viện chính
 
 | Thư viện | Phiên bản | Mục đích |
