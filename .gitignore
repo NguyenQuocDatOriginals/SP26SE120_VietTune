@@ -127,3 +127,6 @@ appsettings.Local.json
 **/coverage.info
 *.codecoverage
 **/Report/
+
+# Local documentation (not versioned on main)
+docs/
