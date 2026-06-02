@@ -44,9 +44,7 @@ export const INSTRUMENT_CATEGORY_NAMES = {
 
 export const USER_ROLE_NAMES = {
   ADMIN: 'Administrator',
-  MODERATOR: 'Moderator',
   RESEARCHER: 'Researcher',
   CONTRIBUTOR: 'Contributor',
   EXPERT: 'Expert',
-  USER: 'User',
 };

@@ -8,8 +8,8 @@ const mocks = vi.hoisted(() => ({
   mockLogin: vi.fn(),
   mockGetStoredUser: vi.fn(),
   mockIsAuthenticated: vi.fn(),
-  mockGetCurrentUser: vi.fn(),
   mockLogout: vi.fn(),
+  mockProcessPendingProfileUpdates: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('@/services/authService', () => ({
@@ -18,8 +18,7 @@ vi.mock('@/services/authService', () => ({
     isAuthenticated: () => mocks.mockIsAuthenticated(),
     login: mocks.mockLogin,
     logout: mocks.mockLogout,
-    getCurrentUser: mocks.mockGetCurrentUser,
-    processPendingProfileUpdates: vi.fn(() => Promise.resolve()),
+    processPendingProfileUpdates: mocks.mockProcessPendingProfileUpdates,
   },
 }));
 
@@ -96,20 +95,32 @@ describe('useAuthStore', () => {
 
     await useAuthStore.getState().fetchCurrentUser();
 
-    expect(mocks.mockGetCurrentUser).not.toHaveBeenCalled();
+    expect(mocks.mockGetStoredUser).not.toHaveBeenCalled();
     expect(useAuthStore.getState().isLoading).toBe(false);
   });
 
-  it('fetchCurrentUser updates user on success', async () => {
+  it('fetchCurrentUser hydrates user from storage when authenticated', async () => {
     const u = sampleUser({ id: 'u2' });
     mocks.mockIsAuthenticated.mockReturnValue(true);
-    mocks.mockGetCurrentUser.mockResolvedValue({ success: true, data: u });
+    mocks.mockGetStoredUser.mockReturnValue(u);
 
     await useAuthStore.getState().fetchCurrentUser();
 
     expect(useAuthStore.getState().user).toEqual(u);
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(useAuthStore.getState().isLoading).toBe(false);
+    expect(mocks.mockProcessPendingProfileUpdates).toHaveBeenCalled();
+  });
+
+  it('fetchCurrentUser clears user when authenticated but storage is empty', async () => {
+    mocks.mockIsAuthenticated.mockReturnValue(true);
+    mocks.mockGetStoredUser.mockReturnValue(null);
+
+    await useAuthStore.getState().fetchCurrentUser();
+
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(mocks.mockProcessPendingProfileUpdates).not.toHaveBeenCalled();
   });
 
   it('clearError clears error', () => {

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import {
   canNavigateToWizardStep,
+  scrollToUploadWizardBasicMetadata,
   type WizardNavigationParams,
 } from '@/features/upload/uploadFormValidation';
 
@@ -85,8 +86,18 @@ export function useUploadWizard(params: UseUploadWizardParams) {
   }, []);
 
   const goNext = useCallback(() => {
-    scrollToTopRespectMotion();
-    setUploadWizardStep((step) => Math.min(3, step + 1));
+    setUploadWizardStep((step) => {
+      if (step >= 3) return step;
+      const next = Math.min(3, step + 1);
+      if (step === 1 && next === 2) {
+        scrollToUploadWizardBasicMetadata();
+      } else {
+        queueMicrotask(() => {
+          scrollToTopRespectMotion();
+        });
+      }
+      return next;
+    });
   }, []);
 
   const goPrev = useCallback(() => {

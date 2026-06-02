@@ -1,10 +1,8 @@
-import { Users, BarChart3, Shield, ChevronRight, ChevronDown, BookOpen, Bot } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Users, BarChart3, Shield, ChevronRight, ChevronDown, BookOpen, Bot, Activity } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import AdminDashboardAiMonitoringPanel from '@/components/admin/AdminDashboardAiMonitoringPanel';
-import AdminDashboardAnalyticsPanel from '@/components/admin/AdminDashboardAnalyticsPanel';
-import AdminDashboardModerationPanel from '@/components/admin/AdminDashboardModerationPanel';
-import AdminUserManagement from '@/components/admin/AdminUserManagement';
+import { isAdminOperationsPageEnabled } from '@/config/adminOperationsConfig';
 import BackButton from '@/components/common/BackButton';
 import Card from '@/components/common/Card';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
@@ -12,9 +10,17 @@ import {
   getRoleNameVi,
   LegacyAdminPanelId,
   ROLE_NAMES_VI,
-  StepId,
+  type AdminDashboardSectionId,
+  isNonEmptyInvalidAdminDashboardSection,
+  parseAdminDashboardSectionParam,
 } from '@/features/admin/adminDashboardTypes';
+import AdminDashboardPanels from '@/features/admin/dashboard/AdminDashboardPanels';
+import AdminGovernanceStrip from '@/features/admin/governance/AdminGovernanceStrip';
 import { useAdminDashboardData } from '@/features/admin/hooks/useAdminDashboardData';
+import AdminDashboardRail from '@/features/admin/shell/AdminDashboardRail';
+import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
+import { buildAdminBreadcrumbItems } from '@/features/admin/shell/adminBreadcrumbUtils';
+import AdminOverviewStrip from '@/features/admin/shell/AdminOverviewStrip';
 import { accountDeletionService } from '@/services/accountDeletionService';
 import { adminApi } from '@/services/adminApi';
 import { recordingRequestService } from '@/services/recordingRequestService';
@@ -27,7 +33,13 @@ import { uiToast, notifyLine } from '@/uiToast';
 
 export default function AdminDashboard() {
   const user = useAuthStore((s) => s.user);
-  const [step, setStep] = useState<StepId>('users');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const step = useMemo(
+    () => parseAdminDashboardSectionParam(searchParams.get('section')),
+    [searchParams],
+  );
   const [showAdminGuide, setShowAdminGuide] = useState(false);
   const [legacyPanel, setLegacyPanel] = useState<LegacyAdminPanelId | null>(null);
   const {
@@ -58,7 +70,11 @@ export default function AdminDashboard() {
     usersForTable,
     allUsers,
     monthlyCountsFinal,
+    monthlyTrendIsEstimated,
+    analyticsContributors,
+    analyticsContributorsLoadState,
     ethnicGroupsFromApi,
+    lastDashboardRefreshAt,
   } = useAdminDashboardData();
 
   const [removeTarget, setRemoveTarget] = useState<{ id: string; title?: string } | null>(null);
@@ -72,78 +88,95 @@ export default function AdminDashboard() {
     expertId: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (isNonEmptyInvalidAdminDashboardSection(searchParams.get('section'))) {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.delete('section');
+          return p;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (step !== 'moderation') setLegacyPanel(null);
+  }, [step]);
+
   const stepIndex = useMemo(() => {
-    const order: StepId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
+    const order: AdminDashboardSectionId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
     return Math.max(0, order.indexOf(step));
   }, [step]);
 
+  const adminBreadcrumbItems = useMemo(
+    () => buildAdminBreadcrumbItems(location.pathname, searchParams.get('section')),
+    [location.pathname, searchParams.get('section')],
+  );
+
+  const goSection = useCallback(
+    (id: AdminDashboardSectionId) => {
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set('section', id);
+          return p;
+        },
+        { replace: true },
+      );
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    },
+    [setSearchParams],
+  );
+
   const setStepByIndex = (idx: number) => {
-    const order: StepId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
+    const order: AdminDashboardSectionId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
     const next = order[Math.max(0, Math.min(order.length - 1, idx))];
-    setStep(next);
+    goSection(next);
   };
 
   const handleAssignRole = async (userId: string, newRole: string) => {
     try {
-      let apiOk = false;
-      try {
-        await adminApi.updateUserRole(userId, newRole);
-        apiOk = true;
-      } catch {
-        apiOk = false;
+      await adminApi.updateUserRole(userId, newRole);
+      if (import.meta.env.DEV) {
+        const oRaw = getItem('users_overrides');
+        const o = oRaw ? (JSON.parse(oRaw) as Record<string, Record<string, unknown>>) : {};
+        if (!o[userId]) o[userId] = {};
+        o[userId].role = newRole;
+        void setItem('users_overrides', JSON.stringify(o));
+        setUsersOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], role: newRole } }));
       }
-      const oRaw = getItem('users_overrides');
-      const o = oRaw ? (JSON.parse(oRaw) as Record<string, Record<string, unknown>>) : {};
-      if (!o[userId]) o[userId] = {};
-      o[userId].role = newRole;
-      void setItem('users_overrides', JSON.stringify(o));
-      setUsersOverrides((prev) => ({ ...prev, [userId]: { ...prev[userId], role: newRole } }));
-      if (apiOk) {
-        uiToast.success(
-          notifyLine(
-            'Thành công',
-            `Đã gán vai trò "${ROLE_NAMES_VI[newRole] ?? newRole}" cho người dùng.`,
-          ),
-        );
-      } else {
-        uiToast.warning(
-          notifyLine(
-            'Chỉ cập nhật trên giao diện',
-            `Máy chủ chưa cập nhật vai trò. Đã lưu tạm "${ROLE_NAMES_VI[newRole] ?? newRole}" trong giao diện — vui lòng thử lại sau.`,
-          ),
-        );
-      }
+      uiToast.success(
+        notifyLine(
+          'Thành công',
+          `Đã gán vai trò "${ROLE_NAMES_VI[newRole] ?? newRole}" cho người dùng.`,
+        ),
+      );
+      void load({ showUserLoadingHint: true });
     } catch {
-      uiToast.error(notifyLine('Lỗi', 'Không thể cập nhật vai trò.'));
+      uiToast.error(
+        notifyLine('Lỗi', 'Không thể cập nhật vai trò trên máy chủ. Vui lòng thử lại.'),
+      );
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      let apiOk = false;
-      try {
-        await adminApi.updateUserStatus(userId, false);
-        apiOk = true;
-      } catch {
-        apiOk = false;
+      await adminApi.updateUserStatus(userId, false);
+      if (import.meta.env.DEV) {
+        const next = new Set(deletedUserIds);
+        next.add(userId);
+        setDeletedUserIds(next);
+        void setItem('admin_deleted_user_ids', JSON.stringify([...next]));
       }
-      const next = new Set(deletedUserIds);
-      next.add(userId);
-      setDeletedUserIds(next);
-      void setItem('admin_deleted_user_ids', JSON.stringify([...next]));
       setDeleteUserTarget(null);
-      if (apiOk) {
-        uiToast.success(notifyLine('Thành công', 'Đã vô hiệu hóa người dùng.'));
-      } else {
-        uiToast.warning(
-          notifyLine(
-            'Chỉ cập nhật trên giao diện',
-            'Máy chủ chưa vô hiệu hóa tài khoản. Đã ẩn người dùng trong giao diện — vui lòng thử lại sau.',
-          ),
-        );
-      }
+      uiToast.success(notifyLine('Thành công', 'Đã vô hiệu hóa người dùng.'));
+      void load({ showUserLoadingHint: true });
     } catch {
-      uiToast.error(notifyLine('Lỗi', 'Không thể vô hiệu hóa người dùng.'));
+      uiToast.error(
+        notifyLine('Lỗi', 'Không thể vô hiệu hóa tài khoản trên máy chủ. Vui lòng thử lại.'),
+      );
     }
   };
 
@@ -178,7 +211,7 @@ export default function AdminDashboard() {
     return experts;
   }, [usersOverrides]);
 
-  const steps: { id: StepId; label: string; icon: React.ElementType }[] = useMemo(
+  const steps: { id: AdminDashboardSectionId; label: string; icon: React.ElementType }[] = useMemo(
     () => [
       { id: 'users', label: 'Quản lý người dùng', icon: Users },
       { id: 'analytics', label: 'Phân tích & thống kê', icon: BarChart3 },
@@ -193,17 +226,51 @@ export default function AdminDashboard() {
   const guideButtonClass =
     'inline-flex items-center justify-center gap-2 h-11 px-6 py-0 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-semibold rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none';
 
+  const showAdminOperationsPage = isAdminOperationsPageEnabled();
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="lg:grid lg:grid-cols-[minmax(12.5rem,15rem)_minmax(0,1fr)] lg:gap-8 xl:gap-10 lg:items-start">
+          <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
+            <AdminDashboardRail
+              activeId={step}
+              onSelect={goSection}
+              showOperationsLink={showAdminOperationsPage}
+            />
+          </aside>
+          <div className="min-w-0">
+        <AdminBreadcrumbs items={adminBreadcrumbItems} className="sm:mb-1" />
+        {lastDashboardRefreshAt != null ? (
+          <p className="mb-4 text-xs font-medium text-neutral-500 sm:text-sm">
+            Dữ liệu tổng hợp cập nhật:{' '}
+            <time dateTime={new Date(lastDashboardRefreshAt).toISOString()}>
+              {new Date(lastDashboardRefreshAt).toLocaleString('vi-VN')}
+            </time>
+            <span className="text-neutral-400"> — làm mới nền ~30s khi tab đang mở.</span>
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Quản trị hệ thống
           </h1>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {showAdminOperationsPage ? (
+              <button
+                type="button"
+                onClick={() => void navigate('/admin/operations')}
+                className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 border-2 border-secondary-600/80 text-secondary-900 hover:bg-secondary-50 font-semibold rounded-full transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
+                title="Vận hành & quản trị AI (P3)"
+              >
+                <Activity className="h-5 w-5" strokeWidth={2.5} />
+                <span>Vận hành &amp; AI</span>
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={() => { window.location.href = '/admin/master-data'; }}
+              onClick={() => {
+                void navigate('/admin/master-data');
+              }}
               className="inline-flex items-center justify-center gap-2 h-11 px-6 py-0 border-2 border-primary-600 text-primary-700 hover:bg-primary-50 font-semibold rounded-full transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
               title="Quản lý Master Data"
             >
@@ -223,9 +290,22 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Wizard stepper — aligned with UploadMusic.tsx */}
+        <div className="hidden lg:block">
+          <AdminOverviewStrip
+            remoteTotalRecordings={remoteTotalRecordings ?? 0}
+            allUsersCount={allUsers.length}
+            aiFlaggedCount={aiFlaggedCount ?? 0}
+            remoteKbCount={remoteKbCount ?? 0}
+          />
+        </div>
+
+        <div className="hidden lg:block">
+          <AdminGovernanceStrip />
+        </div>
+
+        {/* Wizard stepper — mobile / tablet; desktop dùng rail trái */}
         <div
-          className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
+          className="lg:hidden rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8 transition-all duration-300 hover:shadow-xl bg-surface-panel"
         >
           <p className="text-sm font-semibold text-primary-800 mb-3">Điều hướng quản trị</p>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -235,11 +315,7 @@ export default function AdminDashboard() {
                 <button
                   key={id}
                   type="button"
-                  onClick={() => {
-                    setLegacyPanel(null);
-                    setStep(id);
-                    window.scrollTo({ top: 0, behavior: 'auto' });
-                  }}
+                  onClick={() => goSection(id)}
                   className={`inline-flex items-center justify-center gap-2 h-11 px-5 py-0 rounded-full text-sm font-semibold border transition-all duration-300 shadow-md hover:shadow-lg hover:scale-110 active:scale-95 whitespace-nowrap ${
                     isActive
                       ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white border-primary-600 shadow-primary-600/30'
@@ -255,65 +331,52 @@ export default function AdminDashboard() {
         </div>
 
         <Card variant="bordered" className="!p-0 overflow-hidden">
-          {step === 'users' && (
-            <AdminUserManagement
-              remoteUsersLoadState={remoteUsersLoadState}
-              usersForTable={usersForTable}
-              showUsersLoadingHint={showUsersLoadingHint}
-              setShowUsersLoadingHint={setShowUsersLoadingHint}
-              load={load}
-              onOpenGuide={() => setShowAdminGuide(true)}
-              getRoleNameVi={getRoleNameVi}
-              onAssignRole={handleAssignRole}
-              onRequestDeleteUser={(p) => setDeleteUserTarget(p)}
-            />
-          )}
-
-          {step === 'analytics' && (
-            <AdminDashboardAnalyticsPanel
-              remoteTotalRecordings={remoteTotalRecordings}
-              recordingsLength={recordings.length}
-              remoteEthnicGroupsLoadState={remoteEthnicGroupsLoadState}
-              ethnicGroupCount={ethnicGroupsFromApi.length}
-              allUsersCount={allUsers.length}
-              remoteInstrumentCount={remoteInstrumentCount}
-              remoteInstruments={remoteInstruments}
-              monthlyCountsFinal={monthlyCountsFinal}
-            />
-          )}
-
-          {step === 'aiMonitoring' && (
-            <AdminDashboardAiMonitoringPanel
-              avgExpertAccuracy={avgExpertAccuracy}
-              aiFlaggedCount={aiFlaggedCount}
-              remoteKbCount={remoteKbCount}
-              expertPerformanceRows={expertPerformanceRows}
-              onFlaggedCountChange={setAiFlaggedCount}
-              currentUserId={user?.id}
-            />
-          )}
-
-          {step === 'moderation' && (
-            <AdminDashboardModerationPanel
-              legacyPanel={legacyPanel}
-              setLegacyPanel={setLegacyPanel}
-              deleteRecordingRequests={deleteRecordingRequests}
-              setDeleteRecordingRequests={setDeleteRecordingRequests}
-              editRecordingRequests={editRecordingRequests}
-              setEditRecordingRequests={setEditRecordingRequests}
-              expertOptions={expertOptions}
-              forwardDeleteExpertId={forwardDeleteExpertId}
-              setForwardDeleteExpertId={setForwardDeleteExpertId}
-              pendingExpertDeletions={pendingExpertDeletions}
-              onRequestExpertDeletionApprove={setExpertDeletionApproveTarget}
-              recordings={recordings}
-              onRequestRemoveRecording={({ id, title }) => setRemoveTarget({ id, title })}
-            />
-          )}
+          <AdminDashboardPanels
+            step={step}
+            remoteUsersLoadState={remoteUsersLoadState}
+            usersForTable={usersForTable}
+            showUsersLoadingHint={showUsersLoadingHint}
+            setShowUsersLoadingHint={setShowUsersLoadingHint}
+            load={load}
+            onOpenUserGuide={() => setShowAdminGuide(true)}
+            getRoleNameVi={getRoleNameVi}
+            onAssignRole={handleAssignRole}
+            onRequestDeleteUser={(p) => setDeleteUserTarget(p)}
+            remoteTotalRecordings={remoteTotalRecordings}
+            recordingsLength={recordings.length}
+            remoteEthnicGroupsLoadState={remoteEthnicGroupsLoadState}
+            ethnicGroupCount={ethnicGroupsFromApi.length}
+            allUsersCount={allUsers.length}
+            remoteInstrumentCount={remoteInstrumentCount}
+            remoteInstruments={remoteInstruments}
+            monthlyCountsFinal={monthlyCountsFinal}
+            monthlyTrendIsEstimated={monthlyTrendIsEstimated}
+            analyticsContributors={analyticsContributors}
+            analyticsContributorsLoadState={analyticsContributorsLoadState}
+            avgExpertAccuracy={avgExpertAccuracy}
+            aiFlaggedCount={aiFlaggedCount}
+            remoteKbCount={remoteKbCount}
+            expertPerformanceRows={expertPerformanceRows}
+            onFlaggedCountChange={setAiFlaggedCount}
+            currentUserId={user?.id}
+            legacyPanel={legacyPanel}
+            setLegacyPanel={setLegacyPanel}
+            deleteRecordingRequests={deleteRecordingRequests}
+            setDeleteRecordingRequests={setDeleteRecordingRequests}
+            editRecordingRequests={editRecordingRequests}
+            setEditRecordingRequests={setEditRecordingRequests}
+            expertOptions={expertOptions}
+            forwardDeleteExpertId={forwardDeleteExpertId}
+            setForwardDeleteExpertId={setForwardDeleteExpertId}
+            pendingExpertDeletions={pendingExpertDeletions}
+            onRequestExpertDeletionApprove={setExpertDeletionApproveTarget}
+            recordings={recordings}
+            onRequestRemoveRecording={({ id, title }) => setRemoveTarget({ id, title })}
+          />
         </Card>
 
-        {/* Footer navigation — similar feel to UploadMusic wizard actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-6">
+        {/* Footer — ẩn trên desktop (đã có rail); giữ trên mobile/tablet */}
+        <div className="lg:hidden flex flex-wrap items-center justify-between gap-4 pt-6">
           <button
             type="button"
             onClick={() => setStepByIndex(stepIndex - 1)}
@@ -325,7 +388,6 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={() => {
-              setLegacyPanel(null);
               setStepByIndex(stepIndex + 1);
               window.scrollTo({ top: 0, behavior: 'auto' });
             }}
@@ -335,6 +397,8 @@ export default function AdminDashboard() {
             Tiếp theo
             <ChevronRight className="h-5 w-5" strokeWidth={2.5} />
           </button>
+        </div>
+          </div>
         </div>
       </div>
 

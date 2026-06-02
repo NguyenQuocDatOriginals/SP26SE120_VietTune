@@ -8,7 +8,8 @@ import type {
   InstrumentTimeSegment,
 } from '@/types/instrumentDetection';
 import { getHttpStatus } from '@/utils/httpError';
-import { mapInstrumentDetectionRow, peelAiAnalysisEnvelope } from '@/utils/mapInstrumentDetectionRow';
+import { mapInstrumentDetectionRow } from '@/utils/mapInstrumentDetectionRow';
+import { normalizeAiAnalyzeOnly } from '@/utils/normalizeAiAnalyzeOnly';
 
 const FEATURE_FLAG_INSTRUMENT_CONFIDENCE = String(
   import.meta.env.VITE_INSTRUMENT_CONFIDENCE ?? 'true',
@@ -123,11 +124,15 @@ function extractInstrumentsArray(raw: unknown): unknown[] {
 }
 
 function normalizeAiAnalyzeOnlyResponse(raw: unknown): InstrumentDetectionResult {
-  const peeled = peelAiAnalysisEnvelope(raw);
-  const source = peeled ?? (isRecord(raw) ? raw : null);
-  const rawInstruments = Array.isArray(source?.instruments)
-    ? source.instruments
-    : extractInstrumentsArray(raw);
+  const normalized = normalizeAiAnalyzeOnly(raw);
+  if (normalized) {
+    return {
+      instruments: normalized.instruments,
+      timeline: null,
+      audio_info: null,
+    };
+  }
+  const rawInstruments = extractInstrumentsArray(raw);
   const instruments = rawInstruments
     .map(mapInstrumentDetectionRow)
     .filter((item): item is DetectedInstrument => !!item);

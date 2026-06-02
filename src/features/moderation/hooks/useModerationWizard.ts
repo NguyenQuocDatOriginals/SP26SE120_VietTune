@@ -26,24 +26,33 @@ function hasAllInstrumentDecisions(
   });
 }
 
-export function getMissingStep2Fields(
+export type Step2RequiredFieldKey = keyof typeof STEP2_REQUIRED_LABELS;
+
+export function getMissingStep2FieldKeys(
   step2: ModerationVerificationData['step2'] | undefined,
   declaredInstruments: string[],
-): string[] {
-  const missing: string[] = [];
-  if (!step2?.culturalValue) missing.push(STEP2_REQUIRED_LABELS.culturalValue);
-  if (!step2?.authenticity) missing.push(STEP2_REQUIRED_LABELS.authenticity);
-  if (!step2?.accuracy) missing.push(STEP2_REQUIRED_LABELS.accuracy);
+): Step2RequiredFieldKey[] {
+  const missing: Step2RequiredFieldKey[] = [];
+  if (!step2?.culturalValue) missing.push('culturalValue');
+  if (!step2?.authenticity) missing.push('authenticity');
+  if (!step2?.accuracy) missing.push('accuracy');
 
   const instrumentsComplete = hasAllInstrumentDecisions(
     declaredInstruments,
     step2?.instrumentOverrides,
   );
   if (!instrumentsComplete && !step2?.instrumentsVerified) {
-    missing.push(STEP2_REQUIRED_LABELS.instrumentsVerified);
+    missing.push('instrumentsVerified');
   }
 
   return missing;
+}
+
+export function getMissingStep2Fields(
+  step2: ModerationVerificationData['step2'] | undefined,
+  declaredInstruments: string[],
+): string[] {
+  return getMissingStep2FieldKeys(step2, declaredInstruments).map((key) => STEP2_REQUIRED_LABELS[key]);
 }
 
 export function useModerationWizard(opts: {

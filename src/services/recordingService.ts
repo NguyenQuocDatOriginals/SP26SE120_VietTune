@@ -143,7 +143,7 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
       username: uploaderHandle,
       email: '',
       fullName: uploaderDisplayName,
-      role: UserRole.USER,
+      role: UserRole.CONTRIBUTOR,
       createdAt: uploadedDate,
       updatedAt: uploadedDate,
     },

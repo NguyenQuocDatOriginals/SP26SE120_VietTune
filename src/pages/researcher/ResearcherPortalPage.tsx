@@ -51,8 +51,6 @@ export default function ResearcherPortalPage() {
   const returnTo = location.pathname;
 
   const {
-    searchQuery,
-    setSearchQuery,
     filters,
     setFilters,
     approvedRecordings,
@@ -63,7 +61,6 @@ export default function ResearcherPortalPage() {
     ceremonyRefData,
     communeRefData,
     activeFilterCount,
-    handleSearchClick,
     analysisDataset,
   } = useResearcherData();
 
@@ -335,47 +332,6 @@ export default function ResearcherPortalPage() {
           {/* Tab: Tìm kiếm nâng cao */}
           {activeTab === 'search' && (
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-              <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 shadow-lg backdrop-blur-sm p-4 sm:p-6">
-                <div className="mb-4">
-                  <h2 className="text-lg sm:text-xl font-semibold text-primary-800 flex items-center gap-2">
-                    <Search className="w-5 h-5 text-primary-600" strokeWidth={2.5} />
-                    Tìm kiếm ngữ nghĩa
-                  </h2>
-                  <p className="text-sm text-neutral-600 mt-1">
-                    Nhập từ khóa tự nhiên để hệ thống gợi ý bản ghi phù hợp.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1 min-w-0">
-                    <Search
-                      className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2"
-                      strokeWidth={2.5}
-                    />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSearchClick();
-                      }}
-                      placeholder='Ví dụ: "Tìm bài hát mùa màng dùng đàn bầu ở Tây Nam Bộ"'
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 outline-none transition-all text-neutral-900 placeholder-neutral-500 bg-white"
-                      aria-label="Tìm kiếm ngữ nghĩa"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSearchClick}
-                    disabled={searchLoading}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 disabled:opacity-80 disabled:cursor-wait text-white font-semibold shadow-xl shadow-primary-600/40 hover:shadow-2xl transition-all cursor-pointer min-w-[132px]"
-                    aria-busy={searchLoading}
-                  >
-                    <Search className="w-5 h-5 flex-shrink-0" strokeWidth={2.5} />
-                    <span>{searchLoading ? 'Đang tìm...' : 'Tìm kiếm'}</span>
-                  </button>
-                </div>
-              </div>
-
               <ResearcherFilterBar
                 filters={filters}
                 setFilters={setFilters}
@@ -507,7 +463,7 @@ export default function ResearcherPortalPage() {
                 open={showExportDialog}
                 onClose={() => setShowExportDialog(false)}
                 recordings={analysisDataset && analysisDataset.length > 0 ? analysisDataset : approvedRecordings}
-                filtersSummary={`Query: "${searchQuery}" | Filters: ${activeFilterCount} active`}
+                filtersSummary={`Bộ lọc đang bật: ${activeFilterCount}`}
               />
             </div>
           )}

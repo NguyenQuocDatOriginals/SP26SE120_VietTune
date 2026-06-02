@@ -9,15 +9,17 @@ import type {
   ContributorRow,
   CoverageRow,
   ExpertPerformanceDto,
+  SubmissionAnalyticsDto,
 } from '@/types/analytics';
 import { extractArray, extractObject } from '@/utils/apiHelpers';
+import { parseSubmissionsTrendPayload } from '@/utils/parseSubmissionsTrend';
 
 type OverviewResponse = AnalyticsOverview | { data?: AnalyticsOverview; isSuccess?: boolean };
 type CoverageResponse = CoverageRow[] | { data?: CoverageRow[] };
 type SubmissionsTrendResponse =
   | Record<string, number>
-  | { data?: Record<string, number> }
-  | Record<string, unknown>;
+  | SubmissionAnalyticsDto
+  | { data?: Record<string, number> | SubmissionAnalyticsDto };
 type ContributorsResponse = ContributorRow[] | { data?: ContributorRow[] };
 type ExpertsResponse = ExpertPerformanceDto[] | { data?: ExpertPerformanceDto[] };
 type ContentResponse = ContentAnalyticsDto | { data?: ContentAnalyticsDto };
@@ -45,12 +47,7 @@ export const analyticsApi = {
         apiFetchLoose.GET('/api/Analytics/submissions', {}),
       ),
     );
-    const obj = extractObject(res);
-    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
-      const entries = Object.entries(obj);
-      if (entries.every(([, v]) => typeof v === 'number')) return obj as Record<string, number>;
-    }
-    return {};
+    return parseSubmissionsTrendPayload(extractObject(res));
   },
 
   async getContributors(): Promise<ContributorRow[]> {

@@ -8,7 +8,6 @@
 
 import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
 import { legacyPost } from '@/api/legacyHttp';
-import { getHttpStatus } from '@/utils/httpError';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -47,6 +46,17 @@ function mapDtoToRecordingImage(row: unknown): RecordingImage | null {
     caption: r.caption == null ? null : String(r.caption),
     sortOrder: typeof r.sortOrder === 'number' ? r.sortOrder : Number(r.sortOrder ?? 0),
   };
+}
+
+/** Sort ascending by sortOrder; primary is sortOrder === 0 or first item. */
+function sortRecordingImages(images: RecordingImage[]): RecordingImage[] {
+  return [...images].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function pickPrimaryRecordingImage(images: RecordingImage[]): RecordingImage | null {
+  if (images.length === 0) return null;
+  const sorted = sortRecordingImages(images);
+  return sorted.find((img) => img.sortOrder === 0) ?? sorted[0] ?? null;
 }
 
 // ── Service ────────────────────────────────────────────────────────────────
@@ -95,24 +105,12 @@ export const recordingImageService = {
   },
 
   /**
-   * 3. Get primary image (sortOrder = 0) for a recording.
-   *    GET /api/RecordingImage/primary/{recordingId}
+   * 3. Primary image (sortOrder = 0). Derived from `/by-recording` so missing
+   *    primary does not trigger HTTP 404 (BE returns NotFound on `/primary`).
    */
   getPrimary: async (recordingId: string): Promise<RecordingImage | null> => {
-    try {
-      const envelope = await apiOk(
-        asApiEnvelope<unknown>(
-          apiFetch.GET('/api/RecordingImage/primary/{recordingId}', {
-            params: { path: { recordingId } },
-          }),
-        ),
-      );
-      const raw = unwrap(envelope);
-      return mapDtoToRecordingImage(raw);
-    } catch (err: unknown) {
-      if (getHttpStatus(err) === 404) return null;
-      throw err;
-    }
+    const images = await recordingImageService.getByRecording(recordingId);
+    return pickPrimaryRecordingImage(images);
   },
 
   /**
@@ -163,16 +161,10 @@ export const recordingImageService = {
   },
 };
 
-/** URLs for UI gallery: primary image first (GET `/primary` + `/by-recording`). */
+/** URLs for UI gallery: primary (lowest sortOrder) first via single `/by-recording` call. */
 export async function fetchRecordingImageDisplayUrls(recordingId: string): Promise<string[]> {
-  const [primary, images] = await Promise.all([
-    recordingImageService.getPrimary(recordingId),
-    recordingImageService.getByRecording(recordingId),
-  ]);
-  const urls = images
-    .map((img) => img.imageUrl)
-    .filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
-  const primaryUrl = primary?.imageUrl?.trim();
-  if (!primaryUrl) return urls;
-  return [primaryUrl, ...urls.filter((u) => u !== primaryUrl)];
+  const images = await recordingImageService.getByRecording(recordingId);
+  return sortRecordingImages(images)
+    .map((img) => img.imageUrl.trim())
+    .filter((url) => url.length > 0);
 }

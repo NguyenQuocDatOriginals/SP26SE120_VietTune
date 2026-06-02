@@ -1,10 +1,43 @@
 import { useEffect, useRef } from 'react';
 
+import { reconcileLanguageFields } from '@/features/upload/languageUtils';
+import { isFolkComposerLabel } from '@/features/upload/composerUtils';
+import { resolveUploadRegionLabel } from '@/features/upload/regionUtils';
+import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
 import { LANGUAGES } from '@/features/upload/uploadConstants';
 import type { LoadedRecording, LocalRecordingStorage } from '@/features/upload/uploadRecordingTypes';
 import { reportError, toReportableError } from '@/services/errorReporting';
 import { getLocalRecordingFull } from '@/services/recordingStorage';
 import { sessionGetItem } from '@/services/storageService';
+
+function applyLoadedRecordingLanguage(
+  langVal: string,
+  s: Pick<UploadRecordingLoaderSetters, 'setNoLanguage' | 'setLanguage' | 'setCustomLanguage'>,
+): void {
+  if (langVal === 'Không có ngôn ngữ') {
+    s.setNoLanguage(true);
+    s.setLanguage('');
+    s.setCustomLanguage('');
+    return;
+  }
+  s.setNoLanguage(false);
+  if (langVal && !LANGUAGES.includes(langVal)) {
+    const reconciled = reconcileLanguageFields('Khác', langVal, false);
+    s.setLanguage(reconciled.language);
+    s.setCustomLanguage(reconciled.customLanguage);
+    return;
+  }
+  s.setLanguage(langVal);
+  s.setCustomLanguage('');
+}
+
+function applyLoadedRecordingPerformanceType(
+  raw: string,
+  s: Pick<UploadRecordingLoaderSetters, 'setPerformanceType'>,
+): void {
+  const normalized = normalizePerformanceTypeKey(raw);
+  s.setPerformanceType(normalized || raw);
+}
 
 export type UploadRecordingLoaderSetters = {
   setEditingRecordingId: (v: string | null) => void;
@@ -99,7 +132,7 @@ export function useUploadRecordingLoader(
           }
 
           const composerVal = recording.basicInfo?.composer || '';
-          if (composerVal === 'Dân gian/Không rõ') {
+          if (isFolkComposerLabel(composerVal)) {
             s.setComposerUnknown(true);
             s.setComposer('');
           } else {
@@ -107,16 +140,7 @@ export function useUploadRecordingLoader(
             s.setComposerUnknown(false);
           }
 
-          const langVal = recording.basicInfo?.language || '';
-          if (langVal === 'Không có ngôn ngữ') {
-            s.setNoLanguage(true);
-            s.setLanguage('');
-          } else if (langVal && !LANGUAGES.includes(langVal)) {
-            s.setLanguage('Khác');
-            s.setCustomLanguage(langVal);
-          } else {
-            s.setLanguage(langVal);
-          }
+          applyLoadedRecordingLanguage(recording.basicInfo?.language || '', s);
 
           s.setVocalStyle(recording.basicInfo?.genre || '');
           s.setRecordingDate(recording.basicInfo?.recordingDate || '');
@@ -127,10 +151,10 @@ export function useUploadRecordingLoader(
           s.setCapturedGpsLon(typeof recording.gpsLongitude === 'number' ? recording.gpsLongitude : null);
           s.setCapturedGpsAccuracy(null);
           s.setEthnicity(recording.culturalContext?.ethnicity || '');
-          s.setRegion(recording.culturalContext?.region || '');
+          s.setRegion(resolveUploadRegionLabel(recording.culturalContext?.region || '', []));
           s.setProvince(recording.culturalContext?.province || '');
           s.setEventType(recording.culturalContext?.eventType || '');
-          s.setPerformanceType(recording.culturalContext?.performanceType || '');
+          applyLoadedRecordingPerformanceType(recording.culturalContext?.performanceType || '', s);
 
           const incomingInst = recording.culturalContext?.instruments || [];
           if (incomingInst.length > 0 && incomingInst[0].length === 36) {
@@ -215,7 +239,7 @@ export function useUploadRecordingLoader(
           }
 
           const composerVal = recording.basicInfo?.composer || '';
-          if (composerVal === 'Dân gian/Không rõ') {
+          if (isFolkComposerLabel(composerVal)) {
             s.setComposerUnknown(true);
             s.setComposer('');
           } else {
@@ -223,16 +247,7 @@ export function useUploadRecordingLoader(
             s.setComposerUnknown(false);
           }
 
-          const langVal = recording.basicInfo?.language || '';
-          if (langVal === 'Không có ngôn ngữ') {
-            s.setNoLanguage(true);
-            s.setLanguage('');
-          } else if (langVal && !LANGUAGES.includes(langVal)) {
-            s.setLanguage('Khác');
-            s.setCustomLanguage(langVal);
-          } else {
-            s.setLanguage(langVal);
-          }
+          applyLoadedRecordingLanguage(recording.basicInfo?.language || '', s);
 
           s.setVocalStyle(recording.basicInfo?.genre || '');
           s.setRecordingDate(recording.basicInfo?.recordingDate || '');
@@ -243,10 +258,10 @@ export function useUploadRecordingLoader(
           s.setCapturedGpsLon(typeof recording.gpsLongitude === 'number' ? recording.gpsLongitude : null);
           s.setCapturedGpsAccuracy(null);
           s.setEthnicity(recording.culturalContext?.ethnicity || '');
-          s.setRegion(recording.culturalContext?.region || '');
+          s.setRegion(resolveUploadRegionLabel(recording.culturalContext?.region || '', []));
           s.setProvince(recording.culturalContext?.province || '');
           s.setEventType(recording.culturalContext?.eventType || '');
-          s.setPerformanceType(recording.culturalContext?.performanceType || '');
+          applyLoadedRecordingPerformanceType(recording.culturalContext?.performanceType || '', s);
 
           const incomingInst = recording.culturalContext?.instruments || [];
           if (incomingInst.length > 0 && incomingInst[0].length === 36) {

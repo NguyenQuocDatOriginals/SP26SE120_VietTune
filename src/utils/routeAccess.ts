@@ -35,11 +35,9 @@ export const RESEARCHER_ROUTE_POLICY: RouteGuardPolicy = {
 /** Đăng nhập bắt buộc; mọi vai trò đã kích hoạt (profile, đóng góp của tôi, thông báo). */
 export const AUTHENTICATED_ROUTE_POLICY: RouteGuardPolicy = {
   allowedRoles: [
-    UserRole.USER,
     UserRole.CONTRIBUTOR,
     UserRole.RESEARCHER,
     UserRole.EXPERT,
-    UserRole.MODERATOR,
     UserRole.ADMIN,
   ],
   unauthorizedRedirectTo: '/403',

@@ -16,9 +16,7 @@ describe('MetadataSuggestionPanel', () => {
 
     render(<MetadataSuggestionPanel suggestions={suggestions} onApply={onApply} />);
 
-    expect(
-      screen.getAllByText(/Độ tin cậy hiển thị theo mức phát hiện nhạc cụ/).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getByText(/Độ tin cậy phản ánh mức phát hiện nhạc cụ/)).toBeTruthy();
 
     const applyButtons = screen.getAllByRole('button', { name: 'Áp dụng' });
     expect(applyButtons.length).toBeGreaterThanOrEqual(2);
@@ -41,17 +39,11 @@ describe('MetadataSuggestionPanel', () => {
 
     render(<MetadataSuggestionPanel suggestions={suggestions} onApply={onApply} />);
 
-    expect(
-      screen.getAllByText(/Độ tin cậy hiển thị theo mức phát hiện nhạc cụ/).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getByText('Ca trù')).toBeTruthy();
+    expect(screen.getByText('Lễ hội')).toBeTruthy();
 
-    expect(screen.getAllByText('Ca trù').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Lễ hội').length).toBeGreaterThan(0);
-
-    const vocalLabel = screen.getAllByText('Lối hát / Thể loại')[0];
-    const vocalCard = vocalLabel.parentElement?.nextElementSibling as HTMLElement;
-    const eventLabel = screen.getAllByText('Loại sự kiện')[0];
-    const eventCard = eventLabel.parentElement?.nextElementSibling as HTMLElement;
+    const eventCard = screen.getByRole('article', { name: /Loại sự kiện/i });
+    const vocalCard = screen.getByRole('article', { name: /Lối hát/i });
 
     fireEvent.click(within(vocalCard).getByRole('button', { name: 'Áp dụng' }));
     fireEvent.click(within(eventCard).getByRole('button', { name: 'Áp dụng' }));
@@ -85,9 +77,6 @@ describe('MetadataSuggestionPanel', () => {
       );
       expect(screen.getAllByText('Lễ hội').length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Nguồn: Đàn tranh/).length).toBeGreaterThan(0);
-      expect(screen.getAllByRole('progressbar', { name: /AI confidence cho Đàn tranh/i }).length).toBeGreaterThan(
-        0,
-      );
     } finally {
       spy.mockRestore();
     }
@@ -97,9 +86,7 @@ describe('MetadataSuggestionPanel', () => {
     const suggestions: MetadataSuggestion[] = [
       { field: 'region', value: 'Miền Bắc', sourceInstrument: 'Đàn tranh', confidence: 0.8 },
     ];
-    render(<MetadataSuggestionPanel suggestions={suggestions} readOnly />);
-    expect(
-      screen.getAllByText(/không phải từ mô hình dự đoán độc lập/).length,
-    ).toBeGreaterThan(0);
+    const { container } = render(<MetadataSuggestionPanel suggestions={suggestions} readOnly />);
+    expect(container.textContent).toMatch(/không phải từ mô hình dự đoán độc lập/);
   });
 });

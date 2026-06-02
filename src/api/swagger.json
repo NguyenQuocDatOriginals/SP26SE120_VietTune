@@ -3077,6 +3077,69 @@
         }
       }
     },
+    "/api/graph-explorer/search": {
+      "get": {
+        "tags": [
+          "GraphExplorer"
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/graph-explorer/expand": {
+      "get": {
+        "tags": [
+          "GraphExplorer"
+        ],
+        "parameters": [
+          {
+            "name": "sourceId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetLabel",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "relType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Instrument": {
       "get": {
         "tags": [
@@ -4555,6 +4618,18 @@
         }
       }
     },
+    "/api/admin/neo4j/migrate-data": {
+      "post": {
+        "tags": [
+          "Neo4jAdmin"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Notification": {
       "get": {
         "tags": [
@@ -5645,6 +5720,37 @@
         }
       }
     },
+    "/api/Recording/search-by-filter-multi": {
+      "post": {
+        "tags": [
+          "Recording"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Recording": {
       "get": {
         "tags": [
@@ -5886,6 +5992,37 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RecordingGuest/search-by-filter-multi": {
+      "post": {
+        "tags": [
+          "RecordingGuest"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -10822,6 +10959,63 @@
               "type": "string",
               "format": "uuid"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto": {
+        "type": "object",
+        "properties": {
+          "ethnicGroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "instrumentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "ceremonyIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "regionCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "communeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "string",
             "nullable": true
           }
         },

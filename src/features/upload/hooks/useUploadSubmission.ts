@@ -3,12 +3,16 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import type { RecordingUploadDto } from '@/api';
 import { legacyPost } from '@/api/legacyHttp';
-import { LANGUAGES } from '@/features/upload/uploadConstants';
-import { reportError, toReportableError } from '@/services/errorReporting';
+import { applyAiAnalyzeOnlyMetadata } from '@/features/upload/applyAiAnalyzeOnlyMetadata';
 import {
-  instrumentDetectionFlags,
-  instrumentDetectionService,
-} from '@/services/instrumentDetectionService';
+  debugLogAiAnalyzeOnly,
+  hasMeaningfulNormalizedAiData,
+  normalizeAiAnalyzeOnlyResponse,
+  type NormalizedAiAnalysisPayload,
+} from '@/features/upload/normalizeAiAnalysisResponse';
+import { mergeInstrumentDetectionSignals } from '@/features/upload/performanceTypeUtils';
+import { reportError, toReportableError } from '@/services/errorReporting';
+import { instrumentDetectionFlags } from '@/services/instrumentDetectionService';
 import { recordingImageService, fetchRecordingImageDisplayUrls } from '@/services/recordingImageService';
 import { recordingService } from '@/services/recordingService';
 import type {
@@ -26,7 +30,6 @@ import {
   buildAiDirectSuggestions,
   dedupeAndSortMetadataSuggestions,
   mapInstrumentsToMetadataSuggestions,
-  normalizeInstrumentMatchKey,
 } from '@/utils/instrumentMetadataMapper';
 
 /** Never use a sentinel id (e.g. `'1'`) — misattributes ownership if JWT/session is missing. */
@@ -82,6 +85,8 @@ type UseUploadSubmissionOptions = {
   setAiMetadataSuggestions: Dispatch<SetStateAction<MetadataSuggestion[]>>;
   setAiAnalysisLoading?: (value: boolean) => void;
   setAiAnalysisError?: (value: string | null) => void;
+  setAiAnalysisSuccess?: (value: boolean) => void;
+  setAiAnalysisEmpty?: (value: boolean) => void;
   setEthnicity: (value: string) => void;
   setCustomEthnicity: (value: string) => void;
   setVocalStyle: (value: string) => void;
@@ -89,6 +94,9 @@ type UseUploadSubmissionOptions = {
   setEventType: (value: string) => void;
   setCustomEventType: (value: string) => void;
   setPerformanceType: (value: string) => void;
+  applyPerformanceTypeFromAi?: (value: string) => void;
+  maybeApplyInstrumentalFromDetectedInstruments?: (detected: DetectedInstrument[]) => void;
+  region: string;
   setRegion?: (value: string) => void;
   setTitle: (value: string) => void;
   setComposer: (value: string) => void;
@@ -168,57 +176,25 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
 
     try {
       let publicUrl = '';
-      type AiInstrument = {
-        id?: string;
-        name?: string;
-        confidence?: number;
-        confidenceScore?: number;
-        max_confidence?: number;
-      };
-      type AiAnalysisResult = {
-        language?: string;
-        recordingLocation?: string;
-        instruments?: AiInstrument[];
-        ethnicGroup?: { name?: string };
-        vocalStyle?: { name?: string };
-        musicalScale?: { name?: string };
-        ceremony?: { name?: string };
-        performanceContext?: string;
-        regionSuggestion?: { region: string; detail?: string };
-        classification?: {
-          performanceType?: 'vocal' | 'instrumental' | 'mixed';
-          culturalContext?: string;
-          tags?: string[];
-        };
-        overallConfidence?: number;
-      };
-      let aiRes: AiAnalysisResult | null = null;
+      let aiRes: NormalizedAiAnalysisPayload | null = null;
       let detectedInstruments: DetectedInstrument[] = [];
-      let mlDetectionResult:
-        | import('@/types/instrumentDetection').InstrumentDetectionResult
-        | null = null;
+      let aiAnalyzeRawOk = false;
 
       if (options.useAiAnalysis) {
         options.setAiAnalysisLoading?.(true);
         options.setAiAnalysisError?.(null);
+        options.setAiAnalysisSuccess?.(false);
+        options.setAiAnalysisEmpty?.(false);
         try {
           const formData = new FormData();
           formData.append('audioFile', options.file);
 
-          // Call 3 endpoints in parallel:
-          // 1. Upload to Supabase
-          // 2. AI metadata analysis (language, ethnicity, instrument names, etc.)
-          // 3. ML instrument detection (returns confidence scores)
-          const shouldDetect =
-            instrumentDetectionFlags.confidenceEnabled && options.mediaType === 'audio';
-          const [uploadResult, aiResult, detectionResult] = await Promise.allSettled([
+          // Upload + single analyze-only (metadata + instruments share one Gemini call).
+          const [uploadResult, aiResult] = await Promise.allSettled([
             uploadFileToSupabase(options.file),
             legacyPost('/AIAnalysis/analyze-only', formData, {
               timeout: 300000,
             }),
-            shouldDetect
-              ? instrumentDetectionService.analyzeOnlyFromFile(options.file)
-              : Promise.resolve(null),
           ]);
 
           if (uploadResult.status === 'fulfilled') {
@@ -228,8 +204,9 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
           }
 
           if (aiResult.status === 'fulfilled' && aiResult.value) {
-            const payload = aiResult.value as { data?: unknown };
-            aiRes = (payload.data ?? aiResult.value) as AiAnalysisResult;
+            aiAnalyzeRawOk = true;
+            aiRes = normalizeAiAnalyzeOnlyResponse(aiResult.value);
+            debugLogAiAnalyzeOnly(aiResult.value, aiRes);
           } else {
             reportError(
               toReportableError(
@@ -246,17 +223,8 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
             options.setAiAnalysisError?.(
               aiResult.reason instanceof Error ? aiResult.reason.message : String(aiResult.reason),
             );
-          }
-
-          // Store ML detection results for confidence merging
-          if (detectionResult.status === 'fulfilled' && detectionResult.value) {
-            mlDetectionResult = detectionResult.value;
-          } else if (detectionResult.status === 'rejected') {
-            reportError(
-              toReportableError(detectionResult.reason, 'Instrument detection failed'),
-              undefined,
-              { region: 'upload', stage: 'instrument_detection' },
-            );
+            options.setAiAnalysisSuccess?.(false);
+            options.setAiAnalysisEmpty?.(false);
           }
         } finally {
           options.setAiAnalysisLoading?.(false);
@@ -311,184 +279,70 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
       options.setRecordingImages([]);
       options.setRecordingImagePreviews([]);
 
+      let aiInstrumentNamesApplied: string[] = [];
+
       if (aiRes) {
-        uiToast.success('upload.ai.success_detail');
-        if (instrumentDetectionFlags.confidenceEnabled && Array.isArray(aiRes.instruments)) {
-          const seen = new Set<string>();
-          const mappedFromAi = aiRes.instruments
-            .map((item) => {
-              const name = item?.name?.trim();
-              if (!name) return null;
-              const key = name.toLowerCase();
-              if (seen.has(key)) return null;
-              seen.add(key);
-
-              const normalizedConfidenceRaw =
-                typeof item.confidence === 'number'
-                  ? item.confidence
-                  : typeof item.confidenceScore === 'number'
-                    ? item.confidenceScore
-                    : undefined;
-              const clamp01 = (v: number) => Math.max(0, Math.min(1, v > 1 ? v / 100 : v));
-              let confidence: number | null =
-                typeof normalizedConfidenceRaw === 'number' && Number.isFinite(normalizedConfidenceRaw)
-                  ? clamp01(normalizedConfidenceRaw)
-                  : null;
-              if (confidence === null && typeof item.max_confidence === 'number' && Number.isFinite(item.max_confidence)) {
-                confidence = clamp01(item.max_confidence);
-              }
-
-              const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : undefined;
-
-              const row: DetectedInstrument = {
-                name,
-                confidence,
-                ...(id ? { id } : {}),
-              };
-              return row;
-            })
-            .filter((row): row is DetectedInstrument => !!row);
-
-          detectedInstruments = mappedFromAi;
-
-          // ── Merge ML detection confidence into AI-identified instruments ──
-          if (mlDetectionResult && mlDetectionResult.instruments.length > 0) {
-            const mlByKey = new Map<string, DetectedInstrument>();
-            for (const mlInst of mlDetectionResult.instruments) {
-              const k = normalizeInstrumentMatchKey(mlInst.name);
-              if (!k) continue;
-              const prev = mlByKey.get(k);
-              const mlConf =
-                mlInst.confidence !== null &&
-                typeof mlInst.confidence === 'number' &&
-                Number.isFinite(mlInst.confidence)
-                  ? mlInst.confidence
-                  : -1;
-              const prevConf =
-                prev &&
-                prev.confidence !== null &&
-                typeof prev.confidence === 'number' &&
-                Number.isFinite(prev.confidence)
-                  ? prev.confidence
-                  : -1;
-              if (!prev || mlConf > prevConf) mlByKey.set(k, mlInst);
-            }
-
-            detectedInstruments = detectedInstruments.map((inst) => {
-              const mlMatch = mlByKey.get(normalizeInstrumentMatchKey(inst.name));
-              if (mlMatch) {
-                const nextConf =
-                  mlMatch.confidence !== null &&
-                  typeof mlMatch.confidence === 'number' &&
-                  Number.isFinite(mlMatch.confidence)
-                    ? mlMatch.confidence
-                    : inst.confidence;
-                return {
-                  ...inst,
-                  confidence: nextConf,
-                  id: inst.id ?? mlMatch.id,
-                };
-              }
-              return inst;
-            });
-
-            // Add ML-only instruments that AI didn't identify
-            const aiKeys = new Set(
-              detectedInstruments.map((i) => normalizeInstrumentMatchKey(i.name)),
-            );
-            for (const [k, mlInst] of mlByKey) {
-              if (!aiKeys.has(k)) detectedInstruments.push(mlInst);
-            }
-          }
+        const meaningful = hasMeaningfulNormalizedAiData(aiRes);
+        if (meaningful) {
+          options.setAiAnalysisSuccess?.(true);
+          options.setAiAnalysisEmpty?.(false);
+          uiToast.success('upload.ai.success_detail');
+        } else {
+          options.setAiAnalysisSuccess?.(false);
+          options.setAiAnalysisEmpty?.(true);
         }
 
-        let isInstrumental = false;
-        if (aiRes.language) {
-          const langLower = aiRes.language.toLowerCase();
-          if (
-            langLower === 'instrumental' ||
-            langLower === 'nhạc cụ' ||
-            langLower === 'không có ngôn ngữ' ||
-            langLower === 'none' ||
-            langLower === 'không'
-          ) {
-            isInstrumental = langLower === 'instrumental' || langLower === 'nhạc cụ';
-            options.setNoLanguage(true);
-            options.setLanguage('');
-          } else {
-            if (LANGUAGES.includes(aiRes.language)) {
-              options.setLanguage(aiRes.language);
-            } else {
-              options.setLanguage('Khác');
-              options.setCustomLanguage(aiRes.language);
-            }
-            options.setNoLanguage(false);
-          }
-        }
-        if (aiRes.recordingLocation) options.setRecordingLocation(aiRes.recordingLocation);
-        if (aiRes.instruments && Array.isArray(aiRes.instruments)) {
-          const names = aiRes.instruments
-            .map((i) => i.name)
-            .filter((name): name is string => Boolean(name));
-          if (names.length > 0) options.setInstruments(names);
-        }
-        if (aiRes.ethnicGroup?.name) {
-          const name = aiRes.ethnicGroup.name;
-          if (options.ethnicGroupsData.find((e) => e.name === name)) {
-            options.setEthnicity(name);
-          } else {
-            options.setEthnicity('Khác');
-            options.setCustomEthnicity(name);
-          }
-        }
-        if (aiRes.vocalStyle?.name) {
-          options.setVocalStyle(aiRes.vocalStyle.name);
-        }
-        if (aiRes.regionSuggestion?.region) {
-          options.setRegion?.(aiRes.regionSuggestion.region);
-        }
-        if (aiRes.classification?.performanceType) {
-          options.setPerformanceType?.(aiRes.classification.performanceType);
-        }
-        if (aiRes.musicalScale?.name) options.setMusicalScale(aiRes.musicalScale.name);
-        if (aiRes.ceremony?.name) {
-          const name = aiRes.ceremony.name;
-          if (options.ceremoniesData.find((c) => c.name === name)) {
-            options.setEventType(name);
-          } else {
-            options.setEventType('Khác');
-            options.setCustomEventType(name);
-          }
-        }
-        if (isInstrumental) {
-          options.setPerformanceType('instrumental');
-        } else if (aiRes.performanceContext) {
-          const pt = aiRes.performanceContext;
-          if (
-            [
-              'vocal_accompaniment',
-              'instrumental_solo',
-              'instrumental_ensemble',
-              'acappella',
-              'instrumental',
-            ].includes(pt)
-          ) {
-            options.setPerformanceType(pt);
-          } else {
-            options.setPerformanceType(
-              pt === 'Hát với nhạc cụ'
-                ? 'vocal_accompaniment'
-                : pt === 'Nhạc cụ'
-                  ? 'instrumental'
-                  : '',
-            );
-          }
-        }
-        options.setTitle('');
-        options.setComposer('');
-        options.setComposerUnknown(false);
+        const applyResult = applyAiAnalyzeOnlyMetadata({
+          ai: aiRes,
+          title: options.title,
+          composer: options.composer,
+          composerUnknown: options.composerUnknown,
+          recordingLocation: options.recordingLocation,
+          language: options.language,
+          customLanguage: options.customLanguage,
+          noLanguage: options.noLanguage,
+          ethnicity: options.ethnicity,
+          customEthnicity: options.customEthnicity,
+          vocalStyle: options.vocalStyle,
+          musicalScale: options.musicalScale,
+          eventType: options.eventType,
+          customEventType: options.customEventType,
+          instruments: options.instruments,
+          performanceType: options.performanceType,
+          region: options.region,
+          setTitle: options.setTitle,
+          setComposer: options.setComposer,
+          setComposerUnknown: options.setComposerUnknown,
+          setRecordingLocation: options.setRecordingLocation,
+          setLanguage: options.setLanguage,
+          setCustomLanguage: options.setCustomLanguage,
+          setNoLanguage: options.setNoLanguage,
+          setEthnicity: options.setEthnicity,
+          setCustomEthnicity: options.setCustomEthnicity,
+          setVocalStyle: options.setVocalStyle,
+          setMusicalScale: options.setMusicalScale,
+          setEventType: options.setEventType,
+          setCustomEventType: options.setCustomEventType,
+          setInstruments: options.setInstruments,
+          setRegion: options.setRegion,
+          applyPerformanceTypeFromAi: options.applyPerformanceTypeFromAi,
+          maybeApplyInstrumentalFromDetectedInstruments:
+            options.maybeApplyInstrumentalFromDetectedInstruments,
+          ethnicGroupsData: options.ethnicGroupsData,
+          ceremoniesData: options.ceremoniesData,
+          REGIONS: options.REGIONS,
+        });
+
+        detectedInstruments = applyResult.detectedInstruments;
+        aiInstrumentNamesApplied = applyResult.aiInstrumentNamesApplied;
+      } else if (options.useAiAnalysis && aiAnalyzeRawOk) {
+        options.setAiAnalysisSuccess?.(false);
+        options.setAiAnalysisEmpty?.(true);
       }
       options.setInstrumentPredictions(detectedInstruments);
+      options.maybeApplyInstrumentalFromDetectedInstruments?.(
+        mergeInstrumentDetectionSignals(detectedInstruments, aiInstrumentNamesApplied),
+      );
 
       // Build the read-only "Suggested Metadata" panel from two complementary sources:
       //   1. AI-direct fields from Gemini's analyze-only response (ethnicGroup, vocalStyle,

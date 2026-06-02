@@ -1,3 +1,5 @@
+import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
+
 export type UploadValidationContext = {
   isEditMode: boolean;
   file: File | null;
@@ -59,11 +61,12 @@ export function collectUploadFieldErrors(ctx: UploadValidationContext): Record<s
     newErrors.composer = "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
   }
 
-  if (!ctx.performanceType) {
+  const performanceTypeKey = normalizePerformanceTypeKey(ctx.performanceType);
+  if (!performanceTypeKey) {
     newErrors.performanceType = 'Vui lòng chọn loại hình biểu diễn';
   } else {
     if (
-      (ctx.performanceType === 'vocal_accompaniment' || ctx.performanceType === 'acappella') &&
+      (performanceTypeKey === 'vocal_accompaniment' || performanceTypeKey === 'acappella') &&
       !ctx.vocalStyle
     ) {
       newErrors.vocalStyle = 'Vui lòng chọn lối hát / thể loại';
@@ -117,6 +120,25 @@ export function scrollToFirstUploadError(errors: Record<string, string>) {
       errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, 100);
+}
+
+/** DOM id on the first metadata card ("Thông tin mô tả cơ bản") for wizard step 2 scroll targets. */
+export const UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID = 'upload-wizard-basic-metadata';
+
+/** After 1 → 2, bring basic metadata into view (tall preview otherwise hides the form). */
+export function scrollToUploadWizardBasicMetadata(): void {
+  if (typeof window === 'undefined') return;
+  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 'auto'
+    : 'smooth';
+  const run = () => {
+    document
+      .getElementById(UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID)
+      ?.scrollIntoView({ behavior, block: 'start' });
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(run);
+  });
 }
 
 export type UploadFormCompleteContext = UploadValidationContext & {

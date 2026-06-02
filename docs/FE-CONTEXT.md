@@ -2,7 +2,7 @@
 
 > Tài liệu mô tả chi tiết toàn bộ Frontend (FE) của VietTune dựa trên source hiện tại trong thư mục `src/`.
 > Mục đích: làm "context tham chiếu" để onboard, refactor, hoặc cho AI agent đọc khi làm việc trên codebase.
-> Snapshot ngày: 2026-05-08.
+> Snapshot ngày: 2026-05-29 (đối chiếu `src/api/swagger.json`: **184 path**, OpenAPI 3.0.1).
 
 ---
 
@@ -12,7 +12,7 @@ VietTune là hệ thống tài liệu hóa âm nhạc truyền thống Việt Na
 
 - **Người dùng (Guest/User)**: khám phá/tìm kiếm bản thu, xem tri thức, chat với AI.
 - **Contributor**: tải lên bản thu, theo dõi đóng góp, sửa metadata.
-- **Expert (Moderator)**: kiểm duyệt 3 stage, xử lý dispute/embargo, viết Knowledge Base.
+- **Expert (Chuyên gia)**: kiểm duyệt 3 stage, xử lý dispute/embargo, viết Knowledge Base (`/moderation`).
 - **Researcher**: cổng nghiên cứu chuyên sâu (so sánh phổ, knowledge graph, QA chat, export dataset).
 - **Admin**: dashboard quản trị người dùng, analytics, AI monitoring, KB.
 
@@ -138,7 +138,7 @@ async function bootstrap() {
 - Layout chia 2 nhóm:
   - **Public layout** (`MainLayout` với Header/Footer/background): mọi route không phải auth/`/403`/`*`.
   - **Auth layout**: `/login`, `/register`, `/auth/register-researcher`, `/confirm-account`, `/forgot-password` (đứng riêng, mỗi trang được bọc `ErrorBoundary region="auth"`).
-- Các route được bảo vệ bởi `<AdminGuard />` và `<ResearcherGuard />`.
+- Các route được bảo vệ bởi `<AdminGuard />`, `<ResearcherGuard />`, `<ExpertGuard />`.
 - `RootWrapper` render duy nhất 1 `<Toaster>`, `<ScrollToTop>`, `<LoginModal>` (modal toàn cục) + `<Outlet />`.
 
 ---
@@ -150,12 +150,12 @@ Public/main routes (qua `MainLayout`):
 | Path | Component | Ghi chú |
 |---|---|---|
 | `/` | `HomePage` | Researcher/Expert sẽ bị redirect sang portal/moderation nếu `isActive`. |
-| `/explore` | `ExplorePage` | Catalog + filter + search (URL query). |
+| `/explore` | `ExplorePage` | Catalog + `FilterSidebar`. Keyword (`recordingService`) và **ngữ nghĩa** (`semanticSearchService` → `GET /api/search/semantic`, query `?mode=semantic&sq=`). |
 | `/recordings/:id` | `RecordingDetailPage` | |
 | `/recordings/:id/edit` | `EditRecordingPage` | Candidate auth route. |
 | `/upload` | `UploadPage` | Wizard tải lên (Contributor). |
-| `/search` | `SearchPage` | Title search. |
-| `/semantic-search` | `SemanticSearchPage` | 768-dim vector search. |
+| `/search` | `SearchPage` | Tìm theo tiêu đề + bộ lọc (`recordingService`); không còn trang semantic độc lập. |
+| `/semantic-search` | — | **Không còn route** → `*` hiển thị `NotFoundPage` (404). Trước đây là standalone page; thay bằng tab ngữ nghĩa trên `/explore`. |
 | `/chatbot` | `ChatbotPage` | VietTune Intelligence (AI). |
 | `/knowledge-base` | `KnowledgeExplorePage` | Public KB explorer. |
 | `/kb/entry/:id` | `KbEntryPublicViewPage` | KB entry public view. |
@@ -166,14 +166,15 @@ Public/main routes (qua `MainLayout`):
 | `/terms` | `TermsPage` | |
 | `/profile` | `ProfilePage` | Auth-only (TODO route policy). |
 | `/contributions` | `ContributionsPage` | Contributor-only. |
-| `/dashboard` | `<Navigate to="/moderation" replace />` | Legacy alias. |
-| `/moderation` | `ModerationPage` | Expert/Admin. |
-| `/approved-recordings` | `ApprovedRecordingsPage` | Expert/Admin. |
+| `/dashboard` | `<Navigate to="/moderation" replace />` | Legacy alias (Expert). |
+| `/moderation` | `ModerationPage` | Bọc **`ExpertGuard`** — chỉ `UserRole.EXPERT`. |
+| `/approved-recordings` | `ApprovedRecordingsPage` | Bọc **`ExpertGuard`** — chỉ Expert. |
 | `/notifications` | `NotificationPage` | Auth-only. |
 | `/researcher` | `ResearcherPortalPage` | Bọc `ResearcherGuard`. |
-| `/admin` | `AdminDashboard` | Bọc `AdminGuard`. |
+| `/admin` | `AdminDashboard` | Bọc `AdminGuard`. **≥lg:** rail + tóm tắt nhanh + dải governance (KB/master-data/researcher) + nội dung; **&lt;lg:** stepper + footer. Query `?section=`. |
 | `/admin/create-expert` | `CreateExpertPage` | Bọc `AdminGuard`. |
 | `/admin/knowledge-base` | `KnowledgeBasePage` | Bọc `AdminGuard`. |
+| `/admin/operations` | `AdminOperationsPage` | Bọc `AdminGuard`. P3 vận hành & AI; cờ `VITE_ADMIN_OPERATIONS_PAGE` (`true`/`1`) bật UI đầy đủ + CTA từ dashboard; tắt cờ vẫn mở route (hướng dẫn bật cờ). |
 
 Auth/standalone routes (không có layout chính):
 
@@ -192,15 +193,19 @@ Auth/standalone routes (không có layout chính):
 `src/utils/routeAccess.ts`:
 
 - `RouteGuardPolicy { allowedRoles, unauthorizedRedirectTo, inactiveRedirectTo, requireActive }`.
-- `ADMIN_ROUTE_POLICY`: `[ADMIN]`, redirect 403, requireActive.
-- `RESEARCHER_ROUTE_POLICY`: `[RESEARCHER, ADMIN, EXPERT]`, redirect 403, requireActive.
+- `ADMIN_ROUTE_POLICY`: `[ADMIN]`, redirect `/403`, `requireActive`.
+- `RESEARCHER_ROUTE_POLICY`: `[RESEARCHER, ADMIN, EXPERT]`, redirect `/403`, `requireActive`.
+- **`EXPERT_ROUTE_POLICY`**: `[EXPERT]` only, redirect `/403`, `requireActive` — dùng bởi `ExpertGuard` (`/moderation`, `/approved-recordings`).
 - `evaluateGuardAccess(user, pathname, policy, { isAuthLoading })` → `'allow' | 'defer' | 'redirect'`.
 - `parseSafeRedirectParam(value)` chống open-redirect (chỉ chấp nhận `/...` không bắt đầu `//`).
 - `getDefaultPostLoginPath(user)`:
   - `ADMIN → /admin`, `RESEARCHER → /researcher`, `EXPERT → /moderation`, mặc định `/`.
-- `resolvePostLoginPath(user, requestedRedirect)` kiểm tra path có hợp lệ với role không (ví dụ `/admin` chỉ cho ADMIN).
+- `resolvePostLoginPath(user, requestedRedirect)` kiểm tra path có hợp lệ với role không.
+- **`isRedirectAllowedForRole`**: Admin được redirect tới `/moderation` sau login, nhưng **`ExpertGuard` chặn Admin** khi vào route thực tế → Admin không dùng UI moderation qua guard.
 
-`AdminGuard.tsx` & `ResearcherGuard.tsx` dùng cùng pattern: gọi `evaluateGuardAccess`, render Card chuyển hướng nếu `redirect`, render skeleton nếu `defer`, hoặc `<Outlet />` qua `ErrorBoundary` nếu `allow`.
+`AdminGuard.tsx`, `ResearcherGuard.tsx`, **`ExpertGuard.tsx`** (`src/components/auth/`) dùng cùng pattern: `evaluateGuardAccess` → redirect Card / skeleton / `<Outlet />` qua `ErrorBoundary`.
+
+`ModerationPage` còn check thêm `isEmailConfirmed` + `isActive` (guard chỉ check `isActive`).
 
 `MainLayout.tsx` còn có 2 effect đặc biệt:
 
@@ -222,8 +227,8 @@ src/
 ├── api/                   # OpenAPI client + legacy fetch
 │   ├── client.ts          # apiFetch (openapi-fetch) + apiOk + apiFetchLoose
 │   ├── adapters.ts        # Type aliases tới schemas + path/query types
-│   ├── generated.d.ts     # 381KB — sinh từ swagger.json
-│   ├── swagger.json       # OpenAPI spec hiện tại
+│   ├── generated.d.ts     # Sinh từ swagger.json (openapi-typescript)
+│   ├── swagger.json       # OpenAPI spec — **184 path** (2026-05-29)
 │   ├── swagger.latest.json
 │   ├── legacyHttp.ts      # legacyGet/Post/Put + legacyGetAnonymous (fetch raw)
 │   ├── httpClientRequestConfig.ts
@@ -231,7 +236,7 @@ src/
 │
 ├── components/
 │   ├── admin/             # AdminGuard, ResearcherGuard, AdminDashboard*
-│   ├── auth/              # LoginFormContent, LoginModal, AuthHeader
+│   ├── auth/              # LoginFormContent, LoginModal, ExpertGuard, AuthHeader
 │   ├── common/            # Button/Card/Input/Badge/Dialog/Pagination/...
 │   ├── features/          # AudioPlayer, VideoPlayer, SearchBar, FilterSidebar...
 │   │   ├── ai/            # FlaggedResponseList
@@ -266,7 +271,7 @@ src/
 │   └── AuthContext.tsx    # Provider + useAuth (fallback authStore)
 │
 ├── features/              # Domain-specific modules
-│   ├── admin/             # adminDashboardTypes + hooks/useAdminDashboardData
+│   ├── admin/             # adminDashboardTypes, dashboard/, governance/, shell/, hooks/useAdminDashboardData
 │   ├── annotation/        # hooks: useAnnotationForm, useAnnotations
 │   ├── compare-engine/    # AudioEngine, FFTProcessor, SpectrogramRenderer, workers, hooks
 │   ├── contributions/     # contributionDisplayUtils, hooks
@@ -422,8 +427,8 @@ interface AuthState {
 ```
 
 - Khởi tạo `user`/`isAuthenticated` đồng bộ từ `authService.getStoredUser()` + `isAuthenticated()` (kiểm tra JWT exp).
-- `setUser` còn persist sang IndexedDB qua `storageService.setItem` đồng thời cập nhật `users_overrides` (giữ override demo/profile khi reload), và cố gắng `processPendingProfileUpdates()`.
-- `fetchCurrentUser` *không* tự logout khi 401/network — giữ user đã lưu để tránh "rớt" khi BE chập chờn.
+- `setUser` persist user vào IndexedDB; **`users_overrides` chỉ ghi khi `import.meta.env.DEV`** (demo role / create-expert local).
+- `fetchCurrentUser` **hydrate từ storage** (`authService.getStoredUser`) — **không** gọi `GET /api/User/me` (endpoint không tồn tại trong swagger). Best-effort `processPendingProfileUpdates()` sau hydrate.
 
 ### 7.2. `AuthContext` — `src/contexts/AuthContext.tsx`
 
@@ -457,12 +462,13 @@ interface AuthState {
 ```ts
 enum UserRole {
   ADMIN = 'Admin',
-  MODERATOR = 'Moderator',     // legacy
   RESEARCHER = 'Researcher',
   CONTRIBUTOR = 'Contributor',
   EXPERT = 'Expert',
-  USER = 'User',
 }
+
+/** Fallback khi map role string lạ từ API */
+export const DEFAULT_UNKNOWN_USER_ROLE = UserRole.CONTRIBUTOR;
 
 interface User {
   id: string; username: string; email: string; fullName: string;
@@ -476,6 +482,8 @@ interface RegisterForm { username; email; password; confirmPassword; fullName; p
 interface RegisterResearcherForm { email; password; fullName; phoneNumber; }
 interface ConfirmAccountForm { otp: string; }
 ```
+
+**Đã gỡ:** `MODERATOR`, `USER` (legacy) — không còn trong enum hay `USER_ROLE_NAMES`.
 
 ### 8.2. Recording (`types/recording.ts`)
 
@@ -572,8 +580,9 @@ apiFetch.use({ async onRequest({ request }) {
 
 - Tập trung re-name các schema/path types thành alias `Api*`:
   - DTO: `ApiAnnotationDto`, `ApiRecordingDto`, `ApiSubmissionDto`, `ApiSubmissionVersionDto`, `ApiEmbargoDto`, `ApiEthnicGroupDto`, `ApiInstrumentDto`, KB, Dispute requests…
-  - Query types per endpoint: `ApiRecordingListQuery`, `ApiRecordingSearchByFilterQuery`, `ApiAdminUsersListQuery`, `ApiAnalyticsExpertsQuery/ContentQuery`, `ApiAuthConfirmEmailQuery`, `ApiSemanticSearchQuery/768Query`, `ApiQAMessageListQuery/byConversation/Flag`.
-  - Auth models: `ApiAuthLoginModel`, `ApiAuthRegisterModel`, `ApiAuthForgotPasswordModel`, `ApiAuthResetPasswordModel`.
+  - Query types per endpoint: `ApiRecordingListQuery`, `ApiRecordingSearchByFilterQuery`, `ApiAdminUsersListQuery`, `ApiAnalyticsExpertsQuery/ContentQuery`, `ApiAuthConfirmEmailQuery`, `ApiSemanticSearchQuery`, …
+  - Auth models: `ApiAuthLoginModel`, `ApiAuthRegisterModel`, `ApiAuthForgotPasswordModel`, `ApiAuthResetPasswordModel`, `ApiUpdateInfoDTO`, `ApiUpdatePasswordDTO`.
+  - **Không** có adapter `/auth/me` — profile qua `PUT /api/User/update-profile`, `PUT /api/User/update-password`.
 
 ### 10.5. Patterns sử dụng
 
@@ -603,31 +612,32 @@ Bảng tóm tắt các service chính trong `src/services/`:
 
 | Service | Mục đích | Endpoint chính |
 |---|---|---|
-| `authService.ts` | Login/register/forgot/confirm/demo. Lưu JWT vào storage. | `/api/Auth/login`, `/api/Auth/register-contributor`, `/api/Auth/register-researcher`, `/api/Auth/confirm-email`, `/api/Auth/forgot-password` |
+| `authService.ts` | Login (email), register contributor/researcher, confirm/resend OTP, forgot/reset password, profile/password update, demo login (DEV). JWT + user trong storage. **Không** `/auth/me`. | Tag `Auth` (7 path): `POST login`, `register-*`, `PUT resend-confirmation`, `confirm-email`, `forgot-password`, `reset-password`. Profile: `PUT /api/User/update-profile`, `update-password` |
 | `recordingService.ts` | Search/CRUD bản thu (guest + auth + filter + by-title). Map BE shape lệch về `Recording`. | `/api/Recording*`, `/api/RecordingGuest*`, `/api/Submission/create-submission`, `/api/RecordingImage` |
 | `submissionService.ts` | Quản lý submission (Contributor lifecycle). | `/api/Submission/*` |
-| `submissionVersionApi.ts` | Lịch sử version của submission. | |
+| `submissionVersionApi.ts` | Lịch sử version của submission. | `/api/SubmissionVersion/*` |
 | `submissionApiMapper.ts` | DTO ↔ FE mapper. |
-| `expertModerationApi.ts` | Expert lấy queue, claim, approve, reject, AI summary. | `/api/Submission/get-by-status`, `/api/Submission/confirm-submit-submission`, ... |
-| `expertWorkflowService.ts` | Logic 3-stage cho Expert. |
+| `expertModerationApi.ts` | Expert queue, claim, approve, stage, reject qua **`POST /api/Review/create`**, audit `POST /api/AuditLog`. | `GET get-by-status`, `get-by-reviewer`, `PUT assign/unassign`, `approve-submission`, `done-stage-one/two`, `POST Review/create` |
+| `expertWorkflowService.ts` | Queue merge + overlay local; Phase 2 gọi API trước overlay. Feature flags: `config/expertWorkflowPhase.ts`. |
 | `recordingRequestService.ts` | Notifications + delete/edit request mapping. Dùng bởi `notificationHub` và Header. |
 | `notificationHub.ts` | SignalR client (`/notificationHub`). |
 | `qaConversationService.ts`, `qaMessageService.ts`, `researcherChatService.ts` | Researcher QA chat, kèm flagged response. |
-| `semanticSearchService.ts` | `GET /api/search/semantic-768`. |
+| `semanticSearchService.ts` | `GET /api/search/semantic` (Explore tab ngữ nghĩa). |
 | `metadataSuggestService.ts` | AI-suggest metadata khi upload. |
 | `instrumentDetectionService.ts` | Phân tích nhạc cụ AI (declared vs detected). |
 | `knowledgeBaseApi.ts`, `knowledgeGraphService.ts` | KB & Graph data. |
 | `embargoApi.ts`, `copyrightDisputeApi.ts` | Moderation phụ trợ. |
 | `analyticsApi.ts` | Admin/expert analytics. |
-| `adminApi.ts`, `accountDeletionService.ts` | Admin user mgmt. |
+| `adminApi.ts` | User list/role/status, **`createExpert`** (legacy `POST /Admin/create-expert` — chưa có trong swagger), **`getAuditLogs`**, **`getSystemHealth`**. |
+| `accountDeletionService.ts` | Admin account deletion flow. |
 | `referenceDataService.ts`, `instrumentService.ts`, `ethnicityService.ts`, `geocodeService.ts` | Master data. |
 | `researcherArchiveService.ts`, `researcherRecordingFilterSearch.ts` | Researcher portal. |
-| `uploadService.ts` | Upload file (multipart/storage). |
+| `uploadService.ts` | Upload media **trực tiếp Supabase Storage** (`uploadFileToSupabase`) — **không** qua VietTune BE. |
+| `supabaseClient.ts` | `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`. |
 | `storageService.ts`, `recordingStorage.ts` | (xem mục 9). |
 | `errorReporting.ts` | Sentry init + capture wrapper. |
 | `serviceLogger.ts` | `logServiceError/Warn` (no-op khi sản phẩm strip console). |
 | `serviceApiClient.ts` | Type cho legacy http client. |
-| `supabaseClient.ts` | (giữ chỗ — Supabase chưa dùng nhiều). |
 
 ---
 
@@ -765,6 +775,13 @@ Mục tiêu: **đóng kín** `react-hot-toast` để khi đổi lib chỉ sửa 
 
 ## 18. Moderation (Expert workflow 3-stage)
 
+**Feature flags** (`src/config/expertWorkflowPhase.ts`):
+
+| Biến | Mặc định | Ý nghĩa |
+|------|----------|---------|
+| `VITE_EXPERT_API_PHASE2` | bật | Queue + assign/approve từ API (`get-by-status` + `get-by-reviewer`) |
+| `VITE_EXPERT_QUEUE_SOURCE` | `by-status` | `by-status` → `GET /Submission/get-by-status`; `admin` → `GET /Admin/submissions` |
+
 `src/features/moderation/`:
 
 - `constants/moderationStage.ts` — khai báo 3 stage; `verificationStepDefinitions.ts` — checklist các bước bắt buộc.
@@ -784,7 +801,11 @@ UI: `src/components/features/moderation/` (~35 file) + `workspaceTabs/` (AI / Em
 `src/features/upload/`:
 
 - `uploadConstants.ts`, `uploadFormValidation.ts`, `uploadRecordingTypes.ts`.
-- 10 hooks (xem mục 12.2). `useUploadSubmission` (~28KB) là core: upload media → tạo submission → poll trạng thái → mapping LocalRecording → IndexedDB.
+- 10 hooks (xem mục 12.2). `useUploadSubmission` (~28KB) là core:
+  1. **Supabase** — `uploadFileToSupabase` (song song AI nếu bật).
+  2. **BE** — `POST /AIAnalysis/analyze-only` (+ instrument detection tùy cờ).
+  3. Sau có URL → `recordingService.createSubmission` (VietTune API).
+- Lỗi `Failed to fetch` ở bước upload thường là **Supabase/mạng/env**, không phải VietTune BE.
 - `MetadataStepSection.tsx` (~34KB) — form metadata bước 2.
 - `MediaUploadStep.tsx` (~29KB) — bước 1 (file/Youtube), validate kích thước (`MAX_FILE_SIZE = 100MB`), formats audio (`mpeg/wav/flac/ogg`).
 - `UploadConfirmDialogs`, `UploadDatePicker`, `UploadFormFields`, `UploadFormPrimitives`, `UploadMediaPreview`, `UploadSearchableDropdown`, `UploadWizardActions`, `UploadWizardStepper`, `MultiSelectTags`, `MetadataSuggestionPanel`.
@@ -795,13 +816,11 @@ UI: `src/components/features/moderation/` (~35 file) + `workspaceTabs/` (AI / Em
 
 | Role | Trang chủ default | Quyền tiêu biểu |
 |---|---|---|
-| Guest (không login) | `/` | Explore (RecordingGuest), search by title, chatbot (giới hạn?), KB public, instruments/ethnicities. |
-| `User` | `/` | Như guest + profile + notifications. |
-| `Contributor` | `/` | Upload, ContributionsPage, edit recording (lock khi đang moderation), nhận notifications. |
-| `Expert` | `/moderation` | Moderation wizard, approved-recordings, dispute, embargo, KB write. |
-| `Researcher` | `/researcher` | Compare engine, Knowledge graph tab, QA chat, export dataset. |
-| `Admin` | `/admin` | AdminDashboard, user mgmt, AI monitoring, KB, create-expert. |
-| `Moderator` (legacy) | — | Treated như Expert ở nhiều chỗ; chuyển đổi qua `routeAccess`. |
+| Guest (không login) | `/` | Explore (RecordingGuest + facet; semantic khi có `sq`), SearchPage, chatbot, KB public, instruments/ethnicities. |
+| `Contributor` | `/` | Upload (Supabase + submission API), ContributionsPage, edit recording (lock khi moderation), notifications. |
+| `Expert` | `/moderation` | **`ExpertGuard` only** — moderation wizard, approved-recordings, dispute, embargo, KB (portal researcher tab KG). |
+| `Researcher` | `/researcher` | Compare engine, Knowledge graph, QA chat, export dataset (`ResearcherGuard` cũng cho Admin/Expert). |
+| `Admin` | `/admin` | AdminDashboard, user mgmt, audit log panel, system health, create-expert, KB governance. **Không** vào `/moderation` qua guard (dù post-login redirect có thể trỏ tới đó). |
 
 Logic redirect ngầm trong `MainLayout`:
 
@@ -825,22 +844,36 @@ sequenceDiagram
 
   U->>LM: openLoginModal({ redirect, onSuccess })
   LM->>AS: login({ email, password })
-  AS->>API: POST /api/Auth/login (apiFetchLoose)
+  AS->>API: POST /api/Auth/login (JSON email+password)
   API-->>AS: { token, role, fullName, isActive, ... }
   AS->>SS: setItem('access_token', token); setItem('user', JSON)
   AS-->>ST: { user, token }
   ST->>ST: set({ user, isAuthenticated: true })
-  ST->>SS: persist user + users_overrides
   AS->>AS: processPendingProfileUpdates() (best-effort)
 ```
+
+**Auth API (swagger tag `Auth`, 7 path):**
+
+| Luồng | Method | Path | Ghi chú FE |
+|-------|--------|------|------------|
+| Login | `POST` | `/api/Auth/login` | Email only; 401 → message chung; 400 → giữ message BE |
+| Register contributor | `POST` | `/api/Auth/register-contributor` | |
+| Register researcher | `POST` | `/api/Auth/register-researcher` | |
+| Resend OTP | `PUT` | `/api/Auth/resend-confirmation-email` | FormData field `email` |
+| Confirm email | `PUT` | `/api/Auth/confirm-email?token=` | |
+| Forgot password | `PUT` | `/api/Auth/forgot-password` | FormData `Email` |
+| Reset password | `PUT` | `/api/Auth/reset-password` | FormData `Email`, `OTP`, `NewPassword` |
+
+**Profile (không thuộc tag Auth):** `PUT /api/User/update-profile`, `PUT /api/User/update-password`. **Không** có `GET /me`.
 
 Đặc điểm:
 
 - JWT exp được kiểm tra qua `utils/jwtExpiry.isJwtExpired` → tránh "đăng nhập giả" khi token hết hạn còn lưu.
 - `clearExpiredCredentialsIfNeeded` chạy trong AuthProvider mount.
-- `authService.loginDemo(demoKey)` chỉ DEV (`import.meta.env.DEV`) — trả token `demo-token-*` cho 6 role demo.
-- `LoginModal` (`components/auth/LoginModal.tsx`) là toàn cục, mở qua `useLoginModalStore`. Bên trong dùng `LoginFormContent` (`react-hook-form`).
-- Sau login: `resolvePostLoginPath(user, requestedRedirect)` quyết định nơi đến (chống ?redirect=/admin với non-admin).
+- `authService.loginDemo(demoKey)` chỉ DEV — token demo cho 4 role (+ expert variants).
+- `ConfirmAccountPage`: resend OTP + cooldown 60s.
+- `ForgotPasswordPage`: wizard 2 bước (email → OTP + mật khẩu mới).
+- Sau login: `resolvePostLoginPath(user, requestedRedirect)`.
 
 ---
 
@@ -874,7 +907,7 @@ sequenceDiagram
 
 - **Unit (Vitest)**: file `*.test.ts(x)` cùng thư mục. Đáng chú ý:
   - `services/aiUtilityServices.test.ts`, `embargoApi.test.ts`, `instrumentDetectionService.test.ts`, `knowledgeGraphService.test.ts`, `qaServices.test.ts`.
-  - `stores/authStore.test.ts`.
+  - `services/authService.test.ts`, `stores/authStore.test.ts`.
   - `utils/*.test.ts` (annotationHelpers, apiHelpers, httpError, instrumentDeclaredDetectedCompare, instrumentMetadataMapper, jwtExpiry, routeAccess, searchText, validation, youtube, crossCaseInstrumentWarning).
   - `features/explore/utils/*.test.ts` (`exploreGuestFilters`, `exploreRecordingsLoad`).
   - `features/moderation/utils/*.test.ts` (`expertQueueProjection`, `expertSubmissionLock`, `queueStatusMeta`).
@@ -890,6 +923,7 @@ sequenceDiagram
 - **Vitest config** `vitest.config.ts` (jsdom env).
 - **E2E (Playwright)**:
   - Projects: `setup`, `explore-guest`, `toast-smoke`, `upload-ui`, `contributions-ui`, `moderation-ui`, `contributor-storage`, `guest-full`, `auth-ui`, `contributor-full`, `expert-ui`, `researcher-ui`, `admin-ui`.
+  - Không còn spec riêng cho `/semantic-search` (route đã gỡ; semantic chỉ qua `/explore`).
   - Runbook: `docs/E2E-contributor-runbook.md`, `docs/PLAN-e2e-*`.
 
 ---
@@ -902,6 +936,12 @@ sequenceDiagram
 | `VITE_APP_NAME` | Tên app (default `VietTune`). |
 | `VITE_VIETTUNE_AI_BASE_URL` | Base URL cho Researcher chat / VietTune Intelligence (fallback `API_BASE_URL`). |
 | `VITE_SIGNALR_HUB_URL` | (optional) override URL hub. |
+| `VITE_SUPABASE_URL` | Supabase project URL — **bắt buộc** cho upload media. |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key. |
+| `VITE_SUPABASE_BUCKET` | Storage bucket (default `audio`). |
+| `VITE_EXPERT_API_PHASE2` | Expert moderation Phase 2 (default on). |
+| `VITE_EXPERT_QUEUE_SOURCE` | `by-status` \| `admin`. |
+| `VITE_ADMIN_OPERATIONS_PAGE` | Bật UI đầy đủ trang `/admin/operations`. |
 
 Có 4 file `.env*` trong repo (`.env`, `.env.development`, `.env.production`, `.env.local`) + 2 example E2E (`.env.e2e-contributor.example`, `.env.e2e-multi-role.example`).
 
@@ -1006,6 +1046,8 @@ flowchart TB
 | File | Kích thước | Ghi chú |
 |---|---|---|
 | `src/api/generated.d.ts` | 381KB | KHÔNG sửa tay. |
+| `src/pages/ExplorePage.tsx` | — | URL-driven explore: facet drawer, keyword/semantic header, `useExploreData`. |
+| `src/features/explore/utils/exploreRecordingsLoad.ts` | — | Tải catalog: guest/auth, keyword vs semantic (`recordingService`, `semanticSearchService`). |
 | `src/pages/ModerationPage.tsx` | 33KB | Trang moderation chính. |
 | `src/components/features/UploadMusic.tsx` | 34KB | Compose toàn bộ upload UI. |
 | `src/components/features/VideoPlayer.tsx` | 41KB | Custom player + caption. |
@@ -1025,7 +1067,12 @@ flowchart TB
 ## 29. Tài liệu tham chiếu thêm trong repo
 
 - `README.md` — tổng quan ngắn.
-- `docs/EXPLORE-CODE-SKELETON.md` — chi tiết Explore.
+- **`docs/AUDIT-auth-register-login.md`** — auth OpenAPI + BE/FE audit (7 path Auth).
+- **`docs/AUDIT-expert-role.md`** — Expert workflow, swagger Submission/Review, gaps BE.
+- **`docs/AUDIT-admin-role.md`** — Admin dashboard, governance APIs.
+- **`docs/PLAN-fe-auth-flow.md`** — kế hoạch triển khai auth FE (Phases 0–5).
+- `docs/API_DOCUMENTATION.md` — **chỉ** Recording search (`search-by-filter`, `search-by-filter-multi`); không phải catalog đầy đủ.
+- `docs/EXPLORE-CODE-SKELETON.md` — chi tiết Explore; đối chiếu **mục 5** trong tài liệu này cho routing hiện tại (ví dụ `/semantic-search` đã gỡ).
 - `docs/PLAN-frontend-refactor.md`, `docs/PLAN-production-ready-refactor.md` — định hướng refactor.
 - `docs/PLAN-expert-moderation-r3.md` — workflow Expert mới nhất (2026-05-08).
 - `docs/PLAN-knowledge-exploration.md`, `docs/AUDIT-knowledge-graph-viettune.md` — KB & graph.

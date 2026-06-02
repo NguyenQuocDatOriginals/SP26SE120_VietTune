@@ -278,7 +278,7 @@ export default function ApprovedRecordingsPage() {
                           username: u.username ?? '',
                           email: u.email ?? '',
                           fullName: u.fullName ?? u.username ?? '',
-                          role: u.role ?? UserRole.USER,
+                          role: u.role ?? UserRole.CONTRIBUTOR,
                           createdAt: u.createdAt ?? '',
                           updatedAt: u.updatedAt ?? '',
                         };
@@ -288,7 +288,7 @@ export default function ApprovedRecordingsPage() {
                         username: '',
                         email: '',
                         fullName: '',
-                        role: UserRole.USER,
+                        role: UserRole.CONTRIBUTOR,
                         createdAt: '',
                         updatedAt: '',
                       };
@@ -345,7 +345,7 @@ export default function ApprovedRecordingsPage() {
                           username: u.username ?? '',
                           email: u.email ?? '',
                           fullName: u.fullName ?? u.username ?? '',
-                          role: u.role ?? UserRole.USER,
+                          role: u.role ?? UserRole.CONTRIBUTOR,
                           createdAt: u.createdAt ?? '',
                           updatedAt: u.updatedAt ?? '',
                         };
@@ -355,7 +355,7 @@ export default function ApprovedRecordingsPage() {
                         username: '',
                         email: '',
                         fullName: '',
-                        role: UserRole.USER,
+                        role: UserRole.CONTRIBUTOR,
                         createdAt: '',
                         updatedAt: '',
                       };

@@ -59,6 +59,8 @@ export interface CommuneItem {
 export interface CeremonyItem {
   id: string;
   name: string;
+  /** Backend taxonomy: Ritual, Wedding, Funeral, Festival, Harvest, Daily, … */
+  type?: string | null;
   description?: string | null;
 }
 

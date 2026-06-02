@@ -1,5 +1,23 @@
 import { UserRole } from '@/types';
 
+/** Dashboard stepper sections (URL query `?section=` on `/admin`). */
+export const ADMIN_DASHBOARD_SECTION_IDS = ['users', 'analytics', 'aiMonitoring', 'moderation'] as const;
+export type AdminDashboardSectionId = (typeof ADMIN_DASHBOARD_SECTION_IDS)[number];
+
+export function parseAdminDashboardSectionParam(raw: string | null): AdminDashboardSectionId {
+  const t = raw?.trim() ?? '';
+  return ADMIN_DASHBOARD_SECTION_IDS.includes(t as AdminDashboardSectionId)
+    ? (t as AdminDashboardSectionId)
+    : 'users';
+}
+
+/** True when `raw` is non-empty but not a valid dashboard section (caller may strip from URL). */
+export function isNonEmptyInvalidAdminDashboardSection(raw: string | null): boolean {
+  const t = raw?.trim() ?? '';
+  if (!t) return false;
+  return !ADMIN_DASHBOARD_SECTION_IDS.includes(t as AdminDashboardSectionId);
+}
+
 export type StepId = 'users' | 'analytics' | 'aiMonitoring' | 'moderation' | 'master-data';
 
 export type LegacyAdminPanelId =
@@ -42,11 +60,9 @@ export const ROLE_OPTIONS: { value: string; label: string }[] = [
 export const ROLE_NAMES_VI: Record<string, string> = {
   [UserRole.ADMIN]: 'Quản trị viên',
   ADMIN: 'Quản trị viên',
-  MODERATOR: 'Điều hành viên',
   [UserRole.RESEARCHER]: 'Nhà nghiên cứu',
   [UserRole.CONTRIBUTOR]: 'Người đóng góp',
   [UserRole.EXPERT]: 'Chuyên gia',
-  [UserRole.USER]: 'Người dùng',
 };
 
 export function getRoleNameVi(role: string): string {

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { EmptyState } from '../components/EmptyState';
 import { EntityDeleteDialog } from '../components/EntityDeleteDialog';
@@ -16,9 +17,12 @@ import { entityConfigs } from '../utils/entityFieldConfig';
 import { normalizeSlug } from '../utils/slugNormalizer';
 
 import BackButton from '@/components/common/BackButton';
+import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
+import { buildAdminBreadcrumbItems } from '@/features/admin/shell/adminBreadcrumbUtils';
 import { reportError, toReportableError } from '@/services/errorReporting';
 
 export function MasterDataPage() {
+  const location = useLocation();
   const [currentKind, setCurrentKind] = useState<EntityKind>('instruments');
   const [selectedEntity, setSelectedEntity] = useState<ReferenceEntity<Record<string, unknown>> | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -92,8 +96,14 @@ export function MasterDataPage() {
     return items.filter((item: ReferenceEntity<Record<string, unknown>>) => normalizeSlug(item.name).includes(searchSlug));
   }, [items, debouncedSearch]);
 
+  const adminBreadcrumbItems = useMemo(
+    () => buildAdminBreadcrumbItems(location.pathname, null),
+    [location.pathname],
+  );
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pb-12">
+      <AdminBreadcrumbs items={adminBreadcrumbItems} />
       {/* Page header */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">

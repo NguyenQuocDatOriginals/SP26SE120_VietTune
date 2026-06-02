@@ -56,6 +56,13 @@ export default function ResearcherPortalGraphTab({
   const ctrl = useKnowledgeGraphController({ fallbackGraphData, approvedRecordings });
 
   const dataSourceBadge = useMemo(() => {
+    if (ctrl.dataSourceKind === 'neo4j') {
+      return {
+        Icon: Network,
+        label: 'Neo4j',
+        className: 'text-cyan-950 bg-cyan-50/95 border-cyan-200/90 shadow-sm',
+      } as const;
+    }
     if (ctrl.dataSourceKind === 'explore') {
       return {
         Icon: Network,
@@ -103,9 +110,31 @@ export default function ResearcherPortalGraphTab({
     ) : null;
 
   const exploreErrorBanner =
-    ctrl.explore.isError && ctrl.exploreTarget ? (
+    ctrl.backendMode === 'pg' && ctrl.explore.isError && ctrl.exploreTarget ? (
       <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
         Không mở rộng được nút. Thử nút khác.
+      </p>
+    ) : null;
+
+  const neo4jSearchErrorBanner =
+    ctrl.backendMode === 'neo4j' && ctrl.neo4jSearchError ? (
+      <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
+        {ctrl.neo4jSearchError}
+      </p>
+    ) : null;
+
+  const neo4jExpandErrorBanner =
+    ctrl.backendMode === 'neo4j' && ctrl.neo4jExpandError ? (
+      <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
+        {ctrl.neo4jExpandError}
+      </p>
+    ) : null;
+
+  const neo4jHintBanner =
+    ctrl.backendMode === 'neo4j' && ctrl.displayGraph.nodes.length === 0 ? (
+      <p className="text-xs text-cyan-900 bg-cyan-50/90 border border-cyan-200 rounded-lg px-3 py-1.5 mb-2">
+        Tìm thực thể (≥2 ký tự) ở danh sách trái, chọn kết quả để khởi tạo đồ thị. Nhấp đúp nút để
+        mở rộng lân cận (Neo4j).
       </p>
     ) : null;
 
@@ -137,6 +166,30 @@ export default function ResearcherPortalGraphTab({
               <RefreshCw className="h-3.5 w-3.5" aria-hidden />
             )}
             Làm mới
+          </button>
+        </div>
+
+        <div
+          className="flex flex-wrap items-center gap-2 mt-3"
+          role="group"
+          aria-label="Nguồn dữ liệu đồ thị"
+        >
+          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">
+            Nguồn
+          </span>
+          <button
+            type="button"
+            className={`${TAB_CLASS} ${ctrl.backendMode === 'pg' ? TAB_ACTIVE : TAB_IDLE}`}
+            onClick={ctrl.switchToPg}
+          >
+            PostgreSQL KG
+          </button>
+          <button
+            type="button"
+            className={`${TAB_CLASS} ${ctrl.backendMode === 'neo4j' ? TAB_ACTIVE : TAB_IDLE}`}
+            onClick={ctrl.switchToNeo4j}
+          >
+            Neo4j Explorer
           </button>
         </div>
 
@@ -176,6 +229,9 @@ export default function ResearcherPortalGraphTab({
 
         {overviewErrorBanner}
         {exploreErrorBanner}
+        {neo4jSearchErrorBanner}
+        {neo4jExpandErrorBanner}
+        {neo4jHintBanner}
         {graphTruncationBanner}
 
         <div className="flex gap-3 mt-3">
@@ -191,9 +247,15 @@ export default function ResearcherPortalGraphTab({
                     type="search"
                     value={ctrl.listQuery}
                     onChange={(e) => ctrl.setListQuery(e.target.value)}
-                    placeholder="Tìm nút..."
+                    placeholder={
+                      ctrl.backendMode === 'neo4j'
+                        ? `Tìm thực thể (≥${ctrl.neo4jSearchMinLength} ký tự)...`
+                        : 'Tìm nút...'
+                    }
                     className="w-full rounded-md border border-neutral-200 bg-white py-1.5 pl-7 pr-2 text-xs text-neutral-800 placeholder:text-neutral-400 focus:border-primary-400 focus:outline-none"
-                    aria-label="Tìm kiếm nút"
+                    aria-label={
+                      ctrl.backendMode === 'neo4j' ? 'Tìm thực thể Neo4j' : 'Tìm kiếm nút'
+                    }
                   />
                 </div>
                 <button
@@ -208,6 +270,11 @@ export default function ResearcherPortalGraphTab({
               <select
                 value={ctrl.typeFilter}
                 onChange={(e) => ctrl.setTypeFilter(e.target.value)}
+                title={
+                  ctrl.backendMode === 'neo4j'
+                    ? 'Lọc tìm kiếm theo loại (tùy chọn). Mở rộng nút chỉ lọc khi chọn loại ở đây.'
+                    : 'Lọc theo loại thực thể'
+                }
                 className="mb-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700"
               >
                 {TYPE_FILTER_OPTIONS.map((o) => (
@@ -217,7 +284,63 @@ export default function ResearcherPortalGraphTab({
                 ))}
               </select>
               <ul className="flex-1 overflow-y-auto space-y-px text-xs min-h-[80px]">
-                {ctrl.debouncedListQuery.trim().length >= 1 ? (
+                {ctrl.backendMode === 'neo4j' &&
+                ctrl.debouncedListQuery.trim().length === 0 &&
+                ctrl.listNodesFromGraph.length === 0 ? (
+                  <li className="text-neutral-500 text-[11px] px-2 py-2 leading-relaxed">
+                    Nhập ít nhất {ctrl.neo4jSearchMinLength} ký tự để tìm trên Neo4j, chọn kết quả
+                    để khởi tạo đồ thị. Nhấp đúp nút để mở rộng lân cận.
+                  </li>
+                ) : ctrl.backendMode === 'neo4j' &&
+                  ctrl.debouncedListQuery.trim().length > 0 &&
+                  ctrl.debouncedListQuery.trim().length < ctrl.neo4jSearchMinLength ? (
+                  <li className="text-neutral-500 text-[11px] px-2 py-2">
+                    Nhập thêm{' '}
+                    {ctrl.neo4jSearchMinLength - ctrl.debouncedListQuery.trim().length} ký tự (tối
+                    thiểu {ctrl.neo4jSearchMinLength}).
+                  </li>
+                ) : ctrl.backendMode === 'neo4j' &&
+                  ctrl.debouncedListQuery.trim().length >= ctrl.neo4jSearchMinLength ? (
+                  ctrl.neo4jSearchLoading ? (
+                    <li className="flex items-center gap-1.5 text-neutral-400 py-3 px-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                      Đang tìm (Neo4j)...
+                    </li>
+                  ) : ctrl.neo4jSearchError ? (
+                    <li className="text-red-500 text-[11px] px-2 py-2">{ctrl.neo4jSearchError}</li>
+                  ) : !ctrl.neo4jSearchResults.length ? (
+                    <li className="text-neutral-400 text-[11px] px-2 py-2">
+                      Không có kết quả. Thử bỏ lọc loại hoặc từ khóa khác.
+                    </li>
+                  ) : (
+                    ctrl.neo4jSearchResults.map((hit) => {
+                      const viewerNodeId = `${hit.group}:${hit.id}`;
+                      const active =
+                        ctrl.selection?.source === 'graph' &&
+                        ctrl.selection.id === viewerNodeId &&
+                        ctrl.selection.apiEntityType === hit.group;
+                      return (
+                        <li key={`${hit.group}-${hit.id}`}>
+                          <button
+                            type="button"
+                            onClick={() => ctrl.handleNeo4jSearchResultClick(hit)}
+                            className={`w-full truncate text-left px-2 py-1 rounded-md transition-colors ${
+                              active
+                                ? 'bg-primary-100 text-primary-900 font-semibold'
+                                : 'hover:bg-neutral-50'
+                            }`}
+                            title={hit.label}
+                          >
+                            <span className="text-[9px] uppercase text-neutral-400 block leading-none mb-px">
+                              {hit.group}
+                            </span>
+                            {hit.label}
+                          </button>
+                        </li>
+                      );
+                    })
+                  )
+                ) : ctrl.backendMode === 'pg' && ctrl.debouncedListQuery.trim().length >= 1 ? (
                   ctrl.search.isLoading ? (
                     <li className="flex items-center gap-1.5 text-neutral-400 py-3 px-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -323,10 +446,22 @@ export default function ResearcherPortalGraphTab({
               <KnowledgeGraphViewer
                 data={ctrl.displayGraph}
                 onNodeClick={ctrl.handleGraphNodeClick}
+                onNodeDoubleClick={
+                  ctrl.backendMode === 'neo4j' ? ctrl.handleGraphNodeDoubleClick : undefined
+                }
                 selectedNodeId={ctrl.selectedNodeId}
                 maxNodes={100}
-                compactLayout={!ctrl.exploreTarget}
+                compactLayout={ctrl.backendMode === 'neo4j' ? false : !ctrl.exploreTarget}
                 tabFilter={ctrl.graphView}
+                showDirectedLinks={ctrl.backendMode === 'neo4j'}
+                emptyStateMessage={
+                  ctrl.backendMode === 'neo4j' ? 'Chưa có đồ thị Neo4j' : undefined
+                }
+                emptyStateHint={
+                  ctrl.backendMode === 'neo4j'
+                    ? `Tìm thực thể (≥${ctrl.neo4jSearchMinLength} ký tự) ở cột trái và chọn một kết quả. Tab phía trên chỉ gợi ý loại tìm kiếm, không tải tổng quan như PostgreSQL.`
+                    : undefined
+                }
               />
             </div>
           </section>
@@ -347,7 +482,9 @@ export default function ResearcherPortalGraphTab({
                     ? ctrl.selection.apiEntityType
                     : viewerTypeToApiEntityType(ctrl.selection.viewerType)}
                 </p>
-                {ctrl.selection.source === 'graph' && !ctrl.exploreTarget && (
+                {ctrl.selection.source === 'graph' &&
+                  ctrl.backendMode === 'pg' &&
+                  !ctrl.exploreTarget && (
                   <button
                     type="button"
                     className="w-full rounded-md border border-primary-200 bg-primary-50/80 px-2 py-1.5 text-[11px] font-semibold text-primary-800 hover:bg-primary-100/90"
@@ -355,6 +492,11 @@ export default function ResearcherPortalGraphTab({
                   >
                     Mở rộng quanh nút (API)
                   </button>
+                )}
+                {ctrl.backendMode === 'neo4j' && ctrl.selection.source === 'graph' && (
+                  <p className="text-[11px] text-cyan-800 bg-cyan-50/80 border border-cyan-100 rounded-md px-2 py-1.5">
+                    Nhấp đúp nút trên đồ thị để mở rộng lân cận (1-hop).
+                  </p>
                 )}
                 {ctrl.exploreTarget && (
                   <div className="flex gap-1">

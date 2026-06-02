@@ -14,6 +14,12 @@ import {
   useKnowledgeGraphSearch,
   useKnowledgeGraphStats,
 } from '@/features/knowledge-graph/hooks';
+import { useNeo4jExplore } from '@/features/knowledge-graph/hooks/useNeo4jExplore';
+import {
+  NEO4J_SEARCH_MIN_LENGTH,
+  resolveNeo4jExpandLabel,
+  resolveNeo4jSearchLabel,
+} from '@/features/knowledge-graph/utils/neo4jSearchLabel';
 import { pickFocusDefaultNode } from '@/features/knowledge-graph/utils/graphViewerHelpers';
 import {
   computeKgIntelligence,
@@ -34,7 +40,12 @@ import {
 } from '@/features/knowledge-graph/utils/researcherGraphUx';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Recording } from '@/types';
-import type { GraphLink, GraphNode, KnowledgeGraphData } from '@/types/graph';
+import type {
+  GraphLink,
+  GraphNode,
+  KnowledgeGraphBackendMode,
+  KnowledgeGraphData,
+} from '@/types/graph';
 
 /** A single step in the exploration breadcrumb trail. */
 export interface ExploreHistoryStep {
@@ -120,6 +131,18 @@ export function useKnowledgeGraphController({
   // ── Phase 4: semantic mode (focus by relation kind) ─────────────────
   const [semanticMode, setSemanticMode] = useState<SemanticMode>('free');
 
+  const [backendMode, setBackendMode] = useState<KnowledgeGraphBackendMode>('pg');
+
+  const neo4jSearchLabel = useMemo(
+    () => resolveNeo4jSearchLabel(typeFilter, graphView),
+    [typeFilter, graphView],
+  );
+  const neo4jExpandLabel = useMemo(() => resolveNeo4jExpandLabel(typeFilter), [typeFilter]);
+  const neo4j = useNeo4jExplore({
+    searchLabelFilter: neo4jSearchLabel,
+    expandLabelFilter: neo4jExpandLabel,
+  });
+
   const debouncedListQuery = useDebounce(listQuery, 350);
 
   /** Cache of subgraphs keyed by `${type}:${guid}` so revisits are instant + merged. */
@@ -136,16 +159,23 @@ export function useKnowledgeGraphController({
     query: debouncedListQuery,
     types: searchTypesParam,
     limit: 40,
-    enabled: debouncedListQuery.trim().length >= 1,
+    enabled: backendMode === 'pg' && debouncedListQuery.trim().length >= 1,
     minQueryLength: 1,
   });
+
+  const neo4jSearch = neo4j.search;
+  useEffect(() => {
+    if (backendMode !== 'neo4j') return;
+    void neo4jSearch(debouncedListQuery);
+  }, [backendMode, debouncedListQuery, neo4jSearch]);
 
   const explore = useKnowledgeGraphExplore({
     nodeId: exploreTarget?.id ?? '',
     nodeType: exploreTarget?.type ?? '',
     depth: 2,
     maxNodes: 80,
-    enabled: Boolean(exploreTarget?.id && exploreTarget?.type),
+    enabled:
+      backendMode === 'pg' && Boolean(exploreTarget?.id && exploreTarget?.type),
   });
 
   // Reset selection + history when the user switches tab.
@@ -180,6 +210,9 @@ export function useKnowledgeGraphController({
    * accumulated diff-merged subgraph (Phase 3) so users keep their context as they navigate.
    */
   const displayGraph: KnowledgeGraphData = useMemo(() => {
+    if (backendMode === 'neo4j') {
+      return enrichGraphWithDegreeVal(neo4j.graphData);
+    }
     if (exploreTarget && mergedSubgraphRef.current.nodes.length) {
       return enrichGraphWithDegreeVal(mergedSubgraphRef.current);
     }
@@ -191,14 +224,24 @@ export function useKnowledgeGraphController({
       : enrichGraphWithDegreeVal(fallbackGraphData);
     // mergedTick triggers re-evaluation of mergedSubgraphRef.current.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exploreTarget, explore.isSuccess, explore.data, baseApiGraph, fallbackGraphData, mergedTick]);
+  }, [
+    backendMode,
+    neo4j.graphData,
+    exploreTarget,
+    explore.isSuccess,
+    explore.data,
+    baseApiGraph,
+    fallbackGraphData,
+    mergedTick,
+  ]);
 
-  const dataSourceKind: 'api' | 'local' | 'explore' = useMemo(() => {
+  const dataSourceKind: 'api' | 'local' | 'explore' | 'neo4j' = useMemo(() => {
+    if (backendMode === 'neo4j') return 'neo4j';
     if (exploreTarget && (mergedSubgraphRef.current.nodes.length || explore.isSuccess)) return 'explore';
     if (baseApiGraph) return 'api';
     return 'local';
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exploreTarget, explore.isSuccess, baseApiGraph, mergedTick]);
+  }, [backendMode, exploreTarget, explore.isSuccess, baseApiGraph, mergedTick]);
 
   // Auto-select a sensible default when nothing is selected.
   useEffect(() => {
@@ -295,6 +338,7 @@ export function useKnowledgeGraphController({
         label: node.name,
         viewerType: node.type,
       });
+      if (backendMode === 'neo4j') return;
       const exploreId = resolveKnowledgeGraphExploreNodeId(node);
       if (exploreId) {
         setExploreTarget({ id: exploreId, type: apiType });
@@ -303,7 +347,7 @@ export function useKnowledgeGraphController({
         setExploreTarget(null);
       }
     },
-    [pushHistoryFromNode],
+    [pushHistoryFromNode, backendMode],
   );
 
   const handleSearchResultClick = useCallback(
@@ -317,6 +361,22 @@ export function useKnowledgeGraphController({
         label: hit.label,
         viewerType,
       });
+      if (backendMode === 'neo4j') {
+        neo4j.seedFromSearchHit({ id: hit.id, label: hit.label, group: hit.type });
+        setHistory((prev) => {
+          if (prev.length && prev[prev.length - 1].viewerNodeId === viewerNodeId) return prev;
+          return [
+            ...prev,
+            {
+              entityId: hit.id,
+              entityType: hit.type,
+              label: hit.label,
+              viewerNodeId,
+            },
+          ];
+        });
+        return;
+      }
       setExploreTarget({ id: hit.id, type: hit.type });
       setHistory((prev) => {
         if (prev.length && prev[prev.length - 1].viewerNodeId === viewerNodeId) return prev;
@@ -331,7 +391,14 @@ export function useKnowledgeGraphController({
         ];
       });
     },
-    [],
+    [backendMode, neo4j.seedFromSearchHit],
+  );
+
+  const handleNeo4jSearchResultClick = useCallback(
+    (hit: { id: string; group: string; label: string }) => {
+      handleSearchResultClick({ id: hit.id, type: hit.group, label: hit.label });
+    },
+    [handleSearchResultClick],
   );
 
   const handleListNodeClick = useCallback(
@@ -399,15 +466,57 @@ export function useKnowledgeGraphController({
     if (node) pushHistoryFromNode(node, exploreId, apiType);
   }, [selection, displayGraph.nodes, pushHistoryFromNode]);
 
+  const switchToNeo4j = useCallback(() => {
+    setBackendMode('neo4j');
+    setTypeFilter('');
+    setListQuery('');
+    setSelection(null);
+    setExploreTarget(null);
+    setHistory([]);
+    mergedSubgraphRef.current = { nodes: [], links: [] };
+    subgraphCacheRef.current.clear();
+    setMergedTick((t) => t + 1);
+    neo4j.reset();
+  }, [neo4j]);
+
+  const switchToPg = useCallback(() => {
+    setBackendMode('pg');
+    neo4j.reset();
+    resetToOverview();
+    overview.refetch();
+    stats.refetch();
+  }, [neo4j, resetToOverview, overview, stats]);
+
+  const handleGraphNodeDoubleClick = useCallback(
+    (node: GraphNode) => {
+      if (backendMode !== 'neo4j') return;
+      const entityId = node.entityId ?? node.backendId;
+      if (!entityId) return;
+      void neo4j.expand(entityId);
+    },
+    [backendMode, neo4j],
+  );
+
   const refreshAll = useCallback(() => {
+    if (backendMode === 'neo4j') {
+      neo4j.reset();
+      setSelection(null);
+      return;
+    }
     overview.refetch();
     stats.refetch();
     resetToOverview();
     search.refetch();
-  }, [overview, stats, search, resetToOverview]);
+  }, [backendMode, overview, stats, search, resetToOverview, neo4j]);
 
-  const busy = overview.isLoading || explore.isLoading;
-  const exploreInFlight = explore.isLoading && Boolean(exploreTarget);
+  const busy =
+    backendMode === 'neo4j'
+      ? neo4j.isSearching || neo4j.isExpanding
+      : overview.isLoading || explore.isLoading;
+  const exploreInFlight =
+    backendMode === 'neo4j'
+      ? neo4j.isExpanding
+      : explore.isLoading && Boolean(exploreTarget);
 
   // ── Phase 4: intelligence selector + observations for current node ──
   const intelligence = useMemo(() => computeKgIntelligence(displayGraph), [displayGraph]);
@@ -434,6 +543,14 @@ export function useKnowledgeGraphController({
     setLeftOpen,
     semanticMode,
     setSemanticMode,
+    backendMode,
+    switchToNeo4j,
+    switchToPg,
+    neo4jSearchMinLength: NEO4J_SEARCH_MIN_LENGTH,
+    neo4jSearchResults: neo4j.searchResults,
+    neo4jSearchLoading: neo4j.isSearching,
+    neo4jSearchError: neo4j.searchError,
+    neo4jExpandError: neo4j.expandError,
     // derived data
     displayGraph,
     listNodesFromGraph,
@@ -453,7 +570,9 @@ export function useKnowledgeGraphController({
     baseApiGraph,
     // actions
     handleGraphNodeClick,
+    handleGraphNodeDoubleClick,
     handleSearchResultClick,
+    handleNeo4jSearchResultClick,
     handleListNodeClick,
     navigateBack,
     navigateToHistoryStep,

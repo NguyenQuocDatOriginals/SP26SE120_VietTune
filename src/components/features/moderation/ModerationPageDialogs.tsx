@@ -19,7 +19,6 @@ export interface ModerationPageDialogsProps {
   verificationForms: Record<string, ModerationVerificationData | undefined>;
   onExpertReviewNotesChange: (submissionId: string, text: string) => void;
   onCancelVerification: (id: string) => void;
-  onUnclaimFromWizard: () => void;
   onOpenRejectFromWizard: () => void;
   getCurrentVerificationStep: (submissionId: string) => number;
   prevVerificationStep: (submissionId: string) => void;
@@ -70,7 +69,6 @@ export default function ModerationPageDialogs({
   verificationForms,
   onExpertReviewNotesChange,
   onCancelVerification,
-  onUnclaimFromWizard,
   onOpenRejectFromWizard,
   getCurrentVerificationStep,
   prevVerificationStep,
@@ -120,7 +118,6 @@ export default function ModerationPageDialogs({
           formSlice={verificationForms[sid]}
           currentStep={currentStep}
           onClose={() => onCancelVerification(sid)}
-          onUnclaim={onUnclaimFromWizard}
           onOpenReject={onOpenRejectFromWizard}
           onPrevStep={() => prevVerificationStep(sid)}
           onNextStep={() => nextVerificationStep(sid)}

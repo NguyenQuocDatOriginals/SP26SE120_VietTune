@@ -2702,6 +2702,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/graph-explorer/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    keyword?: string;
+                    label?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/graph-explorer/expand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    sourceId?: string;
+                    targetLabel?: string;
+                    relType?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Instrument": {
         parameters: {
             query?: never;
@@ -4076,6 +4149,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/neo4j/migrate-data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Notification": {
         parameters: {
             query?: never;
@@ -5101,6 +5207,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Recording/search-by-filter-multi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                    "text/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                    "application/*+json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Recording": {
         parameters: {
             query?: never;
@@ -5296,6 +5441,45 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/RecordingGuest/search-by-filter-multi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                    "text/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                    "application/*+json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -8886,6 +9070,18 @@ export interface components {
             keySignature?: string | null;
             status?: components["schemas"]["VietTuneArchive.Domain.Entities.Enum.SubmissionStatus"];
             instrumentIds?: string[] | null;
+        };
+        "VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto": {
+            ethnicGroupIds?: string[] | null;
+            instrumentIds?: string[] | null;
+            ceremonyIds?: string[] | null;
+            regionCodes?: string[] | null;
+            communeIds?: string[] | null;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            sortOrder?: string | null;
         };
         "VietTuneArchive.Application.Mapper.DTOs.RecordingImageDto": {
             /** Format: uuid */

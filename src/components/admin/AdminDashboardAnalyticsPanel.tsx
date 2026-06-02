@@ -1,10 +1,15 @@
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Server } from 'lucide-react';
 
+import AdminAuditLogPanel from '@/components/admin/AdminAuditLogPanel';
 import { AdminAnalyticsStatGrid } from '@/components/admin/AdminStatsCards';
+import AdminSystemHealthCard from '@/components/admin/AdminSystemHealthCard';
 import ContentAnalyticsPanel from '@/components/features/analytics/ContentAnalyticsPanel';
-import ContributorLeaderboard from '@/components/features/analytics/ContributorLeaderboard';
+import ContributorLeaderboard, {
+  type ContributorLeaderboardLoadState,
+} from '@/components/features/analytics/ContributorLeaderboard';
 import CoverageGapChart from '@/components/features/analytics/CoverageGapChart';
 import MonthlyTrendChart from '@/components/features/analytics/MonthlyTrendChart';
+import type { ContributorRow } from '@/types/analytics';
 
 type RemoteInstruments = { id: string; name: string; category: string | undefined }[] | null;
 
@@ -17,6 +22,10 @@ export default function AdminDashboardAnalyticsPanel({
   remoteInstrumentCount,
   remoteInstruments,
   monthlyCountsFinal,
+  monthlyTrendIsEstimated,
+  analyticsContributors,
+  analyticsContributorsLoadState,
+  onRefreshDashboard,
 }: {
   remoteTotalRecordings: number | null;
   recordingsLength: number;
@@ -26,6 +35,10 @@ export default function AdminDashboardAnalyticsPanel({
   remoteInstrumentCount: number | null;
   remoteInstruments: RemoteInstruments;
   monthlyCountsFinal: Record<string, number>;
+  monthlyTrendIsEstimated: boolean;
+  analyticsContributors: ContributorRow[] | null;
+  analyticsContributorsLoadState: ContributorLeaderboardLoadState;
+  onRefreshDashboard: () => void;
 }) {
   return (
     <div className="p-8">
@@ -86,8 +99,39 @@ export default function AdminDashboardAnalyticsPanel({
 
         <CoverageGapChart />
         <ContentAnalyticsPanel />
-        <MonthlyTrendChart data={monthlyCountsFinal} />
-        <ContributorLeaderboard />
+        <MonthlyTrendChart
+          data={monthlyCountsFinal}
+          isEstimatedData={monthlyTrendIsEstimated}
+        />
+        <ContributorLeaderboard
+          contributors={analyticsContributors}
+          loadState={analyticsContributorsLoadState}
+          onRefresh={onRefreshDashboard}
+        />
+
+        <details className="group rounded-2xl border border-neutral-200/80 bg-surface-panel p-6 shadow-lg open:shadow-xl">
+          <summary className="cursor-pointer list-none text-xl font-semibold text-neutral-900 [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex w-full flex-wrap items-center gap-3">
+              <span className="flex shrink-0 items-center justify-center rounded-lg bg-neutral-100 p-2">
+                <Server className="h-5 w-5 text-neutral-700" strokeWidth={2.5} aria-hidden />
+              </span>
+              Vận hành hệ thống
+              <span className="ml-auto text-sm font-medium text-primary-700 group-open:hidden">
+                Mở
+              </span>
+              <span className="ml-auto hidden text-sm font-medium text-primary-700 group-open:inline">
+                Thu gọn
+              </span>
+            </span>
+          </summary>
+          <p className="mt-3 text-sm font-medium text-neutral-600">
+            Sức khỏe dịch vụ và nhật ký kiểm toán (API Admin, không thuộc Analytics).
+          </p>
+          <div className="mt-6 space-y-6 border-t border-neutral-200/80 pt-6">
+            <AdminSystemHealthCard />
+            <AdminAuditLogPanel />
+          </div>
+        </details>
       </div>
     </div>
   );

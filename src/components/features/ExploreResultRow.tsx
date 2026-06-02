@@ -1,4 +1,4 @@
-import { Check, FileText, Play } from 'lucide-react';
+import { Check, FileText, Play, Sparkles } from 'lucide-react';
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -91,6 +91,19 @@ function getCommuneLabel(rec: Recording): string {
   return fromTags ?? '';
 }
 
+function semanticBorderClass(score: number | undefined): string {
+  if (score == null || score <= 0) {
+    return 'before:from-primary-400 before:to-secondary-500';
+  }
+  if (score >= 0.8) {
+    return 'before:from-emerald-500 before:to-emerald-600';
+  }
+  if (score >= 0.5) {
+    return 'before:from-secondary-400 before:to-primary-500';
+  }
+  return 'before:from-amber-400 before:to-secondary-500';
+}
+
 export const ExploreResultRow = memo(function ExploreResultRow({
   recording: r,
   returnTo,
@@ -122,9 +135,14 @@ export const ExploreResultRow = memo(function ExploreResultRow({
           { label: 'Xã/Phường', value: 'Chưa cập nhật' },
         ];
 
+  const semanticScore = r._semanticScore;
+
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl border border-secondary-200/60 bg-white/70 p-5 shadow-sm transition-all duration-300 hover:border-secondary-300 hover:shadow-lg before:absolute before:top-0 before:bottom-0 before:left-0 before:w-1.5 before:bg-gradient-to-b before:from-primary-400 before:to-secondary-500"
+      className={cn(
+        'group relative overflow-hidden rounded-2xl border border-secondary-200/60 bg-white/70 p-5 shadow-sm transition-all duration-300 hover:border-secondary-300 hover:shadow-lg before:absolute before:top-0 before:bottom-0 before:left-0 before:w-1.5 before:bg-gradient-to-b',
+        semanticBorderClass(semanticScore),
+      )}
     >
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start sm:gap-6">
         <div className="min-w-0 flex-1">
@@ -138,6 +156,15 @@ export const ExploreResultRow = memo(function ExploreResultRow({
                 Đã xác minh
               </span>
             )}
+            {semanticScore != null && semanticScore > 0 ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700"
+                title="Độ khớp ngữ nghĩa với mô tả tìm kiếm"
+              >
+                <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                {Math.round(semanticScore * 100)}% khớp
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">

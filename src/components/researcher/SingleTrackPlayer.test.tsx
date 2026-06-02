@@ -70,7 +70,7 @@ const recordingFixture: Recording = {
     username: 'user',
     email: 'u@example.com',
     fullName: 'User',
-    role: UserRole.USER,
+    role: UserRole.CONTRIBUTOR,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },

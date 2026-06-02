@@ -1,8 +1,6 @@
 import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import type { KeyboardEvent, LegacyRef, ReactNode } from 'react';
 import { useRef } from 'react';
-import { Link } from 'react-router-dom';
-
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/helpers';
 
@@ -22,7 +20,7 @@ export type ExploreSearchHeaderProps = {
   /** Gộp thêm class (vd. `mb-0` khi nhúng trong hero trang Chủ). */
   className?: string;
   /**
-   * `home-semantic-only`: trang Chủ — chỉ ô ngữ nghĩa, không tab từ khóa, không link /semantic-search.
+   * `home-semantic-only`: trang Chủ — chỉ ô ngữ nghĩa, không tab từ khóa.
    */
   layout?: 'default' | 'home-semantic-only';
 };
@@ -104,21 +102,8 @@ export default function ExploreSearchHeader({
         className,
       )}
     >
-      <div
-        className={cn(
-          'mb-4',
-          !homeSemanticOnly && 'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
-        )}
-      >
+      <div className="mb-4">
         <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">Tìm kiếm</h2>
-        {!homeSemanticOnly ? (
-          <Link
-            to="/semantic-search"
-            className="text-sm font-semibold text-secondary-800 underline-offset-2 hover:text-secondary-900 hover:underline"
-          >
-            Giao diện tìm theo nghĩa đầy đủ →
-          </Link>
-        ) : null}
       </div>
 
       {!homeSemanticOnly ? (

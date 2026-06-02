@@ -1,42 +1,47 @@
-export type AnalyticsOverview = {
-  totalRecordings?: number;
-  totalSubmissions?: number;
-  totalUsers?: number;
-  totalContributors?: number;
-  totalExperts?: number;
-};
+import type { components } from '@/api';
 
-export type CoverageRow = {
-  name?: string;
-  label?: string;
-  ethnicity?: string;
-  region?: string;
-  count?: number;
-  value?: number;
-};
+/** Swagger: `OverviewMetricsDto` — `GET /api/Analytics/overview` */
+export type OverviewMetricsDto =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.OverviewMetricsDto'];
 
-export type ContributorRow = {
-  userId?: string;
+/** Swagger: `SubmissionAnalyticsDto` — `GET /api/Analytics/submissions` */
+export type SubmissionAnalyticsDto =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.SubmissionAnalyticsDto'];
+
+/** Swagger: `CoverageChartDto` — `GET /api/Analytics/coverage` */
+export type CoverageRow =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.CoverageChartDto'];
+
+/** Swagger: `ContributorLeaderboardDto` — `GET /api/Analytics/contributors` */
+export type ContributorLeaderboardDto =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.ContributorLeaderboardDto'];
+
+/**
+ * Contributor row for admin analytics UI.
+ * Extends swagger DTO with FE-only aliases used when merging with `adminApi.getUsers()`.
+ */
+export type ContributorRow = ContributorLeaderboardDto & {
+  /** FE-only: alias for `userId` in merged user tables */
   id?: string;
-  username?: string;
-  fullName?: string;
-  contributionCount?: number;
+  /** FE-only: alias for `contributionCount` */
   submissions?: number;
-  approvedCount?: number;
-  rejectedCount?: number;
 };
 
-export type ExpertPerformanceDto = {
-  expertId?: string | null;
-  name?: string | null;
-  reviews?: number;
-  accuracy?: number;
-  avgTime?: string | null;
-};
+/** Swagger: `ExpertPerformanceResponseDto` — `GET /api/Analytics/experts` */
+export type ExpertPerformanceDto =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.ExpertPerformanceResponseDto'];
 
-export type ContentAnalyticsDto = {
-  totalSongs?: number;
-  byEthnicity?: Record<string, number> | null;
-  byRegion?: Record<string, number> | null;
-  mostViewedSongs?: string[] | null;
+/** Swagger: `ContentAnalyticsResponseDto` — `GET /api/Analytics/content` */
+export type ContentAnalyticsDto =
+  components['schemas']['VietTuneArchive.Application.Mapper.DTOs.AnalyticsDto.ContentAnalyticsResponseDto'];
+
+/**
+ * Overview payload from `analyticsApi.getOverview()`.
+ * Contract fields follow `OverviewMetricsDto`; legacy name kept until dashboard mapping (T3).
+ */
+export type AnalyticsOverview = OverviewMetricsDto & {
+  /**
+   * @deprecated Prefer `totalSongs` from `OverviewMetricsDto`. Still read in `useAdminDashboardData` (T3).
+   */
+  totalRecordings?: number;
 };

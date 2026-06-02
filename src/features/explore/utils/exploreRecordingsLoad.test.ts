@@ -28,15 +28,18 @@ import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchi
 import { semanticSearchService } from '@/services/semanticSearchService';
 import type { Recording } from '@/types';
 
-function semanticRows(count: number) {
-  return Array.from({ length: count }, (_, i) => ({
-    recording: {
-      id: `sem-${i}`,
-      title: `Track ${i}`,
-      uploadedDate: new Date(2024, 0, 1 + ((count - i) % 28)).toISOString(),
-    } as Recording,
-    similarityScore: 1 - i * 0.01,
-  }));
+function semanticRows(count: number, elapsedMs = 120) {
+  return {
+    results: Array.from({ length: count }, (_, i) => ({
+      recording: {
+        id: `sem-${i}`,
+        title: `Track ${i}`,
+        uploadedDate: new Date(2024, 0, 1 + ((count - i) % 28)).toISOString(),
+      } as Recording,
+      similarityScore: 1 - i * 0.01,
+    })),
+    elapsedMs,
+  };
 }
 
 function mkRecording(p: { id: string; title: string; uploadedDate: string }): Recording {
@@ -72,6 +75,7 @@ describe('loadExploreRecordings semantic mode', () => {
     expect(p1.recordings[0]?.id).toBe('sem-0');
     expect(p1.recordings[19]?.id).toBe('sem-19');
     expect(p1.dataSource).toBe('searchApi');
+    expect(p1.semanticElapsedMs).toBe(120);
 
     const p2 = await loadExploreRecordings({
       currentPage: 2,

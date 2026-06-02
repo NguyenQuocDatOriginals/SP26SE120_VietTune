@@ -1,6 +1,6 @@
 /**
  * Shared conversion from LocalRecording (upload/moderation storage) to Recording (display/API type).
- * Used for demo fallback when API is unavailable (HomePage, SemanticSearchPage, etc.).
+ * Used for demo fallback when API is unavailable (HomePage, etc.).
  */
 import { REGION_NAMES } from '@/config/constants';
 import type { LocalRecording } from '@/types';
@@ -130,7 +130,7 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
               'Không có thông tin',
             role: (typeof local.uploader?.role === 'string'
               ? local.uploader.role
-              : UserRole.USER) as UserRole,
+              : UserRole.CONTRIBUTOR) as UserRole,
             createdAt: local.uploader?.createdAt ?? new Date().toISOString(),
             updatedAt: local.uploader?.updatedAt ?? new Date().toISOString(),
           }
@@ -139,7 +139,7 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
             username: '',
             email: '',
             fullName: 'Không có thông tin',
-            role: UserRole.USER,
+            role: UserRole.CONTRIBUTOR,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },

@@ -1,4 +1,5 @@
 import { BookOpen, Calendar, Link2, Pencil, RefreshCw, User } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import KBEntryForm from './KBEntryForm';
@@ -29,6 +30,8 @@ function formatMetaDate(raw?: string): string {
 export interface KnowledgeBasePanelProps {
   /** When set and screen is `list`, show `BackButton` with this `to` */
   listBackTo?: string;
+  /** Optional breadcrumb row above title (admin wayfinding). */
+  breadcrumbSlot?: ReactNode;
   /** Render inside researcher tab — tighter chrome */
   embedded?: boolean;
   /** Open create form on mount (e.g. after navigation from admin dashboard) */
@@ -41,6 +44,7 @@ export interface KnowledgeBasePanelProps {
 
 export default function KnowledgeBasePanel({
   listBackTo,
+  breadcrumbSlot,
   embedded = false,
   openCreateOnMount = false,
   readOnly = false,
@@ -163,6 +167,7 @@ export default function KnowledgeBasePanel({
   return (
     <div className={outerClass} style={embedded ? undefined : { backgroundColor: '#FFF7E6' }}>
       <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${innerPad}`}>
+        {breadcrumbSlot}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-100/90 shadow-sm">

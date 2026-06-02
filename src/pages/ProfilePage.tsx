@@ -92,9 +92,12 @@ export default function ProfilePage() {
     if (authService.isAuthenticated()) {
       try {
         const res = await authService.updateProfile({
+          id: updated.id,
           fullName: updated.fullName,
           username: updated.username,
           email: updated.email,
+          phoneNumber: updated.phoneNumber,
+          avatar: updated.avatar,
         });
         if (res && res.data) {
           const serverUser = res.data as User;

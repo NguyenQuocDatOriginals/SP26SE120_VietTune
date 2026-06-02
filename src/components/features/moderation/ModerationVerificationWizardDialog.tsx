@@ -1,4 +1,4 @@
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, Check, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, Ref } from 'react';
 import { createPortal } from 'react-dom';
@@ -8,7 +8,11 @@ import VideoPlayer from '@/components/features/VideoPlayer';
 import { EXPERT_API_PHASE2 } from '@/config/expertWorkflowPhase';
 import { MODERATION_EXPERT_TEXTAREA_MAX_LENGTH } from '@/config/validationConstants';
 import { VERIFICATION_STEPS } from '@/features/moderation/constants/verificationStepDefinitions';
-import { getMissingStep2Fields } from '@/features/moderation/hooks/useModerationWizard';
+import {
+  getMissingStep2FieldKeys,
+  getMissingStep2Fields,
+} from '@/features/moderation/hooks/useModerationWizard';
+import { ModerationInstrumentCatalogSelect } from '@/components/features/moderation/ModerationInstrumentCatalogSelect';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import { buildRecordingForModerationWizard } from '@/features/moderation/utils/buildRecordingForModerationWizard';
 import { resolveCulturalContextForDisplay } from '@/features/moderation/utils/resolveReferenceDisplayStrings';
@@ -143,7 +147,6 @@ export function ModerationVerificationWizardDialog({
   formSlice,
   currentStep,
   onClose,
-  onUnclaim,
   onOpenReject,
   onPrevStep,
   onNextStep,
@@ -160,7 +163,6 @@ export function ModerationVerificationWizardDialog({
   formSlice: ModerationVerificationData | undefined;
   currentStep: number;
   onClose: () => void;
-  onUnclaim: () => void;
   onOpenReject: () => void;
   onPrevStep: () => void;
   onNextStep: () => void;
@@ -199,7 +201,7 @@ export function ModerationVerificationWizardDialog({
   const step1CulturalContext =
     item.culturalContext != null ? (resolvedCulturalContext ?? item.culturalContext) : undefined;
   const [newInstrumentOverride, setNewInstrumentOverride] = useState('');
-  const instrumentCatalogListId = `verification-instrument-catalog-${submissionId}`;
+  const [instrumentAddError, setInstrumentAddError] = useState<string | null>(null);
   const [instrumentsCatalog, setInstrumentsCatalog] = useState<InstrumentItem[]>([]);
   const [instrumentsLoading, setInstrumentsLoading] = useState(false);
 
@@ -248,10 +250,44 @@ export function ModerationVerificationWizardDialog({
       step1CulturalContext?.eventType ?? '',
     ],
   });
-  const step2MissingFields =
+  const step2DeclaredInstruments = step1CulturalContext?.instruments ?? [];
+  const step2MissingFieldKeys =
     currentStep === 2
-      ? getMissingStep2Fields(formSlice?.step2, step1CulturalContext?.instruments ?? [])
+      ? getMissingStep2FieldKeys(formSlice?.step2, step2DeclaredInstruments)
       : [];
+  const step2MissingFields =
+    currentStep === 2 ? getMissingStep2Fields(formSlice?.step2, step2DeclaredInstruments) : [];
+
+  const WIZARD_STEP_LABELS = ['Kiểm tra sơ bộ', 'Xác minh chuyên môn', 'Phê duyệt'] as const;
+
+  const instrumentExcludeNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const n of listedInstruments) names.add(n);
+    for (const n of Object.keys(step2Overrides)) names.add(n);
+    return Array.from(names);
+  }, [listedInstruments, step2Overrides]);
+
+  const tryAddInstrumentOverride = () => {
+    const name = newInstrumentOverride.trim();
+    if (!name) {
+      setInstrumentAddError(null);
+      return;
+    }
+    const norm = normalizeInstrumentDisplayKey(name);
+    const isDuplicate =
+      listedInstruments.some((n) => normalizeInstrumentDisplayKey(n) === norm) ||
+      Object.keys(step2Overrides).some((n) => normalizeInstrumentDisplayKey(n) === norm);
+    if (isDuplicate) {
+      setInstrumentAddError('Nhạc cụ này đã có trong danh sách khai báo hoặc đã được thêm.');
+      return;
+    }
+    setInstrumentAddError(null);
+    onUpdateVerificationForm(2, 'instrumentOverrides', {
+      ...step2Overrides,
+      [name]: 'added',
+    });
+    setNewInstrumentOverride('');
+  };
 
   return createPortal(
     <div
@@ -267,7 +303,7 @@ export function ModerationVerificationWizardDialog({
         aria-labelledby="verification-dialog-title"
         aria-describedby={`verification-step-description-${currentStep}`}
         tabIndex={-1}
-        className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-5xl w-full overflow-hidden flex flex-col transition-all duration-300 pointer-events-auto transform mt-8 outline-none focus:outline-none"
+        className="rounded-2xl border border-neutral-300/80 bg-surface-panel shadow-2xl backdrop-blur-sm max-w-5xl w-full overflow-hidden flex flex-col min-h-0 transition-all duration-300 pointer-events-auto transform mt-8 outline-none focus:outline-none"
         style={{
           animation: 'slideUp 0.3s ease-out',
           maxHeight: 'calc(100vh - 4rem)',
@@ -288,7 +324,7 @@ export function ModerationVerificationWizardDialog({
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6 max-h-[80vh]">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 overscroll-contain">
           <div className="space-y-6">
             <div
               className="rounded-2xl border border-neutral-200/80 shadow-md p-4 sm:p-5 bg-surface-panel"
@@ -513,38 +549,84 @@ export function ModerationVerificationWizardDialog({
                 >
                   {stepDef.description}
                 </p>
-                <div
-                  className="flex items-center gap-2 mb-6"
+                <ol
+                  className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-2"
                   aria-label={`Tiến độ kiểm duyệt: bước ${currentStep} trong 3`}
                 >
-                  {[1, 2, 3].map((step) => (
-                    <div key={step} className="flex-1">
-                      <div
-                        className={`h-2 rounded-full ${step <= currentStep ? 'bg-primary-600' : 'bg-neutral-200'}`}
-                        aria-hidden
-                      />
-                      <div
-                        className="text-xs text-center mt-1 text-neutral-600"
-                        aria-current={step === currentStep ? 'step' : undefined}
+                  {[1, 2, 3].map((step) => {
+                    const isCompleted = step < currentStep;
+                    const isActive = step === currentStep;
+                    const isUpcoming = step > currentStep;
+                    return (
+                      <li
+                        key={step}
+                        className={`flex flex-1 items-start gap-2 rounded-xl border px-3 py-2.5 transition-colors ${
+                          isActive
+                            ? 'border-primary-500/80 bg-primary-50 shadow-sm'
+                            : isCompleted
+                              ? 'border-emerald-200/90 bg-emerald-50/60'
+                              : 'border-neutral-200/90 bg-neutral-50/80'
+                        }`}
+                        aria-current={isActive ? 'step' : undefined}
                       >
-                        Bước {step}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        <span
+                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                            isActive
+                              ? 'bg-primary-600 text-white'
+                              : isCompleted
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-neutral-200 text-neutral-600'
+                          }`}
+                          aria-hidden
+                        >
+                          {isCompleted ? <Check className="h-4 w-4" strokeWidth={2.5} /> : step}
+                        </span>
+                        <div className="min-w-0">
+                          <p
+                            className={`text-xs font-semibold leading-tight ${
+                              isActive
+                                ? 'text-primary-800'
+                                : isCompleted
+                                  ? 'text-emerald-800'
+                                  : 'text-neutral-500'
+                            }`}
+                          >
+                            Bước {step}
+                          </p>
+                          <p
+                            className={`text-sm leading-snug ${
+                              isActive
+                                ? 'font-bold text-primary-900'
+                                : isUpcoming
+                                  ? 'text-neutral-500'
+                                  : 'font-medium text-emerald-900'
+                            }`}
+                          >
+                            {WIZARD_STEP_LABELS[step - 1]}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
                 {!isCurrentStepValid && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
+                  <div
+                    className="mb-4 rounded-lg border border-red-200/90 bg-red-50/90 px-3 py-3"
+                    role="alert"
+                  >
                     {currentStep === 2 && step2MissingFields.length > 0 ? (
                       <>
-                        <p className="text-sm text-red-600 font-medium">Bạn còn thiếu:</p>
-                        <ul className="mt-1 list-disc pl-5 text-sm text-red-600">
+                        <p className="text-sm font-medium text-red-800">
+                          Bạn cần đánh dấu đủ các tiêu chí bắt buộc trước khi tiếp tục:
+                        </p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
                           {step2MissingFields.map((field) => (
                             <li key={field}>{field}</li>
                           ))}
                         </ul>
                       </>
                     ) : (
-                      <p className="text-sm text-red-600 font-medium">
+                      <p className="text-sm font-medium text-red-800">
                         Vui lòng hoàn thành tất cả các yêu cầu bắt buộc
                       </p>
                     )}
@@ -590,18 +672,38 @@ export function ModerationVerificationWizardDialog({
                     <span className="text-sm text-neutral-500">(Bắt buộc)</span>
                   </h3>
                   <div className="space-y-3">
-                    {VERIFICATION_STEPS[1].fields.map((field) => (
-                      <div key={field.key} className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          aria-label={field.label}
-                          checked={!!(formSlice?.step2 as Record<string, unknown> | undefined)?.[field.key]}
-                          onChange={(e) => onUpdateVerificationForm(2, field.key, e.target.checked)}
-                          className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 cursor-pointer"
-                        />
-                        <span className="text-neutral-700">{field.label}</span>
-                      </div>
-                    ))}
+                    {VERIFICATION_STEPS[1].fields.map((field) => {
+                      const isMissing = step2MissingFieldKeys.includes(
+                        field.key as (typeof step2MissingFieldKeys)[number],
+                      );
+                      return (
+                        <div
+                          key={field.key}
+                          className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
+                            isMissing && !isCurrentStepValid
+                              ? 'border-amber-300/80 bg-amber-50/50'
+                              : 'border-transparent'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label={field.label}
+                            checked={
+                              !!(formSlice?.step2 as Record<string, unknown> | undefined)?.[field.key]
+                            }
+                            onChange={(e) =>
+                              onUpdateVerificationForm(2, field.key, e.target.checked)
+                            }
+                            className="mt-1 h-5 w-5 flex-shrink-0 rounded border-neutral-300 accent-primary-600 hover:accent-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 cursor-pointer"
+                          />
+                          <span
+                            className={`text-sm leading-relaxed ${isMissing && !isCurrentStepValid ? 'font-medium text-neutral-900' : 'text-neutral-700'}`}
+                          >
+                            {field.label}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="rounded-xl border border-secondary-200/70 bg-gradient-to-br from-surface-panel to-cream-50/50 p-4 shadow-sm">
                     <div className="mb-3 space-y-1">
@@ -614,12 +716,6 @@ export function ModerationVerificationWizardDialog({
                     {instrumentsLoading && (
                       <p className="mb-2 text-xs font-medium text-neutral-500">Đang tải danh mục nhạc cụ…</p>
                     )}
-                    <datalist id={instrumentCatalogListId}>
-                      {instrumentsCatalog.map((inst) => (
-                        <option key={inst.id} value={inst.name} />
-                      ))}
-                    </datalist>
-
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
                       Danh sách khai báo
                     </p>
@@ -689,30 +785,30 @@ export function ModerationVerificationWizardDialog({
                       <p id={`add-instrument-hint-${submissionId}`} className="text-xs text-neutral-500">
                         Gõ hoặc chọn gợi ý từ danh mục (không bắt buộc trùng chính xác).
                       </p>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                        <input
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                        <div
+                          className="min-w-0 flex-1"
                           id={`add-instrument-${submissionId}`}
-                          type="text"
-                          list={instrumentCatalogListId}
-                          value={newInstrumentOverride}
-                          onChange={(e) => setNewInstrumentOverride(e.target.value)}
-                          placeholder="Ví dụ: Đàn tranh…"
-                          autoComplete="off"
                           aria-describedby={`add-instrument-hint-${submissionId}`}
-                          className="min-h-[44px] min-w-0 flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-primary-400/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1"
-                        />
+                        >
+                          <ModerationInstrumentCatalogSelect
+                            instruments={instrumentsCatalog}
+                            disabled={instrumentsLoading}
+                            value={newInstrumentOverride}
+                            onChange={(name) => {
+                              setNewInstrumentOverride(name);
+                              setInstrumentAddError(null);
+                            }}
+                            excludeNames={instrumentExcludeNames}
+                            hasError={Boolean(instrumentAddError)}
+                            errorMessage={instrumentAddError ?? undefined}
+                          />
+                        </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            const name = newInstrumentOverride.trim();
-                            if (!name) return;
-                            onUpdateVerificationForm(2, 'instrumentOverrides', {
-                              ...step2Overrides,
-                              [name]: 'added',
-                            });
-                            setNewInstrumentOverride('');
-                          }}
-                          className="min-h-[44px] shrink-0 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                          onClick={tryAddInstrumentOverride}
+                          disabled={!newInstrumentOverride.trim()}
+                          className="min-h-[44px] shrink-0 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
                         >
                           Thêm nhạc cụ
                         </button>
@@ -790,32 +886,24 @@ export function ModerationVerificationWizardDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 p-6 border-t border-neutral-200 bg-neutral-50/50">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onUnclaim}
-              aria-label="Hủy nhận kiểm duyệt và trả bản thu về hàng đợi"
-              className="px-6 py-2.5 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-            >
-              Hủy nhận kiểm duyệt
-            </button>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-neutral-200 bg-neutral-50/95 p-4 sm:p-6">
+          <div className="flex items-center">
             <button
               type="button"
               onClick={onOpenReject}
               aria-label="Từ chối bản thu đang kiểm duyệt"
-              className="px-6 py-2.5 bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-orange-600/40 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              className="px-5 py-2.5 rounded-full bg-gradient-to-br from-orange-600 to-orange-700 font-medium text-white shadow-md transition-colors hover:from-orange-500 hover:to-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
             >
               Từ chối
             </button>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
             {currentStep > 1 && (
               <button
                 type="button"
                 onClick={onPrevStep}
                 aria-label={`Quay lại bước ${currentStep - 1}`}
-                className="px-6 py-2.5 bg-neutral-200/80 hover:bg-neutral-300 text-neutral-800 rounded-full font-medium transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                className="px-5 py-2.5 rounded-full border border-neutral-300/90 bg-white font-medium text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               >
                 Quay lại (Bước {currentStep - 1})
               </button>
@@ -826,7 +914,7 @@ export function ModerationVerificationWizardDialog({
                 onClick={onNextStep}
                 disabled={!isCurrentStepValid}
                 aria-label={`Chuyển tới bước ${currentStep + 1}`}
-                className="px-6 py-2.5 bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-110 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2"
+                className="px-5 py-2.5 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 font-semibold text-white shadow-md transition-colors hover:from-primary-500 hover:to-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:from-neutral-300 disabled:to-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
               >
                 Tiếp tục (Bước {currentStep + 1})
               </button>
@@ -836,7 +924,7 @@ export function ModerationVerificationWizardDialog({
                 onClick={onCompleteFinalStep}
                 disabled={!allStepsComplete}
                 aria-label="Hoàn thành kiểm duyệt và mở xác nhận phê duyệt"
-                className="px-6 py-2.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white rounded-full font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-green-600/40 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                className="px-5 py-2.5 rounded-full bg-gradient-to-br from-green-600 to-green-700 font-semibold text-white shadow-md transition-colors hover:from-green-500 hover:to-green-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-300 disabled:from-neutral-300 disabled:to-neutral-300 disabled:text-neutral-600 disabled:shadow-none"
               >
                 Hoàn thành kiểm duyệt
               </button>

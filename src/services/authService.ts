@@ -1,11 +1,46 @@
 import { apiFetchLoose, apiOk, asApiEnvelope } from '@/api';
-import type { ApiAuthConfirmEmailQuery, ApiAuthLoginModel, ApiAuthRegisterModel } from '@/api';
-import { legacyGet, legacyPost, legacyPut } from '@/api/legacyHttp';
+import type {
+  ApiAuthConfirmEmailQuery,
+  ApiAuthLoginModel,
+  ApiAuthRegisterModel,
+  ApiUpdateInfoDTO,
+  ApiUpdatePasswordDTO,
+} from '@/api';
 import { logServiceError, logServiceWarn } from '@/services/serviceLogger';
 import { getItem, setItem, removeItem, sessionSetItem } from '@/services/storageService';
 import { User, LoginForm, ApiResponse, UserRole } from '@/types';
 import { uiToast } from '@/uiToast';
 import { isJwtExpired } from '@/utils/jwtExpiry';
+
+const LOGIN_GENERIC_ERROR = 'Sai tài khoản hoặc mật khẩu';
+
+function extractApiErrorMessage(data: unknown): string | undefined {
+  if (data == null) return undefined;
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  if (typeof data === 'object' && 'message' in data) {
+    const msg = (data as { message?: unknown }).message;
+    if (typeof msg === 'string' && msg.trim()) return msg.trim();
+  }
+  return undefined;
+}
+
+function mapLoginHttpError(error: unknown, status: number | undefined): Error {
+  const err = new Error('Login failed');
+  let message = LOGIN_GENERIC_ERROR;
+
+  if (status === 401) {
+    message = LOGIN_GENERIC_ERROR;
+  } else if (status === 400) {
+    const body = (error as { response?: { data?: unknown } }).response?.data;
+    message = extractApiErrorMessage(body) ?? LOGIN_GENERIC_ERROR;
+  }
+
+  (err as { response?: { status?: number; data?: { message?: string } } }).response = {
+    status,
+    data: { message },
+  };
+  return err;
+}
 
 export const authService = {
   // Login
@@ -53,6 +88,7 @@ export const authService = {
           role: authData.role as UserRole,
           phoneNumber: authData.phoneNumber,
           isActive: authData.isActive,
+          // BE login response has no isEmailConfirmed; successful login implies email was confirmed server-side.
           isEmailConfirmed: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -71,12 +107,7 @@ export const authService = {
     } catch (error) {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 400 || status === 401) {
-        const err = new Error('Invalid credentials');
-        (err as { response?: { status?: number; data?: { message?: string } } }).response = {
-          status,
-          data: { message: 'Sai tài khoản hoặc mật khẩu' },
-        };
-        throw err;
+        throw mapLoginHttpError(error, status);
       }
       logServiceError('Login error', error);
       throw error;
@@ -130,20 +161,6 @@ export const authService = {
     }
   },
 
-  // Verify OTP / Confirm Account (POST - keeping for compatibility if needed, but adding confirmEmail)
-  verifyOtp: async (email: string, otp: string) => {
-    try {
-      const response = await legacyPost<ApiResponse<unknown>>('/auth/verify-otp', {
-        email,
-        otp,
-      });
-      return response;
-    } catch (error) {
-      logServiceError('Verify OTP error', error);
-      throw error;
-    }
-  },
-
   // Confirm Email (PUT per OpenAPI)
   confirmEmail: async (token: string) => {
     try {
@@ -159,6 +176,29 @@ export const authService = {
     }
   },
 
+  resendConfirmationEmail: async (email: string) => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      const err = new Error('Email không được để trống.');
+      (err as { response?: { data?: { message?: string } } }).response = {
+        data: { message: 'Email không được để trống.' },
+      };
+      throw err;
+    }
+    const form = new FormData();
+    form.set('email', trimmed);
+    try {
+      return await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.PUT('/api/Auth/resend-confirmation-email', { body: form }),
+        ),
+      );
+    } catch (error) {
+      logServiceError('Resend confirmation email error', error);
+      throw error;
+    }
+  },
+
   forgotPassword: async (email: string) => {
     const form = new FormData();
     form.set('Email', email.trim());
@@ -169,6 +209,23 @@ export const authService = {
     );
   },
 
+  resetPassword: async (email: string, otp: string, newPassword: string) => {
+    const form = new FormData();
+    form.set('Email', email.trim());
+    form.set('OTP', otp.trim());
+    form.set('NewPassword', newPassword);
+    try {
+      return await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.PUT('/api/Auth/reset-password', { body: form }),
+        ),
+      );
+    } catch (error) {
+      logServiceError('Reset password error', error);
+      throw error;
+    }
+  },
+
   // Logout: only clear storage. Navigation to /login is handled by the caller
   // so we avoid a full page reload and a brief blank screen flash.
   logout: async () => {
@@ -177,14 +234,41 @@ export const authService = {
     await sessionSetItem('fromLogout', '1');
   },
 
-  // Get current user
-  getCurrentUser: async () => {
-    return legacyGet<ApiResponse<User>>('/auth/me');
-  },
+  updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
+    const stored = authService.getStoredUser();
+    const userId = data.id ?? stored?.id;
+    if (!userId || !stored) {
+      throw new Error('Cannot update profile without a stored user.');
+    }
 
-  // Update profile
-  updateProfile: async (data: Partial<User>) => {
-    return legacyPut<ApiResponse<User>>('/auth/profile', data);
+    const payload: ApiUpdateInfoDTO = {
+      userId,
+      fullName: data.fullName ?? stored.fullName ?? null,
+      avatarUrl: data.avatar ?? stored.avatar ?? null,
+      phone: data.phoneNumber ?? stored.phoneNumber ?? null,
+    };
+
+    try {
+      await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.PUT('/api/User/update-profile', { body: payload }),
+        ),
+      );
+
+      const merged: User = {
+        ...stored,
+        ...data,
+        id: userId,
+        fullName: data.fullName ?? stored.fullName,
+        phoneNumber: data.phoneNumber ?? stored.phoneNumber,
+        avatar: data.avatar ?? stored.avatar,
+      };
+      await setItem('user', JSON.stringify(merged));
+      return { success: true, data: merged };
+    } catch (error) {
+      logServiceError('Update profile error', error);
+      throw error;
+    }
   },
 
   // Queue a pending profile update for retry when server becomes available
@@ -211,23 +295,18 @@ export const authService = {
       for (const id of ids) {
         try {
           const data = pending[id];
-          const res = await legacyPut<ApiResponse<User>>('/auth/profile', data);
-          if (res && res.data) {
-            // Update local stored user and overrides
-            const serverUser = res.data as User;
-            await setItem('user', JSON.stringify(serverUser));
+          const res = await authService.updateProfile({ id, ...data });
+          if (res.success && res.data) {
+            const serverUser = res.data;
             const oRaw = getItem('users_overrides');
             const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
             overrides[serverUser.id] = serverUser;
-            await setItem('users_overrides', JSON.stringify(overrides));
+            if (import.meta.env.DEV) {
+              await setItem('users_overrides', JSON.stringify(overrides));
+            }
 
-            // Do NOT load localRecordings here — it can be huge and cause OOM.
-            // Propagation to localRecordings is done only in ProfilePage when user saves profile.
-
-            // Remove from pending
             delete pending[id];
 
-            // Notify user that profile has been synced
             try {
               uiToast.success('auth.profile.sync_success');
             } catch {
@@ -247,12 +326,28 @@ export const authService = {
     }
   },
 
-  // Change password
-  changePassword: async (oldPassword: string, newPassword: string) => {
-    return legacyPost<ApiResponse<void>>('/auth/change-password', {
+  changePassword: async (
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<ApiResponse<void>> => {
+    const payload: ApiUpdatePasswordDTO = {
+      userId,
       oldPassword,
       newPassword,
-    });
+      confirmPassword: newPassword,
+    };
+    try {
+      await apiOk<unknown>(
+        asApiEnvelope<unknown>(
+          apiFetchLoose.PUT('/api/User/update-password', { body: payload }),
+        ),
+      );
+      return { success: true, data: undefined as void };
+    } catch (error) {
+      logServiceError('Change password error', error);
+      throw error;
+    }
   },
 
   // Get stored user — safe JSON parse to avoid app crash on corrupt storage

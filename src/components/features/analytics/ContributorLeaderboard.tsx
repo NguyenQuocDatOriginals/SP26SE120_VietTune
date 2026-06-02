@@ -4,68 +4,81 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { analyticsApi } from '@/services/analyticsApi';
 import type { ContributorRow } from '@/types/analytics';
 import { uiToast } from '@/uiToast';
+import {
+  normalizeContributorLeaderboard,
+  type NormalizedContributor,
+} from '@/utils/normalizeContributorLeaderboard';
 
 const DEFAULT_LIMIT = 20;
 
-type NormalizedContributor = {
-  id: string;
-  name: string;
-  username: string;
-  contributionCount: number;
-  approvedCount: number;
-  rejectedCount: number;
-};
-
-function toNumber(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
-function normalizeContributors(rows: ContributorRow[]): NormalizedContributor[] {
-  return rows
-    .map((row, idx) => {
-      const id = String(row.userId ?? row.id ?? `unknown-${idx}`);
-      const username = String(row.username ?? '').trim();
-      const fullName = String(row.fullName ?? '').trim();
-      return {
-        id,
-        name: fullName || username || `Người đóng góp #${idx + 1}`,
-        username: username || '—',
-        contributionCount: toNumber(row.contributionCount ?? row.submissions),
-        approvedCount: toNumber(row.approvedCount),
-        rejectedCount: toNumber(row.rejectedCount),
-      };
-    })
-    .sort((a, b) => b.contributionCount - a.contributionCount);
-}
+export type ContributorLeaderboardLoadState = 'idle' | 'loading' | 'ok' | 'error';
 
 export interface ContributorLeaderboardProps {
   className?: string;
+  /** When set with `loadState`, skips internal fetch (admin dashboard). */
+  contributors?: ContributorRow[] | null;
+  loadState?: ContributorLeaderboardLoadState;
+  onRefresh?: () => void;
 }
 
-export default function ContributorLeaderboard({ className }: ContributorLeaderboardProps) {
-  const [rows, setRows] = useState<NormalizedContributor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function ContributorLeaderboard({
+  className,
+  contributors: contributorsProp,
+  loadState: loadStateProp,
+  onRefresh,
+}: ContributorLeaderboardProps) {
+  const isControlled = loadStateProp !== undefined;
+
+  const [internalRows, setInternalRows] = useState<NormalizedContributor[]>([]);
+  const [internalLoading, setInternalLoading] = useState(!isControlled);
+  const [internalError, setInternalError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
 
   const loadContributors = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setInternalLoading(true);
+    setInternalError(null);
     try {
       const result = await analyticsApi.getContributors();
-      setRows(normalizeContributors(result));
+      setInternalRows(normalizeContributorLeaderboard(result));
     } catch (err) {
-      setRows([]);
-      setError('Không thể tải bảng xếp hạng người đóng góp.');
+      setInternalRows([]);
+      setInternalError('Không thể tải bảng xếp hạng người đóng góp.');
       uiToast.fromApiError(err, 'common.http_500');
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    if (!isControlled) {
+      void loadContributors();
+    }
+  }, [isControlled, loadContributors]);
+
+  const rows = useMemo(() => {
+    if (isControlled) {
+      return normalizeContributorLeaderboard(contributorsProp ?? []);
+    }
+    return internalRows;
+  }, [isControlled, contributorsProp, internalRows]);
+
+  const loading = isControlled
+    ? loadStateProp === 'loading' || loadStateProp === 'idle'
+    : internalLoading;
+
+  const error = isControlled
+    ? loadStateProp === 'error'
+      ? 'Không thể tải bảng xếp hạng người đóng góp.'
+      : null
+    : internalError;
+
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+      return;
+    }
     void loadContributors();
-  }, [loadContributors]);
+  };
 
   const visibleRows = useMemo(
     () => (showAll ? rows : rows.slice(0, DEFAULT_LIMIT)),
@@ -91,7 +104,7 @@ export default function ContributorLeaderboard({ className }: ContributorLeaderb
           )}
           <button
             type="button"
-            onClick={() => void loadContributors()}
+            onClick={handleRefresh}
             disabled={loading}
             className="rounded-lg border border-neutral-200/80 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
           >

@@ -1,9 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useUploadAiAdvisory } from '@/features/upload/hooks/useUploadAiAdvisory';
+import { reconcileLanguageFields } from '@/features/upload/languageUtils';
+import {
+  hasValidDetectedInstruments,
+  normalizePerformanceTypeKey,
+  PERFORMANCE_TYPE,
+} from '@/features/upload/performanceTypeUtils';
+import type { DetectedInstrument } from '@/types/instrumentDetection';
 import { getAddressFromCoordinates } from '@/services/geocodeService';
-import { suggestMetadata } from '@/services/metadataSuggestService';
-import { buildGpsRegionHintForMetadata } from '@/utils/gpsRegionHint';
 
 /**
  * Contributor metadata fields, GPS, optional “gợi ý metadata” button, and submit/error UI for UploadMusic.
@@ -48,7 +53,56 @@ export function useUploadForm() {
   const [eventType, setEventType] = useState('');
   const [customEventType, setCustomEventType] = useState('');
   const [performanceType, setPerformanceType] = useState('');
+  const performanceTypeManuallySetRef = useRef(false);
   const [instruments, setInstruments] = useState<string[]>([]);
+
+  const setPerformanceTypeFromUser = useCallback((value: string) => {
+    performanceTypeManuallySetRef.current = true;
+    setPerformanceType(value);
+  }, []);
+
+  const applyPerformanceTypeFromAi = useCallback((value: string) => {
+    if (performanceTypeManuallySetRef.current) return;
+    const key = normalizePerformanceTypeKey(value);
+    if (key) setPerformanceType(key);
+  }, []);
+
+  const maybeApplyInstrumentalFromDetectedInstruments = useCallback(
+    (detected: DetectedInstrument[]) => {
+      if (performanceTypeManuallySetRef.current) return;
+      if (!hasValidDetectedInstruments(detected)) return;
+      setPerformanceType(PERFORMANCE_TYPE.INSTRUMENTAL);
+    },
+    [],
+  );
+
+  const handleLanguageSelect = useCallback(
+    (val: string) => {
+      if (noLanguage) return;
+      setLanguage(val);
+      if (val !== 'Khác') setCustomLanguage('');
+    },
+    [noLanguage],
+  );
+
+  const handleNoLanguageChange = useCallback((checked: boolean) => {
+    setNoLanguage(checked);
+    if (checked) {
+      setLanguage('');
+      setCustomLanguage('');
+    }
+  }, []);
+
+  useEffect(() => {
+    const next = reconcileLanguageFields(language, customLanguage, noLanguage);
+    if (next.noLanguage && !noLanguage) {
+      setNoLanguage(true);
+    }
+    if (next.language !== language || next.customLanguage !== customLanguage) {
+      setLanguage(next.language);
+      setCustomLanguage(next.customLanguage);
+    }
+  }, [language, customLanguage, noLanguage]);
 
   const [description, setDescription] = useState('');
   const [fieldNotes, setFieldNotes] = useState('');
@@ -101,10 +155,6 @@ export function useUploadForm() {
   const [capturedGpsLat, setCapturedGpsLat] = useState<number | null>(null);
   const [capturedGpsLon, setCapturedGpsLon] = useState<number | null>(null);
   const [capturedGpsAccuracy, setCapturedGpsAccuracy] = useState<number | null>(null);
-  const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
-  const [aiSuggestError, setAiSuggestError] = useState<string | null>(null);
-  const [aiSuggestSuccess, setAiSuggestSuccess] = useState<string | null>(null);
-
   const requiresInstruments =
     performanceType === 'instrumental' || performanceType === 'vocal_accompaniment';
   const allowsLyrics = performanceType === 'acappella' || performanceType === 'vocal_accompaniment';
@@ -165,60 +215,6 @@ export function useUploadForm() {
     );
   }, []);
 
-  const handleAiSuggestMetadata = useCallback(async () => {
-    setAiSuggestError(null);
-    setAiSuggestSuccess(null);
-    setAiSuggestLoading(true);
-    try {
-      const gpsHint =
-        capturedGpsLat != null &&
-        capturedGpsLon != null &&
-        Number.isFinite(capturedGpsLat) &&
-        Number.isFinite(capturedGpsLon)
-          ? buildGpsRegionHintForMetadata(capturedGpsLat, capturedGpsLon)
-          : undefined;
-      const baseDescription = description?.trim() || '';
-      const mergedDescription = [baseDescription, gpsHint].filter(Boolean).join('\n\n') || undefined;
-      const res = await suggestMetadata({
-        genre: vocalStyle || undefined,
-        title: title?.trim() || undefined,
-        description: mergedDescription,
-      });
-      const hasSuggestions =
-        res.ethnicity || res.region || (res.instruments && res.instruments.length > 0);
-      if (res.message && !hasSuggestions) {
-        setAiSuggestError(res.message);
-      } else {
-        const parts: string[] = [];
-        if (res.ethnicity) {
-          setEthnicity(res.ethnicity);
-          parts.push(`Dân tộc: ${res.ethnicity}`);
-        }
-        if (res.region) {
-          setRegion(res.region);
-          parts.push(`Vùng: ${res.region}`);
-        }
-        if (res.instruments && res.instruments.length > 0) {
-          setInstruments((prev) => {
-            const combined = [...prev];
-            for (const name of res.instruments!) {
-              if (name && !combined.includes(name)) combined.push(name);
-            }
-            return combined.length > 0 ? combined : (res.instruments ?? []);
-          });
-          parts.push(`Nhạc cụ: ${res.instruments.join(', ')}`);
-        }
-        if (parts.length > 0) {
-          setAiSuggestSuccess(`Đã áp dụng gợi ý: ${parts.join(' · ')}. Xem lại kết quả phía trên.`);
-        }
-      }
-    } catch {
-      setAiSuggestError('Không kết nối được dịch vụ gợi ý. Kiểm tra backend và thử lại.');
-    } finally {
-      setAiSuggestLoading(false);
-    }
-  }, [vocalStyle, title, description, capturedGpsLat, capturedGpsLon]);
-
   return {
     title,
     setTitle,
@@ -232,8 +228,10 @@ export function useUploadForm() {
     setComposerUnknown,
     language,
     setLanguage,
+    handleLanguageSelect,
     noLanguage,
     setNoLanguage,
+    handleNoLanguageChange,
     customLanguage,
     setCustomLanguage,
     recordingDate,
@@ -278,6 +276,10 @@ export function useUploadForm() {
     setCustomEventType,
     performanceType,
     setPerformanceType,
+    setPerformanceTypeFromUser,
+    applyPerformanceTypeFromAi,
+    maybeApplyInstrumentalFromDetectedInstruments,
+    performanceTypeManuallySetRef,
     instruments,
     setInstruments,
     /** Advisory AI state (upload analyze-*); same refs as top-level aliases below. */
@@ -290,6 +292,10 @@ export function useUploadForm() {
     setAiAnalysisLoading: aiAdvisory.setAiAnalysisLoading,
     aiAnalysisError: aiAdvisory.aiAnalysisError,
     setAiAnalysisError: aiAdvisory.setAiAnalysisError,
+    aiAnalysisSuccess: aiAdvisory.aiAnalysisSuccess,
+    setAiAnalysisSuccess: aiAdvisory.setAiAnalysisSuccess,
+    aiAnalysisEmpty: aiAdvisory.aiAnalysisEmpty,
+    setAiAnalysisEmpty: aiAdvisory.setAiAnalysisEmpty,
     description,
     setDescription,
     fieldNotes,
@@ -341,15 +347,8 @@ export function useUploadForm() {
     setCapturedGpsLon,
     capturedGpsAccuracy,
     setCapturedGpsAccuracy,
-    aiSuggestLoading,
-    setAiSuggestLoading,
-    aiSuggestError,
-    setAiSuggestError,
-    aiSuggestSuccess,
-    setAiSuggestSuccess,
     requiresInstruments,
     allowsLyrics,
     handleGetGpsLocation,
-    handleAiSuggestMetadata,
   };
 }

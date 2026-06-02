@@ -55,16 +55,17 @@ export const useAuthStore = create<AuthState>((set) => ({
         if (user) {
           await setItem('user', JSON.stringify(user));
 
-          // Ensure overrides store includes this user so future demo/logins retain edits
-          try {
-            const oRaw = getItem('users_overrides');
-            const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
-            if (user.id) {
-              overrides[user.id] = user;
-              await setItem('users_overrides', JSON.stringify(overrides));
+          if (import.meta.env.DEV) {
+            try {
+              const oRaw = getItem('users_overrides');
+              const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
+              if (user.id) {
+                overrides[user.id] = user;
+                await setItem('users_overrides', JSON.stringify(overrides));
+              }
+            } catch (err) {
+              console.warn('Failed to update users_overrides', err);
             }
-          } catch (err) {
-            console.warn('Failed to update users_overrides', err);
           }
 
           // Do NOT load localRecordings here — it can be huge and cause OOM on login.
@@ -95,10 +96,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     set({ isLoading: true });
     try {
-      const response = await authService.getCurrentUser();
-      if (response.success && response.data) {
-        set({ user: response.data, isAuthenticated: true });
-        // After fetching current user, try to process any pending profile updates
+      const storedUser = authService.getStoredUser();
+      if (storedUser) {
+        set({ user: storedUser, isAuthenticated: true });
         try {
           authService
             .processPendingProfileUpdates()
@@ -106,14 +106,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         } catch (err) {
           console.warn('Failed to trigger pending profile processing', err);
         }
-      }
-    } catch (error) {
-      // Do NOT clear user state on fetch failure — the token may still be valid
-      // (e.g. backend temporarily unavailable, network issue). Keep the stored user
-      // so the user isn't surprise-logged-out on every reload when the API is down.
-      const storedUser = authService.getStoredUser();
-      if (storedUser) {
-        set({ user: storedUser, isAuthenticated: true });
       } else {
         set({ user: null, isAuthenticated: false });
       }

@@ -253,7 +253,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
 
   return (
     <div className="w-full space-y-6">
-      {/* Main Search Input — same style as SemanticSearchPage main card */}
+      {/* Main Search Input */}
       <div
         className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
       >
@@ -298,7 +298,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         ) : null}
       </div>
 
-      {/* Basic Filters — same card style as SemanticSearchPage */}
+      {/* Basic Filters */}
       <div
         className="border border-neutral-200/80 rounded-2xl p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl bg-surface-panel"
       >

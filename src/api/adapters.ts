@@ -123,6 +123,11 @@ export type ApiAuthResetPasswordModel = NonNullable<
   NonNullable<ApiPaths['/api/Auth/reset-password']['put']['requestBody']>['content']['multipart/form-data']
 >;
 
+export type ApiUpdateInfoDTO =
+  Schemas['VietTuneArchive.Application.Mapper.DTOs.UpdateInfoDTO'];
+export type ApiUpdatePasswordDTO =
+  Schemas['VietTuneArchive.Application.Mapper.DTOs.UpdatePasswordDTO'];
+
 export type ApiPagedResponseEmbargoDto =
   Schemas['VietTuneArchive.Application.Responses.PagedResponse`1[[VietTuneArchive.Application.Mapper.DTOs.EmbargoDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'];
 export type ApiServiceResponseEmbargoDto =

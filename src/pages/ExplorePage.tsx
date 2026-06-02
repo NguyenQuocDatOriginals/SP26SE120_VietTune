@@ -1,4 +1,4 @@
-import { Search, Music, ArrowRight, ListFilter, X } from 'lucide-react';
+import { Search, Music, ArrowRight, ListFilter, RefreshCw, X } from 'lucide-react';
 import { useState, useEffect, useCallback, useMemo, useDeferredValue, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -9,6 +9,8 @@ import ExploreSearchHeader, {
   type ExploreSearchMode,
 } from '@/components/features/ExploreSearchHeader';
 import FilterSidebar from '@/components/features/FilterSidebar';
+import SemanticResultSkeleton from '@/components/features/SemanticResultSkeleton';
+import SemanticSearchSummaryBar from '@/components/features/SemanticSearchSummaryBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useExploreFilterOptions } from '@/features/explore/hooks/useExploreFilterOptions';
 import {
@@ -21,6 +23,7 @@ import {
 import { useDebounce } from '@/hooks/useDebounce';
 import { useExploreData } from '@/hooks/useExploreData';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { getSemanticSearchCircuitBreakerState } from '@/services/semanticSearchService';
 import { SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
 import { cn } from '@/utils/helpers';
 import { SURFACE_PANEL_GRADIENT } from '@/utils/surfaceTokens';
@@ -137,13 +140,22 @@ export default function ExplorePage() {
   const exploreMode: ExploreSearchMode =
     searchParams.get('mode') === 'semantic' ? 'semantic' : 'keyword';
 
-  const { recordings, loading, totalResults, searchError, setSearchError } = useExploreData({
-    currentPage,
-    exploreMode,
-    filters,
-    sqFromUrl,
-    isAuthenticated,
-  });
+  const [semanticReloadTick, setSemanticReloadTick] = useState(0);
+
+  const { recordings, loading, totalResults, searchError, setSearchError, semanticElapsedMs } =
+    useExploreData({
+      currentPage,
+      exploreMode,
+      filters,
+      sqFromUrl,
+      isAuthenticated,
+      reloadTick: semanticReloadTick,
+    });
+
+  const semanticCircuitCooling = useMemo(
+    () => getSemanticSearchCircuitBreakerState().isCoolingDown,
+    [searchError, loading, semanticReloadTick, sqFromUrl],
+  );
 
   const isNarrowViewport = useMediaQuery('(max-width: 1023px)');
   const filterDrawerTriggerRef = useRef<HTMLButtonElement>(null);
@@ -225,6 +237,11 @@ export default function ExplorePage() {
     setCurrentPage(1);
     setSearchParams(buildExploreSearchParams(next, 'semantic', semanticInput), { replace: true });
   }, [filters, semanticInput, setSearchParams]);
+
+  const retrySemanticSearch = useCallback(() => {
+    setSearchError(null);
+    setSemanticReloadTick((t) => t + 1);
+  }, [setSearchError]);
 
   useEffect(() => {
     if (exploreMode === 'semantic' && debouncedSemanticInput !== sqFromUrl) {
@@ -429,6 +446,14 @@ export default function ExplorePage() {
               keywordBusy={loading && exploreMode === 'keyword'}
               semanticBusy={loading && exploreMode === 'semantic'}
             />
+            {exploreMode === 'semantic' && hasSemanticQuery ? (
+              <SemanticSearchSummaryBar
+                query={sqFromUrl}
+                totalResults={loading ? 0 : totalResults}
+                elapsedMs={loading ? undefined : semanticElapsedMs}
+                className="mb-4"
+              />
+            ) : null}
             <div
               ref={resultsTopRef}
               className={cn(SURFACE_PANEL_GRADIENT, 'p-6 sm:p-8 mb-8 lg:mb-0')}
@@ -447,15 +472,30 @@ export default function ExplorePage() {
               </h2>
 
               {searchError ? (
-                <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-                  {searchError}
-                </p>
+                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                  <p>{searchError}</p>
+                  {exploreMode === 'semantic' && hasSemanticQuery ? (
+                    <button
+                      type="button"
+                      onClick={retrySemanticSearch}
+                      disabled={semanticCircuitCooling}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100/80 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                      Thử lại
+                    </button>
+                  ) : null}
+                </div>
               ) : null}
 
               {loading ? (
-                <div className="flex justify-center py-12">
-                  <LoadingSpinner size="lg" />
-                </div>
+                exploreMode === 'semantic' && hasSemanticQuery ? (
+                  <SemanticResultSkeleton rows={4} />
+                ) : (
+                  <div className="flex justify-center py-12">
+                    <LoadingSpinner size="lg" />
+                  </div>
+                )
               ) : recordings.length === 0 ? (
                 <div className="py-10 text-center">
                   <Music
@@ -464,25 +504,46 @@ export default function ExplorePage() {
                     aria-hidden
                   />
                   <h3 className="text-lg font-semibold text-neutral-800 mb-2">
-                    Chưa có bản thu nào
+                    {exploreMode === 'semantic' && !hasSemanticQuery
+                      ? 'Chưa nhập mô tả tìm kiếm'
+                      : exploreMode === 'semantic' && semanticCircuitCooling && searchError
+                        ? 'Tìm kiếm ngữ nghĩa tạm nghỉ'
+                        : 'Chưa có bản thu nào'}
                   </h3>
                   <p className="text-neutral-600 font-medium leading-relaxed max-w-md mx-auto mb-4">
-                    {exploreMode === 'semantic' && hasSemanticQuery
-                      ? 'Không có bản thu khớp mô tả. Thử diễn đạt khác, nới lỏng bộ lọc, hoặc chuyển sang tìm theo từ khóa.'
-                      : hasFilters || hasSemanticQuery
-                        ? 'Thử thay đổi bộ lọc hoặc xóa bộ lọc để xem bản thu mới nhất.'
-                        : 'Chưa có bản thu nào được kiểm duyệt.'}
+                    {exploreMode === 'semantic' && !hasSemanticQuery
+                      ? 'Nhập mô tả bằng câu tự nhiên (ví dụ: dân ca quan họ, đàn bầu miền Bắc) rồi nhấn Tìm.'
+                      : exploreMode === 'semantic' && semanticCircuitCooling && searchError
+                        ? 'Máy chủ tìm kiếm ngữ nghĩa gặp lỗi. Vui lòng đợi vài phút rồi nhấn Thử lại.'
+                        : exploreMode === 'semantic' && hasSemanticQuery
+                          ? 'Không có bản thu khớp mô tả. Thử diễn đạt khác, nới lỏng bộ lọc, hoặc chuyển sang tìm theo từ khóa.'
+                          : hasFilters || hasSemanticQuery
+                            ? 'Thử thay đổi bộ lọc hoặc xóa bộ lọc để xem bản thu mới nhất.'
+                            : 'Chưa có bản thu nào được kiểm duyệt.'}
                   </p>
-                  {(hasFilters || hasSemanticQuery) && (
-                    <button
-                      type="button"
-                      onClick={clearAllExplore}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
-                    >
-                      Xóa bộ lọc
-                      <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-                    </button>
-                  )}
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    {exploreMode === 'semantic' && hasSemanticQuery && searchError ? (
+                      <button
+                        type="button"
+                        onClick={retrySemanticSearch}
+                        disabled={semanticCircuitCooling}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-300 bg-amber-50 text-amber-950 font-medium hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                      >
+                        <RefreshCw className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                        Thử lại
+                      </button>
+                    ) : null}
+                    {(hasFilters || hasSemanticQuery) && (
+                      <button
+                        type="button"
+                        onClick={clearAllExplore}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white font-medium transition-all duration-300 shadow-xl hover:shadow-2xl shadow-primary-600/40 hover:scale-105 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
+                      >
+                        Xóa bộ lọc
+                        <ArrowRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <>

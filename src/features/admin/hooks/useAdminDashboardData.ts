@@ -28,7 +28,9 @@ import type {
   EditRecordingRequest,
   ExpertAccountDeletionRequest,
 } from '@/types';
+import type { ContributorRow } from '@/types/analytics';
 import { toApiSubmissionStatus, toModerationUiStatus } from '@/types/moderation';
+import { resolveOverviewTotalRecordings } from '@/utils/analyticsOverview';
 import { migrateVideoDataToVideoData } from '@/utils/helpers';
 
 type GenericListResponse =
@@ -78,10 +80,18 @@ export function useAdminDashboardData() {
   );
   const [editRecordingRequests, setEditRecordingRequests] = useState<EditRecordingRequest[]>([]);
   const [deletedUserIds, setDeletedUserIds] = useState<Set<string>>(new Set());
+  const [lastDashboardRefreshAt, setLastDashboardRefreshAt] = useState<number | null>(null);
+  const [analyticsContributors, setAnalyticsContributors] = useState<ContributorRow[] | null>(
+    null,
+  );
+  const [analyticsContributorsLoadState, setAnalyticsContributorsLoadState] = useState<
+    'idle' | 'loading' | 'ok' | 'error'
+  >('idle');
 
   const load = useCallback(
     async (opts?: { showUserLoadingHint?: boolean }) => {
       const shouldShowUserLoading = !!opts?.showUserLoadingHint;
+      setAnalyticsContributorsLoadState('loading');
       // --- Admin backend data (best-effort) ---
       // Avoid UI flicker: keep showing last good list during background refresh.
       // Only enter "loading" when we have no data yet AND user explicitly wants a hint.
@@ -101,7 +111,7 @@ export function useAdminDashboardData() {
         ethnicGroupsRes,
       ] = await Promise.allSettled([
         adminApi.getUsers(), // MUST drive user list
-        analyticsApi.getContributors(),
+        analyticsApi.getContributors(), // also feeds ContributorLeaderboard (no second fetch)
         analyticsApi.getSubmissionsTrend(),
         knowledgeBaseApi.countKnowledgeBaseItems(),
         analyticsApi.getExperts(),
@@ -112,6 +122,14 @@ export function useAdminDashboardData() {
         // Ethnic groups (prefer /EthnicGroup, fallback handled below)
         legacyGet<GenericListResponse>('/EthnicGroup'),
       ]);
+
+      if (contributorsRes.status === 'fulfilled') {
+        setAnalyticsContributors(contributorsRes.value);
+        setAnalyticsContributorsLoadState('ok');
+      } else {
+        setAnalyticsContributors([]);
+        setAnalyticsContributorsLoadState('error');
+      }
 
       // ---- Users (primary) ----
       if (usersRes.status === 'fulfilled') {
@@ -178,7 +196,7 @@ export function useAdminDashboardData() {
               username: String(usernameRaw ?? email ?? id),
               email: email,
               fullName: fullNameRaw,
-              role: String(roleRaw ?? UserRole.USER),
+              role: String(roleRaw ?? UserRole.CONTRIBUTOR),
               contributionCount: counts.total,
               approvedCount: counts.approved,
               rejectedCount: counts.rejected,
@@ -299,14 +317,14 @@ export function useAdminDashboardData() {
               ? ((recordingsRaw as Record<string, unknown>).items as unknown[])
               : [];
         const totalFromList = recordingArr.length;
+        const totalFromOverview = resolveOverviewTotalRecordings(overview);
         setRemoteTotalRecordings(
-          typeof overview?.totalRecordings === 'number'
-            ? overview.totalRecordings
-            : totalFromList || null,
+          typeof totalFromOverview === 'number' ? totalFromOverview : totalFromList || null,
         );
       } else {
+        const totalFromOverview = resolveOverviewTotalRecordings(overview);
         setRemoteTotalRecordings(
-          typeof overview?.totalRecordings === 'number' ? overview.totalRecordings : null,
+          typeof totalFromOverview === 'number' ? totalFromOverview : null,
         );
       }
 
@@ -406,6 +424,7 @@ export function useAdminDashboardData() {
           });
           setEditRecordingRequests([]);
         });
+      setLastDashboardRefreshAt(Date.now());
     },
     [remoteUsers, remoteUsersLoadState],
   );
@@ -472,7 +491,7 @@ export function useAdminDashboardData() {
           username: overUsername ?? u?.username ?? id,
           email: u?.email,
           fullName: overFullName ?? u?.fullName,
-          role: overRole ?? u?.role ?? UserRole.USER,
+          role: overRole ?? u?.role ?? UserRole.CONTRIBUTOR,
           contributionCount: counts.total,
           approvedCount: counts.approved,
           rejectedCount: counts.rejected,
@@ -524,6 +543,8 @@ export function useAdminDashboardData() {
     [remoteMonthlyCounts, monthlyCounts],
   );
 
+  const monthlyTrendIsEstimated = remoteMonthlyCounts === null;
+
   const ethnicGroupsFromApi = useMemo(() => remoteEthnicGroups ?? [], [remoteEthnicGroups]);
 
   return {
@@ -557,6 +578,10 @@ export function useAdminDashboardData() {
     usersForTable,
     allUsers,
     monthlyCountsFinal,
+    monthlyTrendIsEstimated,
+    analyticsContributors,
+    analyticsContributorsLoadState,
     ethnicGroupsFromApi,
+    lastDashboardRefreshAt,
   };
 }

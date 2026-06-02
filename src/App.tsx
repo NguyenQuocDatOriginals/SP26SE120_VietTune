@@ -21,7 +21,6 @@ import MainLayout from './components/layout/MainLayout';
 
 const ResearcherPortalPage = lazy(() => import('./pages/researcher/ResearcherPortalPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
-const SemanticSearchPage = lazy(() => import('./pages/SemanticSearchPage'));
 const ChatbotPage = lazy(() => import('./pages/ChatbotPage'));
 const KnowledgeExplorePage = lazy(() => import('./pages/KnowledgeExplorePage'));
 const KbEntryPublicViewPage = lazy(() => import('./pages/KbEntryPublicViewPage'));
@@ -39,6 +38,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const MasterDataPage = lazy(() => import('./features/admin/master-data/pages/MasterDataPage').then(module => ({ default: module.MasterDataPage })));
 const KnowledgeBasePage = lazy(() => import('./pages/admin/KnowledgeBasePage'));
 const CreateExpertPage = lazy(() => import('./pages/admin/CreateExpertPage'));
+const AdminOperationsPage = lazy(() => import('./pages/admin/AdminOperationsPage'));
 const ModerationPage = lazy(() => import('./pages/ModerationPage'));
 const ApprovedRecordingsPage = lazy(() => import('./pages/ApprovedRecordingsPage'));
 const EditRecordingPage = lazy(() => import('./pages/EditRecordingPage'));
@@ -122,14 +122,6 @@ const router = createBrowserRouter(
           element={
             <RouteSuspense>
               <SearchPage />
-            </RouteSuspense>
-          }
-        />
-        <Route
-          path="semantic-search"
-          element={
-            <RouteSuspense>
-              <SemanticSearchPage />
             </RouteSuspense>
           }
         />
@@ -282,6 +274,14 @@ const router = createBrowserRouter(
             element={
               <RouteSuspense>
                 <MasterDataPage />
+              </RouteSuspense>
+            }
+          />
+          <Route
+            path="operations"
+            element={
+              <RouteSuspense>
+                <AdminOperationsPage />
               </RouteSuspense>
             }
           />

@@ -15,6 +15,8 @@ type Params = {
   filters: SearchFilters;
   sqFromUrl: string;
   isAuthenticated: boolean;
+  /** Increment to force refetch (e.g. semantic retry). */
+  reloadTick?: number;
 };
 
 export function useExploreData({
@@ -23,11 +25,13 @@ export function useExploreData({
   filters,
   sqFromUrl,
   isAuthenticated,
+  reloadTick = 0,
 }: Params) {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [semanticElapsedMs, setSemanticElapsedMs] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,14 +71,17 @@ export function useExploreData({
         setRecordings(r.recordings);
         setTotalResults(r.totalResults);
         setSearchError(r.fetchWarning ?? null);
+        setSemanticElapsedMs(r.semanticElapsedMs);
         logExploreTelemetry(r.dataSource, r.recordings.length, {
           ...(r.fetchWarning ? { fallback: true } : {}),
+          ...(r.semanticElapsedMs != null ? { semanticElapsedMs: r.semanticElapsedMs } : {}),
         });
       } catch (e) {
         if (cancelled || controller.signal.aborted || isExploreRequestAborted(e)) return;
         console.error('Explore load failed:', e);
         setRecordings([]);
         setTotalResults(0);
+        setSemanticElapsedMs(undefined);
         setSearchError('Không tải được dữ liệu. Bạn có thể thử lại sau.');
         logExploreTelemetry('empty', 0, { failed: true });
       } finally {
@@ -86,7 +93,14 @@ export function useExploreData({
       cancelled = true;
       controller.abort();
     };
-  }, [currentPage, exploreMode, filters, isAuthenticated, sqFromUrl]);
+  }, [currentPage, exploreMode, filters, isAuthenticated, sqFromUrl, reloadTick]);
 
-  return { recordings, loading, totalResults, searchError, setSearchError };
+  return {
+    recordings,
+    loading,
+    totalResults,
+    searchError,
+    setSearchError,
+    semanticElapsedMs,
+  };
 }

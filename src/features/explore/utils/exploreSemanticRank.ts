@@ -1,6 +1,6 @@
 import type { Recording } from '@/types';
 
-/** Tokenize for loose accent-insensitive matching (aligned with SemanticSearchPage). */
+/** Tokenize for loose accent-insensitive matching (client-side semantic ranking). */
 export function tokenizeExploreSemantic(text: string): string[] {
   return text
     .toLowerCase()
@@ -33,7 +33,7 @@ export function scoreRecordingSemantic(r: Recording, tokens: string[]): number {
   return score;
 }
 
-/** Rank by semantic token overlap; drops zero-score rows (same contract as SemanticSearchPage). */
+/** Rank by semantic token overlap; drops zero-score rows (client-side fallback). */
 export function rankRecordingsBySemanticQuery(
   recordings: Recording[],
   rawQuery: string,

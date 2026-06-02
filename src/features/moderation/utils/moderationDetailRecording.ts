@@ -61,7 +61,7 @@ export function buildConvertedRecording(
           username: (r.uploader as { username?: string }).username ?? '',
           email: '',
           fullName: (r.uploader as { username?: string }).username ?? '',
-          role: UserRole.USER,
+          role: UserRole.CONTRIBUTOR,
           createdAt: '',
           updatedAt: '',
         }
@@ -70,7 +70,7 @@ export function buildConvertedRecording(
           username: '',
           email: '',
           fullName: '',
-          role: UserRole.USER,
+          role: UserRole.CONTRIBUTOR,
           createdAt: '',
           updatedAt: '',
         },

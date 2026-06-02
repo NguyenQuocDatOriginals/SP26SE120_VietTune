@@ -78,3 +78,6 @@ export interface KnowledgeGraphData {
   /** Original recording count before cap (when truncated). */
   recordingInputTotal?: number;
 }
+
+/** Knowledge graph backend: PostgreSQL KG API vs Neo4j GraphExplorer. */
+export type KnowledgeGraphBackendMode = 'pg' | 'neo4j';

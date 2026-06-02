@@ -166,21 +166,15 @@ export default function LoginFormContent({
         <form onSubmit={handleSubmit(runLogin)} className="space-y-4">
           <div className="space-y-3">
             <Input
-              placeholder="Email hoặc số điện thoại"
-              type="text"
-              autoComplete="username"
+              placeholder="Địa chỉ email"
+              type="email"
+              autoComplete="email"
               className="border-neutral-300 py-3.5 focus:border-primary-500 shadow-none ring-0 focus:ring-2 focus:ring-primary-500/20"
               {...register('email', {
-                required: 'Email hoặc số điện thoại là bắt buộc',
+                required: 'Email là bắt buộc',
                 validate: (v) => {
                   const s = String(v ?? '').trim();
-                  const emailOk = /^\S+@\S+\.\S+$/.test(s);
-                  const phoneOk = /^[0-9]{10,11}$/.test(s);
-                  return (
-                    emailOk ||
-                    phoneOk ||
-                    'Nhập email hợp lệ hoặc số điện thoại 10–11 chữ số'
-                  );
+                  return /^\S+@\S+\.\S+$/.test(s) || 'Nhập địa chỉ email hợp lệ';
                 },
               })}
               error={errors.email?.message}

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { unwrapSemanticSearchResults } from '@/services/semanticSearchService';
+import {
+  unwrapSemanticSearchResults,
+  type SemanticSearchResponse,
+} from '@/services/semanticSearchService';
 import { VerificationStatus } from '@/types';
 
 const semanticRow = {
@@ -55,5 +58,19 @@ describe('unwrapSemanticSearchResults', () => {
 
   it('returns an empty list for unexpected response shapes', () => {
     expect(unwrapSemanticSearchResults({ query: 'missing results' })).toEqual([]);
+  });
+});
+
+describe('SemanticSearchResponse shape', () => {
+  it('documents results + elapsedMs contract used by explore loader', () => {
+    const payload: SemanticSearchResponse = {
+      results: unwrapSemanticSearchResults({
+        totalResults: 1,
+        results: [semanticRow],
+      }),
+      elapsedMs: 250,
+    };
+    expect(payload.results).toHaveLength(1);
+    expect(payload.elapsedMs).toBe(250);
   });
 });

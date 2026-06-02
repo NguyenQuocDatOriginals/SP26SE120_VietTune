@@ -30,6 +30,7 @@ import { useUploadRecordingLoader } from '@/features/upload/hooks/useUploadRecor
 import { useUploadReferenceData } from '@/features/upload/hooks/useUploadReferenceData';
 import { useUploadSubmission } from '@/features/upload/hooks/useUploadSubmission';
 import { useUploadWizard } from '@/features/upload/hooks/useUploadWizard';
+import { shouldShowUploadAdminCopyrightSection } from '@/features/upload/uploadCeremonyVisibility';
 import {
   formatDuration,
   formatFileSize,
@@ -41,6 +42,7 @@ import {
   getWizardTransitionFieldErrors,
   isUploadFormComplete,
   scrollToFirstUploadError,
+  scrollToUploadWizardBasicMetadata,
   validateUploadFormState,
   WIZARD_STEP_2_TRANSITION_FIELD_KEYS,
 } from '@/features/upload/uploadFormValidation';
@@ -88,8 +90,10 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setComposerUnknown,
     language,
     setLanguage,
+    handleLanguageSelect,
     noLanguage,
     setNoLanguage,
+    handleNoLanguageChange,
     customLanguage,
     setCustomLanguage,
     recordingDate,
@@ -134,6 +138,10 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setCustomEventType,
     performanceType,
     setPerformanceType,
+    setPerformanceTypeFromUser,
+    applyPerformanceTypeFromAi,
+    maybeApplyInstrumentalFromDetectedInstruments,
+    performanceTypeManuallySetRef,
     instruments,
     setInstruments,
     instrumentPredictions,
@@ -144,6 +152,10 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setAiAnalysisLoading,
     aiAnalysisError,
     setAiAnalysisError,
+    aiAnalysisSuccess,
+    setAiAnalysisSuccess,
+    aiAnalysisEmpty,
+    setAiAnalysisEmpty,
     description,
     setDescription,
     fieldNotes,
@@ -186,13 +198,9 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setCapturedGpsLon,
     capturedGpsAccuracy,
     setCapturedGpsAccuracy,
-    aiSuggestLoading,
-    aiSuggestError,
-    aiSuggestSuccess,
     requiresInstruments,
     allowsLyrics,
     handleGetGpsLocation,
-    handleAiSuggestMetadata,
   } = useUploadForm();
 
   const {
@@ -254,6 +262,19 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     return null;
   }, [vocalStyle, ethnicity]);
 
+  const showAdminCopyrightSection = useMemo(
+    () => shouldShowUploadAdminCopyrightSection(eventType, customEventType, ceremoniesData),
+    [eventType, customEventType, ceremoniesData],
+  );
+
+  useEffect(() => {
+    if (showAdminCopyrightSection) return;
+    setCollector('');
+    setCopyright('');
+    setArchiveOrg('');
+    setCatalogId('');
+  }, [showAdminCopyrightSection, setCollector, setCopyright, setArchiveOrg, setCatalogId]);
+
   const showWizard = !isEditMode;
   const isAsyncNavigationBlocked = useMemo(
     () => isUploadingMedia || Boolean(aiAnalysisLoading) || isAnalyzing,
@@ -285,6 +306,17 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     instruments,
     mediaType,
   });
+
+  const handleWizardStepChange = useCallback(
+    (step: number) => {
+      const prev = uploadWizardStep;
+      setUploadWizardStep(step);
+      if (showWizard && prev === 1 && step === 2) {
+        scrollToUploadWizardBasicMetadata();
+      }
+    },
+    [uploadWizardStep, showWizard, setUploadWizardStep],
+  );
 
   useUploadRecordingLoader(isEditModeParam, recordingId, searchParams, {
     setEditingRecordingId,
@@ -411,6 +443,8 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setAiMetadataSuggestions([]);
     setAiAnalysisError(null);
     setAiAnalysisLoading(false);
+    setAiAnalysisSuccess(false);
+    setAiAnalysisEmpty(false);
     setUploadProgress(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [
@@ -422,6 +456,8 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setAiMetadataSuggestions,
     setAiAnalysisError,
     setAiAnalysisLoading,
+    setAiAnalysisSuccess,
+    setAiAnalysisEmpty,
     setUploadProgress,
     fileInputRef,
   ]);
@@ -488,6 +524,8 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setAiMetadataSuggestions,
     setAiAnalysisLoading,
     setAiAnalysisError,
+    setAiAnalysisSuccess,
+    setAiAnalysisEmpty,
     setEthnicity,
     setCustomEthnicity,
     setVocalStyle,
@@ -495,6 +533,10 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setEventType,
     setCustomEventType,
     setPerformanceType,
+    applyPerformanceTypeFromAi,
+    maybeApplyInstrumentalFromDetectedInstruments,
+    region,
+    setRegion,
     setTitle,
     setComposer,
     setComposerUnknown,
@@ -736,11 +778,14 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setEventType('');
     setCustomEventType('');
     setPerformanceType('');
+    performanceTypeManuallySetRef.current = false;
     setInstruments([]);
     setInstrumentPredictions([]);
     setAiMetadataSuggestions([]);
     setAiAnalysisError(null);
     setAiAnalysisLoading(false);
+    setAiAnalysisSuccess(false);
+    setAiAnalysisEmpty(false);
     setDescription('');
     setFieldNotes('');
     setTranscription('');
@@ -816,7 +861,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           showWizard={showWizard}
           uploadWizardStep={uploadWizardStep}
           canNavigateToStep={canNavigateToStep}
-          onStepChange={setUploadWizardStep}
+          onStepChange={handleWizardStepChange}
           asyncPipelineBusy={isAsyncNavigationBlocked}
         />
 
@@ -849,6 +894,8 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           aiMetadataSuggestions={aiMetadataSuggestions}
           aiAnalysisLoading={aiAnalysisLoading}
           aiAnalysisError={aiAnalysisError}
+          aiAnalysisSuccess={aiAnalysisSuccess}
+          aiAnalysisEmpty={aiAnalysisEmpty}
           isUploadingMedia={isUploadingMedia}
           uploadProgress={uploadProgress}
           fileInputRef={fileInputRef}
@@ -891,10 +938,12 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           setComposerUnknown={setComposerUnknown}
           language={language}
           setLanguage={setLanguage}
+          onLanguageSelect={handleLanguageSelect}
           customLanguage={customLanguage}
           setCustomLanguage={setCustomLanguage}
           noLanguage={noLanguage}
           setNoLanguage={setNoLanguage}
+          onNoLanguageChange={handleNoLanguageChange}
           recordingDate={recordingDate}
           setRecordingDate={setRecordingDate}
           dateEstimated={dateEstimated}
@@ -904,7 +953,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           recordingLocation={recordingLocation}
           setRecordingLocation={setRecordingLocation}
           performanceType={performanceType}
-          setPerformanceType={setPerformanceType}
+          setPerformanceType={setPerformanceTypeFromUser}
           instruments={instruments}
           setInstruments={setInstruments}
           instrumentPredictions={instrumentPredictions}
@@ -955,10 +1004,6 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           capturedGpsLon={capturedGpsLon}
           capturedGpsAccuracy={capturedGpsAccuracy}
           handleGetGpsLocation={handleGetGpsLocation}
-          aiSuggestLoading={aiSuggestLoading}
-          aiSuggestError={aiSuggestError}
-          aiSuggestSuccess={aiSuggestSuccess}
-          handleAiSuggestMetadata={handleAiSuggestMetadata}
           SectionHeaderComponent={SectionHeader}
           FormFieldComponent={FormField}
           TextInputComponent={TextInput}
@@ -1007,46 +1052,48 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
               </div>
             </CollapsibleSection>
 
-            <CollapsibleSection
-              icon={Shield}
-              title="Thông tin quản trị và bản quyền"
-              optional
-              defaultOpen={false}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField label="Người thu thập/Ghi âm">
-                  <TextInput
-                    value={collector}
-                    onChange={setCollector}
-                    placeholder="Tên người hoặc tổ chức ghi âm"
-                  />
-                </FormField>
+            {showAdminCopyrightSection ? (
+              <CollapsibleSection
+                icon={Shield}
+                title="Thông tin quản trị và bản quyền"
+                optional
+                defaultOpen={false}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="Người thu thập/Ghi âm">
+                    <TextInput
+                      value={collector}
+                      onChange={setCollector}
+                      placeholder="Tên người hoặc tổ chức ghi âm"
+                    />
+                  </FormField>
 
-                <FormField label="Bản quyền">
-                  <TextInput
-                    value={copyright}
-                    onChange={setCopyright}
-                    placeholder="Thông tin về quyền sở hữu, giấy phép"
-                  />
-                </FormField>
+                  <FormField label="Bản quyền">
+                    <TextInput
+                      value={copyright}
+                      onChange={setCopyright}
+                      placeholder="Thông tin về quyền sở hữu, giấy phép"
+                    />
+                  </FormField>
 
-                <FormField label="Tổ chức lưu trữ">
-                  <TextInput
-                    value={archiveOrg}
-                    onChange={setArchiveOrg}
-                    placeholder="Nơi bảo quản bản gốc"
-                  />
-                </FormField>
+                  <FormField label="Tổ chức lưu trữ">
+                    <TextInput
+                      value={archiveOrg}
+                      onChange={setArchiveOrg}
+                      placeholder="Nơi bảo quản bản gốc"
+                    />
+                  </FormField>
 
-                <FormField label="Mã định danh" hint="ISRC hoặc mã catalog riêng">
-                  <TextInput
-                    value={catalogId}
-                    onChange={setCatalogId}
-                    placeholder="VD: ISRC-VN-XXX-00-00000"
-                  />
-                </FormField>
-              </div>
-            </CollapsibleSection>
+                  <FormField label="Mã định danh" hint="ISRC hoặc mã catalog riêng">
+                    <TextInput
+                      value={catalogId}
+                      onChange={setCatalogId}
+                      placeholder="VD: ISRC-VN-XXX-00-00000"
+                    />
+                  </FormField>
+                </div>
+              </CollapsibleSection>
+            ) : null}
 
             <UploadWizardActions
               showFinalActions={true}

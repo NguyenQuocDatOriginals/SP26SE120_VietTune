@@ -11,6 +11,9 @@ export function useUploadAiAdvisory() {
   const [aiMetadataSuggestions, setAiMetadataSuggestions] = useState<MetadataSuggestion[]>([]);
   const [aiAnalysisLoading, setAiAnalysisLoading] = useState(false);
   const [aiAnalysisError, setAiAnalysisError] = useState<string | null>(null);
+  const [aiAnalysisSuccess, setAiAnalysisSuccess] = useState(false);
+  /** HTTP 200 but no usable metadata/instruments after normalization (all unknown/empty). */
+  const [aiAnalysisEmpty, setAiAnalysisEmpty] = useState(false);
 
   return {
     instrumentPredictions,
@@ -21,5 +24,9 @@ export function useUploadAiAdvisory() {
     setAiAnalysisLoading,
     aiAnalysisError,
     setAiAnalysisError,
+    aiAnalysisSuccess,
+    setAiAnalysisSuccess,
+    aiAnalysisEmpty,
+    setAiAnalysisEmpty,
   };
 }

@@ -1,4 +1,5 @@
 import { macroRegionDisplayNameFromProvinceRegionCode } from '@/config/provinceRegionCodes';
+import { isUnknownValue, sanitizeAiString } from '@/features/upload/unknownValueUtils';
 import { INSTRUMENT_METADATA_FALLBACK } from '@/features/upload/constants/instrumentMetadataFallback';
 import type { EthnicGroupItem, InstrumentItem, VocalStyleItem } from '@/services/referenceDataService';
 import type {
@@ -123,22 +124,22 @@ export function buildAiDirectSuggestions(
 
   const out: MetadataSuggestion[] = [];
 
-  const ethnic = ai.ethnicGroup?.name?.trim();
+  const ethnic = sanitizeAiString(ai.ethnicGroup?.name);
   if (ethnic) pushSuggestion(out, 'ethnicity', ethnic, AI_ANALYSIS_SOURCE_LABEL, conf);
 
-  const vocal = ai.vocalStyle?.name?.trim();
+  const vocal = sanitizeAiString(ai.vocalStyle?.name);
   if (vocal) pushSuggestion(out, 'vocalStyle', vocal, AI_ANALYSIS_SOURCE_LABEL, conf);
 
-  const scale = ai.musicalScale?.name?.trim();
+  const scale = sanitizeAiString(ai.musicalScale?.name);
   if (scale) pushSuggestion(out, 'musicalScale', scale, AI_ANALYSIS_SOURCE_LABEL, conf);
 
-  const ceremony = ai.ceremony?.name?.trim();
+  const ceremony = sanitizeAiString(ai.ceremony?.name);
   if (ceremony) pushSuggestion(out, 'eventType', ceremony, AI_ANALYSIS_SOURCE_LABEL, conf);
 
   // `regionSuggestion.region` may be either a province region code (e.g. "DBSH") or a
   // human label already (e.g. "Đồng bằng sông Hồng"); resolve in that order.
-  const regionRaw = ai.regionSuggestion?.region?.trim();
-  if (regionRaw) {
+  const regionRaw = sanitizeAiString(ai.regionSuggestion?.region);
+  if (regionRaw && !isUnknownValue(regionRaw)) {
     const fromCode = macroRegionDisplayNameFromProvinceRegionCode(regionRaw);
     const candidate = fromCode || regionRaw;
     const aligned = pickBestRegionLabel(candidate, availableRegions) ?? candidate;

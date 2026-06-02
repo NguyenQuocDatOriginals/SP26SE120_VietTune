@@ -13,6 +13,20 @@ import {
 const SEMANTIC_CIRCUIT_BREAKER_MS = 3 * 60 * 1000;
 let semanticBlockedUntil = 0;
 
+/** Read-only snapshot for admin ops / diagnostics (circuit breaker after 5xx). */
+export function getSemanticSearchCircuitBreakerState(): {
+  isCoolingDown: boolean;
+  cooldownEndsAt: number;
+  cooldownMsTotal: number;
+} {
+  const now = Date.now();
+  return {
+    isCoolingDown: now < semanticBlockedUntil,
+    cooldownEndsAt: semanticBlockedUntil,
+    cooldownMsTotal: SEMANTIC_CIRCUIT_BREAKER_MS,
+  };
+}
+
 function getErrorStatus(error: unknown): number | undefined {
   if (!error || typeof error !== 'object') return undefined;
   const response = (error as { response?: { status?: unknown } }).response;
@@ -37,6 +51,11 @@ export interface SemanticSearchRequestParams {
   q: string;
   topK?: number;
   minScore?: number;
+}
+
+export interface SemanticSearchResponse {
+  results: SemanticSearchResult[];
+  elapsedMs: number;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -151,7 +170,7 @@ function normalizeSemanticRecording(input: unknown, index: number): Recording {
       username: '',
       email: '',
       fullName: pickString(normalized, ['uploadedByName', 'uploaderName']) || 'Không rõ',
-      role: UserRole.USER,
+      role: UserRole.CONTRIBUTOR,
       createdAt: uploadedDate,
       updatedAt: uploadedDate,
     },
@@ -195,7 +214,7 @@ export function unwrapSemanticSearchResults(input: unknown): SemanticSearchResul
  */
 export const searchSemantic = async (
   params: SemanticSearchRequestParams,
-): Promise<SemanticSearchResult[]> => {
+): Promise<SemanticSearchResponse> => {
   if (Date.now() < semanticBlockedUntil) {
     throw new Error('Semantic search temporarily unavailable');
   }
@@ -207,6 +226,7 @@ export const searchSemantic = async (
     minScore: params.minScore ?? 0.5,
   };
 
+  const startedAt = Date.now();
   try {
     const result = await apiOk(
       asApiEnvelope<SemanticSearch768Response | SemanticSearchResult[]>(
@@ -216,7 +236,10 @@ export const searchSemantic = async (
       ),
     );
     semanticBlockedUntil = 0;
-    return unwrapSemanticSearchResults(result);
+    return {
+      results: unwrapSemanticSearchResults(result),
+      elapsedMs: Date.now() - startedAt,
+    };
   } catch (error) {
     const status = getErrorStatus(error);
     if (status != null && status >= 500) {

@@ -1,4 +1,5 @@
-import { AlertCircle, Check, Info, MapPin, Music, Navigation, Sparkles } from 'lucide-react';
+import { AlertCircle, Check, Info, MapPin, Music, Navigation } from 'lucide-react';
+import { useEffect } from 'react';
 
 import InstrumentConfidenceBar from '@/components/common/InstrumentConfidenceBar';
 import MetadataSuggestionPanel from '@/components/features/upload/MetadataSuggestionPanel';
@@ -12,6 +13,10 @@ import type {
   VocalStyleItem,
 } from '@/services/referenceDataService';
 import type { DetectedInstrument, MetadataSuggestion } from '@/types/instrumentDetection';
+import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
+import { applyComposerInput, isFolkComposerLabel } from '@/features/upload/composerUtils';
+import { resolveUploadRegionLabel } from '@/features/upload/regionUtils';
+import { UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID } from '@/features/upload/uploadFormValidation';
 import { detectCrossCaseWarning } from '@/utils/crossCaseInstrumentWarning';
 
 type SectionHeaderProps = {
@@ -94,10 +99,12 @@ type MetadataStepSectionProps = {
   setComposerUnknown: (value: boolean) => void;
   language: string;
   setLanguage: (value: string) => void;
+  onLanguageSelect?: (value: string) => void;
   customLanguage: string;
   setCustomLanguage: (value: string) => void;
   noLanguage: boolean;
   setNoLanguage: (value: boolean) => void;
+  onNoLanguageChange?: (checked: boolean) => void;
   recordingDate: string;
   setRecordingDate: (value: string) => void;
   dateEstimated: boolean;
@@ -158,10 +165,6 @@ type MetadataStepSectionProps = {
   capturedGpsLon: number | null;
   capturedGpsAccuracy: number | null;
   handleGetGpsLocation: () => void;
-  aiSuggestLoading: boolean;
-  aiSuggestError: string | null;
-  aiSuggestSuccess: string | null;
-  handleAiSuggestMetadata: () => void;
   SectionHeaderComponent: React.ComponentType<SectionHeaderProps>;
   FormFieldComponent: React.ComponentType<FormFieldProps>;
   TextInputComponent: React.ComponentType<TextInputProps>;
@@ -187,10 +190,12 @@ export default function MetadataStepSection({
   setComposerUnknown,
   language,
   setLanguage,
+  onLanguageSelect,
   customLanguage,
   setCustomLanguage,
   noLanguage,
   setNoLanguage,
+  onNoLanguageChange,
   recordingDate,
   setRecordingDate,
   dateEstimated,
@@ -251,10 +256,6 @@ export default function MetadataStepSection({
   capturedGpsLon,
   capturedGpsAccuracy,
   handleGetGpsLocation,
-  aiSuggestLoading,
-  aiSuggestError,
-  aiSuggestSuccess,
-  handleAiSuggestMetadata,
   SectionHeaderComponent,
   FormFieldComponent,
   TextInputComponent,
@@ -263,7 +264,23 @@ export default function MetadataStepSection({
   MultiSelectTagsComponent,
   CollapsibleSectionComponent,
 }: MetadataStepSectionProps) {
+  useEffect(() => {
+    if (!region.trim() || REGIONS.length === 0) return;
+    const resolved = resolveUploadRegionLabel(region, REGIONS);
+    if (resolved && resolved !== region) setRegion(resolved);
+  }, [region, REGIONS, setRegion]);
+
+  useEffect(() => {
+    if (composerUnknown || !composer.trim()) return;
+    if (isFolkComposerLabel(composer)) {
+      setComposerUnknown(true);
+      setComposer('');
+    }
+  }, [composer, composerUnknown, setComposer, setComposerUnknown]);
+
   if (!show) return null;
+
+  const performanceTypeKey = normalizePerformanceTypeKey(performanceType);
   const hasGps = capturedGpsLat != null && capturedGpsLon != null;
   const showFatalGps = Boolean(gpsError) && !gpsLoading;
   const showCoordsNoAddress =
@@ -306,7 +323,10 @@ export default function MetadataStepSection({
 
   return (
     <>
-      <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl">
+      <div
+        id={UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID}
+        className="scroll-mt-24 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
+      >
         <SectionHeaderComponent
           icon={Music}
           title="Thông tin mô tả cơ bản"
@@ -362,7 +382,7 @@ export default function MetadataStepSection({
             >
               <TextInputComponent
                 value={composer}
-                onChange={setComposer}
+                onChange={(value) => applyComposerInput(value, setComposer, setComposerUnknown)}
                 placeholder="Tên người sáng tác"
                 disabled={isFormDisabled || composerUnknown}
               />
@@ -383,36 +403,53 @@ export default function MetadataStepSection({
             {errors.composer && <p className="text-sm text-red-400">{errors.composer}</p>}
           </div>
 
-          <div className="space-y-2">
-            <FormFieldComponent label="Ngôn ngữ">
+          <div className="space-y-2" id="field-language">
+            <FormFieldComponent
+              label="Ngôn ngữ"
+              hint={
+                noLanguage
+                  ? 'Bản thu không có lời / không xác định ngôn ngữ'
+                  : language && language !== 'Khác'
+                    ? `Ngôn ngữ đã chọn: ${language}`
+                    : undefined
+              }
+            >
               <SearchableDropdownComponent
-                value={language}
+                value={noLanguage ? '' : language}
                 onChange={(val) => {
-                  setLanguage(val);
-                  if (val !== 'Khác') setCustomLanguage('');
+                  if (onLanguageSelect) onLanguageSelect(val);
+                  else {
+                    setLanguage(val);
+                    if (val !== 'Khác') setCustomLanguage('');
+                  }
                 }}
                 options={LANGUAGES}
-                placeholder="Chọn ngôn ngữ"
+                placeholder={noLanguage ? 'Không áp dụng' : 'Chọn ngôn ngữ'}
                 disabled={isFormDisabled || noLanguage}
               />
             </FormFieldComponent>
             {language === 'Khác' && !noLanguage && (
-              <TextInputComponent
-                value={customLanguage}
-                onChange={setCustomLanguage}
-                placeholder="Nhập tên ngôn ngữ khác..."
-                disabled={isFormDisabled || noLanguage}
-              />
+              <FormFieldComponent label="Nhập ngôn ngữ khác" hint="Chỉ dùng khi ngôn ngữ không có trong danh sách">
+                <TextInputComponent
+                  value={customLanguage}
+                  onChange={setCustomLanguage}
+                  placeholder="Ví dụ: Chăm, Ê Đê, Khmer..."
+                  disabled={isFormDisabled || noLanguage}
+                />
+              </FormFieldComponent>
             )}
             <label className="flex items-center gap-2 text-sm text-neutral-800 cursor-pointer">
               <input
                 type="checkbox"
                 checked={noLanguage}
                 onChange={(e) => {
-                  setNoLanguage(e.target.checked);
-                  if (e.target.checked) {
-                    setLanguage('');
-                    setCustomLanguage('');
+                  if (onNoLanguageChange) onNoLanguageChange(e.target.checked);
+                  else {
+                    setNoLanguage(e.target.checked);
+                    if (e.target.checked) {
+                      setLanguage('');
+                      setCustomLanguage('');
+                    }
                   }
                 }}
                 className="w-4 h-4 rounded border-neutral-400 text-primary-600 focus:outline-none bg-surface-panel"
@@ -465,30 +502,40 @@ export default function MetadataStepSection({
 
           <div className="md:col-span-2">
             <FormFieldComponent label="Loại hình biểu diễn" required id="field-performanceType">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {PERFORMANCE_TYPES.map((pt) => (
-                  <button
-                    key={pt.key}
-                    type="button"
-                    onClick={() => {
-                      if (performanceType === pt.key) {
-                        setPerformanceType('');
-                      } else {
-                        setPerformanceType(pt.key);
-                        if (pt.key === 'acappella') {
-                          setInstruments([]);
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup">
+                {PERFORMANCE_TYPES.map((pt) => {
+                  const activeKey = normalizePerformanceTypeKey(performanceType);
+                  const isSelected = activeKey === pt.key;
+                  return (
+                    <button
+                      key={pt.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      data-selected={isSelected ? 'true' : 'false'}
+                      onClick={() => {
+                        if (isSelected) {
+                          setPerformanceType('');
+                        } else {
+                          setPerformanceType(pt.key);
+                          if (pt.key === 'acappella') {
+                            setInstruments([]);
+                          }
                         }
-                      }
-                    }}
-                    className={`w-full px-4 py-3 rounded-xl text-sm font-medium transition-all border border-neutral-200 ${
-                      performanceType === pt.key
-                        ? 'bg-primary-600 text-white shadow-md'
-                        : 'text-neutral-700 hover:border-primary-400 bg-surface-panel hover:bg-[#F5F0E8]'
-                    }`}
-                  >
-                    {pt.label}
-                  </button>
-                ))}
+                      }}
+                      className={`w-full min-h-[48px] px-4 py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2 ${
+                        isSelected
+                          ? 'border-[3px] border-primary-600 bg-primary-100 text-primary-950 shadow-md ring-2 ring-primary-300/80 font-bold'
+                          : 'border-2 border-neutral-300 text-neutral-600 font-medium hover:border-primary-500 hover:bg-primary-50/40 bg-white'
+                      }`}
+                    >
+                      {isSelected && (
+                        <Check className="h-5 w-5 shrink-0 text-primary-700" aria-hidden />
+                      )}
+                      {pt.label}
+                    </button>
+                  );
+                })}
               </div>
               {errors.performanceType && (
                 <p className="text-sm text-red-400">{errors.performanceType}</p>
@@ -496,10 +543,10 @@ export default function MetadataStepSection({
             </FormFieldComponent>
           </div>
 
-          {(performanceType === 'vocal_accompaniment' || performanceType === 'acappella') && (
+          {(performanceTypeKey === 'vocal_accompaniment' || performanceTypeKey === 'acappella') && (
             <div
               className={
-                performanceType === 'vocal_accompaniment' ? 'md:col-span-1' : 'md:col-span-2'
+                performanceTypeKey === 'vocal_accompaniment' ? 'md:col-span-1' : 'md:col-span-2'
               }
             >
               <FormFieldComponent
@@ -521,7 +568,7 @@ export default function MetadataStepSection({
           {requiresInstruments && (
             <div
               className={
-                performanceType === 'vocal_accompaniment' ? 'md:col-span-1' : 'md:col-span-2'
+                performanceTypeKey === 'vocal_accompaniment' ? 'md:col-span-1' : 'md:col-span-2'
               }
             >
               <FormFieldComponent
@@ -576,7 +623,7 @@ export default function MetadataStepSection({
               suggestions={aiMetadataSuggestions}
               onApply={(field, value) => {
                 if (field === 'ethnicity') setEthnicity(value);
-                if (field === 'region') setRegion(value);
+                if (field === 'region') setRegion(resolveUploadRegionLabel(value, REGIONS));
                 if (field === 'vocalStyle') setVocalStyle(value);
                 if (field === 'eventType') setEventType(value);
               }}
@@ -587,7 +634,7 @@ export default function MetadataStepSection({
             {allowsLyrics && (
               <div
                 className={
-                  performanceType === 'vocal_accompaniment'
+                  performanceTypeKey === 'vocal_accompaniment'
                     ? 'col-span-1'
                     : 'col-span-1 md:col-span-2'
                 }
@@ -816,45 +863,6 @@ export default function MetadataStepSection({
                   loading="lazy"
                 />
               </div>
-            )}
-          </div>
-        </CollapsibleSectionComponent>
-
-        <CollapsibleSectionComponent
-          icon={Sparkles}
-          title="Hỗ trợ điền bằng AI"
-          subtitle="Dựa trên 'Lối hát' để gợi ý Dân tộc & Nhạc cụ phù hợp"
-          optional
-          defaultOpen={false}
-        >
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleAiSuggestMetadata}
-                disabled={isFormDisabled || aiSuggestLoading || !vocalStyle}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white font-medium transition-colors cursor-pointer text-sm"
-              >
-                <Sparkles className="w-4 h-4" strokeWidth={2.5} />
-                {aiSuggestLoading ? 'Đang xử lý...' : 'Lấy gợi ý AI'}
-              </button>
-              {!vocalStyle && (
-                <span className="text-xs text-neutral-500 italic">
-                  Chọn lối hát/thể loại trước khi dùng
-                </span>
-              )}
-            </div>
-            {aiSuggestError && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {aiSuggestError}
-              </p>
-            )}
-            {aiSuggestSuccess && (
-              <p className="text-xs text-green-700 flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" />
-                {aiSuggestSuccess}
-              </p>
             )}
           </div>
         </CollapsibleSectionComponent>

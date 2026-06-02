@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import KnowledgeBasePanel from '@/components/features/kb/KnowledgeBasePanel';
+import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
+import { buildAdminBreadcrumbItems } from '@/features/admin/shell/adminBreadcrumbUtils';
 
 export default function KnowledgeBasePage() {
   const location = useLocation();
@@ -16,7 +18,20 @@ export default function KnowledgeBasePage() {
     }
   }, [location.state, navigate]);
 
+  const adminBreadcrumbItems = useMemo(
+    () => buildAdminBreadcrumbItems(location.pathname, null),
+    [location.pathname],
+  );
+
   return (
-    <KnowledgeBasePanel listBackTo="/admin" openCreateOnMount={openCreateOnMount} />
+    <KnowledgeBasePanel
+      listBackTo="/admin"
+      openCreateOnMount={openCreateOnMount}
+      breadcrumbSlot={
+        <div className="mb-4">
+          <AdminBreadcrumbs items={adminBreadcrumbItems} />
+        </div>
+      }
+    />
   );
 }

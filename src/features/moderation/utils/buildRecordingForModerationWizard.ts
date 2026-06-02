@@ -61,7 +61,7 @@ export function buildRecordingForModerationWizard(
       username: item.uploader?.username || 'Khách',
       email: '',
       fullName: item.uploader?.username || 'Khách',
-      role: UserRole.USER,
+      role: UserRole.CONTRIBUTOR,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },

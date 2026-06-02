@@ -57,6 +57,8 @@ export type ExploreLoadSuccess = {
   dataSource: ExploreDataSource;
   /** Set when primary API failed but archive fallback (or empty) was used. */
   fetchWarning?: string;
+  /** Wall-clock time for last successful semantic API call (ms). */
+  semanticElapsedMs?: number;
 };
 
 function sortByUploadedDesc(items: Recording[]): Recording[] {
@@ -142,6 +144,7 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
 
   let response: ApiResponseType;
   let fetchWarning: string | undefined;
+  let semanticElapsedMs: number | undefined;
   try {
     // ── Semantic search ──────────────────────────────────────────────────
     if (exploreMode === 'semantic' && sqActive) {
@@ -150,7 +153,8 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
           q: sqActive,
           topK: SEMANTIC_SEARCH_TOPK,
         });
-        const ranked = semanticResponse.map((r) => ({
+        semanticElapsedMs = semanticResponse.elapsedMs;
+        const ranked = semanticResponse.results.map((r) => ({
           ...r.recording,
           _semanticScore: r.similarityScore,
         }));
@@ -309,5 +313,6 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
     totalResults: apiTotal,
     dataSource,
     fetchWarning,
+    semanticElapsedMs,
   };
 }

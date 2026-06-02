@@ -16,8 +16,8 @@ import React from 'react';
 import InstrumentConfidenceBar from '@/components/common/InstrumentConfidenceBar';
 import AudioPlayer from '@/components/features/AudioPlayer';
 import VideoPlayer from '@/components/features/VideoPlayer';
+import MetadataSuggestionReadOnlyPanel from '@/components/features/upload/metadata-suggestions/MetadataSuggestionReadOnlyPanel';
 import type { DetectedInstrument, MetadataSuggestion } from '@/types/instrumentDetection';
-import { groupMetadataSuggestionsForAdvisory } from '@/utils/instrumentMetadataMapper';
 
 type MediaInfo = {
   name: string;
@@ -56,6 +56,10 @@ type MediaUploadStepProps = {
   /** Upload-time Gemini analyze in flight (advisory pipeline). */
   aiAnalysisLoading?: boolean;
   aiAnalysisError?: string | null;
+  /** True when analyze-only returned usable metadata and/or instruments. */
+  aiAnalysisSuccess?: boolean;
+  /** True when HTTP succeeded but payload was empty/unknown after normalization. */
+  aiAnalysisEmpty?: boolean;
   isUploadingMedia: boolean;
   uploadProgress: number;
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -121,6 +125,8 @@ export default function MediaUploadStep({
   aiMetadataSuggestions,
   aiAnalysisLoading = false,
   aiAnalysisError = null,
+  aiAnalysisSuccess = false,
+  aiAnalysisEmpty = false,
   isUploadingMedia,
   uploadProgress,
   fileInputRef,
@@ -141,16 +147,33 @@ export default function MediaUploadStep({
   const hasUploadSuccess = Boolean(createdRecordingId || (isEditMode && newUploadedUrl));
   const shouldShowAiPanel = mediaType === 'audio' && useAiAnalysis && hasUploadSuccess;
   const hasInstrumentPredictions = instrumentPredictions.length > 0;
+  const hasSuggestionPreview = shouldShowAiPanel && aiMetadataSuggestions.length > 0;
   const showAiLoading =
     shouldShowAiPanel && (isUploadingMedia || aiAnalysisLoading) && !hasInstrumentPredictions;
+  const showAiNoInstruments =
+    shouldShowAiPanel &&
+    !isUploadingMedia &&
+    !aiAnalysisLoading &&
+    !hasInstrumentPredictions &&
+    !aiAnalysisError &&
+    aiAnalysisSuccess &&
+    !aiAnalysisEmpty;
+  const showAiEmptyResult =
+    shouldShowAiPanel &&
+    !isUploadingMedia &&
+    !aiAnalysisLoading &&
+    !hasInstrumentPredictions &&
+    !aiAnalysisError &&
+    aiAnalysisEmpty;
   const showAiEmptyState =
     shouldShowAiPanel &&
     !isUploadingMedia &&
     !aiAnalysisLoading &&
     !hasInstrumentPredictions &&
-    !aiAnalysisError;
-  const advisorySuggestions = groupMetadataSuggestionsForAdvisory(aiMetadataSuggestions);
-  const hasSuggestionPreview = shouldShowAiPanel && advisorySuggestions.length > 0;
+    !aiAnalysisError &&
+    !aiAnalysisSuccess &&
+    !aiAnalysisEmpty &&
+    !hasSuggestionPreview;
 
   return (
     <div
@@ -449,103 +472,30 @@ export default function MediaUploadStep({
                       </div>
                     )}
 
-                    {showAiEmptyState && (
-                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-800">
-                        Không thể hiển thị kết quả AI lúc này. Bạn vẫn có thể tiếp tục điền metadata và gửi bình thường.
+                    {showAiNoInstruments && (
+                      <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-800">
+                        AI không phát hiện nhạc cụ rõ ràng trong bản thu này.
+                        {hasSuggestionPreview
+                          ? ' Xem gợi ý metadata bên dưới hoặc tại bước tiếp theo.'
+                          : ' Một số metadata khác (nếu có) đã được áp dụng ở bước tiếp theo.'}
                       </div>
                     )}
 
-                    <p className="mt-3 text-xs text-neutral-600">
-                      Chỉ là gợi ý từ AI. Chuyên gia sẽ xác minh sau.
-                    </p>
+                    {showAiEmptyResult && (
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-800">
+                        Phân tích AI đã hoàn tất nhưng chưa trả về nhạc cụ hoặc metadata hữu ích (thường gặp khi
+                        kết quả là unknown/rỗng). Bạn vẫn có thể sang bước tiếp theo và điền tay.
+                      </div>
+                    )}
+
+                    {showAiEmptyState && (
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-800">
+                        Chưa có kết quả phân tích AI. Bạn vẫn có thể tiếp tục điền metadata và gửi bình thường.
+                      </div>
+                    )}
 
                     {hasSuggestionPreview && (
-                      <div className="mt-4 rounded-lg border border-secondary-200/70 bg-secondary-50/50 p-3">
-                        <p className="text-sm font-semibold text-neutral-800">
-                          Gợi ý metadata (chỉ đọc)
-                        </p>
-                        <div className="mt-2 space-y-3 text-sm text-neutral-700">
-                          {advisorySuggestions.map((group) => (
-                            <div key={group.field}>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="font-semibold text-neutral-800">
-                                  {group.field === 'region'
-                                    ? 'Khu vực gợi ý'
-                                    : group.field === 'vocalStyle'
-                                      ? 'Lối hát gợi ý'
-                                      : group.field === 'eventType'
-                                        ? 'Loại sự kiện gợi ý'
-                                        : group.field === 'musicalScale'
-                                          ? 'Âm giai gợi ý'
-                                          : 'Nhóm dân tộc gợi ý'}
-                                </p>
-                                {group.conflictDetected && (
-                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-                                    Nguồn không đồng nhất
-                                  </span>
-                                )}
-                                {group.requiresExpert && (
-                                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                                    Cần chuyên gia xác minh
-                                  </span>
-                                )}
-                              </div>
-                              {group.candidates.length > 0 && (
-                                <div className="mt-2 space-y-2">
-                                  <div>
-                                    <p className="text-xs font-semibold tracking-wide text-neutral-500 normal-case">
-                                      Chính
-                                    </p>
-                                    <p className="text-sm text-neutral-800">
-                                      {group.candidates[0].label}{' '}
-                                      <span className="font-semibold text-neutral-600">
-                                        {Math.round(group.candidates[0].score * 100)}%
-                                      </span>
-                                      {group.candidates[0].sourceInstruments &&
-                                        group.candidates[0].sourceInstruments.length > 0 && (
-                                          <span className="text-neutral-500">
-                                            {' '}
-                                            · từ {group.candidates[0].sourceInstruments.join(', ')}
-                                          </span>
-                                        )}
-                                    </p>
-                                  </div>
-                                  {group.candidates.length > 1 && (
-                                    <div>
-                                      <p className="text-xs font-semibold tracking-wide text-neutral-500 normal-case">
-                                        Phụ
-                                      </p>
-                                      <ul className="mt-1 space-y-1">
-                                        {group.candidates.slice(1, 3).map((candidate) => (
-                                          <li
-                                            key={`${group.field}-${candidate.value}`}
-                                            className="flex items-start gap-2"
-                                          >
-                                            <span className="text-primary-700">•</span>
-                                            <span className="text-neutral-700">
-                                              {candidate.label}{' '}
-                                              <span className="text-xs font-semibold text-neutral-500">
-                                                {Math.round(candidate.score * 100)}%
-                                              </span>
-                                              {candidate.sourceInstruments &&
-                                                candidate.sourceInstruments.length > 0 && (
-                                                  <span className="text-neutral-500">
-                                                    {' '}
-                                                    · từ {candidate.sourceInstruments.join(', ')}
-                                                  </span>
-                                                )}
-                                            </span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <MetadataSuggestionReadOnlyPanel suggestions={aiMetadataSuggestions} />
                     )}
                   </div>
                 )}

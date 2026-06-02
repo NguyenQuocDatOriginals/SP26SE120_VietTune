@@ -26,7 +26,6 @@ import {
 
 
 export function useResearcherData() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<SearchFiltersState>({
     ethnicGroupId: '',
     instrumentId: '',
@@ -135,14 +134,13 @@ export function useResearcherData() {
     return {
       page: 1,
       pageSize: 500,
-      q: searchQuery.trim() || undefined,
       ethnicGroupId: filters.ethnicGroupId || undefined,
       instrumentId: filters.instrumentId || undefined,
       ceremonyId: filters.ceremonyId || undefined,
       regionCode: filters.regionCode || undefined,
       communeId: filters.communeId || undefined,
     };
-  }, [searchQuery, filters]);
+  }, [filters]);
 
   const loadResearcherCatalog = useCallback(async () => {
     setSearchLoading(true);
@@ -189,13 +187,7 @@ export function useResearcherData() {
     return () => clearTimeout(t);
   }, [loadResearcherCatalog]);
 
-  const handleSearchClick = useCallback(() => {
-    void loadResearcherCatalog();
-  }, [loadResearcherCatalog]);
-
   return {
-    searchQuery,
-    setSearchQuery,
     filters,
     setFilters,
     searchResults,
@@ -215,6 +207,5 @@ export function useResearcherData() {
     INSTRUMENTS,
     COMMUNES,
     loadResearcherCatalog,
-    handleSearchClick,
   };
 }

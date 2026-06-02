@@ -18,7 +18,7 @@ const stubUser: User = {
   id: 'u1',
   username: 't',
   email: 't@t',
-  role: UserRole.USER,
+  role: UserRole.CONTRIBUTOR,
   fullName: 'T',
   createdAt: '2020-01-01T00:00:00.000Z',
   updatedAt: '2020-01-01T00:00:00.000Z',

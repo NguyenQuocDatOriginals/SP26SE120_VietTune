@@ -16,12 +16,13 @@ export interface User {
 
 export enum UserRole {
   ADMIN = 'Admin',
-  MODERATOR = 'Moderator',
   RESEARCHER = 'Researcher',
   CONTRIBUTOR = 'Contributor',
   EXPERT = 'Expert',
-  USER = 'User',
 }
+
+/** Fallback when mapping unknown API role strings (replaces removed `User` enum). */
+export const DEFAULT_UNKNOWN_USER_ROLE = UserRole.CONTRIBUTOR;
 
 export interface LoginForm {
   email: string;

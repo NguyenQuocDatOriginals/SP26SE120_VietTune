@@ -34,9 +34,15 @@ function asMonthlyTrendData(source: Record<string, number>): MonthlyTrendPoint[]
 export interface MonthlyTrendChartProps {
   data: Record<string, number>;
   className?: string;
+  /** True when chart uses client-side counts (API submissions has no monthly trend). */
+  isEstimatedData?: boolean;
 }
 
-export default function MonthlyTrendChart({ data, className }: MonthlyTrendChartProps) {
+export default function MonthlyTrendChart({
+  data,
+  className,
+  isEstimatedData = false,
+}: MonthlyTrendChartProps) {
   const points = useMemo(() => asMonthlyTrendData(data), [data]);
   const hasData = points.some((p) => p.count > 0);
 
@@ -46,6 +52,13 @@ export default function MonthlyTrendChart({ data, className }: MonthlyTrendChart
       aria-live="polite"
     >
       <h3 className="mb-4 text-xl font-semibold text-neutral-900">Đóng góp theo tháng</h3>
+
+      {isEstimatedData ? (
+        <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Dữ liệu tạm tính — tính từ ngày tải bản ghi trên hệ thống (API chưa có xu hướng theo
+          tháng).
+        </p>
+      ) : null}
 
       {!hasData ? (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

@@ -1,12 +1,15 @@
 import { UserPlus } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import Input from '@/components/common/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
+import { buildAdminBreadcrumbItems } from '@/features/admin/shell/adminBreadcrumbUtils';
+import { adminApi } from '@/services/adminApi';
 import { getItem, setItem } from '@/services/storageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole, type User } from '@/types';
@@ -15,8 +18,10 @@ import { validatePassword } from '@/utils/validation';
 
 export default function CreateExpertPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [expertForm, setExpertForm] = useState({
     username: '',
     email: '',
@@ -34,6 +39,7 @@ export default function CreateExpertPage() {
   /** One-time on-screen only (not persisted) so admin can copy the initial password. */
   const [expertPasswordRevealOnce, setExpertPasswordRevealOnce] = useState<{
     username: string;
+    email: string;
     password: string;
   } | null>(null);
 
@@ -45,6 +51,11 @@ export default function CreateExpertPage() {
       navigate('/403', { replace: true });
     }
   }, [isAdmin, isAuthLoading, navigate]);
+
+  const adminBreadcrumbItems = useMemo(
+    () => buildAdminBreadcrumbItems(location.pathname, null),
+    [location.pathname],
+  );
 
   if (isAuthLoading) {
     return (
@@ -94,43 +105,44 @@ export default function CreateExpertPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleCreateExpert = () => {
+  const writeDevOverride = (username: string) => {
+    if (!import.meta.env.DEV) return;
+    const newExpertId = `expert_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const newExpert: User = {
+      id: newExpertId,
+      username,
+      email: expertForm.email.trim(),
+      fullName: expertForm.fullName.trim(),
+      role: UserRole.EXPERT,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const oRaw = getItem('users_overrides');
+    const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
+    overrides[newExpertId] = newExpert;
+    void setItem('users_overrides', JSON.stringify(overrides));
+  };
+
+  const handleCreateExpert = async () => {
     if (!validateExpertForm()) return;
 
+    setIsSubmitting(true);
     try {
-      // Check if username already exists
-      const oRaw = getItem('users_overrides');
-      const overrides = oRaw ? (JSON.parse(oRaw) as Record<string, User>) : {};
-      const existingUser = Object.values(overrides).find(
-        (u) => u.username.toLowerCase() === expertForm.username.trim().toLowerCase(),
-      );
-      if (existingUser) {
-        setExpertFormErrors({ username: 'Tên người dùng đã tồn tại' });
-        return;
-      }
-
-      // Create new EXPERT user
-      const newExpertId = `expert_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      const newExpert: User = {
-        id: newExpertId,
-        username: expertForm.username.trim(),
+      const username = expertForm.username.trim();
+      const result = await adminApi.createExpert({
         email: expertForm.email.trim(),
+        password: expertForm.password,
         fullName: expertForm.fullName.trim(),
-        role: UserRole.EXPERT,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      });
 
-      // Save to users_overrides
-      overrides[newExpertId] = newExpert;
-      void setItem('users_overrides', JSON.stringify(overrides));
+      writeDevOverride(username);
 
       setExpertPasswordRevealOnce({
-        username: newExpert.username,
+        username,
+        email: expertForm.email.trim(),
         password: expertForm.password,
       });
 
-      // Reset form
       setExpertForm({
         username: '',
         email: '',
@@ -141,16 +153,25 @@ export default function CreateExpertPage() {
       setExpertFormErrors({});
 
       uiToast.success(
-        notifyLine('Thành công', `Đã tạo tài khoản Chuyên gia "${newExpert.username}" thành công.`),
+        notifyLine(
+          'Thành công',
+          result.message ?? `Đã tạo tài khoản Chuyên gia "${username}" trên máy chủ.`,
+        ),
       );
-    } catch {
-      uiToast.error(notifyLine('Lỗi', 'Không thể tạo tài khoản Chuyên gia.'));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Không thể tạo tài khoản Chuyên gia.';
+      uiToast.error(notifyLine('Lỗi', message));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-4">
+          <AdminBreadcrumbs items={adminBreadcrumbItems} />
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Cấp tài khoản Chuyên gia
@@ -170,10 +191,29 @@ export default function CreateExpertPage() {
               <span className="text-neutral-600">Người dùng:</span>{' '}
               <span className="font-medium">{expertPasswordRevealOnce.username}</span>
             </p>
+            <p className="mb-1">
+              <span className="text-neutral-600">Email đăng nhập:</span>{' '}
+              <span className="font-medium">{expertPasswordRevealOnce.email}</span>
+            </p>
             <p className="mb-3 break-all font-mono text-base">{expertPasswordRevealOnce.password}</p>
-            <Button type="button" variant="outline" size="sm" onClick={() => setExpertPasswordRevealOnce(null)}>
-              Ẩn
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setExpertPasswordRevealOnce(null)}
+              >
+                Ẩn
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => void navigate('/admin?section=users')}
+              >
+                Về quản lý người dùng
+              </Button>
+            </div>
           </div>
         )}
 
@@ -185,14 +225,14 @@ export default function CreateExpertPage() {
             Tạo tài khoản mới
           </h2>
           <p className="text-neutral-700 font-medium leading-relaxed mb-6">
-            Tạo tài khoản Chuyên gia mới để họ có thể kiểm duyệt và xác minh bản thu âm nhạc truyền
-            thống.
+            Tạo tài khoản Chuyên gia mới trên máy chủ để họ có thể đăng nhập và kiểm duyệt bản thu âm
+            nhạc truyền thống. Đăng nhập bằng <strong>email</strong> và mật khẩu bên dưới.
           </p>
           <div className="max-w-2xl">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Tên người dùng"
+                  label="Tên hiển thị (tham chiếu nội bộ)"
                   value={expertForm.username}
                   onChange={(e) => {
                     setExpertForm({ ...expertForm, username: e.target.value });
@@ -267,16 +307,18 @@ export default function CreateExpertPage() {
                   type="button"
                   variant="primary"
                   size="lg"
-                  onClick={handleCreateExpert}
+                  onClick={() => void handleCreateExpert()}
+                  disabled={isSubmitting}
                   className="gap-2"
                 >
                   <UserPlus className="h-5 w-5" strokeWidth={2.5} />
-                  Tạo tài khoản Chuyên gia
+                  {isSubmitting ? 'Đang tạo…' : 'Tạo tài khoản Chuyên gia'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="lg"
+                  disabled={isSubmitting}
                   onClick={() => {
                     setExpertForm({
                       username: '',

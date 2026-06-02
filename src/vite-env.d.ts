@@ -31,6 +31,8 @@ interface ImportMetaEnv {
    * Example: `Admin/reference-usage/{kind}/{id}` — when backend ships the route.
    */
   readonly VITE_MASTER_DATA_USAGE_PATH?: string;
+  /** `true` | `1` → bật route `/admin/operations` + CTA trên dashboard (P3 — vận hành & AI). */
+  readonly VITE_ADMIN_OPERATIONS_PAGE?: string;
 }
 
 interface ImportMeta {

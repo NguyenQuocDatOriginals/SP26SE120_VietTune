@@ -267,7 +267,8 @@ export default function HomePage() {
                 alt="VietTune Logo"
                 className="h-16 w-16 object-contain rounded-2xl shadow-sm"
                 loading="eager"
-                fetchPriority="high"
+                // @ts-expect-error -- fetchpriority is valid HTML but React 18 types use fetchPriority
+                fetchpriority="high"
                 decoding="async"
                 width={64}
                 height={64}

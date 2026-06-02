@@ -65,11 +65,17 @@ function graphLayoutKey(g: KnowledgeGraphData): string {
 export interface KnowledgeGraphViewerProps {
   data: KnowledgeGraphData;
   onNodeClick?: (node: GraphNode) => void;
+  onNodeDoubleClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
   maxNodes?: number;
   compactLayout?: boolean;
   /** Tab from researcher portal — nodes that do not belong to the tab are dimmed (overview = no extra dim). */
   tabFilter?: ResearcherGraphTabView | null;
+  /** Neo4j mode: show relation labels and directional arrows on links. */
+  showDirectedLinks?: boolean;
+  /** Override center message when the graph has no nodes. */
+  emptyStateMessage?: string;
+  emptyStateHint?: string;
 }
 
 type GraphLinkEdge = GraphLink & {
@@ -80,10 +86,14 @@ type GraphLinkEdge = GraphLink & {
 const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
   data,
   onNodeClick,
+  onNodeDoubleClick,
   selectedNodeId,
   maxNodes = 100,
   compactLayout = true,
   tabFilter = 'overview',
+  showDirectedLinks = false,
+  emptyStateMessage,
+  emptyStateHint,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height } = useContainerDimensions(containerRef);
@@ -92,6 +102,7 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
   const [hoverNode, setHoverNode] = useState<GraphNode | null>(null);
   const [clickPulseId, setClickPulseId] = useState<string | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastNodeClickRef = useRef<{ id: string; at: number } | null>(null);
 
   // RAF-throttled tooltip position via DOM mutation; avoids React re-render storm during hover.
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -171,6 +182,21 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
 
   const handleNodeClick = useCallback(
     (graphNode: GraphNode) => {
+      const now = Date.now();
+      const last = lastNodeClickRef.current;
+      const isDouble =
+        Boolean(onNodeDoubleClick) &&
+        last &&
+        last.id === graphNode.id &&
+        now - last.at < 450;
+
+      if (isDouble) {
+        lastNodeClickRef.current = null;
+        onNodeDoubleClick?.(graphNode);
+      } else {
+        lastNodeClickRef.current = { id: graphNode.id, at: now };
+      }
+
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
       setClickPulseId(graphNode.id);
       pulseTimerRef.current = setTimeout(() => { setClickPulseId(null); pulseTimerRef.current = null; }, 480);
@@ -180,7 +206,16 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
         fgRef.current.zoom(FOCUS_ZOOM + 0.15, 560);
       }
     },
-    [onNodeClick],
+    [onNodeClick, onNodeDoubleClick],
+  );
+
+  const linkLabel = useCallback(
+    (link: GraphLinkEdge) => {
+      if (!showDirectedLinks) return '';
+      const t = link.type?.trim();
+      return t && t.length <= 28 ? t : t ? `${t.slice(0, 25)}…` : '';
+    },
+    [showDirectedLinks],
   );
 
   const handleNodeHover = useCallback((node: GraphNode | null) => setHoverNode(node), []);
@@ -431,6 +466,9 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
           onNodeHover={handleNodeHover}
           linkColor={getLinkColor}
           linkWidth={getLinkWidth}
+          linkLabel={showDirectedLinks ? linkLabel : undefined}
+          linkDirectionalArrowLength={showDirectedLinks ? 4 : 0}
+          linkDirectionalArrowRelPos={1}
           linkDirectionalParticles={0}
           d3VelocityDecay={0.38}
           d3AlphaDecay={0.045}
@@ -480,7 +518,12 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
               d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
           </svg>
-          <p className="text-sm font-medium text-slate-500">Không có dữ liệu</p>
+          <p className="text-sm font-medium text-slate-500">
+            {emptyStateMessage ?? 'Không có dữ liệu'}
+          </p>
+          {emptyStateHint ? (
+            <p className="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed">{emptyStateHint}</p>
+          ) : null}
         </div>
       )}
     </div>

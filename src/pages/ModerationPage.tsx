@@ -17,12 +17,10 @@ import ModerationReviewTab from '@/components/features/moderation/ModerationRevi
 import type { StageTransitionRequest } from '@/components/features/moderation/StageTransitionConfirmDialog';
 import { MODERATION_STAGE_FILTERS_UI_ENABLED } from '@/config/moderationStageUi';
 import { deriveModerationStage } from '@/features/moderation/constants/moderationStage';
-import { VERIFICATION_STEPS } from '@/features/moderation/constants/verificationStepDefinitions';
 import { useExpertQueue } from '@/features/moderation/hooks/useExpertQueue';
 import { useModerationWizard } from '@/features/moderation/hooks/useModerationWizard';
 import { useSubmissionOverlay } from '@/features/moderation/hooks/useSubmissionOverlay';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
-import { deriveVerificationUiProgress } from '@/features/moderation/utils/deriveVerificationUiProgress';
 import { isLockedToAnotherExpert } from '@/features/moderation/utils/expertSubmissionLock';
 import {
   confirmModerationApprove,
@@ -43,10 +41,6 @@ import { toModerationUiStatus } from '@/types/moderation';
 import { ReviewDecision } from '@/types/reviewDecision';
 import { uiToast } from '@/uiToast';
 import { migrateVideoDataToVideoData } from '@/utils/helpers';
-
-const STAGE_NAME_BY_STEP: Record<number, string> = Object.fromEntries(
-  VERIFICATION_STEPS.map((stepDef) => [stepDef.step, stepDef.name]),
-) as Record<number, string>;
 
 export default function ModerationPage() {
   const user = useAuthStore((s) => s.user);
@@ -133,26 +127,6 @@ export default function ModerationPage() {
       return haystack.includes(q);
     });
   }, [itemsAfterStageFilter, queueSearchQuery]);
-
-  const selectedStageInfo = useMemo(() => {
-    if (!selectedId) return null;
-    const listItem = allItems.find((i) => i.id === selectedId);
-    const item = mergeDisplayItem(listItem, selectedItemFull);
-    if (!item) return null;
-    const claimedByCurrentUser =
-      item.moderation?.claimedBy === user?.id || item.moderation?.reviewerId === user?.id;
-    if (!claimedByCurrentUser) return null;
-    const mergedVerificationData = {
-      ...(item.moderation?.verificationData || {}),
-      ...(verificationForms[selectedId] || {}),
-    } as ModerationVerificationData;
-    const uiProgress = deriveVerificationUiProgress(mergedVerificationData);
-    if (uiProgress.mode === 'all_complete') {
-      return { step: 3, stepName: 'Hoàn tất checklist' };
-    }
-    const step = uiProgress.step ?? getCurrentVerificationStep(selectedId);
-    return { step, stepName: STAGE_NAME_BY_STEP[step] ?? STAGE_NAME_BY_STEP[1] };
-  }, [selectedId, allItems, selectedItemFull, user?.id, verificationForms, getCurrentVerificationStep]);
 
   const handleExpertReviewNotesChange = useCallback((submissionId: string, text: string) => {
     setExpertReviewNotesDraft((prev) => ({ ...prev, [submissionId]: text }));
@@ -500,11 +474,6 @@ export default function ModerationPage() {
     setPortalModal({ kind: 'delete', submissionId: id });
   }, []);
 
-  const unclaimFromWizard = useCallback(() => {
-    if (!showVerificationDialog) return;
-    unclaim(showVerificationDialog);
-  }, [showVerificationDialog, unclaim]);
-
   if (!user || user.role !== UserRole.EXPERT || !user.isEmailConfirmed || !user.isActive) {
     return (
       <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang kiểm duyệt bản thu." />
@@ -632,7 +601,7 @@ export default function ModerationPage() {
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {moderationA11yMessage}
         </div>
-        <ModerationPageHeader selectedStageInfo={selectedStageInfo} />
+        <ModerationPageHeader />
 
         {/* Tabs — VietTune UI */}
         <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-amber-200/70 backdrop-blur-sm mb-6 sm:mb-8 transition-all duration-300 min-w-0 overflow-x-hidden bg-white/80">
@@ -760,7 +729,6 @@ export default function ModerationPage() {
           verificationForms={verificationForms}
           onExpertReviewNotesChange={handleExpertReviewNotesChange}
           onCancelVerification={cancelVerification}
-          onUnclaimFromWizard={unclaimFromWizard}
           onOpenRejectFromWizard={() => {
             if (showVerificationDialog) setShowRejectDialog(showVerificationDialog);
           }}

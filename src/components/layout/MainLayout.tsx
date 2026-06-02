@@ -8,7 +8,10 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import NotificationFeedBootstrap from '@/components/common/NotificationFeedBootstrap';
 import backgroundImage from '@/components/image/background.png';
 import { setItem } from '@/services/storageService';
-import { vectorSyncService } from '@/services/vectorSyncService';
+import {
+  VECTOR_SYNC_ON_INIT_ENABLED,
+  vectorSyncService,
+} from '@/services/vectorSyncService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
 
@@ -17,10 +20,10 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
-  // Fire-and-forget vector resync on first mount (once per app lifecycle)
+  // Optional: vector resync when backend VectorSyncController is enabled (VITE_ENABLE_VECTOR_SYNC=true)
   const vectorSyncFired = useRef(false);
   useEffect(() => {
-    if (vectorSyncFired.current) return;
+    if (!VECTOR_SYNC_ON_INIT_ENABLED || vectorSyncFired.current) return;
     vectorSyncFired.current = true;
     void vectorSyncService.resync();
   }, []);
