@@ -80,5 +80,20 @@ namespace VietTuneArchive.API.Controllers
             await _userService.DeleteAsync(id);
             return Ok("User deleted successfully.");
         }
+
+        [HttpPost("create-expert")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateExpertAccount([FromBody] CreateExpertUserDTO createExpertDTO)
+        {
+            if (createExpertDTO == null)
+                return BadRequest("Invalid data.");
+
+            var result = await _userService.AddAsync(createExpertDTO);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            return BadRequest(result);
+        }
     }
 }

@@ -55,7 +55,8 @@ namespace VietTuneArchive.Application.Services
                 Password = dto.Password,
                 PasswordHash = passwordHash,
                 FullName = dto.FullName,
-                Role = "Staff",
+                Phone = dto.Phone,
+                Role = "Expert",
                 ConfirmEmailToken = null,
                 IsEmailConfirmed = true,
                 ResetPasswordToken = null,
@@ -66,7 +67,7 @@ namespace VietTuneArchive.Application.Services
                 ContributionScore = 0
             };
             await _userRepository.AddAsync(user);
-            return Result<CreateExpertUserDTO>.Success(expertUserDTO, "Tạo tài khoản Expert thành công.");
+            return Result<CreateExpertUserDTO>.Success(expertUserDTO, "Tạo tài khoản Expert thành công!");
         }
 
         public async Task<Result<UpdateUserDTO>> UpdateAsync(UpdateUserDTO updateUserDTO)
