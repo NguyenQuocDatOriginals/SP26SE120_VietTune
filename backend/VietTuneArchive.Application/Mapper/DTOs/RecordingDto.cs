@@ -22,6 +22,9 @@ namespace VietTuneArchive.Application.Mapper.DTOs
         public string? LyricsVietnamese { get; set; }
         public string? PerformerName { get; set; }
         public int? PerformerAge { get; set; }
+        public string? Composer { get; set; }
+        public string? Language { get; set; }
+        public string? RecordingLocation { get; set; }
         public DateTime? RecordingDate { get; set; }
         public decimal? GpsLatitude { get; set; }
         public decimal? GpsLongitude { get; set; }
@@ -51,6 +54,9 @@ namespace VietTuneArchive.Application.Mapper.DTOs
         public string? LyricsVietnamese { get; set; }
         public string? PerformerName { get; set; }
         public int? PerformerAge { get; set; }
+        public string? Composer { get; set; }
+        public string? Language { get; set; }
+        public string? RecordingLocation { get; set; }
         public DateTime? RecordingDate { get; set; }
         public decimal? GpsLatitude { get; set; }
         public decimal? GpsLongitude { get; set; }

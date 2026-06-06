@@ -115,6 +115,9 @@ namespace VietTuneArchive.Application.Services
                 existingRecording.LyricsVietnamese = recordingDto.LyricsVietnamese;
                 existingRecording.PerformerName = recordingDto.PerformerName;
                 existingRecording.PerformerAge = recordingDto.PerformerAge;
+                existingRecording.Composer = recordingDto.Composer;
+                existingRecording.Language = recordingDto.Language;
+                existingRecording.RecordingLocation = recordingDto.RecordingLocation;
                 existingRecording.RecordingDate = recordingDto.RecordingDate;
                 existingRecording.GpsLatitude = recordingDto.GpsLatitude;
                 existingRecording.GpsLongitude = recordingDto.GpsLongitude;
