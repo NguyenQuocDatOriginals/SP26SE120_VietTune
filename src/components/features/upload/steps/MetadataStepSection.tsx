@@ -16,7 +16,7 @@ import type { DetectedInstrument, MetadataSuggestion } from '@/types/instrumentD
 import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
 import { applyComposerInput, isFolkComposerLabel } from '@/features/upload/composerUtils';
 import { resolveUploadRegionLabel } from '@/features/upload/regionUtils';
-import { UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID } from '@/features/upload/uploadFormValidation';
+import { UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID, UPLOAD_METADATA_FIELDS_PENDING_BACKEND } from '@/features/upload/uploadFormValidation';
 import { detectCrossCaseWarning } from '@/utils/crossCaseInstrumentWarning';
 
 type SectionHeaderProps = {
@@ -374,6 +374,7 @@ export default function MetadataStepSection({
             {errors.artist && <p className="text-sm text-red-400">{errors.artist}</p>}
           </div>
 
+          {!UPLOAD_METADATA_FIELDS_PENDING_BACKEND && (
           <div className="space-y-2">
             <FormFieldComponent
               label="Nhạc sĩ/Tác giả"
@@ -402,7 +403,9 @@ export default function MetadataStepSection({
             </label>
             {errors.composer && <p className="text-sm text-red-400">{errors.composer}</p>}
           </div>
+          )}
 
+          {!UPLOAD_METADATA_FIELDS_PENDING_BACKEND && (
           <div className="space-y-2" id="field-language">
             <FormFieldComponent
               label="Ngôn ngữ"
@@ -458,6 +461,7 @@ export default function MetadataStepSection({
               Không có ngôn ngữ
             </label>
           </div>
+          )}
 
           <div className="space-y-2">
             <FormFieldComponent label="Ngày ghi âm">
@@ -491,6 +495,7 @@ export default function MetadataStepSection({
             )}
           </div>
 
+          {!UPLOAD_METADATA_FIELDS_PENDING_BACKEND && (
           <FormFieldComponent label="Địa điểm ghi âm" hint="Ví dụ: Đình làng X, Nhà văn hóa Y">
             <TextInputComponent
               value={recordingLocation}
@@ -499,6 +504,7 @@ export default function MetadataStepSection({
               disabled={isFormDisabled}
             />
           </FormFieldComponent>
+          )}
 
           <div className="md:col-span-2">
             <FormFieldComponent label="Loại hình biểu diễn" required id="field-performanceType">

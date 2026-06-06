@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 import { EmptyState } from '../components/EmptyState';
 import { EntityDeleteDialog } from '../components/EntityDeleteDialog';
-import { EntityFormDialog } from '../components/EntityFormDialog';
+import { EntityFormDialog, type EntityFormDialogMode } from '../components/EntityFormDialog';
 import { EntitySidebar } from '../components/EntitySidebar';
 import { EntityTable } from '../components/EntityTable';
 import { EntityTableToolbar } from '../components/EntityTableToolbar';
@@ -26,6 +26,7 @@ export function MasterDataPage() {
   const [currentKind, setCurrentKind] = useState<EntityKind>('instruments');
   const [selectedEntity, setSelectedEntity] = useState<ReferenceEntity<Record<string, unknown>> | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formDialogMode, setFormDialogMode] = useState<EntityFormDialogMode>('create');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const { searchTerm, setSearchTerm, debouncedSearch } = useEntitySearch();
@@ -49,12 +50,20 @@ export function MasterDataPage() {
 
   const handleAddClick = () => {
     setSelectedEntity(null);
+    setFormDialogMode('create');
     setIsFormOpen(true);
   };
 
-  const handleEditClick = (entity: ReferenceEntity<Record<string, unknown>>) => {
+  const handleViewDetailClick = (entity: ReferenceEntity<Record<string, unknown>>) => {
     setSelectedEntity(entity);
+    setFormDialogMode('view');
     setIsFormOpen(true);
+  };
+
+  const handleDeleteFromForm = async () => {
+    if (!selectedEntity) return;
+    setIsFormOpen(false);
+    await handleDeleteClick(selectedEntity);
   };
 
   const handleDeleteClick = async (entity: ReferenceEntity<Record<string, unknown>>) => {
@@ -152,8 +161,7 @@ export function MasterDataPage() {
                 page={page}
                 pageSize={20}
                 onPageChange={handlePageChange}
-                onEdit={handleEditClick}
-                onDelete={handleDeleteClick}
+                onViewDetail={handleViewDetailClick}
               />
             )}
           </div>
@@ -165,9 +173,11 @@ export function MasterDataPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSave={handleSave}
+        onDelete={() => void handleDeleteFromForm()}
         kind={currentKind}
         entity={selectedEntity}
         existingItems={items}
+        initialMode={formDialogMode}
       />
 
       <EntityDeleteDialog

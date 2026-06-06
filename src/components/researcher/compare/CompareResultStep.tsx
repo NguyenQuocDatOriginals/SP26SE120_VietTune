@@ -64,34 +64,6 @@ export default function CompareResultStep({
         </label>
       </div>
 
-      {compareHasVideoMedia ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
-          <p className="text-sm text-amber-800">
-            Một trong hai bản thu là nguồn video. Chế độ đồng bộ hiện áp dụng cho audio waveform;
-            vui lòng mở từng bản ở thẻ tìm kiếm để xem video.
-          </p>
-        </div>
-      ) : showSpectrogram ? (
-        <CompareWorkstation
-          leftRecording={leftRecording}
-          rightRecording={rightRecording}
-          leftSource={leftMediaSrc}
-          rightSource={rightMediaSrc}
-          metadataPanel={
-            <p className="text-xs text-neutral-600">
-              Phím tắt: Space (play/pause), 1/2/3/4 (focus/modes), A/D hoặc mũi tên (nudge).
-            </p>
-          }
-        />
-      ) : (
-        <DualAudioComparePlayer
-          leftRecording={leftRecording}
-          rightRecording={rightRecording}
-          leftSource={leftMediaSrc}
-          rightSource={rightMediaSrc}
-        />
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
           <h3 className="text-base font-semibold text-emerald-800 mb-3">Giống nhau</h3>
@@ -133,6 +105,34 @@ export default function CompareResultStep({
           )}
         </div>
       </div>
+
+      {compareHasVideoMedia ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+          <p className="text-sm text-amber-800">
+            Một trong hai bản thu là nguồn video. Chế độ đồng bộ hiện áp dụng cho audio waveform;
+            vui lòng mở từng bản ở thẻ tìm kiếm để xem video.
+          </p>
+        </div>
+      ) : showSpectrogram ? (
+        <CompareWorkstation
+          leftRecording={leftRecording}
+          rightRecording={rightRecording}
+          leftSource={leftMediaSrc}
+          rightSource={rightMediaSrc}
+          metadataPanel={
+            <p className="text-xs text-neutral-600">
+              Phím tắt: Space (play/pause), 1/2/3/4 (focus/modes), A/D hoặc mũi tên (nudge).
+            </p>
+          }
+        />
+      ) : (
+        <DualAudioComparePlayer
+          leftRecording={leftRecording}
+          rightRecording={rightRecording}
+          leftSource={leftMediaSrc}
+          rightSource={rightMediaSrc}
+        />
+      )}
 
       <div className="rounded-xl border border-secondary-200/70 bg-white p-4">
         <h3 className="text-base font-semibold text-primary-800 mb-3">So sánh phiên âm / lời hát</h3>

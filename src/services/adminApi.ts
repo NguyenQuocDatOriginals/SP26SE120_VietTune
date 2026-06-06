@@ -234,10 +234,10 @@ export const adminApi = {
         params: { query: openApiQueryRecord(auditQuery) },
       }),
     );
-    const obj = extractObject(raw) ?? raw;
+    const obj = (extractObject(raw) ?? raw) as Record<string, unknown>;
     const itemsRaw =
-      extractArray<Record<string, unknown>>(obj?.items) ??
-      extractArray<Record<string, unknown>>(obj?.Items) ??
+      extractArray<Record<string, unknown>>(obj.items) ??
+      extractArray<Record<string, unknown>>(obj.Items) ??
       [];
     const items: AdminAuditLogRow[] = itemsRaw.map((row) => ({
       id: String(row.id ?? row.Id ?? ''),
@@ -252,26 +252,26 @@ export const adminApi = {
 
     return {
       items,
-      page: Number(obj?.page ?? obj?.Page ?? 1),
-      pageSize: Number(obj?.pageSize ?? obj?.PageSize ?? 20),
-      total: Number(obj?.total ?? obj?.Total ?? items.length),
+      page: Number(obj.page ?? obj.Page ?? 1),
+      pageSize: Number(obj.pageSize ?? obj.PageSize ?? 20),
+      total: Number(obj.total ?? obj.Total ?? items.length),
     };
   },
 
   async getSystemHealth(): Promise<AdminSystemHealth> {
     const raw = await apiOk(apiFetch.GET('/api/Admin/system-health'));
-    const obj = extractObject(raw) ?? raw;
-    const servicesRaw = obj?.services ?? obj?.Services;
+    const obj = (extractObject(raw) ?? raw) as Record<string, unknown>;
+    const servicesRaw = obj.services ?? obj.Services;
     const services =
       servicesRaw && typeof servicesRaw === 'object' && !Array.isArray(servicesRaw)
         ? (servicesRaw as Record<string, string>)
         : undefined;
 
     return {
-      status: String(obj?.status ?? obj?.Status ?? 'Unknown'),
-      uptime: String(obj?.uptime ?? obj?.Uptime ?? '—'),
-      dbConnections: Number(obj?.dbConnections ?? obj?.DbConnections ?? 0),
-      queueLength: Number(obj?.queueLength ?? obj?.QueueLength ?? 0),
+      status: String(obj.status ?? obj.Status ?? 'Unknown'),
+      uptime: String(obj.uptime ?? obj.Uptime ?? '—'),
+      dbConnections: Number(obj.dbConnections ?? obj.DbConnections ?? 0),
+      queueLength: Number(obj.queueLength ?? obj.QueueLength ?? 0),
       services,
     };
   },

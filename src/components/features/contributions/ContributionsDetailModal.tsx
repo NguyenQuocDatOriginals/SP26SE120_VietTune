@@ -37,10 +37,14 @@ import {
   type SubmissionRecordingMedia,
 } from '@/features/contributions/contributionDisplayUtils';
 import { MODERATION_LEGEND_STEPS } from '@/features/contributions/contributionFilterConstants';
-import type { InstrumentItem } from '@/services/referenceDataService';
+import type { ReferenceNameMaps } from '@/utils/resolveRecordingFieldLabels';
+import {
+  resolveInstrumentLabels,
+  resolveReferenceLabel,
+} from '@/utils/resolveRecordingFieldLabels';
 import type { ContributorSubmissionReview } from '@/services/reviewService';
 import type { Submission } from '@/services/submissionService';
-import { reviewDecisionLabelVi } from '@/types/reviewDecision';
+import { reviewDecisionFromSubmissionStatus, reviewDecisionLabelVi } from '@/types/reviewDecision';
 import { cn } from '@/utils/helpers';
 import { isYouTubeUrl } from '@/utils/youtube';
 
@@ -73,7 +77,7 @@ export default function ContributionsDetailModal({
   reviewFeedback = null,
   reviewLoading = false,
   onClose,
-  instruments,
+  referenceMaps,
   onQuickEdit,
 }: {
   detailSubmission: Submission | null;
@@ -81,9 +85,13 @@ export default function ContributionsDetailModal({
   reviewFeedback?: ContributorSubmissionReview | null;
   reviewLoading?: boolean;
   onClose: () => void;
-  instruments: InstrumentItem[];
+  referenceMaps: ReferenceNameMaps;
   onQuickEdit: (sub: Submission) => void;
 }) {
+  const effectiveReviewDecision =
+    reviewFeedback?.decision ??
+    (detailSubmission ? reviewDecisionFromSubmissionStatus(detailSubmission.status) : undefined);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
@@ -167,12 +175,12 @@ export default function ContributionsDetailModal({
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {reviewFeedback.decision !== undefined && (
+                    {effectiveReviewDecision !== undefined && (
                       <p className="text-sm font-semibold text-neutral-900">
-                        Quyết định: {reviewDecisionLabelVi(reviewFeedback.decision)}
+                        Quyết định: {reviewDecisionLabelVi(effectiveReviewDecision)}
                       </p>
                     )}
-                    {reviewFeedback.comments ? (
+                    {reviewFeedback?.comments ? (
                       <p className="whitespace-pre-wrap break-words text-sm font-medium leading-relaxed text-neutral-800">
                         {reviewFeedback.comments}
                       </p>
@@ -415,6 +423,40 @@ export default function ContributionsDetailModal({
 
                       <div>
                         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+                          <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
+                          Bối cảnh văn hóa
+                        </p>
+                        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+                          {renderDetailField(
+                            'Dân tộc',
+                            resolveReferenceLabel(rec?.ethnicGroupId, referenceMaps.ethnicById),
+                            <User className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Nghi lễ / Sự kiện',
+                            resolveReferenceLabel(rec?.ceremonyId, referenceMaps.ceremonyById),
+                            <Tag className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Lối hát',
+                            resolveReferenceLabel(rec?.vocalStyleId, referenceMaps.vocalStyleById),
+                            <Mic2 className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Thang âm',
+                            resolveReferenceLabel(rec?.musicalScaleId, referenceMaps.musicalScaleById),
+                            <Music className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Địa điểm (phường/xã)',
+                            resolveReferenceLabel(rec?.communeId, referenceMaps.communeById),
+                            <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-neutral-400">
                           <FileText className="h-3 w-3 shrink-0" strokeWidth={2} />
                           Nội dung
                         </p>
@@ -428,21 +470,20 @@ export default function ContributionsDetailModal({
                               Nhạc cụ
                             </span>
                             <div className="mt-2 flex flex-wrap gap-2">
-                              {rec.instrumentIds.map((id) => {
-                                const instrument = instruments.find((i) => i.id === id);
-                                return (
+                              {resolveInstrumentLabels(rec.instrumentIds, referenceMaps.instrumentById).map(
+                                (name, index) => (
                                   <span
-                                    key={id}
+                                    key={`${rec.instrumentIds[index]}-${name}`}
                                     className="group inline-flex cursor-default items-center gap-1.5 rounded-lg border border-secondary-200/80 bg-secondary-50/80 px-2.5 py-1.5 text-xs font-medium text-neutral-800 transition-all hover:border-secondary-300 hover:bg-secondary-100/90 hover:shadow-sm"
                                   >
                                     <Music
                                       className="h-3 w-3 shrink-0 text-secondary-500 transition-colors group-hover:text-secondary-700"
                                       strokeWidth={2}
                                     />
-                                    {instrument ? instrument.name : `Nhạc cụ (ID: ${id})`}
+                                    {name}
                                   </span>
-                                );
-                              })}
+                                ),
+                              )}
                             </div>
                           </div>
                         )}

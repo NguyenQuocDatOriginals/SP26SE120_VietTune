@@ -5,6 +5,8 @@ import type { ApiSubmissionStatus, ModerationStatus } from '@/types';
 /** Queue / overlay shape for expert moderation list items (aligned with expertWorkflowService). */
 export interface LocalRecordingMini {
   id?: string;
+  /** Recording entity UUID — distinct from submission id when nested RecordingDto has no id. */
+  recordingId?: string;
   title?: string;
   mediaType?: 'audio' | 'video' | 'youtube';
   audioData?: string | null;

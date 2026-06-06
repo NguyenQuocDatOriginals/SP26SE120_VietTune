@@ -2,6 +2,7 @@ import { Info, Shield, AlertCircle } from 'lucide-react';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useBlocker } from 'react-router-dom';
 
+import ContributorReviewFeedbackBanner from '@/components/features/upload/ContributorReviewFeedbackBanner';
 import UploadProgressDialog from '@/components/common/UploadProgressDialog';
 import { MultiSelectTags } from '@/components/features/upload/MultiSelectTags';
 import MediaUploadStep from '@/components/features/upload/steps/MediaUploadStep';
@@ -67,6 +68,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
   const [editingRecordingId, setEditingRecordingId] = useState<string | null>(
     recordingId || searchParams.get('id'),
   );
+  const [editSubmissionStatus, setEditSubmissionStatus] = useState<number | undefined>(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const currentUser = useAuthStore((s) => s.user);
@@ -320,6 +322,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
   useUploadRecordingLoader(isEditModeParam, recordingId, searchParams, {
     setEditingRecordingId,
+    setEditSubmissionStatus,
     setCurrentSubmissionId,
     setMediaType,
     setTitle,
@@ -844,6 +847,13 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           <span className="text-red-500">*</span>
           <span>Trường bắt buộc</span>
         </div>
+
+        {isEditMode && currentSubmissionId ? (
+          <ContributorReviewFeedbackBanner
+            submissionId={currentSubmissionId}
+            submissionStatus={editSubmissionStatus}
+          />
+        ) : null}
 
         {showWizard && isAsyncNavigationBlocked ? (
           <p

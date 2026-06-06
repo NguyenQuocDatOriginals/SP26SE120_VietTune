@@ -176,7 +176,7 @@ export default function CreateExpertPage() {
           <h1 className="text-xl sm:text-3xl font-bold text-neutral-900 min-w-0">
             Cấp tài khoản Chuyên gia
           </h1>
-          <BackButton />
+          <BackButton to="/admin?section=users" fallback="/admin" />
         </div>
 
         {expertPasswordRevealOnce && (

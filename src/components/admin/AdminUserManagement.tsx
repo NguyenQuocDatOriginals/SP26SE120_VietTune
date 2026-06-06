@@ -1,5 +1,6 @@
-import { BookOpen, FileWarning, RefreshCcw, Search, User as UserIcon, Users } from 'lucide-react';
+import { BookOpen, FileWarning, RefreshCcw, Search, User as UserIcon, UserPlus, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { RoleSelectDropdown } from '@/components/admin/AdminDashboardDropdowns';
 import Pagination from '@/components/common/Pagination';
@@ -43,6 +44,7 @@ export default function AdminUserManagement({
   onRequestDeleteUser,
   onReactivateUser,
 }: AdminUserManagementProps) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | UserAccountStatus>('all');
@@ -105,6 +107,15 @@ export default function AdminUserManagement({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/create-expert')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600 text-white text-sm font-medium shadow-md hover:bg-primary-500 hover:shadow-lg transition-all duration-200 cursor-pointer"
+              title="Cấp tài khoản Chuyên gia"
+            >
+              <UserPlus className="h-4 w-4" strokeWidth={2.5} />
+              Cấp tài khoản Chuyên gia
+            </button>
             <button
               type="button"
               onClick={onOpenGuide}

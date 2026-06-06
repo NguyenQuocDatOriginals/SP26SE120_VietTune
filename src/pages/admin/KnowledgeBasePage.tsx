@@ -25,7 +25,7 @@ export default function KnowledgeBasePage() {
 
   return (
     <KnowledgeBasePanel
-      listBackTo="/admin"
+      listBackTo="/admin?section=aiMonitoring"
       openCreateOnMount={openCreateOnMount}
       breadcrumbSlot={
         <div className="mb-4">

@@ -186,7 +186,7 @@ export default function KnowledgeBasePanel({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {screen === 'list' && listBackTo != null && listBackTo !== '' && (
-              <BackButton to={listBackTo} />
+              <BackButton to={listBackTo} fallback="/admin" />
             )}
             {screen !== 'list' && (
               <Button type="button" variant="outline" size="sm" onClick={goList}>

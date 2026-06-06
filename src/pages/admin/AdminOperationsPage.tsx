@@ -75,7 +75,7 @@ export default function AdminOperationsPage() {
           </div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-xl font-bold text-neutral-900 sm:text-2xl">Vận hành &amp; quản trị AI</h1>
-            <BackButton />
+            <BackButton to="/admin" fallback="/admin" />
           </div>
           <Card variant="bordered" className="p-6 sm:p-8">
             <p className="mb-3 font-semibold text-neutral-900">Trang chưa bật (feature flag)</p>
@@ -117,7 +117,7 @@ export default function AdminOperationsPage() {
               <ClipboardCopy className="h-4 w-4" strokeWidth={2.25} aria-hidden />
               Sao chép chẩn đoán
             </button>
-            <BackButton />
+            <BackButton to="/admin" fallback="/admin" />
           </div>
         </div>
 

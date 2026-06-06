@@ -12,6 +12,10 @@ import { Recording, VerificationStatus } from '@/types';
 
 export interface ResearcherRecordingListProps {
   searchLoading: boolean;
+  loadError: string | null;
+  onRetryLoad?: () => void;
+  catalogEmpty: boolean;
+  activeFilterCount: number;
   approvedRecordings: Recording[];
   eventTypes: string[];
   onPlay: (recording: Recording) => void;
@@ -20,6 +24,10 @@ export interface ResearcherRecordingListProps {
 
 export default function ResearcherRecordingList({
   searchLoading,
+  loadError,
+  onRetryLoad,
+  catalogEmpty,
+  activeFilterCount,
   approvedRecordings,
   eventTypes,
   onPlay,
@@ -33,11 +41,37 @@ export default function ResearcherRecordingList({
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50/80 p-6 text-center space-y-4">
+        <p className="text-red-800 text-sm">{loadError}</p>
+        {onRetryLoad && (
+          <button
+            type="button"
+            onClick={onRetryLoad}
+            className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition-colors cursor-pointer"
+          >
+            Thử lại
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (catalogEmpty) {
+    return (
+      <p className="text-neutral-600 py-8 text-center">
+        Chưa có bản thu nào đã được chuyên gia kiểm duyệt trong kho dữ liệu.
+      </p>
+    );
+  }
+
   if (approvedRecordings.length === 0) {
     return (
       <p className="text-neutral-600 py-8 text-center">
-        Không có bản thu nào khớp với bộ lọc hoặc từ khóa. Chỉ hiển thị bản thu đã được chuyên gia
-        kiểm duyệt.
+        {activeFilterCount > 0
+          ? 'Không có bản thu nào khớp với bộ lọc đã chọn. Hãy thử bỏ bớt bộ lọc hoặc chọn giá trị khác.'
+          : 'Không có bản thu nào để hiển thị.'}
       </p>
     );
   }

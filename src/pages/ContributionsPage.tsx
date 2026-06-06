@@ -1,5 +1,5 @@
 import { LogIn } from 'lucide-react';
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import BackButton from '@/components/common/BackButton';
@@ -16,7 +16,12 @@ import type { SubmissionRecordingMedia } from '@/features/contributions/contribu
 import { CONTRIBUTIONS_SUBMISSIONS_PANEL_ID } from '@/features/contributions/contributionFilterConstants';
 import { useContributionsData } from '@/features/contributions/hooks/useContributionsData';
 import { useContributionsStatusTabA11y } from '@/features/contributions/hooks/useContributionsStatusTabA11y';
-import { referenceDataService, type InstrumentItem } from '@/services/referenceDataService';
+import { referenceDataService } from '@/services/referenceDataService';
+import {
+  buildReferenceNameMaps,
+  resolveReferenceLabel,
+  type ReferenceNameMaps,
+} from '@/utils/resolveRecordingFieldLabels';
 import { getReviewBySubmissionId, type ContributorSubmissionReview } from '@/services/reviewService';
 import { sessionSetItem } from '@/services/storageService';
 import {
@@ -73,25 +78,38 @@ export default function ContributionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [instruments, setInstruments] = useState<InstrumentItem[]>([]);
-  const instrumentNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const instrument of instruments) {
-      map.set(instrument.id, instrument.name);
-    }
-    return map;
-  }, [instruments]);
+  const [referenceMaps, setReferenceMaps] = useState<ReferenceNameMaps>(
+    buildReferenceNameMaps({}),
+  );
+  const instrumentNameById = referenceMaps.instrumentById;
 
   useEffect(() => {
-    const fetchInstruments = async () => {
+    const fetchReferenceData = async () => {
       try {
-        const data = await referenceDataService.getInstruments();
-        setInstruments(data);
+        const [instruments, ethnicGroups, ceremonies, vocalStyles, communes, musicalScales] =
+          await Promise.all([
+            referenceDataService.getInstruments(),
+            referenceDataService.getEthnicGroups(),
+            referenceDataService.getCeremonies(),
+            referenceDataService.getVocalStyles(),
+            referenceDataService.getCommunes(),
+            referenceDataService.getMusicalScales(),
+          ]);
+        setReferenceMaps(
+          buildReferenceNameMaps({
+            instruments,
+            ethnicGroups,
+            ceremonies,
+            vocalStyles,
+            communes,
+            musicalScales,
+          }),
+        );
       } catch (err) {
-        console.error('Failed to fetch instruments:', err);
+        console.error('Failed to fetch reference data:', err);
       }
     };
-    void fetchInstruments();
+    void fetchReferenceData();
   }, []);
 
   // Redirect if user is Expert
@@ -214,6 +232,7 @@ export default function ContributionsPage() {
       id: detail.id, // submissionId
       recordingId: detail.recordingId,
       submissionId: detail.id,
+      submissionStatus: detail.status,
       mediaType: effectiveMediaType,
       youtubeUrl: videoUrl && videoUrl.includes('youtube') ? videoUrl : null,
       audioData: audioUrl,
@@ -224,19 +243,16 @@ export default function ContributionsPage() {
       basicInfo: {
         title: rec?.title || '',
         artist: rec?.performerName || '',
-        composer: rec?.composer || '',
-        language: rec?.language || '',
         genre: '',
-        recordingLocation: rec?.recordingLocation || '',
         recordingDate: rec?.recordingDate || '',
         dateEstimated: false,
         dateNote: '',
       },
       culturalContext: {
-        ethnicity: '',
+        ethnicity: resolveReferenceLabel(rec?.ethnicGroupId, referenceMaps.ethnicById) || '',
         region: '',
-        province: '',
-        eventType: '',
+        province: resolveReferenceLabel(rec?.communeId, referenceMaps.communeById) || '',
+        eventType: resolveReferenceLabel(rec?.ceremonyId, referenceMaps.ceremonyById) || '',
         performanceType: rec?.performanceContext || '',
         instruments: rec?.instrumentIds || [],
         communeId: rec?.communeId,
@@ -442,7 +458,7 @@ export default function ContributionsPage() {
           reviewFeedback={detailReview}
           reviewLoading={detailReviewLoading}
           onClose={closeDetail}
-          instruments={instruments}
+          referenceMaps={referenceMaps}
           onQuickEdit={handleQuickEdit}
         />
       )}

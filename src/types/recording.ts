@@ -71,6 +71,8 @@ export enum VerificationStatus {
 
 export interface LocalRecording {
   id?: string;
+  /** Recording entity UUID for media/images API. */
+  recordingId?: string;
   submissionId?: string;
   title?: string;
   titleVietnamese?: string;

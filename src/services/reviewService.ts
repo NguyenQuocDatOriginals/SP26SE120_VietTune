@@ -41,8 +41,14 @@ export function normalizeContributorReviewPayload(raw: unknown): ContributorSubm
   let rec: Record<string, unknown> | null = root;
   if ('data' in root) {
     if (root.data === null || root.data === undefined) return null;
-    const inner = asRecord(root.data);
-    if (inner) rec = inner;
+    if (Array.isArray(root.data)) {
+      if (root.data.length === 0) return null;
+      const first = asRecord(root.data[0]);
+      if (first) rec = first;
+    } else {
+      const inner = asRecord(root.data);
+      if (inner) rec = inner;
+    }
   }
 
   if (!rec) return null;

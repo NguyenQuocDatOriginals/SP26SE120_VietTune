@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type {
-  ResearcherAnalysisRecord,
   ResearcherCatalogSource,
+  ResearcherFacetOptions,
   ResearcherSearchResult,
-  ResearcherUiRecord,
   SearchFiltersState,
 } from '../researcherPortalTypes';
+import { EMPTY_SEARCH_FILTERS } from '../researcherPortalTypes';
 import { mapRecordingToAnalysisRecord, mapRecordingToUiRecord } from '../researcherRecordingUtils';
 
-import { REGION_NAMES } from '@/config/constants';
 import { logEvent, reportError, toReportableError } from '@/services/errorReporting';
 import {
   referenceDataService,
@@ -19,29 +18,26 @@ import {
   type InstrumentItem,
 } from '@/services/referenceDataService';
 import {
+  applyResearcherFilters,
+  buildResearcherFacetOptions,
   fetchRecordingsSearchByFilter,
-  type RecordingSearchByFilterQuery,
 } from '@/services/researcherRecordingFilterSearch';
 
-
+const EMPTY_FACETS: ResearcherFacetOptions = {
+  ethnicities: [],
+  instruments: [],
+  ceremonies: [],
+  regions: [],
+  communes: [],
+};
 
 export function useResearcherData() {
-  const [filters, setFilters] = useState<SearchFiltersState>({
-    ethnicGroupId: '',
-    instrumentId: '',
-    regionCode: '',
-    ceremonyId: '',
-    communeId: '',
-  });
-  const [searchResults, setSearchResults] = useState<ResearcherSearchResult[]>([]);
-  const [analysisDataset, setAnalysisDataset] = useState<ResearcherAnalysisRecord[]>([]);
-  const [uiDerivedData, setUiDerivedData] = useState<ResearcherUiRecord[]>([]);
-
-  // Backward compatibility for existing components.
-  /** @deprecated Use searchResults, analysisDataset, or uiDerivedData instead. */
-  const approvedRecordings = searchResults;
+  const [filters, setFilters] = useState<SearchFiltersState>({ ...EMPTY_SEARCH_FILTERS });
+  const [baseCatalog, setBaseCatalog] = useState<ResearcherSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [catalogSource, setCatalogSource] = useState<ResearcherCatalogSource>('empty');
+  const [loadGeneration, setLoadGeneration] = useState(0);
 
   const [ethnicRefData, setEthnicRefData] = useState<EthnicGroupItem[]>([]);
   const [instrumentRefData, setInstrumentRefData] = useState<InstrumentItem[]>([]);
@@ -50,25 +46,41 @@ export function useResearcherData() {
 
   const activeFilterCount = useMemo(
     () =>
-      [
-        filters.ethnicGroupId,
-        filters.instrumentId,
-        filters.regionCode,
-        filters.ceremonyId,
-        filters.communeId,
-      ].filter((x) => Boolean(x?.trim())).length,
+      [filters.ethnicity, filters.instrument, filters.region, filters.ceremony, filters.commune].filter(
+        (x) => Boolean(x?.trim()),
+      ).length,
     [filters],
   );
 
-  const ETHNICITIES = useMemo(() => ethnicRefData.map((e) => e.name), [ethnicRefData]);
-  const REGIONS = useMemo(() => Object.values(REGION_NAMES), []);
-  const EVENT_TYPES = useMemo(() => ceremonyRefData.map((c) => c.name), [ceremonyRefData]);
-  const INSTRUMENTS = useMemo(() => instrumentRefData.map((i) => i.name), [instrumentRefData]);
-  const COMMUNES = useMemo(() => communeRefData.map((c) => c.name), [communeRefData]);
+  const facetOptions = useMemo(
+    () => (baseCatalog.length > 0 ? buildResearcherFacetOptions(baseCatalog) : EMPTY_FACETS),
+    [baseCatalog],
+  );
+
+  const searchResults = useMemo(
+    () => applyResearcherFilters(baseCatalog, filters),
+    [baseCatalog, filters],
+  );
+
+  const analysisDataset = useMemo(
+    () => searchResults.map(mapRecordingToAnalysisRecord),
+    [searchResults],
+  );
+
+  const uiDerivedData = useMemo(() => searchResults.map(mapRecordingToUiRecord), [searchResults]);
+
+  /** @deprecated Use searchResults — kept for existing components. */
+  const approvedRecordings = searchResults;
+
+  const EVENT_TYPES = useMemo(() => facetOptions.ceremonies, [facetOptions.ceremonies]);
+  const ETHNICITIES = useMemo(() => facetOptions.ethnicities, [facetOptions.ethnicities]);
+  const REGIONS = useMemo(() => facetOptions.regions, [facetOptions.regions]);
+  const INSTRUMENTS = useMemo(() => facetOptions.instruments, [facetOptions.instruments]);
+  const COMMUNES = useMemo(() => facetOptions.communes, [facetOptions.communes]);
 
   useEffect(() => {
     let cancelled = false;
-    const loadData = async () => {
+    const loadRefData = async () => {
       const settled = await Promise.allSettled([
         referenceDataService.getEthnicGroups(),
         referenceDataService.getCeremonies(),
@@ -115,11 +127,11 @@ export function useResearcherData() {
         });
       }
     };
-    
-    void loadData();
+
+    void loadRefData();
 
     const handleRefDataUpdate = () => {
-      void loadData();
+      void loadRefData();
     };
 
     window.addEventListener('viettune:refdata-updated', handleRefDataUpdate);
@@ -130,72 +142,62 @@ export function useResearcherData() {
     };
   }, []);
 
-  const buildRecordingSearchQuery = useCallback((): RecordingSearchByFilterQuery => {
-    return {
-      page: 1,
-      pageSize: 500,
-      ethnicGroupId: filters.ethnicGroupId || undefined,
-      instrumentId: filters.instrumentId || undefined,
-      ceremonyId: filters.ceremonyId || undefined,
-      regionCode: filters.regionCode || undefined,
-      communeId: filters.communeId || undefined,
-    };
-  }, [filters]);
-
   const loadResearcherCatalog = useCallback(async () => {
     setSearchLoading(true);
-    const q = buildRecordingSearchQuery();
+    setLoadError(null);
 
-    const logTelemetry = (source: string, count: number, extra: Record<string, unknown> = {}) => {
-      logEvent('ResearcherSearch', { source, count, query: q, ...extra });
-    };
     try {
-      const apiList = await fetchRecordingsSearchByFilter(q);
+      const apiList = await fetchRecordingsSearchByFilter({ page: 1, pageSize: 500 });
 
-      if (apiList && apiList.length > 0) {
-        setSearchResults(apiList);
-        setAnalysisDataset(apiList.map(mapRecordingToAnalysisRecord));
-        setUiDerivedData(apiList.map(mapRecordingToUiRecord));
+      setBaseCatalog(apiList);
+      if (apiList.length > 0) {
         setCatalogSource('api-filter');
-        logTelemetry('api-filter', apiList.length, { status: 'success' });
+        logEvent('ResearcherSearch', {
+          source: 'api-filter',
+          count: apiList.length,
+          status: 'success',
+        });
       } else {
-        setSearchResults([]);
-        setAnalysisDataset([]);
-        setUiDerivedData([]);
         setCatalogSource('empty');
-        logTelemetry('empty', 0, { status: 'no-results' });
+        logEvent('ResearcherSearch', { source: 'empty', count: 0, status: 'no-results' });
       }
     } catch (err) {
       reportError(toReportableError(err, 'Researcher catalog load API failed'), undefined, {
         region: 'researcher',
         stage: 'catalog_load',
       });
-      setSearchResults([]);
-      setAnalysisDataset([]);
-      setUiDerivedData([]);
-      setCatalogSource('empty');
-      logTelemetry('error', 0, { status: 'failed', error: String(err) });
+      setBaseCatalog([]);
+      setCatalogSource('error');
+      setLoadError(
+        err instanceof Error ? err.message : 'Không thể tải kho bản thu. Vui lòng thử lại.',
+      );
+      logEvent('ResearcherSearch', { source: 'error', count: 0, status: 'failed', error: String(err) });
     } finally {
       setSearchLoading(false);
     }
-  }, [buildRecordingSearchQuery]);
+  }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      void loadResearcherCatalog();
-    }, 280);
-    return () => clearTimeout(t);
-  }, [loadResearcherCatalog]);
+    void loadResearcherCatalog();
+  }, [loadResearcherCatalog, loadGeneration]);
+
+  const retryLoadCatalog = useCallback(() => {
+    setLoadGeneration((g) => g + 1);
+  }, []);
 
   return {
     filters,
     setFilters,
+    baseCatalog,
     searchResults,
     analysisDataset,
     uiDerivedData,
     approvedRecordings,
     searchLoading,
+    loadError,
+    retryLoadCatalog,
     catalogSource,
+    facetOptions,
     ethnicRefData,
     instrumentRefData,
     ceremonyRefData,

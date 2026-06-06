@@ -80,7 +80,10 @@ export function ModerationSubmissionDetailPanels({
       )}
       <div className="rounded-2xl border border-neutral-200/80 p-4 bg-white shadow-sm">
         <h3 className="text-base font-semibold text-neutral-900 mb-3">Thông tin bản thu</h3>
-        <RecordingImageGallery recordingId={item.id} className="mb-3" />
+        <RecordingImageGallery
+          recordingId={item.recordingId ?? item.id}
+          className="mb-3"
+        />
         <ul className="space-y-2 text-sm">
           {infoRows.map((row) => {
             const muted = isPlaceholderField(row.value);

@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { X, AlertCircle } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { EntityKind, ReferenceEntity, EntityFormValues } from '../types/masterDataTypes';
@@ -10,36 +10,56 @@ import { normalizeSlug } from '../utils/slugNormalizer';
 
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+import { referenceDataService } from '@/services/referenceDataService';
 
+export type EntityFormDialogMode = 'create' | 'view' | 'edit';
 
 interface EntityFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: EntityFormValues) => Promise<boolean>;
+  onDelete?: () => void;
   kind: EntityKind;
   entity: ReferenceEntity<Record<string, unknown>> | null;
   existingItems: { id: string; name: string }[];
+  initialMode?: EntityFormDialogMode;
 }
 
 export function EntityFormDialog({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   kind,
   entity,
   existingItems,
+  initialMode = 'create',
 }: EntityFormDialogProps) {
   const config = entityConfigs[kind];
-  const isEdit = !!entity;
+  const isExisting = !!entity;
 
+  const [formMode, setFormMode] = useState<EntityFormDialogMode>(initialMode);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [ethnicGroupOptions, setEthnicGroupOptions] = useState<{ value: string; label: string }[]>([]);
+
+  const isReadOnly = formMode === 'view';
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void referenceDataService.getEthnicGroups().then((groups) => {
+      setEthnicGroupOptions(
+        groups.map((g) => ({ value: g.id, label: g.name })),
+      );
+    });
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
-      if (isEdit && entity) {
+      setFormMode(initialMode);
+      if (entity) {
         setFormData({ ...(entity.raw as Record<string, string>) });
       } else {
         setFormData({});
@@ -47,9 +67,8 @@ export function EntityFormDialog({
       setErrors({});
       setDuplicateWarning(false);
     }
-  }, [isOpen, isEdit, entity]);
+  }, [isOpen, initialMode, entity]);
 
-  // Handle ESC
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
@@ -59,9 +78,15 @@ export function EntityFormDialog({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, isSubmitting, onClose]);
 
+  const ethnicLabelById = useMemo(
+    () => Object.fromEntries(ethnicGroupOptions.map((o) => [o.value, o.label])),
+    [ethnicGroupOptions],
+  );
+
   if (!isOpen) return null;
 
   const handleChange = (name: string, value: string) => {
+    if (isReadOnly) return;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
@@ -88,8 +113,8 @@ export function EntityFormDialog({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
@@ -101,15 +126,27 @@ export function EntityFormDialog({
     }
   };
 
+  const resolveSelectDisplay = (fieldName: string, value: string) => {
+    if (fieldName === 'originEthnicGroupId' || fieldName === 'ethnicGroupId') {
+      return ethnicLabelById[value] || value || '—';
+    }
+    return value || '—';
+  };
+
+  const dialogTitle =
+    formMode === 'create'
+      ? `Thêm mới ${config.singularName}`
+      : formMode === 'view'
+        ? `Chi tiết ${config.singularName}`
+        : `Chỉnh sửa ${config.singularName}`;
+
   const overlay = (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6"
       style={{ animation: 'fadeIn 0.2s ease-out' }}
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Dialog */}
       <div
         role="dialog"
         aria-modal="true"
@@ -118,10 +155,9 @@ export function EntityFormDialog({
         style={{ animation: 'slideUp 0.25s ease-out' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
           <h2 id="dialog-title" className="text-lg font-bold text-neutral-800">
-            {isEdit ? 'Cập nhật' : 'Thêm mới'} {config.singularName}
+            {dialogTitle}
           </h2>
           <button
             type="button"
@@ -134,9 +170,8 @@ export function EntityFormDialog({
           </button>
         </div>
 
-        {/* Form body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {isEdit && !entity?.isActive && (
+          {isExisting && !entity?.isActive && (
             <div className="p-3 bg-secondary-50 text-secondary-800 rounded-xl flex items-start gap-2.5 text-sm border border-secondary-200/50">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-secondary-600" />
               <span>Dữ liệu này đang bị tạm ẩn. Thay đổi sẽ không xuất hiện cho đến khi được kích hoạt lại.</span>
@@ -145,36 +180,64 @@ export function EntityFormDialog({
 
           {config.fields.map((field) => {
             const hasError = !!errors[field.name];
+            const value = formData[field.name] || '';
+
             return (
               <div key={field.name} className="space-y-1.5">
                 <label htmlFor={`field-${field.name}`} className="block text-sm font-semibold text-neutral-700">
                   {field.label}
-                  {field.required && <span className="text-primary-500 ml-0.5" aria-hidden="true">*</span>}
+                  {field.required && !isReadOnly && (
+                    <span className="text-primary-500 ml-0.5" aria-hidden="true">*</span>
+                  )}
                 </label>
 
-                {field.type === 'textarea' ? (
+                {isReadOnly ? (
+                  <p className="rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-3.5 py-2.5 text-sm text-neutral-800">
+                    {field.type === 'select'
+                      ? resolveSelectDisplay(field.name, value)
+                      : value || '—'}
+                  </p>
+                ) : field.type === 'textarea' ? (
                   <textarea
                     id={`field-${field.name}`}
-                    value={formData[field.name] || ''}
+                    value={value}
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     placeholder={field.placeholder}
                     className={clsx(
                       'flex min-h-[100px] w-full rounded-xl border bg-cream-50 px-3.5 py-2.5 text-sm text-neutral-800 placeholder:text-neutral-400',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
                       'disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200',
-                      hasError ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-neutral-200/80'
+                      hasError ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-neutral-200/80',
                     )}
                   />
+                ) : field.type === 'select' ? (
+                  <select
+                    id={`field-${field.name}`}
+                    value={value}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    className={clsx(
+                      'flex h-11 w-full rounded-xl border bg-cream-50 px-3.5 text-sm text-neutral-800',
+                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                      hasError ? 'border-red-400' : 'border-neutral-200/80',
+                    )}
+                  >
+                    <option value="">— Chọn dân tộc —</option>
+                    {ethnicGroupOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
                 ) : (
                   <Input
                     id={`field-${field.name}`}
                     type="text"
-                    value={formData[field.name] || ''}
+                    value={value}
                     onChange={(e) => handleChange(field.name, e.target.value)}
                     placeholder={field.placeholder}
                     className={clsx(
                       'rounded-xl border-neutral-200/80 bg-cream-50 focus:border-primary-500 shadow-none ring-0 focus:ring-2 focus:ring-primary-500/20',
-                      hasError && 'border-red-400 focus:ring-red-500/20 focus:border-red-500'
+                      hasError && 'border-red-400 focus:ring-red-500/20 focus:border-red-500',
                     )}
                     aria-invalid={hasError}
                   />
@@ -182,7 +245,7 @@ export function EntityFormDialog({
 
                 {hasError && <p className="text-xs text-red-500 font-medium">{errors[field.name]}</p>}
 
-                {field.name === 'name' && formData.name && !hasError && (
+                {field.name === 'name' && formData.name && !hasError && !isReadOnly && (
                   <div className="text-xs text-neutral-400 mt-1 flex justify-between">
                     <span>Slug: <code className="text-neutral-500">{normalizeSlug(formData.name)}</code></span>
                     {duplicateWarning && (
@@ -197,20 +260,43 @@ export function EntityFormDialog({
           })}
         </form>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-neutral-100 flex justify-end gap-3">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={isSubmitting} className="!px-4 !py-2 !rounded-xl !text-sm">
             Hủy
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            isLoading={isSubmitting}
-            className="!px-5 !py-2 !rounded-xl !text-sm !shadow-md !shadow-primary-600/20"
-          >
-            {isSubmitting ? 'Đang lưu...' : 'Lưu lại'}
-          </Button>
+
+          {formMode === 'view' && isExisting && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete?.()}
+                disabled={isSubmitting}
+                className="!px-4 !py-2 !rounded-xl !text-sm !text-red-600 hover:!bg-red-50"
+              >
+                Xóa
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setFormMode('edit')}
+                className="!px-5 !py-2 !rounded-xl !text-sm !shadow-md !shadow-primary-600/20"
+              >
+                Chỉnh sửa
+              </Button>
+            </>
+          )}
+
+          {(formMode === 'create' || formMode === 'edit') && (
+            <Button
+              size="sm"
+              onClick={() => void handleSubmit()}
+              disabled={isSubmitting}
+              isLoading={isSubmitting}
+              className="!px-5 !py-2 !rounded-xl !text-sm !shadow-md !shadow-primary-600/20"
+            >
+              {isSubmitting ? 'Đang lưu...' : 'Lưu'}
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -10,6 +10,15 @@ import type { Region } from '@/types/reference';
 import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 import { normalizeSearchText } from '@/utils/searchText';
 
+import type { ResearcherFacetOptions, SearchFiltersState } from '@/features/researcher/researcherPortalTypes';
+import {
+  getCeremonyLabel,
+  getCommuneName,
+  getEthnicityLabel,
+  getInstrumentNamesFromRecording,
+  getRegionLabel,
+} from '@/features/researcher/researcherRecordingUtils';
+
 /** Query for GET /Recording/search-by-filter (see BE Swagger). */
 export type RecordingSearchByFilterQuery = ApiRecordingSearchByFilterQuery & {
   q?: string;
@@ -196,6 +205,72 @@ export async function fetchRecordingsSearchByFilter(
     byId.set(l.id ?? `row-${byId.size}`, l);
   }
   return Promise.all([...byId.values()].map((l) => convertLocalToRecording(l)));
+}
+
+function sortLabels(labels: Iterable<string>): string[] {
+  return [...new Set([...labels].map((x) => x.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, 'vi'),
+  );
+}
+
+/** Build dropdown options from recordings actually present in the approved catalog. */
+export function buildResearcherFacetOptions(catalog: Recording[]): ResearcherFacetOptions {
+  const ethnicities: string[] = [];
+  const instruments: string[] = [];
+  const ceremonies: string[] = [];
+  const regions: string[] = [];
+  const communes: string[] = [];
+
+  for (const rec of catalog) {
+    const ethnic = getEthnicityLabel(rec).trim();
+    if (ethnic) ethnicities.push(ethnic);
+
+    for (const inst of getInstrumentNamesFromRecording(rec)) {
+      instruments.push(inst);
+    }
+
+    const ceremony = getCeremonyLabel(rec, []).trim();
+    if (ceremony) ceremonies.push(ceremony);
+
+    const region = getRegionLabel(rec).trim();
+    if (region) regions.push(region);
+
+    const commune = getCommuneName(rec).trim();
+    if (commune) communes.push(commune);
+  }
+
+  return {
+    ethnicities: sortLabels(ethnicities),
+    instruments: sortLabels(instruments),
+    ceremonies: sortLabels(ceremonies),
+    regions: sortLabels(regions),
+    communes: sortLabels(communes),
+  };
+}
+
+/** Client-side metadata filter using the same label helpers as facet generation. */
+export function applyResearcherFilters(
+  catalog: Recording[],
+  filters: SearchFiltersState,
+): Recording[] {
+  const ethnicity = filters.ethnicity.trim();
+  const instrument = filters.instrument.trim();
+  const ceremony = filters.ceremony.trim();
+  const region = filters.region.trim();
+  const commune = filters.commune.trim();
+
+  if (!ethnicity && !instrument && !ceremony && !region && !commune) {
+    return catalog;
+  }
+
+  return catalog.filter((rec) => {
+    if (ethnicity && getEthnicityLabel(rec).trim() !== ethnicity) return false;
+    if (instrument && !getInstrumentNamesFromRecording(rec).includes(instrument)) return false;
+    if (ceremony && getCeremonyLabel(rec, []).trim() !== ceremony) return false;
+    if (region && getRegionLabel(rec).trim() !== region) return false;
+    if (commune && getCommuneName(rec).trim() !== commune) return false;
+    return true;
+  });
 }
 
 /** Guest-safe variant using `/api/RecordingGuest/search-by-filter` (no Authorization required). */

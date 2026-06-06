@@ -54,17 +54,21 @@ export default function ResearcherPortalPage() {
     filters,
     setFilters,
     approvedRecordings,
+    baseCatalog,
     searchLoading,
+    loadError,
+    retryLoadCatalog,
     catalogSource,
+    facetOptions,
     ethnicRefData,
     instrumentRefData,
     ceremonyRefData,
-    communeRefData,
     activeFilterCount,
     analysisDataset,
+    EVENT_TYPES,
   } = useResearcherData();
 
-  const EVENT_TYPES = useMemo(() => ceremonyRefData.map((c) => c.name), [ceremonyRefData]);
+  const catalogEmpty = !searchLoading && !loadError && baseCatalog.length === 0;
 
   const [activeTab, setActiveTab] = useState<TabId>('search');
   const [playModalRecording, setPlayModalRecording] = useState<Recording | null>(null);
@@ -336,10 +340,7 @@ export default function ResearcherPortalPage() {
                 filters={filters}
                 setFilters={setFilters}
                 activeFilterCount={activeFilterCount}
-                ethnicRefData={ethnicRefData}
-                instrumentRefData={instrumentRefData}
-                ceremonyRefData={ceremonyRefData}
-                communeRefData={communeRefData}
+                facetOptions={facetOptions}
               />
 
               {/* Kết quả — chỉ bản thu đã được expert kiểm duyệt */}
@@ -357,6 +358,10 @@ export default function ResearcherPortalPage() {
 
               <ResearcherRecordingList
                 searchLoading={searchLoading}
+                loadError={loadError}
+                onRetryLoad={retryLoadCatalog}
+                catalogEmpty={catalogEmpty}
+                activeFilterCount={activeFilterCount}
                 approvedRecordings={approvedRecordings}
                 eventTypes={EVENT_TYPES}
                 onPlay={handlePlay}
@@ -512,10 +517,11 @@ export default function ResearcherPortalPage() {
               setFilters={setFilters}
               activeFilterCount={activeFilterCount}
               searchLoading={searchLoading}
-              ethnicRefData={ethnicRefData}
-              instrumentRefData={instrumentRefData}
-              ceremonyRefData={ceremonyRefData}
-              communeRefData={communeRefData}
+              loadError={loadError}
+              retryLoadCatalog={retryLoadCatalog}
+              catalogEmpty={catalogEmpty}
+              facetOptions={facetOptions}
+              eventTypes={EVENT_TYPES}
             />
           )}
 

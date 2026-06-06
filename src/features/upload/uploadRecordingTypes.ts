@@ -12,6 +12,7 @@ export type LocalRecordingStorage = LocalRecording & {
 export type LoadedRecording = LocalRecordingStorage & {
   recordingId?: string;
   submissionId?: string;
+  submissionStatus?: number;
   gpsLatitude?: number | null;
   gpsLongitude?: number | null;
   basicInfo?: {

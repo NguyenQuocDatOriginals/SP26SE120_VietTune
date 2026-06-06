@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 import type { ReferenceEntity, EntityKind } from '../types/masterDataTypes';
 import { entityConfigs } from '../utils/entityFieldConfig';
@@ -14,8 +14,7 @@ interface EntityTableProps {
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  onEdit: (item: ReferenceEntity<Record<string, unknown>>) => void;
-  onDelete: (item: ReferenceEntity<Record<string, unknown>>) => void;
+  onViewDetail: (item: ReferenceEntity<Record<string, unknown>>) => void;
 }
 
 export function EntityTable({
@@ -25,18 +24,15 @@ export function EntityTable({
   page,
   pageSize,
   onPageChange,
-  onEdit,
-  onDelete,
+  onViewDetail,
 }: EntityTableProps) {
   const config = entityConfigs[kind];
   const totalPages = Math.ceil(total / pageSize);
 
-  // Show only specific fields in the table based on entity kind
   const displayFields = config.fields.filter(f => f.name !== 'name' && f.type !== 'textarea').slice(0, 2);
 
   return (
     <div className="rounded-2xl border border-neutral-200/60 bg-surface-panel shadow-md overflow-hidden flex flex-col">
-      {/* Desktop table */}
       <div className="overflow-x-auto hidden sm:block">
         <table className="w-full text-sm text-left" role="grid" aria-rowcount={items.length + 1}>
           <thead>
@@ -52,7 +48,7 @@ export function EntityTable({
               <th scope="col" className="px-6 py-3.5 text-xs font-semibold tracking-wider text-neutral-400 uppercase w-32">
                 Trạng thái
               </th>
-              <th scope="col" className="px-6 py-3.5 text-xs font-semibold tracking-wider text-neutral-400 uppercase text-right w-28">
+              <th scope="col" className="px-6 py-3.5 text-xs font-semibold tracking-wider text-neutral-400 uppercase text-right w-36">
                 Thao tác
               </th>
             </tr>
@@ -76,24 +72,15 @@ export function EntityTable({
                   <EntityStatusBadge isActive={item.isActive} />
                 </td>
                 <td className="px-6 py-4 text-right" role="gridcell">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                      onClick={() => onEdit(item)}
-                      className="p-2 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200"
-                      title={`Sửa ${item.name}`}
-                      aria-label={`Sửa ${item.name}`}
-                    >
-                      <Pencil className="w-4 h-4" aria-hidden="true" strokeWidth={2} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(item)}
-                      className="p-2 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
-                      title={item.isActive ? `Tạm ẩn ${item.name}` : `Xóa ${item.name}`}
-                      aria-label={item.isActive ? `Tạm ẩn ${item.name}` : `Xóa ${item.name}`}
-                    >
-                      <Trash2 className="w-4 h-4" aria-hidden="true" strokeWidth={2} />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onViewDetail(item)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200/80 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                    aria-label={`Xem chi tiết ${item.name}`}
+                  >
+                    <Eye className="h-3.5 w-3.5" aria-hidden />
+                    Xem chi tiết
+                  </button>
                 </td>
               </tr>
             ))}
@@ -101,7 +88,6 @@ export function EntityTable({
         </table>
       </div>
 
-      {/* Mobile card list */}
       <div className="sm:hidden divide-y divide-neutral-100">
         {items.map((item) => (
           <div key={item.id} className="p-4 flex items-start justify-between gap-3">
@@ -117,27 +103,19 @@ export function EntityTable({
                 <EntityStatusBadge isActive={item.isActive} />
               </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={() => onEdit(item)}
-                className="p-2 rounded-lg text-neutral-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
-                aria-label={`Sửa ${item.name}`}
-              >
-                <Pencil className="w-4 h-4" strokeWidth={2} />
-              </button>
-              <button
-                onClick={() => onDelete(item)}
-                className="p-2 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                aria-label={item.isActive ? `Tạm ẩn ${item.name}` : `Xóa ${item.name}`}
-              >
-                <Trash2 className="w-4 h-4" strokeWidth={2} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => onViewDetail(item)}
+              className="inline-flex items-center gap-1 rounded-lg border border-neutral-200/80 px-2.5 py-1.5 text-xs font-semibold text-neutral-700"
+              aria-label={`Xem chi tiết ${item.name}`}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Chi tiết
+            </button>
           </div>
         ))}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="px-6 py-4 border-t border-neutral-100 flex justify-center">
           <Pagination

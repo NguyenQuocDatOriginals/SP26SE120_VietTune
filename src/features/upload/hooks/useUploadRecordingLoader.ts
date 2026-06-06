@@ -41,6 +41,7 @@ function applyLoadedRecordingPerformanceType(
 
 export type UploadRecordingLoaderSetters = {
   setEditingRecordingId: (v: string | null) => void;
+  setEditSubmissionStatus: (v: number | undefined) => void;
   setCurrentSubmissionId: (v: string | null) => void;
   setMediaType: (v: 'audio' | 'video') => void;
   setTitle: (v: string) => void;
@@ -118,6 +119,9 @@ export function useUploadRecordingLoader(
 
           s.setEditingRecordingId(recording.recordingId || recording.id || null);
           s.setCurrentSubmissionId(recording.submissionId || null);
+          s.setEditSubmissionStatus(
+            typeof recording.submissionStatus === 'number' ? recording.submissionStatus : undefined,
+          );
           effectiveMediaType = (recording.mediaType || 'audio') as 'audio' | 'video';
           s.setMediaType(effectiveMediaType);
           s.setTitle(recording.basicInfo?.title || '');
@@ -224,7 +228,10 @@ export function useUploadRecordingLoader(
           if (cancelled) return;
 
           s.setEditingRecordingId(recording.recordingId || null);
-          s.setCurrentSubmissionId(recording.id || null);
+          s.setCurrentSubmissionId(recording.submissionId || recording.id || null);
+          s.setEditSubmissionStatus(
+            typeof recording.submissionStatus === 'number' ? recording.submissionStatus : undefined,
+          );
           effectiveMediaType = (recording.mediaType || 'audio') as 'audio' | 'video';
           s.setMediaType(effectiveMediaType);
           s.setTitle(recording.basicInfo?.title || '');

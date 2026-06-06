@@ -1,5 +1,8 @@
 import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
 
+/** Backend Recording entity has no composer/language/recordingLocation columns yet. */
+export const UPLOAD_METADATA_FIELDS_PENDING_BACKEND = true;
+
 export type UploadValidationContext = {
   isEditMode: boolean;
   file: File | null;
@@ -19,7 +22,7 @@ export type UploadValidationContext = {
 export const WIZARD_STEP_2_TRANSITION_FIELD_KEYS = [
   'title',
   'artist',
-  'composer',
+  ...(UPLOAD_METADATA_FIELDS_PENDING_BACKEND ? [] : (['composer'] as const)),
   'performanceType',
   'vocalStyle',
   'instruments',
@@ -57,7 +60,11 @@ export function collectUploadFieldErrors(ctx: UploadValidationContext): Record<s
     newErrors.artist = "Vui lòng nhập tên nghệ sĩ hoặc chọn 'Không rõ'";
   }
 
-  if (!ctx.composerUnknown && !ctx.composer.trim()) {
+  if (
+    !UPLOAD_METADATA_FIELDS_PENDING_BACKEND &&
+    !ctx.composerUnknown &&
+    !ctx.composer.trim()
+  ) {
     newErrors.composer = "Vui lòng nhập tên tác giả hoặc chọn 'Dân gian/Không rõ'";
   }
 

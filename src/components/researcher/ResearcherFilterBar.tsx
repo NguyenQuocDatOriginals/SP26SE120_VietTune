@@ -2,36 +2,25 @@ import { CalendarDays, Map, MapPin, Music2, Users } from 'lucide-react';
 import React, { useState } from 'react';
 
 import SearchableDropdown from '@/components/common/SearchableDropdown';
-import { REGION_NAMES } from '@/config/constants';
-import type {
-  ResearcherFilterDropdownKey,
-  SearchFiltersState,
+import {
+  EMPTY_SEARCH_FILTERS,
+  type ResearcherFacetOptions,
+  type ResearcherFilterDropdownKey,
+  type SearchFiltersState,
 } from '@/features/researcher/researcherPortalTypes';
-import type {
-  CeremonyItem,
-  CommuneItem,
-  EthnicGroupItem,
-  InstrumentItem,
-} from '@/services/referenceDataService';
 
 export interface ResearcherFilterBarProps {
   filters: SearchFiltersState;
   setFilters: React.Dispatch<React.SetStateAction<SearchFiltersState>>;
   activeFilterCount: number;
-  ethnicRefData: EthnicGroupItem[];
-  instrumentRefData: InstrumentItem[];
-  ceremonyRefData: CeremonyItem[];
-  communeRefData: CommuneItem[];
+  facetOptions: ResearcherFacetOptions;
 }
 
 export default function ResearcherFilterBar({
   filters,
   setFilters,
   activeFilterCount,
-  ethnicRefData,
-  instrumentRefData,
-  ceremonyRefData,
-  communeRefData,
+  facetOptions,
 }: ResearcherFilterBarProps) {
   const [filterDropdownOpen, setFilterDropdownOpen] = useState<ResearcherFilterDropdownKey | null>(
     null,
@@ -42,7 +31,9 @@ export default function ResearcherFilterBar({
       <div className="mb-4 sm:mb-5 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-primary-800 tracking-tight">Bộ lọc nâng cao</h3>
-          <p className="text-xs text-neutral-500 mt-1">Lọc nhanh theo metadata đã xác minh.</p>
+          <p className="text-xs text-neutral-500 mt-1">
+            Chỉ hiển thị giá trị có trong kho bản thu đã duyệt.
+          </p>
           {activeFilterCount > 0 && (
             <p className="text-[11px] text-primary-700 mt-1">
               Đang áp dụng {activeFilterCount} bộ lọc
@@ -51,15 +42,7 @@ export default function ResearcherFilterBar({
         </div>
         <button
           type="button"
-          onClick={() =>
-            setFilters({
-              ethnicGroupId: '',
-              instrumentId: '',
-              regionCode: '',
-              ceremonyId: '',
-              communeId: '',
-            })
-          }
+          onClick={() => setFilters({ ...EMPTY_SEARCH_FILTERS })}
           disabled={activeFilterCount === 0}
           className="text-xs px-3 py-1.5 rounded-lg border border-primary-200/80 text-primary-700 hover:bg-primary-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
@@ -74,13 +57,9 @@ export default function ResearcherFilterBar({
               label: 'Dân tộc',
               icon: Users,
               placeholder: 'Tất cả dân tộc',
-              value: ethnicRefData.find((x) => x.id === filters.ethnicGroupId)?.name || '',
-              onChange: (v: string) =>
-                setFilters((p) => ({
-                  ...p,
-                  ethnicGroupId: ethnicRefData.find((x) => x.name === v)?.id || '',
-                })),
-              options: ethnicRefData.map((x) => x.name),
+              value: filters.ethnicity,
+              onChange: (v: string) => setFilters((p) => ({ ...p, ethnicity: v })),
+              options: facetOptions.ethnicities,
               searchable: true,
             },
             {
@@ -88,13 +67,9 @@ export default function ResearcherFilterBar({
               label: 'Nhạc cụ',
               icon: Music2,
               placeholder: 'Tất cả nhạc cụ',
-              value: instrumentRefData.find((x) => x.id === filters.instrumentId)?.name || '',
-              onChange: (v: string) =>
-                setFilters((p) => ({
-                  ...p,
-                  instrumentId: instrumentRefData.find((x) => x.name === v)?.id || '',
-                })),
-              options: instrumentRefData.map((x) => x.name),
+              value: filters.instrument,
+              onChange: (v: string) => setFilters((p) => ({ ...p, instrument: v })),
+              options: facetOptions.instruments,
               searchable: true,
             },
             {
@@ -102,13 +77,9 @@ export default function ResearcherFilterBar({
               label: 'Nghi lễ',
               icon: CalendarDays,
               placeholder: 'Tất cả nghi lễ',
-              value: ceremonyRefData.find((x) => x.id === filters.ceremonyId)?.name || '',
-              onChange: (v: string) =>
-                setFilters((p) => ({
-                  ...p,
-                  ceremonyId: ceremonyRefData.find((x) => x.name === v)?.id || '',
-                })),
-              options: ceremonyRefData.map((x) => x.name),
+              value: filters.ceremony,
+              onChange: (v: string) => setFilters((p) => ({ ...p, ceremony: v })),
+              options: facetOptions.ceremonies,
               searchable: false,
             },
             {
@@ -116,15 +87,9 @@ export default function ResearcherFilterBar({
               label: 'Vùng miền',
               icon: Map,
               placeholder: 'Tất cả vùng miền',
-              value: filters.regionCode
-                ? REGION_NAMES[filters.regionCode as keyof typeof REGION_NAMES] || ''
-                : '',
-              onChange: (v: string) =>
-                setFilters((p) => ({
-                  ...p,
-                  regionCode: Object.entries(REGION_NAMES).find(([, label]) => label === v)?.[0] || '',
-                })),
-              options: Object.values(REGION_NAMES),
+              value: filters.region,
+              onChange: (v: string) => setFilters((p) => ({ ...p, region: v })),
+              options: facetOptions.regions,
               searchable: false,
             },
             {
@@ -132,13 +97,9 @@ export default function ResearcherFilterBar({
               label: 'Xã / Phường',
               icon: MapPin,
               placeholder: 'Tất cả xã / phường',
-              value: communeRefData.find((x) => x.id === filters.communeId)?.name || '',
-              onChange: (v: string) =>
-                setFilters((p) => ({
-                  ...p,
-                  communeId: communeRefData.find((x) => x.name === v)?.id || '',
-                })),
-              options: communeRefData.map((x) => x.name),
+              value: filters.commune,
+              onChange: (v: string) => setFilters((p) => ({ ...p, commune: v })),
+              options: facetOptions.communes,
               searchable: true,
             },
           ] as const

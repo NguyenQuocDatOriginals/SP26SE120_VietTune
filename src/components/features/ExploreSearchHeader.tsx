@@ -1,6 +1,6 @@
 import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import type { KeyboardEvent, LegacyRef, ReactNode } from 'react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/helpers';
 
@@ -42,6 +42,13 @@ export default function ExploreSearchHeader({
   const homeSemanticOnly = layout === 'home-semantic-only';
   const tabKeywordRef = useRef<HTMLButtonElement | null>(null);
   const tabSemanticRef = useRef<HTMLButtonElement | null>(null);
+  const semanticInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (mode === 'semantic' || homeSemanticOnly) {
+      semanticInputRef.current?.focus();
+    }
+  }, [mode, homeSemanticOnly]);
 
   const onTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>, m: ExploreSearchMode) => {
     if (e.key === 'ArrowRight') {
@@ -157,8 +164,13 @@ export default function ExploreSearchHeader({
               value={keywordValue}
               onChange={(e) => onKeywordChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') onKeywordSubmit();
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (mode === 'keyword') onKeywordSubmit();
+                }
               }}
+              disabled={mode !== 'keyword'}
+              tabIndex={mode === 'keyword' ? 0 : -1}
               placeholder="Tên bài, nhạc cụ, dân tộc, mô tả…"
               className="w-full min-h-[44px] bg-transparent pl-11 pr-[7rem] text-base text-neutral-900 placeholder-neutral-500 focus:outline-none sm:pl-12 sm:pr-36"
               aria-label="Từ khóa tìm kiếm"
@@ -197,12 +209,19 @@ export default function ExploreSearchHeader({
             aria-hidden
           />
           <input
+            ref={semanticInputRef}
             type="text"
             value={semanticValue}
             onChange={(e) => onSemanticChange(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onSemanticSubmit();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!semanticValue.trim()) return;
+                onSemanticSubmit();
+              }
             }}
+            disabled={!homeSemanticOnly && mode !== 'semantic'}
+            tabIndex={homeSemanticOnly || mode === 'semantic' ? 0 : -1}
             placeholder="Ví dụ: dân ca quan họ, đàn bầu miền Bắc, hát then Tày…"
             className="w-full min-h-[44px] bg-transparent pl-11 pr-[7.5rem] text-base text-neutral-900 placeholder-neutral-500 focus:outline-none sm:pl-12 sm:pr-40"
             aria-label="Mô tả tìm kiếm theo ngữ nghĩa"

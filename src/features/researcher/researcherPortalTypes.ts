@@ -1,6 +1,6 @@
 import { Recording } from '@/types';
 
-export type ResearcherCatalogSource = 'api-filter' | 'empty';
+export type ResearcherCatalogSource = 'api-filter' | 'empty' | 'error';
 
 export type ResearcherSearchResult = Recording;
 
@@ -35,13 +35,30 @@ export interface ComparisonFacets {
   different: ComparisonFacetDiff[];
 }
 
+/** Label-based filters — values must match facet options derived from the approved catalog. */
 export interface SearchFiltersState {
-  ethnicGroupId: string;
-  instrumentId: string;
-  regionCode: string;
-  ceremonyId: string;
-  communeId: string;
+  ethnicity: string;
+  instrument: string;
+  region: string;
+  ceremony: string;
+  commune: string;
 }
+
+export interface ResearcherFacetOptions {
+  ethnicities: string[];
+  instruments: string[];
+  ceremonies: string[];
+  regions: string[];
+  communes: string[];
+}
+
+export const EMPTY_SEARCH_FILTERS: SearchFiltersState = {
+  ethnicity: '',
+  instrument: '',
+  region: '',
+  ceremony: '',
+  commune: '',
+};
 
 export interface ChatCitation {
   recordingId: string;

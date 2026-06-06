@@ -223,6 +223,21 @@ function getYearLabel(rec: Recording | undefined): string {
   return rec.recordedDate.slice(0, 4);
 }
 
+export function getInstrumentNamesFromRecording(rec: Recording | undefined): string[] {
+  if (!rec) return [];
+  if ((rec.instruments?.length ?? 0) > 0) {
+    return (rec.instruments ?? [])
+      .map((i) => (i.nameVietnamese ?? i.name ?? '').trim())
+      .filter(Boolean);
+  }
+  const label = getInstrumentLabel(rec);
+  if (!label) return [];
+  return label
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function getInstrumentNames(rec: Recording | undefined): string[] {
   if (!rec) return [];
   const fromList = (rec.instruments ?? [])

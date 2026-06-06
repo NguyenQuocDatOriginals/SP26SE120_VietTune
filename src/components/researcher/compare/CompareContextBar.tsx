@@ -2,14 +2,7 @@ import { Pencil } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import SearchableDropdown from '@/components/common/SearchableDropdown';
-import { REGION_NAMES } from '@/config/constants';
 import type { CompareWizardStep, SearchFiltersState } from '@/features/researcher/researcherPortalTypes';
-import type {
-  CeremonyItem,
-  CommuneItem,
-  EthnicGroupItem,
-  InstrumentItem,
-} from '@/services/referenceDataService';
 import { Recording } from '@/types';
 
 export interface CompareContextBarProps {
@@ -17,10 +10,6 @@ export interface CompareContextBarProps {
   filters: SearchFiltersState;
   activeFilterCount: number;
   resultCount: number;
-  ethnicRefData: EthnicGroupItem[];
-  instrumentRefData: InstrumentItem[];
-  ceremonyRefData: CeremonyItem[];
-  communeRefData: CommuneItem[];
   compareLeftId: string;
   compareRightId: string;
   setCompareLeftId: React.Dispatch<React.SetStateAction<string>>;
@@ -30,34 +19,13 @@ export interface CompareContextBarProps {
   onChangeSelection?: () => void;
 }
 
-function buildFilterChips(
-  filters: SearchFiltersState,
-  ethnicRefData: EthnicGroupItem[],
-  instrumentRefData: InstrumentItem[],
-  ceremonyRefData: CeremonyItem[],
-  communeRefData: CommuneItem[],
-): string[] {
+function buildFilterChips(filters: SearchFiltersState): string[] {
   const chips: string[] = [];
-  if (filters.ethnicGroupId) {
-    const name = ethnicRefData.find((x) => x.id === filters.ethnicGroupId)?.name;
-    if (name) chips.push(`Dân tộc: ${name}`);
-  }
-  if (filters.instrumentId) {
-    const name = instrumentRefData.find((x) => x.id === filters.instrumentId)?.name;
-    if (name) chips.push(`Nhạc cụ: ${name}`);
-  }
-  if (filters.ceremonyId) {
-    const name = ceremonyRefData.find((x) => x.id === filters.ceremonyId)?.name;
-    if (name) chips.push(`Nghi lễ: ${name}`);
-  }
-  if (filters.regionCode) {
-    const name = REGION_NAMES[filters.regionCode as keyof typeof REGION_NAMES];
-    if (name) chips.push(`Vùng: ${name}`);
-  }
-  if (filters.communeId) {
-    const name = communeRefData.find((x) => x.id === filters.communeId)?.name;
-    if (name) chips.push(`Xã/Phường: ${name}`);
-  }
+  if (filters.ethnicity.trim()) chips.push(`Dân tộc: ${filters.ethnicity.trim()}`);
+  if (filters.instrument.trim()) chips.push(`Nhạc cụ: ${filters.instrument.trim()}`);
+  if (filters.ceremony.trim()) chips.push(`Nghi lễ: ${filters.ceremony.trim()}`);
+  if (filters.region.trim()) chips.push(`Vùng: ${filters.region.trim()}`);
+  if (filters.commune.trim()) chips.push(`Xã/Phường: ${filters.commune.trim()}`);
   return chips;
 }
 
@@ -76,10 +44,6 @@ export default function CompareContextBar({
   filters,
   activeFilterCount,
   resultCount,
-  ethnicRefData,
-  instrumentRefData,
-  ceremonyRefData,
-  communeRefData,
   compareLeftId,
   compareRightId,
   setCompareLeftId,
@@ -88,10 +52,7 @@ export default function CompareContextBar({
   onEditFilters,
   onChangeSelection,
 }: CompareContextBarProps) {
-  const chips = useMemo(
-    () => buildFilterChips(filters, ethnicRefData, instrumentRefData, ceremonyRefData, communeRefData),
-    [filters, ethnicRefData, instrumentRefData, ceremonyRefData, communeRefData],
-  );
+  const chips = useMemo(() => buildFilterChips(filters), [filters]);
 
   const compareOptionMap = useMemo(() => {
     const map = new Map<string, string>();

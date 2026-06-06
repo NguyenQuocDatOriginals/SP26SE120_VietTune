@@ -23,6 +23,14 @@ function normalizeId(v: unknown): string {
     .toLowerCase();
 }
 
+function pickField(row: Record<string, unknown> | null | undefined, ...keys: string[]): unknown {
+  if (!row) return undefined;
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== null) return row[k];
+  }
+  return undefined;
+}
+
 /** Địa lý cấp tỉnh → nhãn vùng/miền; không dùng tên phường/xã/huyện cho “Vùng miền”. */
 function macroRegionLabelFromGeo(
   lookups: SubmissionLookupMaps | undefined,
@@ -74,70 +82,90 @@ export function mapSubmissionToLocalRecording(
   x: Record<string, unknown>,
   lookups?: SubmissionLookupMaps,
 ): LocalRecording {
+  const recRaw = pickField(x, 'recording', 'Recording');
   const rec =
-    x.recording && typeof x.recording === 'object'
-      ? (x.recording as Record<string, unknown>)
-      : null;
+    recRaw && typeof recRaw === 'object' ? (recRaw as Record<string, unknown>) : null;
 
-  const submissionId = String(x.id ?? '');
-  const recordingEntityId = rec?.id != null && String(rec.id).trim() ? String(rec.id).trim() : '';
-  const id = recordingEntityId || submissionId;
+  const submissionId = String(x.id ?? x.Id ?? '');
+  const recordingEntityId =
+    rec?.id != null && String(rec.id).trim()
+      ? String(rec.id).trim()
+      : rec?.Id != null && String(rec.Id).trim()
+        ? String(rec.Id).trim()
+        : '';
+  const topLevelRecordingId = String(x.recordingId ?? x.RecordingId ?? '').trim();
+  const recordingId = recordingEntityId || topLevelRecordingId || '';
+  const id = recordingId || submissionId;
   const title =
-    (rec?.title as string | undefined) || (x.title as string | undefined) || 'Không có tiêu đề';
+    (pickField(rec, 'title', 'Title') as string | undefined) ||
+    (pickField(x, 'title', 'Title') as string | undefined) ||
+    'Không có tiêu đề';
   const audioFileUrl =
-    (rec?.audioFileUrl as string | undefined) ??
-    (x.audioFileUrl as string | undefined) ??
+    (pickField(rec, 'audioFileUrl', 'AudioFileUrl') as string | undefined) ??
+    (pickField(x, 'audioFileUrl', 'AudioFileUrl') as string | undefined) ??
     undefined;
   const videoFileUrl =
-    (rec?.videoFileUrl as string | undefined) ??
-    (x.videoFileUrl as string | undefined) ??
+    (pickField(rec, 'videoFileUrl', 'VideoFileUrl') as string | undefined) ??
+    (pickField(x, 'videoFileUrl', 'VideoFileUrl') as string | undefined) ??
     undefined;
-  const statusRaw = x.status;
+  const statusRaw = pickField(x, 'status', 'Status');
   const apiStatus = mapApiSubmissionStatusToModeration(statusRaw);
   const moderationStatus = toModerationUiStatus(apiStatus);
   const reviewerId =
-    (x.reviewerId as string | undefined) ??
-    (x.assignedReviewerId as string | undefined) ??
-    (x.claimedBy as string | undefined);
+    (pickField(x, 'reviewerId', 'ReviewerId') as string | undefined) ??
+    (pickField(x, 'assignedReviewerId', 'AssignedReviewerId') as string | undefined) ??
+    (pickField(x, 'claimedBy', 'ClaimedBy') as string | undefined);
 
   const claimedBy =
     moderationStatus === ModerationStatus.IN_REVIEW && reviewerId ? reviewerId : undefined;
 
-  const instrumentIds = Array.isArray(rec?.instrumentIds) ? (rec?.instrumentIds as unknown[]) : [];
-  const instrumentObjects = Array.isArray(rec?.instruments)
-    ? (rec?.instruments as Array<Record<string, unknown>>)
+  const instrumentRaw = pickField(rec, 'instrumentIds', 'InstrumentIds');
+  const instrumentIds = Array.isArray(instrumentRaw) ? (instrumentRaw as unknown[]) : [];
+  const instrumentObjects = Array.isArray(pickField(rec, 'instruments', 'Instruments'))
+    ? (pickField(rec, 'instruments', 'Instruments') as Array<Record<string, unknown>>)
     : [];
   const mappedInstrumentNames = instrumentIds
     .map((v) => String(v || '').trim())
     .filter(Boolean)
     .map((idVal) => lookups?.instrumentById?.[normalizeId(idVal)] || `ID:${idVal}`);
   const embeddedInstrumentNames = instrumentObjects
-    .map((it) => String(it?.name ?? it?.nameVietnamese ?? '').trim())
+    .map((it) => String(it?.name ?? it?.nameVietnamese ?? it?.Name ?? '').trim())
     .filter(Boolean);
   const instrumentNames =
     mappedInstrumentNames.length > 0 ? mappedInstrumentNames : embeddedInstrumentNames;
 
-  const communeId = (rec?.communeId as string | undefined) || (x.communeId as string | undefined);
+  const communeId =
+    (pickField(rec, 'communeId', 'CommuneId') as string | undefined) ||
+    (pickField(x, 'communeId', 'CommuneId') as string | undefined);
   const districtId =
-    (rec?.districtId as string | undefined) || (x.districtId as string | undefined);
+    (pickField(rec, 'districtId', 'DistrictId') as string | undefined) ||
+    (pickField(x, 'districtId', 'DistrictId') as string | undefined);
   const provinceId =
-    (rec?.provinceId as string | undefined) || (x.provinceId as string | undefined);
+    (pickField(rec, 'provinceId', 'ProvinceId') as string | undefined) ||
+    (pickField(x, 'provinceId', 'ProvinceId') as string | undefined);
+
+  const ethnicGroupId = pickField(rec, 'ethnicGroupId', 'EthnicGroupId');
+  const ceremonyId = pickField(rec, 'ceremonyId', 'CeremonyId');
 
   const ethnicityFromApi =
-    (x.ethnicityName as string | undefined) ||
-    (rec?.ethnicityName as string | undefined) ||
-    (rec?.ethnicGroupName as string | undefined) ||
-    ((rec?.ethnicGroup as Record<string, unknown> | undefined)?.name as string | undefined) ||
-    (rec?.ethnicGroupId
-      ? lookups?.ethnicById?.[normalizeId(rec.ethnicGroupId)] || `ID:${String(rec.ethnicGroupId)}`
+    (pickField(x, 'ethnicityName', 'EthnicityName') as string | undefined) ||
+    (pickField(rec, 'ethnicityName', 'EthnicityName') as string | undefined) ||
+    (pickField(rec, 'ethnicGroupName', 'EthnicGroupName') as string | undefined) ||
+    ((pickField(rec, 'ethnicGroup', 'EthnicGroup') as Record<string, unknown> | undefined)?.name as
+      | string
+      | undefined) ||
+    (ethnicGroupId
+      ? lookups?.ethnicById?.[normalizeId(ethnicGroupId)] || `ID:${String(ethnicGroupId)}`
       : undefined);
 
   const eventTypeFromApi =
-    (x.ceremonyName as string | undefined) ||
-    (rec?.ceremonyName as string | undefined) ||
-    ((rec?.ceremony as Record<string, unknown> | undefined)?.name as string | undefined) ||
-    (rec?.ceremonyId
-      ? lookups?.ceremonyById?.[normalizeId(rec.ceremonyId)] || `ID:${String(rec.ceremonyId)}`
+    (pickField(x, 'ceremonyName', 'CeremonyName') as string | undefined) ||
+    (pickField(rec, 'ceremonyName', 'CeremonyName') as string | undefined) ||
+    ((pickField(rec, 'ceremony', 'Ceremony') as Record<string, unknown> | undefined)?.name as
+      | string
+      | undefined) ||
+    (ceremonyId
+      ? lookups?.ceremonyById?.[normalizeId(ceremonyId)] || `ID:${String(ceremonyId)}`
       : undefined);
 
   const explicitRegion =
@@ -164,6 +192,7 @@ export function mapSubmissionToLocalRecording(
 
   const mapped: LocalRecording = {
     id,
+    ...(recordingId ? { recordingId } : {}),
     ...(submissionId ? { submissionId } : {}),
     title,
     mediaType: audioFileUrl ? 'audio' : videoFileUrl ? 'video' : undefined,
@@ -181,9 +210,9 @@ export function mapSubmissionToLocalRecording(
     basicInfo: {
       title,
       artist:
-        (rec?.performerName as string | undefined) ||
-        (x.performerName as string | undefined) ||
-        (x.submittedBy as string | undefined),
+        (pickField(rec, 'performerName', 'PerformerName') as string | undefined) ||
+        (pickField(x, 'performerName', 'PerformerName') as string | undefined) ||
+        (pickField(x, 'submittedBy', 'SubmittedBy') as string | undefined),
     },
     uploader: {
       id: uploaderId,
@@ -195,21 +224,25 @@ export function mapSubmissionToLocalRecording(
       region: regionMacroLabel,
       province:
         (communeId ? lookups?.communeById?.[normalizeId(communeId)] : undefined) ||
-        (rec?.communeName as string | undefined) ||
-        (rec?.recordingLocation as string | undefined) ||
+        (pickField(rec, 'communeName', 'CommuneName') as string | undefined) ||
         undefined,
       eventType: eventTypeFromApi,
       instruments: instrumentNames,
-      performanceType: (rec?.performanceContext as string | undefined) || undefined,
+      performanceType:
+        (pickField(rec, 'performanceContext', 'PerformanceContext') as string | undefined) ||
+        undefined,
     },
-    ...(typeof rec?.durationSeconds === 'number' && Number.isFinite(rec.durationSeconds)
-      ? { duration: Math.floor(rec.durationSeconds as number) }
+    ...(typeof pickField(rec, 'durationSeconds', 'DurationSeconds') === 'number' &&
+    Number.isFinite(pickField(rec, 'durationSeconds', 'DurationSeconds') as number)
+      ? { duration: Math.floor(pickField(rec, 'durationSeconds', 'DurationSeconds') as number) }
       : {}),
-    ...(rec?.description && String(rec.description).trim()
-      ? { description: String(rec.description).trim() }
+    ...(pickField(rec, 'description', 'Description') &&
+    String(pickField(rec, 'description', 'Description')).trim()
+      ? { description: String(pickField(rec, 'description', 'Description')).trim() }
       : {}),
-    ...(rec?.recordingDate && String(rec.recordingDate).trim()
-      ? { recordedDate: String(rec.recordingDate).trim() }
+    ...(pickField(rec, 'recordingDate', 'RecordingDate') &&
+    String(pickField(rec, 'recordingDate', 'RecordingDate')).trim()
+      ? { recordedDate: String(pickField(rec, 'recordingDate', 'RecordingDate')).trim() }
       : {}),
   };
   return mapped;

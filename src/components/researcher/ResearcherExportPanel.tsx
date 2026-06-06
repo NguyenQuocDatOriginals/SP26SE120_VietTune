@@ -24,7 +24,12 @@ export default function ResearcherExportPanel({
       </span>
       {!searchLoading && (
         <span className="text-[11px] text-neutral-500">
-          Nguồn: {catalogSource === 'api-filter' ? 'API filter' : 'Không có dữ liệu'}
+          Nguồn:{' '}
+          {catalogSource === 'api-filter'
+            ? 'Kho đã duyệt'
+            : catalogSource === 'error'
+              ? 'Lỗi tải'
+              : 'Không có dữ liệu'}
         </span>
       )}
       <button

@@ -6,17 +6,11 @@ import CompareResultStep from '@/components/researcher/compare/CompareResultStep
 import CompareSelectStep from '@/components/researcher/compare/CompareSelectStep';
 import CompareStepper from '@/components/researcher/compare/CompareStepper';
 import ResearcherFilterBar from '@/components/researcher/ResearcherFilterBar';
-import type { CompareWizardStep, SearchFiltersState } from '@/features/researcher/researcherPortalTypes';
+import type { CompareWizardStep, ResearcherFacetOptions, SearchFiltersState } from '@/features/researcher/researcherPortalTypes';
 import {
   buildComparisonFacets,
   getBaseSongTitle,
 } from '@/features/researcher/researcherRecordingUtils';
-import type {
-  CeremonyItem,
-  CommuneItem,
-  EthnicGroupItem,
-  InstrumentItem,
-} from '@/services/referenceDataService';
 import { Recording } from '@/types';
 import { isYouTubeUrl } from '@/utils/youtube';
 
@@ -30,10 +24,11 @@ export interface ResearcherPortalCompareTabProps {
   setFilters: React.Dispatch<React.SetStateAction<SearchFiltersState>>;
   activeFilterCount: number;
   searchLoading: boolean;
-  ethnicRefData: EthnicGroupItem[];
-  instrumentRefData: InstrumentItem[];
-  ceremonyRefData: CeremonyItem[];
-  communeRefData: CommuneItem[];
+  loadError: string | null;
+  retryLoadCatalog: () => void;
+  catalogEmpty: boolean;
+  facetOptions: ResearcherFacetOptions;
+  eventTypes: string[];
 }
 
 function isLikelyVideoSource(src: string): boolean {
@@ -106,15 +101,14 @@ export default function ResearcherPortalCompareTab({
   setFilters,
   activeFilterCount,
   searchLoading,
-  ethnicRefData,
-  instrumentRefData,
-  ceremonyRefData,
-  communeRefData,
+  loadError,
+  retryLoadCatalog,
+  catalogEmpty,
+  facetOptions,
+  eventTypes,
 }: ResearcherPortalCompareTabProps) {
   const [step, setStep] = useState<CompareWizardStep>(1);
   const [showSpectrogram, setShowSpectrogram] = useState(true);
-
-  const eventTypes = useMemo(() => ceremonyRefData.map((c) => c.name), [ceremonyRefData]);
 
   const leftRecording = useMemo(() => {
     return approvedRecordings.find((r) => r.id === compareLeftId);
@@ -164,26 +158,38 @@ export default function ResearcherPortalCompareTab({
               filters={filters}
               setFilters={setFilters}
               activeFilterCount={activeFilterCount}
-              ethnicRefData={ethnicRefData}
-              instrumentRefData={instrumentRefData}
-              ceremonyRefData={ceremonyRefData}
-              communeRefData={communeRefData}
+              facetOptions={facetOptions}
             />
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary-200/60 bg-white/80 p-4">
               <p className="text-sm text-neutral-700">
                 {searchLoading
-                  ? 'Đang tải kết quả...'
-                  : `Tìm thấy ${approvedRecordings.length} bản thu khớp bộ lọc.`}
+                  ? 'Đang tải kho bản thu...'
+                  : loadError
+                    ? loadError
+                    : catalogEmpty
+                      ? 'Chưa có bản thu đã duyệt trong kho.'
+                      : `Tìm thấy ${approvedRecordings.length} bản thu khớp bộ lọc.`}
               </p>
-              <button
-                type="button"
-                onClick={handleContinueFromFilter}
-                disabled={searchLoading}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              >
-                Tiếp tục
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                {loadError && (
+                  <button
+                    type="button"
+                    onClick={retryLoadCatalog}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary-200 px-4 py-2.5 text-sm font-semibold text-primary-700 hover:bg-primary-50 transition-colors cursor-pointer"
+                  >
+                    Thử lại
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleContinueFromFilter}
+                  disabled={searchLoading || Boolean(loadError) || catalogEmpty}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  Tiếp tục
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -195,10 +201,6 @@ export default function ResearcherPortalCompareTab({
               filters={filters}
               activeFilterCount={activeFilterCount}
               resultCount={approvedRecordings.length}
-              ethnicRefData={ethnicRefData}
-              instrumentRefData={instrumentRefData}
-              ceremonyRefData={ceremonyRefData}
-              communeRefData={communeRefData}
               compareLeftId={compareLeftId}
               compareRightId={compareRightId}
               setCompareLeftId={setCompareLeftId}
@@ -227,10 +229,6 @@ export default function ResearcherPortalCompareTab({
               filters={filters}
               activeFilterCount={activeFilterCount}
               resultCount={approvedRecordings.length}
-              ethnicRefData={ethnicRefData}
-              instrumentRefData={instrumentRefData}
-              ceremonyRefData={ceremonyRefData}
-              communeRefData={communeRefData}
               compareLeftId={compareLeftId}
               compareRightId={compareRightId}
               setCompareLeftId={setCompareLeftId}

@@ -23,8 +23,9 @@ import type {
 import { submissionService } from '@/services/submissionService';
 import { submissionVersionApi } from '@/services/submissionVersionApi';
 import { uploadFileToSupabase } from '@/services/uploadService';
-import { UserRole } from '@/types';
+import { UPLOAD_METADATA_FIELDS_PENDING_BACKEND } from '@/features/upload/uploadFormValidation';
 import type { DetectedInstrument, MetadataSuggestion } from '@/types/instrumentDetection';
+import { UserRole } from '@/types';
 import { uiToast } from '@/uiToast';
 import {
   buildAiDirectSuggestions,
@@ -484,13 +485,19 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
           gpsLongitude: options.capturedGpsLon ?? null,
           keySignature: undefined,
           instrumentIds: selectedInstrumentIds,
-          composer: options.composerUnknown ? 'Dân gian/Không rõ' : options.composer || undefined,
-          language: options.noLanguage
-            ? 'Không có ngôn ngữ'
-            : options.language === 'Khác'
-              ? options.customLanguage
-              : options.language || undefined,
-          recordingLocation: options.recordingLocation || undefined,
+          ...(UPLOAD_METADATA_FIELDS_PENDING_BACKEND
+            ? {}
+            : {
+                composer: options.composerUnknown
+                  ? 'Dân gian/Không rõ'
+                  : options.composer || undefined,
+                language: options.noLanguage
+                  ? 'Không có ngôn ngữ'
+                  : options.language === 'Khác'
+                    ? options.customLanguage
+                    : options.language || undefined,
+                recordingLocation: options.recordingLocation || undefined,
+              }),
           ...(isFinal && !options.isEditMode ? { status: 1 as const } : {}),
         };
 

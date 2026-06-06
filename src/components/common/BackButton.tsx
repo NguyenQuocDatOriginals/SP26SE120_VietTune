@@ -14,11 +14,13 @@ export default function BackButton({ to, fallback = '/' }: BackButtonProps) {
   function handleBack() {
     if (to != null && to !== '') {
       navigate(to);
-    } else if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(fallback);
+      return;
     }
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(fallback);
   }
 
   return (

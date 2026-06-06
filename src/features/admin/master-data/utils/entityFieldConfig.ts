@@ -31,7 +31,7 @@ export const entityConfigs: Record<EntityKind, EntityConfig> = {
       { name: 'description', label: 'Mô tả', type: 'textarea', maxLength: 1000 },
       { name: 'tuningSystem', label: 'Hệ thống lên dây', type: 'text', maxLength: 200 },
       { name: 'constructionMethod', label: 'Phương pháp chế tác', type: 'text', maxLength: 200 },
-      { name: 'originEthnicGroupId', label: 'Dân tộc gốc (ID)', type: 'text' }, // Later: Change to select dropdown fetching ethnicities
+      { name: 'originEthnicGroupId', label: 'Dân tộc gốc', type: 'select' },
     ],
   },
   ethnicities: {
@@ -63,7 +63,7 @@ export const entityConfigs: Record<EntityKind, EntityConfig> = {
     fields: [
       { name: 'name', label: 'Tên lối hát', type: 'text', required: true, maxLength: 200 },
       { name: 'description', label: 'Mô tả', type: 'textarea', maxLength: 1000 },
-      { name: 'ethnicGroupId', label: 'Dân tộc (ID)', type: 'text' }, // Later: Change to select dropdown fetching ethnicities
+      { name: 'ethnicGroupId', label: 'Dân tộc', type: 'select' },
     ],
   },
 };
