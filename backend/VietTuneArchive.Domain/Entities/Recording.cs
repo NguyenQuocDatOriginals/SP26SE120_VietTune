@@ -68,6 +68,12 @@ namespace VietTuneArchive.Domain.Entities
         public string? PerformerName { get; set; }
 
         public int? PerformerAge { get; set; }
+        [MaxLength(200)]
+        public string? Composer { get; set; }
+        [MaxLength(200)]
+        public string? Language { get; set; }
+        [MaxLength(200)]
+        public string? RecordingLocation { get; set; }
 
         public DateTime? RecordingDate { get; set; }
 
