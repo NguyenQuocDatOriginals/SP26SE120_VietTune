@@ -12,7 +12,6 @@ import {
 } from 'recharts';
 
 import { analyticsApi } from '@/services/analyticsApi';
-import { uiToast } from '@/uiToast';
 import { normalizeCoverageRows, type NormalizedCoverageRow } from '@/utils/normalizeCoverageRows';
 
 const LOW_COVERAGE_THRESHOLD = 2;
@@ -33,10 +32,9 @@ export default function CoverageGapChart({ className }: CoverageGapChartProps) {
     try {
       const result = await analyticsApi.getCoverage();
       setRows(normalizeCoverageRows(result));
-    } catch (err) {
+    } catch {
       setRows([]);
-      setError('Không thể tải dữ liệu độ phủ theo dân tộc.');
-      uiToast.fromApiError(err, 'common.http_500');
+      setError('Dữ liệu độ phủ chưa khả dụng từ máy chủ. Bạn có thể thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -77,9 +75,18 @@ export default function CoverageGapChart({ className }: CoverageGapChartProps) {
       )}
 
       {!loading && error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-          <AlertCircle className="h-4 w-4" />
-          {error}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-neutral-500" />
+            {error}
+          </span>
+          <button
+            type="button"
+            onClick={() => void loadCoverage()}
+            className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+          >
+            Thử lại
+          </button>
         </div>
       )}
 

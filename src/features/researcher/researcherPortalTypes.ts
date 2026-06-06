@@ -17,6 +17,24 @@ export interface ResearcherUiRecord extends Recording {
 
 export type ResearcherFilterDropdownKey = 'ethnic' | 'instrument' | 'ceremony' | 'region' | 'commune';
 
+export type CompareWizardStep = 1 | 2 | 3;
+
+export interface ComparisonFacetSame {
+  label: string;
+  value: string;
+}
+
+export interface ComparisonFacetDiff {
+  label: string;
+  leftValue: string;
+  rightValue: string;
+}
+
+export interface ComparisonFacets {
+  same: ComparisonFacetSame[];
+  different: ComparisonFacetDiff[];
+}
+
 export interface SearchFiltersState {
   ethnicGroupId: string;
   instrumentId: string;

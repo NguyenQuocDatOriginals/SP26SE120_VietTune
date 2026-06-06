@@ -8303,6 +8303,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/User/create-expert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"];
+                    "text/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"];
+                    "application/*+json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/error": {
         parameters: {
             query?: never;
@@ -8756,6 +8795,12 @@ export interface components {
             timestampStart?: number | null;
             /** Format: int32 */
             timestampEnd?: number | null;
+        };
+        "VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO": {
+            email?: string | null;
+            password?: string | null;
+            fullName?: string | null;
+            phone?: string | null;
         };
         "VietTuneArchive.Application.Mapper.DTOs.CreateReviewDto": {
             /** Format: uuid */

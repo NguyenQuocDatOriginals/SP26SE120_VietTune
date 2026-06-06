@@ -40,15 +40,52 @@ export type ExpertPerformanceRow = {
   avgTime: string;
 };
 
+export type UserAccountStatus = 'Active' | 'Inactive';
+
 export interface AggregatedUser {
   id: string;
   username: string;
   email: string | undefined;
   fullName: string | undefined;
   role: string;
+  status: UserAccountStatus;
   contributionCount: number;
   approvedCount: number;
   rejectedCount: number;
+}
+
+export const STATUS_OPTIONS: { value: UserAccountStatus; label: string }[] = [
+  { value: 'Active', label: 'Đang hoạt động' },
+  { value: 'Inactive', label: 'Đã vô hiệu hóa' },
+];
+
+export function getStatusNameVi(status: UserAccountStatus | string): string {
+  const normalized = status.trim();
+  if (normalized.toLowerCase() === 'inactive') return 'Đã vô hiệu hóa';
+  if (normalized.toLowerCase() === 'active') return 'Đang hoạt động';
+  return STATUS_OPTIONS.find((o) => o.value === normalized)?.label ?? normalized;
+}
+
+export function resolveUserAccountStatus(
+  raw: { status?: unknown; isActive?: unknown; Status?: unknown; IsActive?: unknown },
+): UserAccountStatus {
+  const statusStr =
+    typeof raw.status === 'string'
+      ? raw.status
+      : typeof raw.Status === 'string'
+        ? raw.Status
+        : undefined;
+  if (statusStr) {
+    return statusStr.toLowerCase() === 'inactive' ? 'Inactive' : 'Active';
+  }
+  const isActive =
+    typeof raw.isActive === 'boolean'
+      ? raw.isActive
+      : typeof raw.IsActive === 'boolean'
+        ? raw.IsActive
+        : undefined;
+  if (typeof isActive === 'boolean') return isActive ? 'Active' : 'Inactive';
+  return 'Active';
 }
 
 export const ROLE_OPTIONS: { value: string; label: string }[] = [
@@ -92,6 +129,7 @@ export const DEMO_USERS: AggregatedUser[] = [
     email: undefined,
     fullName: undefined,
     role: UserRole.CONTRIBUTOR,
+    status: 'Active',
     contributionCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
@@ -102,6 +140,7 @@ export const DEMO_USERS: AggregatedUser[] = [
     email: undefined,
     fullName: undefined,
     role: UserRole.EXPERT,
+    status: 'Active',
     contributionCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
@@ -112,6 +151,7 @@ export const DEMO_USERS: AggregatedUser[] = [
     email: undefined,
     fullName: undefined,
     role: UserRole.EXPERT,
+    status: 'Active',
     contributionCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
@@ -122,6 +162,7 @@ export const DEMO_USERS: AggregatedUser[] = [
     email: undefined,
     fullName: undefined,
     role: UserRole.EXPERT,
+    status: 'Active',
     contributionCount: 0,
     approvedCount: 0,
     rejectedCount: 0,
@@ -132,6 +173,7 @@ export const DEMO_USERS: AggregatedUser[] = [
     email: undefined,
     fullName: undefined,
     role: UserRole.ADMIN,
+    status: 'Active',
     contributionCount: 0,
     approvedCount: 0,
     rejectedCount: 0,

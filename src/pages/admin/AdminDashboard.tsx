@@ -62,11 +62,7 @@ export default function AdminDashboard() {
     pendingExpertDeletions,
     setPendingExpertDeletions,
     deleteRecordingRequests,
-    setDeleteRecordingRequests,
     editRecordingRequests,
-    setEditRecordingRequests,
-    deletedUserIds,
-    setDeletedUserIds,
     usersForTable,
     allUsers,
     monthlyCountsFinal,
@@ -137,6 +133,21 @@ export default function AdminDashboard() {
   };
 
   const handleAssignRole = async (userId: string, newRole: string) => {
+    const uuidRe =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const trimmedId = userId.trim();
+    if (
+      !uuidRe.test(trimmedId) ||
+      trimmedId === '00000000-0000-0000-0000-000000000000'
+    ) {
+      uiToast.error(
+        notifyLine(
+          'Lỗi',
+          'ID người dùng không hợp lệ (API chưa trả UUID đúng). Không thể cập nhật vai trò.',
+        ),
+      );
+      return;
+    }
     try {
       await adminApi.updateUserRole(userId, newRole);
       if (import.meta.env.DEV) {
@@ -154,28 +165,36 @@ export default function AdminDashboard() {
         ),
       );
       void load({ showUserLoadingHint: true });
-    } catch {
-      uiToast.error(
-        notifyLine('Lỗi', 'Không thể cập nhật vai trò trên máy chủ. Vui lòng thử lại.'),
-      );
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message.trim()
+          ? err.message
+          : 'Không thể cập nhật vai trò trên máy chủ. Vui lòng thử lại.';
+      uiToast.error(notifyLine('Lỗi', message));
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     try {
       await adminApi.updateUserStatus(userId, false);
-      if (import.meta.env.DEV) {
-        const next = new Set(deletedUserIds);
-        next.add(userId);
-        setDeletedUserIds(next);
-        void setItem('admin_deleted_user_ids', JSON.stringify([...next]));
-      }
       setDeleteUserTarget(null);
       uiToast.success(notifyLine('Thành công', 'Đã vô hiệu hóa người dùng.'));
       void load({ showUserLoadingHint: true });
     } catch {
       uiToast.error(
         notifyLine('Lỗi', 'Không thể vô hiệu hóa tài khoản trên máy chủ. Vui lòng thử lại.'),
+      );
+    }
+  };
+
+  const handleReactivateUser = async (userId: string) => {
+    try {
+      await adminApi.updateUserStatus(userId, true);
+      uiToast.success(notifyLine('Thành công', 'Đã kích hoạt lại tài khoản người dùng.'));
+      void load({ showUserLoadingHint: true });
+    } catch {
+      uiToast.error(
+        notifyLine('Lỗi', 'Không thể kích hoạt tài khoản trên máy chủ. Vui lòng thử lại.'),
       );
     }
   };
@@ -342,6 +361,7 @@ export default function AdminDashboard() {
             getRoleNameVi={getRoleNameVi}
             onAssignRole={handleAssignRole}
             onRequestDeleteUser={(p) => setDeleteUserTarget(p)}
+            onReactivateUser={handleReactivateUser}
             remoteTotalRecordings={remoteTotalRecordings}
             recordingsLength={recordings.length}
             remoteEthnicGroupsLoadState={remoteEthnicGroupsLoadState}
@@ -362,9 +382,7 @@ export default function AdminDashboard() {
             legacyPanel={legacyPanel}
             setLegacyPanel={setLegacyPanel}
             deleteRecordingRequests={deleteRecordingRequests}
-            setDeleteRecordingRequests={setDeleteRecordingRequests}
             editRecordingRequests={editRecordingRequests}
-            setEditRecordingRequests={setEditRecordingRequests}
             expertOptions={expertOptions}
             forwardDeleteExpertId={forwardDeleteExpertId}
             setForwardDeleteExpertId={setForwardDeleteExpertId}
@@ -422,14 +440,14 @@ export default function AdminDashboard() {
         isOpen={!!deleteUserTarget}
         onClose={() => setDeleteUserTarget(null)}
         onConfirm={() => deleteUserTarget && handleDeleteUser(deleteUserTarget.id)}
-        title="Xóa người dùng khỏi hệ thống"
+        title="Vô hiệu hóa người dùng"
         message={
           deleteUserTarget
-            ? `Bạn có chắc muốn xóa "${deleteUserTarget.username}" khỏi hệ thống?`
+            ? `Bạn có chắc muốn vô hiệu hóa "${deleteUserTarget.username}"?`
             : ''
         }
-        description="Người dùng sẽ không còn hiển thị trong danh sách quản lý. Hành động này không thể hoàn tác."
-        confirmText="Xóa"
+        description="Tài khoản sẽ chuyển sang trạng thái Inactive. Bạn có thể kích hoạt lại sau."
+        confirmText="Vô hiệu hóa"
         cancelText="Hủy"
         confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
       />

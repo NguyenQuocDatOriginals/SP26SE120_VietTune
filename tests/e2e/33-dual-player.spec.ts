@@ -29,37 +29,19 @@ test.describe("researcher — dual compare player (33)", () => {
     await page.getByRole("button", { name: /So sánh phân tích/ }).click();
     await expect(page.getByRole("heading", { name: "So sánh phân tích" }).first()).toBeVisible();
 
-    const dd = page.getByRole("button", { name: "Chọn bản ghi âm..." });
-    await expect(dd.first()).toBeVisible({ timeout: 15_000 });
-    const n = await dd.count();
-    test.skip(n < 2, "UI không đủ 2 dropdown so sánh.");
+    // Wizard bước 1: bộ lọc → Tiếp tục
+    await page.getByRole("button", { name: "Tiếp tục" }).click();
+    await expect(page.getByRole("button", { name: "So sánh" })).toBeVisible({ timeout: 15_000 });
 
-    await dd.nth(0).click();
-    const noOpts = page.getByText("Không tìm thấy kết quả");
-    const hasNoOpts = await noOpts.isVisible().catch(() => false);
-    test.skip(hasNoOpts, "Danh sách so sánh trống (0 bản ghi đã duyệt).");
+    const selectCards = page.getByRole("button", { name: "Chọn làm A" });
+    const cardCount = await selectCards.count();
+    test.skip(cardCount < 2, "Không đủ bản thu trong danh sách lọc để so sánh.");
 
-    const list0 = page.locator('[role="listbox"]').last();
-    const opt0 = list0.locator("div.max-h-60 button").first();
-    await expect(opt0).toBeVisible({ timeout: 10_000 });
-    const title0 = (await opt0.textContent())?.trim() ?? "";
-    await opt0.click();
+    await selectCards.nth(0).click();
+    await page.getByRole("button", { name: "Chọn làm B" }).nth(1).click();
 
-    await dd.nth(1).click();
-    const list1 = page.locator('[role="listbox"]').last();
-    const candidates = list1.locator("div.max-h-60 button");
-    const optCount = await candidates.count();
-    let pickedSecond = false;
-    for (let i = 0; i < optCount; i++) {
-      const btn = candidates.nth(i);
-      const t = ((await btn.textContent()) ?? "").trim();
-      if (t && t !== title0) {
-        await btn.click();
-        pickedSecond = true;
-        break;
-      }
-    }
-    test.skip(!pickedSecond, "Không có ít nhất 2 bản thu khác tiêu đề để so sánh.");
+    await page.getByRole("button", { name: "So sánh" }).click();
+    await expect(page.getByText("Phát & phân tích âm thanh")).toBeVisible({ timeout: 15_000 });
 
     const videoNote = page.getByText(
       "Một trong hai bản thu là nguồn video. Chế độ đồng bộ hiện áp dụng cho audio",

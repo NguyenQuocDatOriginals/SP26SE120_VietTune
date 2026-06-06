@@ -318,4 +318,20 @@ export const submissionService = {
       ),
     );
   },
+
+  /** Admin confirms edit request — UpdateRequested → Pending (swagger PUT confirm-edit-submission). */
+  confirmEditSubmission: async (submissionId: string) => {
+    const id = String(submissionId ?? '').trim();
+    if (!id) {
+      return Promise.reject(new Error('submissionId is required'));
+    }
+    const params: ApiSubmissionActionQuery = { submissionId: id };
+    return apiOk(
+      asApiEnvelope<{ isSuccess: boolean; message: string; data: boolean }>(
+        apiFetch.PUT('/api/Submission/confirm-edit-submission', {
+          params: { query: openApiQueryRecord(params) },
+        }),
+      ),
+    );
+  },
 };

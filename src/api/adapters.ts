@@ -62,6 +62,12 @@ export type ApiRecordingSearchByFilterQuery = NonNullable<
 export type ApiAdminUsersListQuery = NonNullable<
   ApiPaths['/api/Admin/users']['get']['parameters']['query']
 >;
+export type ApiAdminSubmissionsListQuery = NonNullable<
+  ApiPaths['/api/Admin/submissions']['get']['parameters']['query']
+>;
+export type ApiAdminAuditLogsQuery = NonNullable<
+  ApiPaths['/api/Admin/audit-logs']['get']['parameters']['query']
+>;
 export type ApiAnalyticsExpertsQuery = NonNullable<
   ApiPaths['/api/Analytics/experts']['get']['parameters']['query']
 >;
@@ -112,6 +118,10 @@ export type ApiAdminUpdateRoleRequest =
   Schemas['VietTuneArchive.Application.Mapper.DTOs.Request.AdminRequest.UpdateRoleRequest'];
 export type ApiAdminUpdateStatusRequest =
   Schemas['VietTuneArchive.Application.Mapper.DTOs.Request.AdminRequest.UpdateStatusRequest'];
+export type ApiAdminAssignReviewerRequest =
+  Schemas['VietTuneArchive.Application.Mapper.DTOs.Request.AdminRequest.AssignReviewerRequest'];
+export type ApiCreateExpertUserDTO =
+  Schemas['VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO'];
 export type ApiBaseResponse = Schemas['VietTuneArchive.Application.Mapper.DTOs.BaseResponse'];
 
 export type ApiAuthLoginModel = Schemas['VietTuneArchive.Domain.Entities.Model.LoginModel'];

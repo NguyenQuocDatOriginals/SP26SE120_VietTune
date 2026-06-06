@@ -1,14 +1,18 @@
-import { apiFetch, apiOk, asApiEnvelope, unwrapServiceResponse } from '@/api';
+import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord, unwrapServiceResponse } from '@/api';
 import type {
+  ApiAdminAssignReviewerRequest,
+  ApiAdminAuditLogsQuery,
+  ApiAdminSubmissionsListQuery,
   ApiAdminUpdateRoleRequest,
   ApiAdminUpdateStatusRequest,
   ApiAdminUserAdminDto,
   ApiAdminUserDetailAdminDto,
   ApiAdminUsersListQuery,
   ApiAdminUsersPagedList,
-  ApiBaseResponse,
+  ApiCreateExpertUserDTO,
 } from '@/api';
-import { legacyGet, legacyPost } from '@/api/legacyHttp';
+import { resolveUserAccountStatus } from '@/features/admin/adminDashboardTypes';
+import { extractSubmissionRows } from '@/services/submissionApiMapper';
 import { extractArray, extractObject } from '@/utils/apiHelpers';
 import { getErrorMessage } from '@/utils/httpError';
 
@@ -78,27 +82,34 @@ type AdminUserListResponse =
 
 export const adminApi = {
   async getUsers(): Promise<AdminUserRow[]> {
-    // Per paths.txt: prefer User API for listing users.
-    // Fallback to Admin users endpoint when needed.
     const normalize = (res: AdminUserListResponse): AdminUserRow[] => {
       const rawArr = extractArray<AdminUserListItem>(res);
       return rawArr
         .map((it) => {
           let row: AdminUserRow | null = null;
-          // Support minimal mocks: ["a@gmail.com","b@gmail.com"]
           if (typeof it === 'string') {
-            row = { id: it, email: it, username: it };
+            row = { id: it, email: it, username: it, status: 'Active' };
             return row;
           }
           if (it && typeof it === 'object') {
             const dto = it as ApiAdminUserAdminDto;
+            const status = resolveUserAccountStatus({
+              status: dto.status ?? (it as AdminUserRow).status,
+              isActive: (it as AdminUserRow).isActive,
+            });
+            const raw = it as AdminUserRow & { userId?: string; UserId?: string };
             row = {
               ...(it as AdminUserRow),
-              id: dto.id ?? (it as AdminUserRow).id,
+              id:
+                dto.id ??
+                raw.id ??
+                raw.userId ??
+                raw.UserId ??
+                (it as AdminUserRow).id,
               email: dto.email ?? (it as AdminUserRow).email,
               fullName: dto.fullName ?? (it as AdminUserRow).fullName,
               role: dto.role ?? (it as AdminUserRow).role,
-              status: dto.status ?? (it as AdminUserRow).status,
+              status,
             };
             return row;
           }
@@ -108,23 +119,23 @@ export const adminApi = {
     };
 
     try {
-      const res = await apiOk(
-        asApiEnvelope<AdminUserListResponse>(apiFetch.GET('/api/User/GetAll')),
+      const params: ApiAdminUsersListQuery = { page: 1, pageSize: 1000 };
+      const primary = await apiOk(
+        apiFetch.GET('/api/Admin/users', {
+          params: { query: params },
+        }),
       );
-      const list = normalize(res);
+      const unwrapped = unwrapServiceResponse<ApiAdminUsersPagedList>(primary as unknown);
+      const list = normalize((unwrapped ?? primary) as AdminUserListResponse);
       if (list.length > 0) return list;
     } catch {
-      // ignore and fallback
+      // fallback below
     }
 
-    const params: ApiAdminUsersListQuery = {};
     const fallback = await apiOk(
-      apiFetch.GET('/api/Admin/users', {
-        params: { query: params },
-      }),
+      asApiEnvelope<AdminUserListResponse>(apiFetch.GET('/api/User/GetAll')),
     );
-    const unwrapped = unwrapServiceResponse<ApiAdminUsersPagedList>(fallback as unknown);
-    return normalize((unwrapped ?? fallback) as AdminUserListResponse);
+    return normalize(fallback);
   },
 
   async getUserById(id: string): Promise<AdminUserRow | null> {
@@ -149,9 +160,8 @@ export const adminApi = {
   },
 
   async updateUserStatus(id: string, isActive: boolean): Promise<void> {
-    const payload: ApiAdminUpdateStatusRequest & { isActive: boolean } = {
+    const payload: ApiAdminUpdateStatusRequest = {
       status: isActive ? 'Active' : 'Inactive',
-      isActive,
     };
     await apiOk(
       apiFetch.PUT('/api/Admin/users/{id}/status', {
@@ -161,26 +171,47 @@ export const adminApi = {
     );
   },
 
+  async getSubmissions(params?: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    reviewer?: string;
+  }): Promise<Record<string, unknown>[]> {
+    const query: ApiAdminSubmissionsListQuery = {
+      page: params?.page ?? 1,
+      pageSize: params?.pageSize ?? 200,
+      ...(params?.status ? { status: params.status } : {}),
+      ...(params?.reviewer ? { reviewer: params.reviewer } : {}),
+    };
+    const res = await apiOk(
+      apiFetch.GET('/api/Admin/submissions', {
+        params: { query: openApiQueryRecord(query) },
+      }),
+    );
+    return extractSubmissionRows(res);
+  },
+
+  async assignSubmissionReviewer(submissionId: string, reviewerId: string): Promise<void> {
+    const body: ApiAdminAssignReviewerRequest = { reviewerId };
+    await apiOk(
+      apiFetch.POST('/api/Admin/submissions/{id}/assign', {
+        params: { path: { id: submissionId } },
+        body,
+      }),
+    );
+  },
+
   async createExpert(payload: CreateExpertPayload): Promise<CreateExpertResult> {
     try {
-      // POST /api/Admin/create-expert — not yet in OpenAPI; use legacy POST until api:sync
-      const res = await legacyPost<ApiBaseResponse | Record<string, unknown>>(
-        '/Admin/create-expert',
-        {
-          email: payload.email.trim(),
-          password: payload.password,
-          fullName: payload.fullName.trim(),
-        },
-      );
-      const obj = extractObject(res) ?? (res as Record<string, unknown>);
-      return {
-        message:
-          typeof obj?.message === 'string'
-            ? obj.message
-            : typeof (res as { Message?: string })?.Message === 'string'
-              ? (res as { Message: string }).Message
-              : 'Tạo tài khoản Expert thành công.',
+      const body: ApiCreateExpertUserDTO = {
+        email: payload.email.trim(),
+        password: payload.password,
+        fullName: payload.fullName.trim(),
       };
+      await apiOk(
+        apiFetch.POST('/api/User/create-expert', { body }),
+      );
+      return { message: 'Tạo tài khoản Expert thành công.' };
     } catch (err) {
       throw new Error(getErrorMessage(err, 'Không thể tạo tài khoản Chuyên gia.'));
     }
@@ -192,14 +223,17 @@ export const adminApi = {
     from?: string;
     to?: string;
   }): Promise<AdminAuditLogsPaged> {
-    const query: Record<string, string | number> = {
+    const auditQuery: ApiAdminAuditLogsQuery = {
       page: params?.page ?? 1,
       pageSize: params?.pageSize ?? 20,
+      ...(params?.from ? { from: params.from } : {}),
+      ...(params?.to ? { to: params.to } : {}),
     };
-    if (params?.from) query.from = params.from;
-    if (params?.to) query.to = params.to;
-
-    const raw = await legacyGet<Record<string, unknown>>('/Admin/audit-logs', { params: query });
+    const raw = await apiOk(
+      apiFetch.GET('/api/Admin/audit-logs', {
+        params: { query: openApiQueryRecord(auditQuery) },
+      }),
+    );
     const obj = extractObject(raw) ?? raw;
     const itemsRaw =
       extractArray<Record<string, unknown>>(obj?.items) ??
@@ -225,7 +259,7 @@ export const adminApi = {
   },
 
   async getSystemHealth(): Promise<AdminSystemHealth> {
-    const raw = await legacyGet<Record<string, unknown>>('/Admin/system-health');
+    const raw = await apiOk(apiFetch.GET('/api/Admin/system-health'));
     const obj = extractObject(raw) ?? raw;
     const servicesRaw = obj?.services ?? obj?.Services;
     const services =

@@ -9052,6 +9052,37 @@
         }
       }
     },
+    "/api/User/create-expert": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/error": {
       "get": {
         "tags": [
@@ -10045,6 +10076,28 @@
           "timestampEnd": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.Mapper.DTOs.CreateExpertUserDTO": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
             "nullable": true
           }
         },

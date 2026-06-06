@@ -1,4 +1,9 @@
-import type { ChatCitation, ResearcherAnalysisRecord, ResearcherUiRecord } from './researcherPortalTypes';
+import type {
+  ChatCitation,
+  ComparisonFacets,
+  ResearcherAnalysisRecord,
+  ResearcherUiRecord,
+} from './researcherPortalTypes';
 
 import { REGION_NAMES } from '@/config/constants';
 import { Recording } from '@/types';
@@ -177,6 +182,117 @@ export function highlightTranscriptDiff(
     leftHtml: toHtml(leftWords, rightSet),
     rightHtml: toHtml(rightWords, leftSet),
   };
+}
+
+function normalizeBaseSongKey(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\((.*?)\)|\[(.*?)\]/g, ' ')
+    .replace(/\b(version|ver|live|cover|remix|ban|bản)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+export function getBaseSongTitle(rec: Recording | undefined): string {
+  if (!rec) return '';
+  const explicit = readExtraString(rec, ['baseSongTitle', 'base_song_title', 'baseTitle']);
+  const source = explicit || rec.title || rec.titleVietnamese || '';
+  return source.trim();
+}
+
+export function getPerformerLabel(rec: Recording | undefined): string {
+  if (!rec) return '';
+  const fromPerformers = (rec.performers ?? [])
+    .map((p) => p.nameVietnamese ?? p.name)
+    .filter(Boolean)
+    .join(', ');
+  if (fromPerformers) return fromPerformers;
+  return readExtraString(rec, ['artistName', 'performerName', 'artist']);
+}
+
+function getGenreLabel(rec: Recording | undefined): string {
+  if (!rec) return '';
+  return readExtraString(rec, ['genreName', 'musicGenre', 'genre']) || (rec.tags ?? []).slice(0, 3).join(', ');
+}
+
+function getYearLabel(rec: Recording | undefined): string {
+  if (!rec?.recordedDate) return '';
+  return rec.recordedDate.slice(0, 4);
+}
+
+function getInstrumentNames(rec: Recording | undefined): string[] {
+  if (!rec) return [];
+  const fromList = (rec.instruments ?? [])
+    .map((i) => (i.nameVietnamese ?? i.name ?? '').trim())
+    .filter(Boolean);
+  if (fromList.length > 0) return fromList;
+  const label = getInstrumentLabel(rec);
+  if (!label) return [];
+  return label.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+export function buildComparisonFacets(
+  left: Recording | undefined,
+  right: Recording | undefined,
+  eventTypes: string[] = [],
+): ComparisonFacets {
+  const same: ComparisonFacets['same'] = [];
+  const different: ComparisonFacets['different'] = [];
+  if (!left || !right) return { same, different };
+
+  const compareScalar = (label: string, leftVal: string, rightVal: string) => {
+    const l = leftVal.trim();
+    const r = rightVal.trim();
+    if (!l && !r) return;
+    if (l && r && l === r) {
+      same.push({ label, value: l });
+    } else if (l || r) {
+      different.push({ label, leftValue: l || '—', rightValue: r || '—' });
+    }
+  };
+
+  compareScalar('Dân tộc', getEthnicityLabel(left), getEthnicityLabel(right));
+  compareScalar('Vùng miền', getRegionLabel(left), getRegionLabel(right));
+  compareScalar('Nghi lễ', getCeremonyLabel(left, eventTypes), getCeremonyLabel(right, eventTypes));
+  compareScalar('Thể loại / Tags', getGenreLabel(left), getGenreLabel(right));
+  compareScalar('Performer', getPerformerLabel(left), getPerformerLabel(right));
+  compareScalar('Năm ghi âm', getYearLabel(left), getYearLabel(right));
+
+  const leftInst = new Set(getInstrumentNames(left));
+  const rightInst = new Set(getInstrumentNames(right));
+  const shared = [...leftInst].filter((x) => rightInst.has(x));
+  const onlyLeft = [...leftInst].filter((x) => !rightInst.has(x));
+  const onlyRight = [...rightInst].filter((x) => !leftInst.has(x));
+
+  if (shared.length > 0) {
+    same.push({ label: 'Nhạc cụ chung', value: shared.join(', ') });
+  }
+  if (onlyLeft.length > 0 || onlyRight.length > 0) {
+    different.push({
+      label: 'Nhạc cụ khác biệt',
+      leftValue: onlyLeft.length > 0 ? onlyLeft.join(', ') : '—',
+      rightValue: onlyRight.length > 0 ? onlyRight.join(', ') : '—',
+    });
+  }
+
+  const leftBase = normalizeBaseSongKey(getBaseSongTitle(left));
+  const rightBase = normalizeBaseSongKey(getBaseSongTitle(right));
+  if (leftBase && rightBase) {
+    if (leftBase === rightBase) {
+      same.push({ label: 'Base song title', value: getBaseSongTitle(left) });
+    } else {
+      different.push({
+        label: 'Base song title',
+        leftValue: getBaseSongTitle(left) || '—',
+        rightValue: getBaseSongTitle(right) || '—',
+      });
+    }
+  }
+
+  return { same, different };
 }
 
 export function buildExpertComparativeNotes(left?: Recording, right?: Recording): string[] {

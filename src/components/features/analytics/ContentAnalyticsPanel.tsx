@@ -15,7 +15,6 @@ import {
 
 import { analyticsApi } from '@/services/analyticsApi';
 import type { ContentAnalyticsDto } from '@/types/analytics';
-import { uiToast } from '@/uiToast';
 
 const BY_ETHNICITY_LIMIT = 12;
 const PIE_COLORS = ['#4F46E5', '#0891B2', '#16A34A', '#D97706', '#DC2626', '#7C3AED'];
@@ -51,10 +50,9 @@ export default function ContentAnalyticsPanel({ className }: ContentAnalyticsPan
     try {
       const result = await analyticsApi.getContent('songs');
       setContent(result);
-    } catch (err) {
+    } catch {
       setContent(null);
-      setError('Không thể tải nội dung phân tích bộ sưu tập.');
-      uiToast.fromApiError(err, 'common.http_500');
+      setError('Dữ liệu phân tích nội dung chưa khả dụng từ máy chủ. Bạn có thể thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -96,9 +94,18 @@ export default function ContentAnalyticsPanel({ className }: ContentAnalyticsPan
       )}
 
       {!loading && error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-          <AlertCircle className="h-4 w-4" />
-          {error}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-neutral-500" />
+            {error}
+          </span>
+          <button
+            type="button"
+            onClick={() => void loadContent()}
+            className="rounded-lg border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+          >
+            Thử lại
+          </button>
         </div>
       )}
 

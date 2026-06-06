@@ -17,9 +17,7 @@ export default function AdminDashboardModerationPanel({
   legacyPanel,
   setLegacyPanel,
   deleteRecordingRequests,
-  setDeleteRecordingRequests,
   editRecordingRequests,
-  setEditRecordingRequests,
   expertOptions,
   forwardDeleteExpertId,
   setForwardDeleteExpertId,
@@ -27,13 +25,12 @@ export default function AdminDashboardModerationPanel({
   onRequestExpertDeletionApprove,
   recordings,
   onRequestRemoveRecording,
+  onRefreshRequests,
 }: {
   legacyPanel: LegacyAdminPanelId | null;
   setLegacyPanel: Dispatch<SetStateAction<LegacyAdminPanelId | null>>;
   deleteRecordingRequests: DeleteRecordingRequest[];
-  setDeleteRecordingRequests: Dispatch<SetStateAction<DeleteRecordingRequest[]>>;
   editRecordingRequests: EditRecordingRequest[];
-  setEditRecordingRequests: Dispatch<SetStateAction<EditRecordingRequest[]>>;
   expertOptions: { id: string; username: string; fullName?: string }[];
   forwardDeleteExpertId: { requestId: string; expertId: string } | null;
   setForwardDeleteExpertId: Dispatch<
@@ -43,6 +40,7 @@ export default function AdminDashboardModerationPanel({
   onRequestExpertDeletionApprove: Dispatch<SetStateAction<ExpertAccountDeletionRequest | null>>;
   recordings: LocalRecording[];
   onRequestRemoveRecording: (p: { id: string; title?: string }) => void;
+  onRefreshRequests: () => void | Promise<void>;
 }) {
   return (
     <div className="p-8">
@@ -140,12 +138,11 @@ export default function AdminDashboardModerationPanel({
       {legacyPanel === 'recordRequests' && (
         <AdminRecordingRequestsPanel
           deleteRecordingRequests={deleteRecordingRequests}
-          setDeleteRecordingRequests={setDeleteRecordingRequests}
           editRecordingRequests={editRecordingRequests}
-          setEditRecordingRequests={setEditRecordingRequests}
           expertOptions={expertOptions}
           forwardDeleteExpertId={forwardDeleteExpertId}
           setForwardDeleteExpertId={setForwardDeleteExpertId}
+          onRefreshRequests={onRefreshRequests}
         />
       )}
 

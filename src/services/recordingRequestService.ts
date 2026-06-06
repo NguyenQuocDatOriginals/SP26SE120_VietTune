@@ -1,16 +1,23 @@
 /**
- * Recording request service — now uses real backend API endpoints.
+ * Recording request service — aligned to swagger.json contract.
  *
  * Endpoints used:
  *  - /api/Notification          — notifications CRUD
- *  - /api/Review                — review/moderation workflows
- *  - /api/Submission            — submissions management
- *  - /api/Admin/submissions     — admin submission management
+ *  - /api/Review/create|update|get-by-id|get-by-submissionid — legacy review mutations only
+ *  - /api/Submission/*          — edit/delete workflow (edit-request, confirm-edit, DELETE)
+ *  - /api/Admin/submissions     — list + assign reviewer
  */
 
 import { apiFetch, apiFetchLoose, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
-import { PAGE_SIZE_DEFAULT, PAGE_SIZE_RECORDING_REQUEST_REVIEW } from '@/config/pagination';
+import { PAGE_SIZE_DEFAULT } from '@/config/pagination';
+import {
+  deriveDeleteRecordingRequests,
+  deriveEditRecordingRequests,
+  parseAdminSubmissionRows,
+} from '@/features/admin/adminSubmissionRequests';
+import { adminApi } from '@/services/adminApi';
 import { logServiceError, logServiceWarn } from '@/services/serviceLogger';
+import { submissionService } from '@/services/submissionService';
 import type {
   DeleteRecordingRequest,
   EditRecordingRequest,
@@ -19,13 +26,10 @@ import type {
 } from '@/types';
 import { UserRole } from '@/types';
 import { extractArray } from '@/utils/apiHelpers';
-import { getHttpStatus } from '@/utils/httpError';
 import { normalizeBENotificationType } from '@/utils/notificationTypeMap';
 
 /**
  * Map backend NotificationDto / SignalR payload → frontend AppNotification.
- * BE fields: message, isRead, relatedId, relatedEntityId
- * FE fields: body, read, recordingId
  */
 export function mapNotificationFromApiRecord(raw: Record<string, unknown>): AppNotification {
   const rawType = String(raw.type ?? '');
@@ -48,30 +52,12 @@ export function mapNotificationFromApiRecord(raw: Record<string, unknown>): AppN
   };
 }
 
-/** Loose shape returned by `/Review/*` list/detail endpoints */
-type ReviewDecisionRow = {
-  id?: string;
-  submissionId?: string;
-  recordingId?: string;
-  decision?: string | number;
-  stage?: string | number;
-  reviewerId?: string;
-  recordingTitle?: string;
-  comments?: string;
-  status?: string | number;
-};
-
-/** JSON body from GET `/Review/:id` before `asReviewRowRecord` normalization */
-type ReviewDetailApiBody = ReviewDecisionRow | { data?: ReviewDecisionRow };
-
+/** Swagger-documented Review routes only (no list/collection endpoints). */
 const REVIEW_ENDPOINTS = {
-  collection: '/api/Review',
-  byId: '/api/Review/{id}',
-  byReviewerId: '/api/Review/reviewer/{reviewerId}',
-  byDecision: '/api/Review/decision/{decision}',
-  legacyGetById: '/api/Review/get-by-id/{id}',
-  legacyCreate: '/api/Review/create',
-  legacyUpdate: '/api/Review/update',
+  getById: '/api/Review/get-by-id/{id}',
+  getBySubmissionId: '/api/Review/get-by-submissionid/{submissionId}',
+  create: '/api/Review/create',
+  update: '/api/Review/update',
 } as const;
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -88,141 +74,65 @@ function asReviewRowRecord(res: unknown): Record<string, unknown> | null {
   return top;
 }
 
-function unwrapReviewRows(res: unknown): ReviewDecisionRow[] {
-  if (Array.isArray(res)) return res as ReviewDecisionRow[];
-  const top = asRecord(res);
-  if (!top) return [];
-  return extractArray<ReviewDecisionRow>(top, ['data', 'Data', 'items', 'Items', 'results', 'Results']);
-}
-
-function rowValueToLowerText(v: unknown): string {
-  if (v == null) return '';
-  if (typeof v === 'string') return v.trim().toLowerCase();
-  if (typeof v === 'number') return String(v);
-  return '';
-}
-
-async function reviewGetAll(page = 1, pageSize = PAGE_SIZE_RECORDING_REQUEST_REVIEW): Promise<ReviewDecisionRow[]> {
-  const res = await apiOk(
-    asApiEnvelope<unknown>(
-      apiFetchLoose.GET(REVIEW_ENDPOINTS.collection, { params: { query: { page, pageSize } } }),
-    ),
-  );
-  return unwrapReviewRows(res);
-}
-
 async function reviewCreate(body: Record<string, unknown>): Promise<void> {
-  try {
-    await apiOk(asApiEnvelope<unknown>(apiFetchLoose.POST(REVIEW_ENDPOINTS.collection, { body })));
-  } catch {
-    // Backward-compatible fallback for older swagger contract.
-    await apiOk(asApiEnvelope<unknown>(apiFetchLoose.POST(REVIEW_ENDPOINTS.legacyCreate, { body })));
-  }
-}
-
-async function reviewGetByDecision(decision: string): Promise<ReviewDecisionRow[]> {
-  const normalizedDecision = decision.trim().toLowerCase();
-  if (!normalizedDecision) return [];
-
-  // New swagger route expects integer enum code; current app stores decision keys as string.
-  // To avoid coupling to backend enum numeric values, load all and filter locally.
-  const rows = await reviewGetAll();
-  return rows.filter((r) => {
-    const decisionText = rowValueToLowerText(r.decision);
-    const statusText = rowValueToLowerText(r.status);
-    return decisionText === normalizedDecision || statusText === normalizedDecision;
-  });
-}
-
-async function reviewGetByReviewer(reviewerId: string): Promise<ReviewDecisionRow[]> {
-  if (!reviewerId) return [];
-  try {
-    const res = await apiOk(
-      asApiEnvelope<unknown>(
-        apiFetchLoose.GET(REVIEW_ENDPOINTS.byReviewerId, {
-          params: { path: { reviewerId } },
-        }),
-      ),
-    );
-    return unwrapReviewRows(res);
-  } catch {
-    // Fallback: old/new contract drift -> filter from GET /api/Review list.
-    const all = await reviewGetAll();
-    const target = reviewerId.trim().toLowerCase();
-    return all.filter((row) => String(row.reviewerId ?? '').trim().toLowerCase() === target);
-  }
+  await apiOk(asApiEnvelope<unknown>(apiFetchLoose.POST(REVIEW_ENDPOINTS.create, { body })));
 }
 
 async function reviewGetById(id: string): Promise<unknown> {
-  try {
-    return apiOk(
-      asApiEnvelope<unknown>(
-        apiFetchLoose.GET(REVIEW_ENDPOINTS.byId, { params: { path: { id } } }),
-      ),
-    );
-  } catch {
-    return apiOk(
-      asApiEnvelope<unknown>(
-        apiFetchLoose.GET(REVIEW_ENDPOINTS.legacyGetById, { params: { path: { id } } }),
-      ),
-    );
-  }
-}
-
-async function reviewUpdateById(id: string, body: Record<string, unknown>): Promise<void> {
-  const top = asRecord(body) ?? {};
-  const reviewId = String(top.id ?? id).trim();
-  try {
-    await apiOk(
-      asApiEnvelope<unknown>(
-        apiFetchLoose.PUT(REVIEW_ENDPOINTS.byId, {
-          params: { path: { id } },
-          body: {
-            ...top,
-            id: reviewId || id,
-          },
-        }),
-      ),
-    );
-  } catch {
-    await apiOk(
-      asApiEnvelope<unknown>(
-        apiFetchLoose.PUT(REVIEW_ENDPOINTS.legacyUpdate, {
-          body: {
-            id: reviewId || id,
-            comments: top.comments ?? null,
-          },
-        }),
-      ),
-    );
-  }
-}
-
-async function reviewDeleteById(id: string): Promise<void> {
-  await apiOk(
+  return apiOk(
     asApiEnvelope<unknown>(
-      apiFetchLoose.DELETE(REVIEW_ENDPOINTS.byId, { params: { path: { id } } }),
+      apiFetchLoose.GET(REVIEW_ENDPOINTS.getById, { params: { path: { id } } }),
     ),
   );
 }
 
+async function reviewUpdate(body: Record<string, unknown>): Promise<void> {
+  const top = asRecord(body) ?? {};
+  const reviewId = String(top.id ?? '').trim();
+  await apiOk(
+    asApiEnvelope<unknown>(
+      apiFetchLoose.PUT(REVIEW_ENDPOINTS.update, {
+        body: {
+          id: reviewId,
+          comments: top.comments ?? null,
+        },
+      }),
+    ),
+  );
+}
+
+/** Derive admin request lists from already-fetched submission rows (no extra HTTP). */
+export function deriveRecordingRequestsFromSubmissions(
+  submissionRows: Record<string, unknown>[],
+  userNameById?: Map<string, string>,
+): { deleteRequests: DeleteRecordingRequest[]; editRequests: EditRecordingRequest[] } {
+  const parsed = parseAdminSubmissionRows(submissionRows);
+  return {
+    deleteRequests: deriveDeleteRecordingRequests(parsed),
+    editRequests: deriveEditRecordingRequests(parsed, userNameById),
+  };
+}
+
 export const recordingRequestService = {
+  deriveRecordingRequestsFromSubmissions,
+
   // --- Delete recording requests ---
 
-  /** Contributor: send delete recording request */
+  /** Contributor: notify admin of delete intent (no swagger delete-request endpoint). */
   async requestDeleteRecording(
     recordingId: string,
     recordingTitle: string,
     contributorId: string,
     contributorName: string,
   ): Promise<void> {
+    void contributorId;
     try {
-      await reviewCreate({
-        submissionId: recordingId,
-        reviewerId: contributorId,
-        decision: 'delete_request',
-        stage: 'pending_admin',
-        comments: `Yêu cầu xóa bản thu "${recordingTitle}" bởi ${contributorName}`,
+      await this.addNotification({
+        type: 'recording_deleted',
+        title: 'Yêu cầu xóa bản thu',
+        body: `${contributorName} yêu cầu xóa bản thu "${recordingTitle}".`,
+        forRoles: [UserRole.ADMIN],
+        recordingId,
       });
     } catch (err) {
       logServiceError('Failed to request delete recording', err);
@@ -230,68 +140,47 @@ export const recordingRequestService = {
     }
   },
 
-  /** Admin: get pending delete requests */
-  async getDeleteRecordingRequests(): Promise<DeleteRecordingRequest[]> {
-    try {
-      const res = await reviewGetByDecision('delete_request');
-      return extractArray<DeleteRecordingRequest>(res);
-    } catch {
-      return [];
-    }
+  /** Admin: derive pending delete requests from submission rows (usually empty). */
+  getDeleteRecordingRequestsFromRows(
+    submissionRows: Record<string, unknown>[],
+  ): DeleteRecordingRequest[] {
+    return deriveDeleteRecordingRequests(parseAdminSubmissionRows(submissionRows));
   },
 
-  /** Admin: forward delete to expert */
+  /** @deprecated Prefer getDeleteRecordingRequestsFromRows — no list endpoint in swagger. */
+  async getDeleteRecordingRequests(): Promise<DeleteRecordingRequest[]> {
+    return [];
+  },
+
+  /** Admin: forward delete review to expert via POST /api/Admin/submissions/{id}/assign */
   async forwardDeleteToExpert(requestId: string, expertId: string): Promise<void> {
     try {
-      await reviewUpdateById(requestId, {
-        decision: 'forwarded_to_expert',
-        reviewerId: expertId,
-      });
+      await adminApi.assignSubmissionReviewer(requestId, expertId);
     } catch (err) {
       logServiceError('Failed to forward delete to expert', err);
+      throw err;
     }
   },
 
-  /** Expert: get forwarded delete requests */
+  /** Expert: no reviewer list endpoint in swagger — returns empty. */
   async getForwardedDeleteRequestsForExpert(expertId: string): Promise<DeleteRecordingRequest[]> {
-    if (!expertId) return [];
-    try {
-      const res = await reviewGetByReviewer(expertId);
-      const all = extractArray<DeleteRecordingRequest & { decision?: string }>(res);
-      return all.filter(
-        (r) => r.decision === 'forwarded_to_expert' || r.status === 'forwarded_to_expert',
-      );
-    } catch (err: unknown) {
-      // 400/404 = no data yet from backend; not a real error
-      const status = getHttpStatus(err);
-      if (status === 400 || status === 404) return [];
-      logServiceWarn(
-        '[recordingRequestService] getForwardedDeleteRequestsForExpert failed',
-        status,
-      );
-      return [];
-    }
+    void expertId;
+    return [];
   },
 
-  /** Expert: complete delete recording */
+  /** Expert: delete submission then remove local storage copy. */
   async completeDeleteRecording(
     requestId: string,
     removeRecordingFromStorage: (id: string) => Promise<void>,
   ): Promise<{ recordingId: string; recordingTitle: string } | null> {
     try {
-      // Get the request details first
-      const res = (await reviewGetById(requestId)) as ReviewDetailApiBody;
+      const res = await reviewGetById(requestId);
       const req = asReviewRowRecord(res);
-      if (!req) return null;
+      const recordingId = String(req?.submissionId ?? req?.recordingId ?? requestId);
+      const recordingTitle = String(req?.recordingTitle ?? req?.comments ?? 'Bản thu');
 
-      const recordingId = String(req.submissionId ?? req.recordingId ?? '');
-      if (!recordingId) return null;
-      const recordingTitle = String(req.recordingTitle ?? req.comments ?? 'Bản thu');
-
+      await submissionService.deleteSubmission(recordingId);
       await removeRecordingFromStorage(recordingId);
-
-      // Mark as completed
-      await reviewUpdateById(requestId, { decision: 'completed' });
 
       return { recordingId, recordingTitle };
     } catch (err) {
@@ -300,160 +189,110 @@ export const recordingRequestService = {
     }
   },
 
-  /** Remove a delete request */
   async removeDeleteRequest(requestId: string): Promise<void> {
-    try {
-      await reviewDeleteById(requestId);
-    } catch (err) {
-      logServiceError('Failed to remove delete request', err);
-    }
+    void requestId;
+    logServiceWarn('[recordingRequestService] removeDeleteRequest: no DELETE /api/Review/{id} in swagger');
   },
 
-  /** Get pending delete recording IDs for contributor */
   async getPendingDeleteRecordingIdsForContributor(contributorId: string): Promise<string[]> {
-    try {
-      const res = await reviewGetByReviewer(contributorId);
-      const all = extractArray<ReviewDecisionRow>(res);
-      return all
-        .filter((r) => r.decision === 'delete_request')
-        .map((r) => r.submissionId || r.recordingId)
-        .filter((id): id is string => !!id);
-    } catch {
-      return [];
-    }
+    void contributorId;
+    return [];
   },
 
-  /** Get delete-approved recording IDs for contributor */
   async getDeleteApprovedRecordingIdsForContributor(contributorId: string): Promise<string[]> {
-    try {
-      const res = await reviewGetByReviewer(contributorId);
-      const all = extractArray<ReviewDecisionRow>(res);
-      return all
-        .filter((r) => r.decision === 'delete_approved')
-        .map((r) => r.submissionId || r.recordingId)
-        .filter((id): id is string => !!id);
-    } catch {
-      return [];
-    }
+    void contributorId;
+    return [];
   },
 
-  /** Admin: approve delete for contributor */
   async approveDeleteForContributor(recordingId: string, contributorId: string): Promise<void> {
     try {
-      await reviewCreate({
-        submissionId: recordingId,
-        reviewerId: contributorId,
-        decision: 'delete_approved',
-        stage: 'approved',
+      await submissionService.deleteSubmission(recordingId);
+      await this.addNotification({
+        type: 'recording_deleted',
+        title: 'Yêu cầu xóa được duyệt',
+        body: 'Yêu cầu xóa bản thu của bạn đã được quản trị viên duyệt.',
+        forRoles: [UserRole.CONTRIBUTOR],
+        recordingId,
       });
+      void contributorId;
     } catch (err) {
       logServiceError('Failed to approve delete for contributor', err);
     }
   },
 
-  /** Revoke delete approval */
   async revokeDeleteApproval(recordingId: string, contributorId: string): Promise<void> {
+    void recordingId;
     void contributorId;
-    try {
-      // Find and remove the approval review
-      const res = await reviewGetByDecision('delete_approved');
-      const all = extractArray<ReviewDecisionRow>(res);
-      const match = all.find((r) => (r.submissionId || r.recordingId) === recordingId);
-      if (match) {
-        if (match.id) await reviewDeleteById(match.id);
-      }
-    } catch (err) {
-      logServiceError('Failed to revoke delete approval', err);
-    }
+    logServiceWarn('[recordingRequestService] revokeDeleteApproval: no list endpoint in swagger');
   },
 
   // --- Edit recording requests ---
 
-  /** Contributor: request to edit an approved recording */
+  /** Contributor: PUT /api/Submission/edit-request-submission */
   async requestEditRecording(
     recordingId: string,
     recordingTitle: string,
     contributorId: string,
     contributorName: string,
   ): Promise<void> {
+    void contributorId;
+    void contributorName;
     try {
-      await reviewCreate({
-        submissionId: recordingId,
-        reviewerId: contributorId,
-        decision: 'edit_request',
-        stage: 'pending',
-        comments: `Yêu cầu chỉnh sửa bản thu "${recordingTitle}" bởi ${contributorName}`,
-      });
+      await submissionService.requestEditSubmission(recordingId);
     } catch (err) {
-      logServiceError('Failed to request edit recording', err);
+      logServiceError(`Failed to request edit recording "${recordingTitle}"`, err);
       throw err;
     }
   },
 
-  /** Admin: get edit recording requests */
-  async getEditRecordingRequests(): Promise<EditRecordingRequest[]> {
-    try {
-      const res = await reviewGetByDecision('edit_request');
-      return extractArray<EditRecordingRequest>(res);
-    } catch {
-      return [];
-    }
+  /** Admin: derive edit requests from submission rows. */
+  getEditRecordingRequestsFromRows(
+    submissionRows: Record<string, unknown>[],
+    userNameById?: Map<string, string>,
+  ): EditRecordingRequest[] {
+    return deriveEditRecordingRequests(parseAdminSubmissionRows(submissionRows), userNameById);
   },
 
-  /** Admin: approve edit request */
+  /** @deprecated Prefer getEditRecordingRequestsFromRows — no list endpoint in swagger. */
+  async getEditRecordingRequests(): Promise<EditRecordingRequest[]> {
+    return [];
+  },
+
+  /** Admin: PUT /api/Submission/confirm-edit-submission */
   async approveEditRequest(requestId: string): Promise<void> {
     try {
-      await reviewUpdateById(requestId, {
-        decision: 'edit_approved',
-        stage: 'approved',
-      });
+      await submissionService.confirmEditSubmission(requestId);
     } catch (err) {
       logServiceError('Failed to approve edit request', err);
+      throw err;
     }
   },
 
-  /** Check if edit is approved for a recording */
   async isEditApprovedForRecording(recordingId: string): Promise<boolean> {
     try {
-      const res = await reviewGetByDecision('edit_approved');
-      const all = extractArray<ReviewDecisionRow>(res);
-      return all.some((r) => (r.submissionId || r.recordingId) === recordingId);
+      const rows = await adminApi.getSubmissions({ page: 1, pageSize: 200 });
+      const parsed = parseAdminSubmissionRows(rows);
+      const row = parsed.find((r) => r.id === recordingId);
+      if (!row) return false;
+      const s = row.status.trim().toLowerCase().replace(/[\s_-]+/g, '');
+      return s === 'pending' || s === '1';
     } catch {
       return false;
     }
   },
 
-  /** Get pending edit recording IDs for contributor */
   async getPendingEditRecordingIdsForContributor(contributorId: string): Promise<string[]> {
-    try {
-      const res = await reviewGetByReviewer(contributorId);
-      const all = extractArray<ReviewDecisionRow>(res);
-      return all
-        .filter((r) => r.decision === 'edit_request' && r.stage === 'pending')
-        .map((r) => r.submissionId || r.recordingId)
-        .filter((id): id is string => !!id);
-    } catch {
-      return [];
-    }
+    void contributorId;
+    return [];
   },
 
-  /** Revoke approved edit */
   async revokeApprovedEdit(recordingId: string): Promise<void> {
-    try {
-      const res = await reviewGetByDecision('edit_approved');
-      const all = extractArray<ReviewDecisionRow>(res);
-      const match = all.find((r) => (r.submissionId || r.recordingId) === recordingId);
-      if (match) {
-        if (match.id) await reviewDeleteById(match.id);
-      }
-    } catch (err) {
-      logServiceError('Failed to revoke approved edit', err);
-    }
+    void recordingId;
+    logServiceWarn('[recordingRequestService] revokeApprovedEdit: no list endpoint in swagger');
   },
 
   // --- Edit submissions for expert review ---
 
-  /** Contributor: submit edit for expert review */
   async submitEditForExpertReview(
     recordingId: string,
     recordingTitle: string,
@@ -464,8 +303,7 @@ export const recordingRequestService = {
       await reviewCreate({
         submissionId: recordingId,
         reviewerId: contributorId,
-        decision: 'edit_submission',
-        stage: 'pending_expert',
+        decision: 1,
         comments: `Chỉnh sửa bản thu "${recordingTitle}" bởi ${contributorName} chờ chuyên gia duyệt`,
       });
     } catch (err) {
@@ -473,36 +311,25 @@ export const recordingRequestService = {
     }
   },
 
-  /** Expert: get pending edit submissions */
   async getPendingEditSubmissionsForExpert(): Promise<EditSubmissionForReview[]> {
-    try {
-      const res = await reviewGetByDecision('edit_submission');
-      return extractArray<EditSubmissionForReview>(res);
-    } catch (err: unknown) {
-      // 400/404 = no data yet from backend; not a real error
-      const status = getHttpStatus(err);
-      if (status === 400 || status === 404) return [];
-      logServiceWarn('[recordingRequestService] getPendingEditSubmissionsForExpert failed', status);
-      return [];
-    }
+    return [];
   },
 
-  /** Expert: approve edit submission */
   async approveEditSubmission(
     submissionId: string,
   ): Promise<{ recordingId: string; recordingTitle: string } | null> {
     try {
-      const res = (await reviewGetById(submissionId)) as ReviewDetailApiBody;
+      const res = await reviewGetById(submissionId);
       const req = asReviewRowRecord(res);
       if (!req) return null;
 
-      await reviewUpdateById(submissionId, {
-        decision: 'edit_submission_approved',
-        stage: 'completed',
+      await reviewUpdate({
+        id: submissionId,
+        comments: String(req.comments ?? ''),
       });
 
       return {
-        recordingId: String(req.submissionId ?? req.recordingId ?? ''),
+        recordingId: String(req.submissionId ?? req.recordingId ?? submissionId),
         recordingTitle: String(req.recordingTitle ?? ''),
       };
     } catch {
@@ -510,20 +337,9 @@ export const recordingRequestService = {
     }
   },
 
-  /** Get pending edit submission recording IDs for contributor */
-  async getPendingEditSubmissionRecordingIdsForContributor(
-    contributorId: string,
-  ): Promise<string[]> {
-    try {
-      const res = await reviewGetByReviewer(contributorId);
-      const all = extractArray<ReviewDecisionRow>(res);
-      return all
-        .filter((r) => r.decision === 'edit_submission')
-        .map((r) => r.submissionId || r.recordingId)
-        .filter((id): id is string => !!id);
-    } catch {
-      return [];
-    }
+  async getPendingEditSubmissionRecordingIdsForContributor(contributorId: string): Promise<string[]> {
+    void contributorId;
+    return [];
   },
 
   // --- Notifications (uses /api/Notification endpoints) ---
@@ -598,7 +414,6 @@ export const recordingRequestService = {
     );
   },
 
-  /** Get notifications for current user (JWT-based, backend filters by user) */
   async getNotificationsForRole(role: UserRole): Promise<AppNotification[]> {
     void role;
     try {
@@ -622,7 +437,6 @@ export const recordingRequestService = {
     }
   },
 
-  /** Mark all notifications as read for current role */
   async markAllNotificationsReadForRole(role: UserRole): Promise<void> {
     void role;
     try {

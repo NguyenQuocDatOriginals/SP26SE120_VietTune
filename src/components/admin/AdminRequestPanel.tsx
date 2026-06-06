@@ -14,22 +14,20 @@ import { notifyLine, uiToast } from '@/uiToast';
 
 export type AdminRecordingRequestsPanelProps = {
   deleteRecordingRequests: DeleteRecordingRequest[];
-  setDeleteRecordingRequests: (r: DeleteRecordingRequest[]) => void;
   editRecordingRequests: EditRecordingRequest[];
-  setEditRecordingRequests: (r: EditRecordingRequest[]) => void;
   expertOptions: { id: string; username: string; fullName?: string }[];
   forwardDeleteExpertId: { requestId: string; expertId: string } | null;
   setForwardDeleteExpertId: (v: { requestId: string; expertId: string } | null) => void;
+  onRefreshRequests: () => void | Promise<void>;
 };
 
 export function AdminRecordingRequestsPanel({
   deleteRecordingRequests,
-  setDeleteRecordingRequests,
   editRecordingRequests,
-  setEditRecordingRequests,
   expertOptions,
   forwardDeleteExpertId,
   setForwardDeleteExpertId,
+  onRefreshRequests,
 }: AdminRecordingRequestsPanelProps) {
   return (
     <div
@@ -109,9 +107,7 @@ export function AdminRecordingRequestsPanel({
                               recordingId: req.recordingId,
                             });
                             setForwardDeleteExpertId(null);
-                            setDeleteRecordingRequests(
-                              await recordingRequestService.getDeleteRecordingRequests(),
-                            );
+                            await onRefreshRequests();
                             uiToast.success(
                               notifyLine('Thành công', 'Đã chuyển yêu cầu xóa đến Chuyên gia.'),
                             );
@@ -172,9 +168,7 @@ export function AdminRecordingRequestsPanel({
                               forRoles: [UserRole.CONTRIBUTOR],
                               recordingId: req.recordingId,
                             });
-                            setEditRecordingRequests(
-                              await recordingRequestService.getEditRecordingRequests(),
-                            );
+                            await onRefreshRequests();
                             uiToast.success(
                               notifyLine(
                                 'Thành công',

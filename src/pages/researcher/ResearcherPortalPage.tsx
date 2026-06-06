@@ -508,6 +508,14 @@ export default function ResearcherPortalPage() {
               compareRightId={compareRightId}
               setCompareLeftId={setCompareLeftId}
               setCompareRightId={setCompareRightId}
+              filters={filters}
+              setFilters={setFilters}
+              activeFilterCount={activeFilterCount}
+              searchLoading={searchLoading}
+              ethnicRefData={ethnicRefData}
+              instrumentRefData={instrumentRefData}
+              ceremonyRefData={ceremonyRefData}
+              communeRefData={communeRefData}
             />
           )}
 

@@ -3,11 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { USER_ROLE_NAMES } from '@/config/constants';
-import {
-  DELETE_ACTION,
-  getRoleNameVi,
-  ROLE_OPTIONS,
-} from '@/features/admin/adminDashboardTypes';
+import { getRoleNameVi, ROLE_OPTIONS } from '@/features/admin/adminDashboardTypes';
 
 function isClickOnScrollbar(event: MouseEvent): boolean {
   const w = window.innerWidth - document.documentElement.clientWidth;
@@ -109,16 +105,6 @@ export function RoleSelectDropdown({
                   {opt.label}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(DELETE_ACTION);
-                  setIsOpen(false);
-                }}
-                className="w-full px-5 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 cursor-pointer"
-              >
-                Xóa khỏi hệ thống
-              </button>
             </div>
           </div>,
           document.body,

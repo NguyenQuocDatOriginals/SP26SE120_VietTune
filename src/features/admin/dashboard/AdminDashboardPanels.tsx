@@ -35,6 +35,7 @@ export type AdminDashboardPanelsProps = {
   getRoleNameVi: (role: string) => string;
   onAssignRole: (userId: string, newRole: string) => void | Promise<void>;
   onRequestDeleteUser: (p: { id: string; username: string }) => void;
+  onReactivateUser: (userId: string) => void | Promise<void>;
   remoteTotalRecordings: number | null;
   recordingsLength: number;
   remoteEthnicGroupsLoadState: 'idle' | 'loading' | 'ok' | 'error';
@@ -55,9 +56,7 @@ export type AdminDashboardPanelsProps = {
   legacyPanel: LegacyAdminPanelId | null;
   setLegacyPanel: Dispatch<SetStateAction<LegacyAdminPanelId | null>>;
   deleteRecordingRequests: DeleteRecordingRequest[];
-  setDeleteRecordingRequests: Dispatch<SetStateAction<DeleteRecordingRequest[]>>;
   editRecordingRequests: EditRecordingRequest[];
-  setEditRecordingRequests: Dispatch<SetStateAction<EditRecordingRequest[]>>;
   expertOptions: { id: string; username: string; fullName?: string }[];
   forwardDeleteExpertId: { requestId: string; expertId: string } | null;
   setForwardDeleteExpertId: Dispatch<
@@ -88,6 +87,7 @@ export default function AdminDashboardPanels(props: AdminDashboardPanelsProps) {
         getRoleNameVi={props.getRoleNameVi}
         onAssignRole={props.onAssignRole}
         onRequestDeleteUser={props.onRequestDeleteUser}
+        onReactivateUser={props.onReactivateUser}
       />
     );
   }
@@ -129,9 +129,7 @@ export default function AdminDashboardPanels(props: AdminDashboardPanelsProps) {
       legacyPanel={props.legacyPanel}
       setLegacyPanel={props.setLegacyPanel}
       deleteRecordingRequests={props.deleteRecordingRequests}
-      setDeleteRecordingRequests={props.setDeleteRecordingRequests}
       editRecordingRequests={props.editRecordingRequests}
-      setEditRecordingRequests={props.setEditRecordingRequests}
       expertOptions={props.expertOptions}
       forwardDeleteExpertId={props.forwardDeleteExpertId}
       setForwardDeleteExpertId={props.setForwardDeleteExpertId}
@@ -139,6 +137,7 @@ export default function AdminDashboardPanels(props: AdminDashboardPanelsProps) {
       onRequestExpertDeletionApprove={props.onRequestExpertDeletionApprove}
       recordings={props.recordings}
       onRequestRemoveRecording={props.onRequestRemoveRecording}
+      onRefreshRequests={() => props.load()}
     />
   );
 }

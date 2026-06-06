@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { legacyGet } from '@/api/legacyHttp';
 import {
@@ -6,20 +6,17 @@ import {
   asObject,
   DEMO_USERS,
   ExpertPerformanceRow,
+  resolveUserAccountStatus,
 } from '@/features/admin/adminDashboardTypes';
 import { usePollWhileVisible } from '@/hooks/usePollWhileVisible';
 import { accountDeletionService } from '@/services/accountDeletionService';
 import { adminApi } from '@/services/adminApi';
 import { analyticsApi } from '@/services/analyticsApi';
-import { reportError, toReportableError } from '@/services/errorReporting';
 import { knowledgeBaseApi } from '@/services/knowledgeBaseApi';
 import { fetchAllMessages } from '@/services/qaMessageService';
 import { recordingRequestService } from '@/services/recordingRequestService';
 import { getItem } from '@/services/storageService';
-import {
-  extractSubmissionRows,
-  mapSubmissionToLocalRecording,
-} from '@/services/submissionApiMapper';
+import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
 import { ModerationStatus } from '@/types';
 import { UserRole } from '@/types';
 import type { LocalRecording } from '@/types';
@@ -88,6 +85,12 @@ export function useAdminDashboardData() {
     'idle' | 'loading' | 'ok' | 'error'
   >('idle');
 
+  // Refs keep `load` stable — avoid re-triggering usePollWhileVisible on every fetch.
+  const remoteUsersRef = useRef(remoteUsers);
+  const remoteUsersLoadStateRef = useRef(remoteUsersLoadState);
+  remoteUsersRef.current = remoteUsers;
+  remoteUsersLoadStateRef.current = remoteUsersLoadState;
+
   const load = useCallback(
     async (opts?: { showUserLoadingHint?: boolean }) => {
       const shouldShowUserLoading = !!opts?.showUserLoadingHint;
@@ -95,7 +98,11 @@ export function useAdminDashboardData() {
       // --- Admin backend data (best-effort) ---
       // Avoid UI flicker: keep showing last good list during background refresh.
       // Only enter "loading" when we have no data yet AND user explicitly wants a hint.
-      if (shouldShowUserLoading && remoteUsersLoadState !== 'ok' && !remoteUsers) {
+      if (
+        shouldShowUserLoading &&
+        remoteUsersLoadStateRef.current !== 'ok' &&
+        !remoteUsersRef.current
+      ) {
         setRemoteUsersLoadState('loading');
       }
       const [
@@ -191,12 +198,14 @@ export function useAdminDashboardData() {
               (typeof anyU.username === 'string' ? anyU.username : undefined) ??
               (typeof anyU.userName === 'string' ? (anyU.userName as string) : undefined) ??
               (typeof anyU.UserName === 'string' ? (anyU.UserName as string) : undefined);
+            const status = resolveUserAccountStatus(anyU);
             return {
               id,
               username: String(usernameRaw ?? email ?? id),
               email: email,
               fullName: fullNameRaw,
               role: String(roleRaw ?? UserRole.CONTRIBUTOR),
+              status,
               contributionCount: counts.total,
               approvedCount: counts.approved,
               rejectedCount: counts.rejected,
@@ -208,7 +217,7 @@ export function useAdminDashboardData() {
         setRemoteUsersLoadState('ok');
       } else {
         // Do NOT clear existing list on background failures to avoid flicker.
-        if (!remoteUsers) setRemoteUsersLoadState('error');
+        if (!remoteUsersRef.current) setRemoteUsersLoadState('error');
       }
 
       // ---- Trend ----
@@ -372,17 +381,30 @@ export function useAdminDashboardData() {
       }
 
       try {
-        // Admin: use GET /Admin/submissions to list all submissions (role-appropriate endpoint)
-        const adminSubmissionsRaw = await legacyGet<GenericListResponse>('/Admin/submissions', {
-          params: { page: 1, pageSize: 200 },
-        });
-        const rows = extractSubmissionRows(adminSubmissionsRaw);
+        const rows = await adminApi.getSubmissions({ page: 1, pageSize: 200 });
         const migrated = migrateVideoDataToVideoData(
           rows.map((row) => mapSubmissionToLocalRecording(row)) as LocalRecording[],
         );
         setRecordings(migrated);
+
+        const userNameById = new Map<string, string>();
+        if (usersRes.status === 'fulfilled') {
+          usersRes.value.forEach((u) => {
+            const anyU = asObject(u);
+            if (!anyU) return;
+            const id = String(anyU.id ?? anyU.userId ?? '');
+            const name = String(anyU.fullName ?? anyU.username ?? anyU.email ?? id);
+            if (id) userNameById.set(id, name);
+          });
+        }
+        const { deleteRequests, editRequests } =
+          recordingRequestService.deriveRecordingRequestsFromSubmissions(rows, userNameById);
+        setDeleteRecordingRequests(deleteRequests);
+        setEditRecordingRequests(editRequests);
       } catch {
         setRecordings([]);
+        setDeleteRecordingRequests([]);
+        setEditRecordingRequests([]);
       }
       try {
         const usersOverridesRaw = getItem('users_overrides');
@@ -404,29 +426,9 @@ export function useAdminDashboardData() {
         setDeletedUserIds(new Set());
       }
       setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
-      void recordingRequestService
-        .getDeleteRecordingRequests()
-        .then(setDeleteRecordingRequests)
-        .catch((err) => {
-          reportError(toReportableError(err, 'Failed to load delete recording requests'), undefined, {
-            region: 'admin',
-            resource: 'deleteRecordingRequests',
-          });
-          setDeleteRecordingRequests([]);
-        });
-      void recordingRequestService
-        .getEditRecordingRequests()
-        .then(setEditRecordingRequests)
-        .catch((err) => {
-          reportError(toReportableError(err, 'Failed to load edit recording requests'), undefined, {
-            region: 'admin',
-            resource: 'editRecordingRequests',
-          });
-          setEditRecordingRequests([]);
-        });
       setLastDashboardRefreshAt(Date.now());
     },
-    [remoteUsers, remoteUsersLoadState],
+    [],
   );
 
   usePollWhileVisible(() => void load(), 30000, [load]);
@@ -459,6 +461,7 @@ export function useAdminDashboardData() {
         username: overUsername ?? u.username,
         fullName: overFullName ?? u.fullName,
         role: overRole ?? u.role,
+        status: u.status,
         contributionCount: counts.total,
         approvedCount: counts.approved,
         rejectedCount: counts.rejected,
@@ -492,6 +495,7 @@ export function useAdminDashboardData() {
           email: u?.email,
           fullName: overFullName ?? u?.fullName,
           role: overRole ?? u?.role ?? UserRole.CONTRIBUTOR,
+          status: 'Active',
           contributionCount: counts.total,
           approvedCount: counts.approved,
           rejectedCount: counts.rejected,
@@ -510,9 +514,8 @@ export function useAdminDashboardData() {
   );
 
   const usersForTable = useMemo(
-    () =>
-      (remoteUsers ?? []).filter((u) => u.role !== UserRole.ADMIN && !deletedUserIds.has(u.id)),
-    [remoteUsers, deletedUserIds],
+    () => (remoteUsers ?? []).filter((u) => u.role !== UserRole.ADMIN),
+    [remoteUsers],
   );
 
   const allUsers = useMemo(
