@@ -439,6 +439,8 @@ export const recordingService = {
         ...(ethnicId ? { ethnicGroupId: ethnicId.trim() } : {}),
         ...(instrumentId ? { instrumentId: instrumentId.trim() } : {}),
         ...(regionCode ? { regionCode: String(regionCode) } : {}),
+        ...(filters.ceremonyId ? { ceremonyId: filters.ceremonyId.trim() } : {}),
+        ...(filters.communeId ? { communeId: filters.communeId.trim() } : {}),
       },
     };
     try {
@@ -519,6 +521,8 @@ export const recordingService = {
     if (ethnicId) merged.ethnicGroupId = ethnicId.trim();
     if (instrumentId) merged.instrumentId = instrumentId.trim();
     if (regionCode) merged.regionCode = String(regionCode);
+    if (filters.ceremonyId) merged.ceremonyId = filters.ceremonyId.trim();
+    if (filters.communeId) merged.communeId = filters.communeId.trim();
 
     return apiOk(
       asApiEnvelope<PaginatedResponse<Recording>>(
