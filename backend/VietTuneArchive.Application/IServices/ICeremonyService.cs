@@ -7,7 +7,7 @@ namespace VietTuneArchive.Application.IServices
     {
         Task<ServiceResponse<List<CeremonyDto>>> GetByTypeAsync(string type);
         Task<ServiceResponse<List<CeremonyDto>>> GetBySeasonAsync(string season);
-        Task<ServiceResponse<List<CeremonyDto>>> SearchByNameAsync(string name);
+        Task<ServiceResponse<List<CeremonyDto>>> SearchByNameAsync(string? name);
         Task<ServiceResponse<List<string>>> GetAllTypesAsync();
         Task<ServiceResponse<List<string>>> GetAllSeasonsAsync();
     }

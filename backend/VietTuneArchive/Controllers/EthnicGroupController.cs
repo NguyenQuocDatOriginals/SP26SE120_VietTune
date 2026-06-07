@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
@@ -29,6 +30,14 @@ namespace VietTuneArchive.API.Controllers
         public async Task<ActionResult<ServiceResponse<EthnicGroupDto>>> GetById(Guid id)
         {
             var result = await _service.GetByIdAsync(id);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
+
+        [HttpGet("search-by-name")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ServiceResponse<List<EthnicGroupDto>>>> SearchByName([FromQuery] string? name)
+        {
+            var result = await _service.SearchByNameAsync(name);
             return result.Success ? Ok(result) : NotFound(result);
         }
 

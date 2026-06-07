@@ -78,22 +78,19 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
-        /// Search ceremonies by name
+        /// Search ceremonies by name with Vietnamese diacritics support
         /// </summary>
-        public async Task<ServiceResponse<List<CeremonyDto>>> SearchByNameAsync(string name)
+        public async Task<ServiceResponse<List<CeremonyDto>>> SearchByNameAsync(string? name)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(name))
-                    throw new ArgumentException("Search name cannot be empty", nameof(name));
-
-                var ceremonies = await _ceremonyRepository.GetAsync(c => c.Name.Contains(name));
+                var ceremonies = await _ceremonyRepository.SearchByNameAsync(name);
                 var dtos = _mapper.Map<List<CeremonyDto>>(ceremonies);
                 return new ServiceResponse<List<CeremonyDto>>
                 {
                     Success = true,
                     Data = dtos,
-                    Message = $"Found {dtos.Count} ceremonies"
+                    Message = $"Found {dtos.Count} ceremonies matching: {name}"
                 };
             }
             catch (Exception ex)
