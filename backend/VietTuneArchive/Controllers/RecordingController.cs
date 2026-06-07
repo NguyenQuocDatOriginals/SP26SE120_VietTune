@@ -33,6 +33,7 @@ namespace VietTuneArchive.API.Controllers
         [HttpGet("search-by-filter")]
         [Authorize(Roles = "Admin,Contributor,Expert,Researcher")]
         public async Task<IActionResult> SearchByFilter(
+            [FromQuery] string? title,
             [FromQuery] Guid? ethnicGroupId,
             [FromQuery] Guid? instrumentId,
             [FromQuery] Guid? ceremonyId,
@@ -44,6 +45,7 @@ namespace VietTuneArchive.API.Controllers
         {
             var filter = new RecordingFilterDto
             {
+                Title = title,
                 EthnicGroupId = ethnicGroupId,
                 InstrumentId = instrumentId,
                 CeremonyId = ceremonyId,
