@@ -149,7 +149,7 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
                        neighborLabel: coalesce(neighbor.Name, neighbor.Title, ''),
                        neighborGroup: labels(neighbor)[0]
                      })[0..20] AS neighbors
-                RETURN n, neighbors, size((n)--()) AS degree";
+                RETURN n, neighbors, COUNT { (n)--() } AS degree";
 
             await using var session = _neo4jDriver.AsyncSession();
             GraphExplorerNodeDetailDto? detail = null;
