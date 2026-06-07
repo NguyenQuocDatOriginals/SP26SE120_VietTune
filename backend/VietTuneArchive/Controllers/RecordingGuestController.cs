@@ -29,6 +29,7 @@ namespace VietTuneArchive.API.Controllers
 
         [HttpGet("search-by-filter")]
         public async Task<IActionResult> SearchByFilter(
+            [FromQuery] string? title,
             [FromQuery] Guid? ethnicGroupId,
             [FromQuery] Guid? instrumentId,
             [FromQuery] Guid? ceremonyId,
@@ -40,6 +41,7 @@ namespace VietTuneArchive.API.Controllers
         {
             var filter = new RecordingFilterDto
             {
+                Title = title,
                 EthnicGroupId = ethnicGroupId,
                 InstrumentId = instrumentId,
                 CeremonyId = ceremonyId,
@@ -59,9 +61,9 @@ namespace VietTuneArchive.API.Controllers
         }
         [HttpPost("search-by-filter-multi")]
         public async Task<IActionResult> SearchByFilterMulti(
-    [FromBody] RecordingFilterMultiDto filter)
+            [FromBody] RecordingFilterMultiDto filter)
         {
-            var result = await _service.SearchByFilterMultiAsync(filter);
+            var result = await _service.SearchByFilterMultiApprovedAsync(filter);
             if (result.IsSuccess)
             {
                 return Ok(result);

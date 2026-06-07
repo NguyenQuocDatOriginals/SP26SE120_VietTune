@@ -298,10 +298,10 @@ public class RecordingServiceTests
             var filter = new RecordingFilterDto { Page = 1, PageSize = 10, SortOrder = "desc" };
             var records = new List<Recording> { new Recording() };
             _repoMock.Setup(x => x.SearchByFilterAsync(
-                filter.EthnicGroupId, filter.InstrumentId, filter.CeremonyId,
+                filter.Title, filter.EthnicGroupId, filter.InstrumentId, filter.CeremonyId,
                 filter.RegionCode, filter.CommuneId, filter.Page, filter.PageSize, filter.SortOrder
             )).ReturnsAsync((records, 1));
-            
+
             _mapperMock.Setup(x => x.Map<List<GetRecordingDto>>(records)).Returns(new List<GetRecordingDto> { new GetRecordingDto() });
 
             var result = await _sut.SearchByFilterAsync(filter);

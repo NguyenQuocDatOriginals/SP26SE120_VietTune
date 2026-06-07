@@ -2,6 +2,7 @@ namespace VietTuneArchive.Application.Mapper.DTOs
 {
     public class RecordingFilterDto
     {
+        public string? Title { get; set; }
         public Guid? EthnicGroupId { get; set; }
         public Guid? InstrumentId { get; set; }
         public Guid? CeremonyId { get; set; }
@@ -14,6 +15,7 @@ namespace VietTuneArchive.Application.Mapper.DTOs
 
     public class RecordingFilterMultiDto
     {
+        public string? Title { get; set; }
         public List<Guid> EthnicGroupIds { get; set; } = new List<Guid>();
         public List<Guid> InstrumentIds { get; set; } = new List<Guid>();
         public List<Guid> CeremonyIds { get; set; } = new List<Guid>();
