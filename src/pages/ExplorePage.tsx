@@ -40,6 +40,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
   const tagsParam = searchParams.get('tags');
   const ethnicityParam = searchParams.get('ethnicity');
   const instrumentParam = searchParams.get('instrument');
+  const ceremonyParam = searchParams.get('ceremony');
+  const communeParam = searchParams.get('commune');
   const filters: SearchFilters = {};
   if (q) filters.query = q;
   if (region && Object.values(Region).includes(region as Region))
@@ -75,6 +77,8 @@ function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
       .map((t) => t.trim())
       .filter(Boolean);
   }
+  if (ceremonyParam) filters.ceremonyId = ceremonyParam.trim();
+  if (communeParam) filters.communeId = communeParam.trim();
   return filters;
 }
 
@@ -89,6 +93,8 @@ function searchParamsFromFilters(filters: SearchFilters): Record<string, string>
   if (filters.tags?.length) params.tags = filters.tags.join(',');
   if (filters.ethnicityIds?.length) params.ethnicity = filters.ethnicityIds.join(',');
   if (filters.instrumentIds?.length) params.instrument = filters.instrumentIds.join(',');
+  if (filters.ceremonyId) params.ceremony = filters.ceremonyId;
+  if (filters.communeId) params.commune = filters.communeId;
   return params;
 }
 
@@ -117,7 +123,7 @@ function buildExploreSearchParams(
  */
 export default function ExplorePage() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const returnTo = location.pathname + location.search;
   const exploreFilterOptions = useExploreFilterOptions();
@@ -429,6 +435,7 @@ export default function ExplorePage() {
                 onChange={setFacetDraft}
                 onApply={handleFacetApply}
                 onReset={handleFacetReset}
+                userRole={user?.role}
               />
             </div>
           </aside>
@@ -561,6 +568,7 @@ export default function ExplorePage() {
                         recording={r}
                         returnTo={returnTo}
                         rowIndex={idx}
+                        userRole={user?.role}
                       />
                     ))}
                   </div>

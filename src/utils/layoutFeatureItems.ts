@@ -14,6 +14,7 @@ export type LayoutFeatureItem = {
 /** Cùng logic với HomePage (hero features) — dùng cho header strip. */
 export function getLayoutFeatureItems(user: User | null): LayoutFeatureItem[] {
   const isExpert = user?.role === UserRole.EXPERT;
+  const isResearcher = user?.role === UserRole.RESEARCHER;
   const useGuestFeatures = !user || user?.role === UserRole.ADMIN || !isExpert;
   const isAdmin = user?.role === UserRole.ADMIN;
 
@@ -45,6 +46,8 @@ export function getLayoutFeatureItems(user: User | null): LayoutFeatureItem[] {
               to: '/admin',
             },
           ]
+        : isResearcher
+        ? []
         : [
             {
               icon: Upload,

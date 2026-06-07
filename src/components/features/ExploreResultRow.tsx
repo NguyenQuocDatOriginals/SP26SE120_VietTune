@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import Button from '@/components/common/Button';
 import { REGION_NAMES } from '@/config/constants';
-import { type Recording, VerificationStatus } from '@/types';
+import { type Recording, VerificationStatus, UserRole } from '@/types';
 import { cn } from '@/utils/helpers';
 
 function asObject(input: unknown): Record<string, unknown> | null {
@@ -108,32 +108,42 @@ export const ExploreResultRow = memo(function ExploreResultRow({
   recording: r,
   returnTo,
   rowIndex,
+  userRole,
 }: {
   recording: Recording;
   returnTo: string;
   rowIndex: number;
+  userRole?: UserRole;
 }) {
   const navigate = useNavigate();
   const openDetail = () =>
     navigate(`/recordings/${r.id}`, { state: { from: returnTo, preloadedRecording: r } });
 
-  const metadataPairs = [
+  const isResearcher = userRole === UserRole.RESEARCHER;
+  const rawPairs = [
     { label: 'Dân tộc', value: getEthnicityLabel(r) },
     { label: 'Vùng miền', value: getRegionLabel(r) },
     { label: 'Nhạc cụ', value: getInstrumentLabel(r) },
     { label: 'Nghi lễ', value: getCeremonyLabel(r) },
     { label: 'Xã/Phường', value: getCommuneLabel(r) },
-  ].filter((x) => Boolean(x.value));
-  const displayPairs =
-    metadataPairs.length > 0
-      ? metadataPairs
-      : [
-          { label: 'Dân tộc', value: 'Chưa cập nhật' },
-          { label: 'Vùng miền', value: 'Chưa cập nhật' },
-          { label: 'Nhạc cụ', value: 'Chưa cập nhật' },
-          { label: 'Nghi lễ', value: 'Chưa cập nhật' },
-          { label: 'Xã/Phường', value: 'Chưa cập nhật' },
-        ];
+  ];
+
+  let displayPairs = rawPairs.filter((x) => Boolean(x.value));
+  
+  if (isResearcher) {
+    displayPairs = rawPairs.map(x => ({
+      label: x.label,
+      value: x.value || 'Chưa cập nhật'
+    }));
+  } else if (displayPairs.length === 0) {
+    displayPairs = [
+      { label: 'Dân tộc', value: 'Chưa cập nhật' },
+      { label: 'Vùng miền', value: 'Chưa cập nhật' },
+      { label: 'Nhạc cụ', value: 'Chưa cập nhật' },
+      { label: 'Nghi lễ', value: 'Chưa cập nhật' },
+      { label: 'Xã/Phường', value: 'Chưa cập nhật' },
+    ];
+  }
 
   const semanticScore = r._semanticScore;
 
@@ -173,7 +183,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
                 key={`${r.id ?? rowIndex}-${item.label}`}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors',
-                  itemIdx >= 3 && 'max-sm:hidden',
+                  (!isResearcher && itemIdx >= 3) && 'max-sm:hidden',
                   item.value === 'Chưa cập nhật'
                     ? 'border-neutral-200/60 bg-neutral-50/50 text-neutral-500 hover:bg-neutral-100'
                     : 'border-neutral-200/70 bg-neutral-50/80 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-100/80',
@@ -186,7 +196,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
                 </span>
               </span>
             ))}
-            {displayPairs.length > 3 && (
+            {(!isResearcher && displayPairs.length > 3) && (
               <span className="inline-flex items-center rounded-xl border border-neutral-200/70 bg-neutral-50/80 px-3 py-1.5 text-xs font-medium text-neutral-600 sm:hidden">
                 +{displayPairs.length - 3} thêm
               </span>

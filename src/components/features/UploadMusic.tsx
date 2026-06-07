@@ -19,6 +19,7 @@ import UploadMediaPreview from '@/components/features/upload/UploadMediaPreview'
 import { UploadSearchableDropdown } from '@/components/features/upload/UploadSearchableDropdown';
 import UploadWizardActions from '@/components/features/upload/UploadWizardActions';
 import UploadWizardStepper from '@/components/features/upload/UploadWizardStepper';
+import UploadImagesSection from '@/components/features/upload/UploadImagesSection';
 import { macroRegionDisplayNameFromProvinceRegionCode as getRegionName } from '@/config/provinceRegionCodes';
 import { useMediaUpload } from '@/features/upload/hooks/useMediaUpload';
 import { useUploadDialogChrome } from '@/features/upload/hooks/useUploadDialogChrome';
@@ -930,6 +931,16 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           mediaName={audioInfo?.name || ''}
           title={title}
           artist={artist || 'Người đóng góp'}
+        />
+
+        <UploadImagesSection
+          show={uploadWizardStep === 2 || !showWizard}
+          isFormDisabled={isFormDisabled}
+          isUploadingMedia={isUploadingMedia}
+          existingRecordingImageUrls={existingRecordingImageUrls}
+          recordingImagePreviews={recordingImagePreviews}
+          onRecordingImagesChange={handleRecordingImagesChange}
+          onRemoveRecordingImage={removeRecordingImage}
         />
 
         <UploadFormFields

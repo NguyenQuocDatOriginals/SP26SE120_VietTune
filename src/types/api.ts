@@ -12,6 +12,8 @@ export interface SearchFilters {
   dateFrom?: string;
   dateTo?: string;
   tags?: string[];
+  ceremonyId?: string;
+  communeId?: string;
 }
 
 export interface ApiResponse<T> {

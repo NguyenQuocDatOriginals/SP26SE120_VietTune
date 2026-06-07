@@ -1,7 +1,7 @@
 import { Clock, Music, Trash2, User } from 'lucide-react';
 import { memo } from 'react';
 
-import { ContributionCardThumbnail } from '@/components/features/contributions/ContributionCardThumbnail';
+
 import {
   CONTRIBUTOR_STAGE_INFO,
   CONTRIBUTOR_STATUS_LABELS,
@@ -68,7 +68,6 @@ function ContributionCardInner({
     >
       <div className="p-5 sm:p-6">
         <div className="flex items-start gap-4 mb-3">
-          <ContributionCardThumbnail recordingId={sub.recordingId} />
           <div className="min-w-0 flex-1 flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-semibold text-neutral-900 truncate transition-colors group-hover:text-secondary-900">

@@ -12,6 +12,8 @@ export type ExploreFacetDraft = {
   genreTags: string[];
   instrumentIds: string[];
   culturalTags: string[];
+  ceremonyId: string | null;
+  communeId: string | null;
 };
 
 export function createEmptyExploreFacetDraft(): ExploreFacetDraft {
@@ -23,6 +25,8 @@ export function createEmptyExploreFacetDraft(): ExploreFacetDraft {
     genreTags: [],
     instrumentIds: [],
     culturalTags: [],
+    ceremonyId: null,
+    communeId: null,
   };
 }
 
@@ -36,6 +40,8 @@ export function exploreDraftToSearchFilters(d: ExploreFacetDraft): SearchFilters
   if (d.recordingTypes.length) out.recordingTypes = [...d.recordingTypes];
   if (d.region) out.regions = [d.region];
   if (tags.length) out.tags = tags;
+  if (d.ceremonyId) out.ceremonyId = d.ceremonyId;
+  if (d.communeId) out.communeId = d.communeId;
   return out;
 }
 
@@ -114,6 +120,8 @@ export function searchFiltersToExploreDraft(
     genreTags: [...genreTags, ...leftover],
     instrumentIds: [...new Set(instrumentIds)],
     culturalTags,
+    ceremonyId: f.ceremonyId ?? null,
+    communeId: f.communeId ?? null,
   };
 }
 

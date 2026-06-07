@@ -5,7 +5,7 @@ import { memo, useMemo, useState } from 'react';
 import type { ExploreFilterOptions } from '@/constants/exploreFilterOptions';
 import type { ExploreFacetDraft } from '@/features/explore/utils/exploreFacetDraft';
 import type { RecordingType } from '@/types';
-import { Region } from '@/types';
+import { Region, UserRole } from '@/types';
 import { cn } from '@/utils/helpers';
 
 export type FilterSidebarProps = {
@@ -14,6 +14,7 @@ export type FilterSidebarProps = {
   onChange: (next: ExploreFacetDraft) => void;
   onApply: () => void;
   onReset: () => void;
+  userRole?: UserRole;
 };
 
 function toggleString(list: string[], value: string): string[] {
@@ -135,8 +136,9 @@ function AccordionSection({
   );
 }
 
-function FilterSidebar({ options, selected, onChange, onApply, onReset }: FilterSidebarProps) {
+function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole }: FilterSidebarProps) {
   const set = (patch: Partial<ExploreFacetDraft>) => onChange({ ...selected, ...patch });
+  const isResearcher = userRole === UserRole.RESEARCHER;
 
   const ethnicityCount = selected.ethnicityIds.length;
   const recordingTypeCount = selected.recordingTypes.length;
@@ -164,7 +166,8 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
           />
         </AccordionSection>
 
-        <AccordionSection title="Thể loại ghi âm" defaultOpen badge={recordingTypeCount}>
+        {!isResearcher && (
+          <AccordionSection title="Thể loại ghi âm" defaultOpen badge={recordingTypeCount}>
           {options.recordingTypes.map((t) => {
             const checked = selected.recordingTypes.includes(t.value);
             return (
@@ -187,7 +190,9 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
             );
           })}
         </AccordionSection>
+        )}
 
+        {!isResearcher && (
         <AccordionSection title="Dòng nhạc / thể loại dân gian" badge={genreCount}>
           <MemoSearchableCheckboxList
             items={options.genreTags}
@@ -199,6 +204,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
             onToggle={(g) => set({ genreTags: toggleString(selected.genreTags, g.label) })}
           />
         </AccordionSection>
+        )}
 
         <AccordionSection title="Nhạc cụ (một phần)" badge={instrumentCount}>
           <MemoSearchableCheckboxList
@@ -215,7 +221,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
           />
         </AccordionSection>
 
-        <AccordionSection title="Khu vực" badge={regionActive}>
+        <AccordionSection title={isResearcher ? "Vùng miền" : "Khu vực"} badge={regionActive}>
           <select
             value={selected.region ?? ''}
             onChange={(e) => {
@@ -240,6 +246,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
           </select>
         </AccordionSection>
 
+        {!isResearcher && (
         <AccordionSection title="Bối cảnh văn hóa" badge={contextCount}>
           <MemoSearchableCheckboxList
             items={options.culturalContexts}
@@ -250,6 +257,33 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset }: Filter
             onToggle={(c) => set({ culturalTags: toggleString(selected.culturalTags, c.label) })}
           />
         </AccordionSection>
+        )}
+
+        {isResearcher && (
+          <AccordionSection title="Nghi lễ" badge={selected.ceremonyId ? 1 : 0}>
+            <MemoSearchableCheckboxList
+              items={options.ceremonies || []}
+              placeholder="Tìm nghi lễ…"
+              ariaLabel="Tìm trong danh sách nghi lễ"
+              emptyMessage="Không có nghi lễ khớp bộ lọc."
+              isChecked={(c) => selected.ceremonyId === c.id}
+              onToggle={(c) => set({ ceremonyId: selected.ceremonyId === c.id ? null : c.id })}
+            />
+          </AccordionSection>
+        )}
+
+        {isResearcher && (
+          <AccordionSection title="Xã / Phường" badge={selected.communeId ? 1 : 0}>
+            <MemoSearchableCheckboxList
+              items={options.communes || []}
+              placeholder="Tìm xã / phường…"
+              ariaLabel="Tìm trong danh sách xã / phường"
+              emptyMessage="Không có xã / phường khớp bộ lọc."
+              isChecked={(c) => selected.communeId === c.id}
+              onToggle={(c) => set({ communeId: selected.communeId === c.id ? null : c.id })}
+            />
+          </AccordionSection>
+        )}
       </div>
 
       <div className="relative z-10 mt-3 shrink-0 border-t border-secondary-200/70 bg-gradient-to-t from-secondary-50/50 to-surface-panel pt-3">

@@ -8,6 +8,8 @@ export type ExploreFilterOptions = {
   instruments: { id: string; label: string }[];
   regions: { value: Region; label: string }[];
   culturalContexts: { id: string; label: string }[];
+  ceremonies: { id: string; label: string }[];
+  communes: { id: string; label: string }[];
 };
 
 const GENRES = [
@@ -53,7 +55,7 @@ const EVENT_TYPES = [
   'Khác',
 ] as const;
 
-export const EXPLORE_STATIC_OPTIONS: Omit<ExploreFilterOptions, 'ethnicities' | 'instruments'> = {
+export const EXPLORE_STATIC_OPTIONS: Omit<ExploreFilterOptions, 'ethnicities' | 'instruments' | 'ceremonies' | 'communes'> = {
   recordingTypes: [
     { value: RecordingType.INSTRUMENTAL, label: 'Nhạc cụ (không lời)' },
     { value: RecordingType.VOCAL, label: 'Có lời / giọng hát' },

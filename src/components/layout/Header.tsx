@@ -442,13 +442,15 @@ export default function Header() {
               </Link>
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to="/upload"
-                    className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Tải lên
-                  </Link>
+                  {user?.role !== UserRole.RESEARCHER && (
+                    <Link
+                      to="/upload"
+                      className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Tải lên
+                    </Link>
+                  )}
                   <Link
                     to="/profile"
                     className="block px-4 py-3 text-white font-medium hover:bg-white/10 rounded-lg transition-colors"

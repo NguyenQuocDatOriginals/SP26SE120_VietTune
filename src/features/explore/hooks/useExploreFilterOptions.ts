@@ -6,13 +6,13 @@ import {
 } from '@/constants/exploreFilterOptions';
 import { referenceDataService } from '@/services/referenceDataService';
 
-type DynamicOptions = Pick<ExploreFilterOptions, 'ethnicities' | 'instruments'>;
+type DynamicOptions = Pick<ExploreFilterOptions, 'ethnicities' | 'instruments' | 'ceremonies' | 'communes'>;
 
 let optionsCache: DynamicOptions | null = null;
 
 export function useExploreFilterOptions(): ExploreFilterOptions {
   const [dynamicOptions, setDynamicOptions] = useState<DynamicOptions>(
-    optionsCache ?? { ethnicities: [], instruments: [] },
+    optionsCache ?? { ethnicities: [], instruments: [], ceremonies: [], communes: [] },
   );
 
   useEffect(() => {
@@ -24,9 +24,11 @@ export function useExploreFilterOptions(): ExploreFilterOptions {
         return;
       }
       
-      const [ethnicGroups, instruments] = await Promise.allSettled([
+      const [ethnicGroups, instruments, ceremonies, communes] = await Promise.allSettled([
         referenceDataService.getEthnicGroups(),
         referenceDataService.getInstruments(),
+        referenceDataService.getCeremonies(),
+        referenceDataService.getCommunes(),
       ]);
       if (cancelled) return;
 
@@ -38,6 +40,14 @@ export function useExploreFilterOptions(): ExploreFilterOptions {
         instruments:
           instruments.status === 'fulfilled'
             ? instruments.value.map((x) => ({ id: x.id, label: x.name }))
+            : [],
+        ceremonies:
+          ceremonies.status === 'fulfilled'
+            ? ceremonies.value.map((x) => ({ id: x.id, label: x.name }))
+            : [],
+        communes:
+          communes.status === 'fulfilled'
+            ? communes.value.map((x) => ({ id: x.id, label: x.name }))
             : [],
       };
 
