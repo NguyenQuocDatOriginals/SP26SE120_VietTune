@@ -1,19 +1,26 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
+using VietTuneArchive.Application.IServices.IThirdPartyServices;
+using VietTuneArchive.Application.DTOs;
 using VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph;
 
 namespace VietTuneArchive.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public class KnowledgeGraphController : ControllerBase
     {
         private readonly IKnowledgeGraphService _graphService;
+        private readonly IGraphExplorerService _graphExplorerService;
 
-        public KnowledgeGraphController(IKnowledgeGraphService graphService)
+        public KnowledgeGraphController(
+            IKnowledgeGraphService graphService,
+            IGraphExplorerService graphExplorerService)
         {
             _graphService = graphService;
+            _graphExplorerService = graphExplorerService;
         }
 
         /// <summary>
@@ -26,7 +33,8 @@ namespace VietTuneArchive.API.Controllers
             if (string.IsNullOrEmpty(request.NodeId) || string.IsNullOrEmpty(request.NodeType))
                 return BadRequest("NodeId and NodeType are required.");
 
-            var result = await _graphService.ExploreNodeAsync(request);
+            // Redirect to Neo4j
+            var result = await _graphExplorerService.ExpandNodeAsync(request.NodeId, request.NodeType, null);
             return Ok(result);
         }
 
@@ -61,7 +69,7 @@ namespace VietTuneArchive.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetOverview([FromQuery] int maxNodes = 100)
         {
-            var result = await _graphService.GetOverviewGraphAsync(maxNodes);
+            var result = await _graphExplorerService.GetOverviewGraphAsync(maxNodes);
             return Ok(result);
         }
 
@@ -89,8 +97,15 @@ namespace VietTuneArchive.API.Controllers
             if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(target))
                 return BadRequest("Source and target types are required.");
 
-            var result = await _graphService.GetRelationshipGraphAsync(source, target, limit);
-            return Ok(result);
+            try
+            {
+                var result = await _graphExplorerService.GetRelationshipGraphAsync(source, target, limit);
+                return Ok(result);
+            }
+            catch (System.ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         /// <summary>
@@ -98,29 +113,17 @@ namespace VietTuneArchive.API.Controllers
         /// </summary>
         [HttpGet("node/{id}")]
         [AllowAnonymous]
-        public async Task<ActionResult<NodeDetailDto>> GetNodeDetail(
-            string id, 
-            [FromQuery] string nodeType)
+        public async Task<ActionResult<GraphExplorerNodeDetailDto>> GetNodeDetail(string id)
         {
-            if (!System.Guid.TryParse(id, out var guid))
+            if (string.IsNullOrWhiteSpace(id))
             {
-                return BadRequest("Invalid ID format.");
+                return BadRequest("ID is required.");
             }
 
-            var allowedTypes = new HashSet<string>
-            {
-                "EthnicGroup", "Instrument", "Ceremony", "Recording", "Province", "VocalStyle", "MusicalScale", "Tag"
-            };
-
-            if (string.IsNullOrWhiteSpace(nodeType) || !allowedTypes.Contains(nodeType))
-            {
-                return BadRequest("Invalid node type.");
-            }
-
-            var result = await _graphService.GetNodeDetailAsync(guid, nodeType);
+            var result = await _graphExplorerService.GetNodeDetailAsync(id);
             if (result == null)
             {
-                return NotFound($"Node not found with ID {id} and Type {nodeType}.");
+                return NotFound($"Node not found with ID {id}.");
             }
 
             return Ok(result);
@@ -131,32 +134,19 @@ namespace VietTuneArchive.API.Controllers
         /// </summary>
         [HttpGet("shortest-path")]
         [AllowAnonymous]
-        public async Task<ActionResult<ShortestPathResponseDto>> GetShortestPath(
+        public async Task<ActionResult<GraphExplorerPathResponseDto>> GetShortestPath(
             [FromQuery] string fromId,
-            [FromQuery] string fromType,
             [FromQuery] string toId,
-            [FromQuery] string toType,
             [FromQuery] int maxDepth = 6)
         {
-            if (!System.Guid.TryParse(fromId, out var fromGuid) || !System.Guid.TryParse(toId, out var toGuid))
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
             {
-                return BadRequest("Invalid ID format for fromId or toId.");
+                return BadRequest("fromId and toId are required.");
             }
 
-            if (fromGuid == toGuid)
+            if (fromId == toId)
             {
                 return BadRequest("fromId and toId must be different.");
-            }
-
-            var allowedTypes = new HashSet<string>
-            {
-                "EthnicGroup", "Instrument", "Ceremony", "Recording", "Province", "VocalStyle", "MusicalScale", "Tag"
-            };
-
-            if (string.IsNullOrWhiteSpace(fromType) || !allowedTypes.Contains(fromType) ||
-                string.IsNullOrWhiteSpace(toType) || !allowedTypes.Contains(toType))
-            {
-                return BadRequest("Invalid node type.");
             }
 
             if (maxDepth < 1 || maxDepth > 10)
@@ -164,7 +154,7 @@ namespace VietTuneArchive.API.Controllers
                 return BadRequest("maxDepth must be between 1 and 10.");
             }
 
-            var result = await _graphService.GetShortestPathAsync(fromGuid, fromType, toGuid, toType, maxDepth);
+            var result = await _graphExplorerService.GetShortestPathAsync(fromId, toId, maxDepth);
             return Ok(result);
         }
     }

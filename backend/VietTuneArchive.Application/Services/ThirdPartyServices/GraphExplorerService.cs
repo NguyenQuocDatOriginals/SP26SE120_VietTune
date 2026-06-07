@@ -297,6 +297,161 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
             return response;
         }
 
+        public async Task<GraphResponseDto> GetOverviewGraphAsync(int maxNodes = 100)
+        {
+            maxNodes = Math.Clamp(maxNodes, 1, 500);
+
+            var query = @"
+                MATCH (n)
+                WHERE n.Id IS NOT NULL
+                WITH n LIMIT $maxNodes
+                OPTIONAL MATCH (n)-[r]-(m)
+                WHERE m.Id IS NOT NULL
+                RETURN n, r, m";
+
+            await using var session = _neo4jDriver.AsyncSession();
+            var nodesDict = new Dictionary<string, GraphNodeDto>();
+            var linksList = new List<GraphLinkDto>();
+            var internalIdToGuid = new Dictionary<long, string>();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { maxNodes });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var nObj = record["n"];
+                    if (nObj == null || nObj is not INode nNode) continue;
+
+                    var nGuid = nNode.Properties.ContainsKey("Id") ? nNode.Properties["Id"]?.ToString() ?? "" : "";
+                    if (!string.IsNullOrEmpty(nGuid))
+                    {
+                        internalIdToGuid[nNode.Id] = nGuid;
+                        if (!nodesDict.ContainsKey(nGuid))
+                        {
+                            nodesDict[nGuid] = MapNode(nNode, nGuid);
+                        }
+                    }
+
+                    var mObj = record["m"];
+                    var rObj = record["r"];
+
+                    if (mObj != null && mObj is INode mNode && rObj != null && rObj is IRelationship rel)
+                    {
+                        var mGuid = mNode.Properties.ContainsKey("Id") ? mNode.Properties["Id"]?.ToString() ?? "" : "";
+                        if (!string.IsNullOrEmpty(mGuid))
+                        {
+                            internalIdToGuid[mNode.Id] = mGuid;
+                            if (!nodesDict.ContainsKey(mGuid))
+                            {
+                                nodesDict[mGuid] = MapNode(mNode, mGuid);
+                            }
+
+                            var linkSource = internalIdToGuid.ContainsKey(rel.StartNodeId) ? internalIdToGuid[rel.StartNodeId] : nGuid;
+                            var linkTarget = internalIdToGuid.ContainsKey(rel.EndNodeId) ? internalIdToGuid[rel.EndNodeId] : mGuid;
+
+                            linksList.Add(new GraphLinkDto
+                            {
+                                Source = linkSource,
+                                Target = linkTarget,
+                                Type = rel.Type
+                            });
+                        }
+                    }
+                }
+            });
+
+            var links = linksList
+                .GroupBy(l => $"{l.Source}-{l.Target}-{l.Type}")
+                .Select(g => g.First())
+                .ToList();
+
+            return new GraphResponseDto
+            {
+                Nodes = nodesDict.Values.ToList(),
+                Links = links
+            };
+        }
+
+        public async Task<GraphResponseDto> GetRelationshipGraphAsync(string sourceType, string targetType, int limit = 100)
+        {
+            if (string.IsNullOrEmpty(sourceType) || !Regex.IsMatch(sourceType, "^[a-zA-Z0-9]+$"))
+            {
+                throw new ArgumentException("Invalid source type format.");
+            }
+            if (string.IsNullOrEmpty(targetType) || !Regex.IsMatch(targetType, "^[a-zA-Z0-9]+$"))
+            {
+                throw new ArgumentException("Invalid target type format.");
+            }
+
+            limit = Math.Clamp(limit, 1, 500);
+
+            var query = $@"
+                MATCH (s:{sourceType})-[r]-(t:{targetType})
+                WHERE s.Id IS NOT NULL AND t.Id IS NOT NULL
+                RETURN s, r, t
+                LIMIT $limit";
+
+            await using var session = _neo4jDriver.AsyncSession();
+            var nodesDict = new Dictionary<string, GraphNodeDto>();
+            var linksList = new List<GraphLinkDto>();
+            var internalIdToGuid = new Dictionary<long, string>();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { limit });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var sNode = record["s"].As<INode>();
+                    var tNode = record["t"].As<INode>();
+                    var rel = record["r"].As<IRelationship>();
+
+                    var sGuid = sNode.Properties.ContainsKey("Id") ? sNode.Properties["Id"]?.ToString() ?? "" : "";
+                    var tGuid = tNode.Properties.ContainsKey("Id") ? tNode.Properties["Id"]?.ToString() ?? "" : "";
+
+                    if (!string.IsNullOrEmpty(sGuid))
+                    {
+                        internalIdToGuid[sNode.Id] = sGuid;
+                        if (!nodesDict.ContainsKey(sGuid))
+                        {
+                            nodesDict[sGuid] = MapNode(sNode, sGuid);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(tGuid))
+                    {
+                        internalIdToGuid[tNode.Id] = tGuid;
+                        if (!nodesDict.ContainsKey(tGuid))
+                        {
+                            nodesDict[tGuid] = MapNode(tNode, tGuid);
+                        }
+                    }
+
+                    var linkSource = internalIdToGuid.ContainsKey(rel.StartNodeId) ? internalIdToGuid[rel.StartNodeId] : sGuid;
+                    var linkTarget = internalIdToGuid.ContainsKey(rel.EndNodeId) ? internalIdToGuid[rel.EndNodeId] : tGuid;
+
+                    linksList.Add(new GraphLinkDto
+                    {
+                        Source = linkSource,
+                        Target = linkTarget,
+                        Type = rel.Type
+                    });
+                }
+            });
+
+            var links = linksList
+                .GroupBy(l => $"{l.Source}-{l.Target}-{l.Type}")
+                .Select(g => g.First())
+                .ToList();
+
+            return new GraphResponseDto
+            {
+                Nodes = nodesDict.Values.ToList(),
+                Links = links
+            };
+        }
+
         private GraphNodeDto MapNode(INode node, string guid)
         {
             var properties = node.Properties;
