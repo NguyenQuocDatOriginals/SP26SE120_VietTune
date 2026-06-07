@@ -8908,6 +8908,9 @@ export interface components {
             performerName?: string | null;
             /** Format: int32 */
             performerAge?: number | null;
+            composer?: string | null;
+            language?: string | null;
+            recordingLocation?: string | null;
             /** Format: date-time */
             recordingDate?: string | null;
             /** Format: double */
@@ -9104,6 +9107,9 @@ export interface components {
             performerName?: string | null;
             /** Format: int32 */
             performerAge?: number | null;
+            composer?: string | null;
+            language?: string | null;
+            recordingLocation?: string | null;
             /** Format: date-time */
             recordingDate?: string | null;
             /** Format: double */
