@@ -8,5 +8,7 @@ namespace VietTuneArchive.Application.IServices.IThirdPartyServices
     {
         Task<List<GraphNodeDto>> SearchNodesAsync(string keyword, string? label = null);
         Task<GraphResponseDto> ExpandNodeAsync(string sourceId, string? targetLabel = null, string? relationshipType = null);
+        Task<GraphExplorerNodeDetailDto?> GetNodeDetailAsync(string id);
+        Task<GraphExplorerPathResponseDto> GetShortestPathAsync(string fromId, string toId, int maxDepth);
     }
 }

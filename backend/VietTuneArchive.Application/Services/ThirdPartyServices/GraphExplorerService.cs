@@ -128,6 +128,175 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
             };
         }
 
+        public async Task<GraphExplorerNodeDetailDto?> GetNodeDetailAsync(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
+            var query = @"
+                MATCH (n)
+                WHERE n.Id = $id
+                OPTIONAL MATCH (n)-[r]-(neighbor)
+                WITH n, r, neighbor
+                ORDER BY neighbor.Name ASC, neighbor.Title ASC
+                WITH n,
+                     collect(DISTINCT {
+                       relType: type(r),
+                       direction: CASE WHEN startNode(r) = n THEN 'OUT' ELSE 'IN' END,
+                       neighborId: neighbor.Id,
+                       neighborLabel: coalesce(neighbor.Name, neighbor.Title, ''),
+                       neighborGroup: labels(neighbor)[0]
+                     })[0..20] AS neighbors
+                RETURN n, neighbors, size((n)--()) AS degree";
+
+            await using var session = _neo4jDriver.AsyncSession();
+            GraphExplorerNodeDetailDto? detail = null;
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { id });
+                if (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var nodeObj = record["n"];
+                    if (nodeObj == null || nodeObj is not INode node) return;
+
+                    var properties = new Dictionary<string, object>();
+                    foreach (var key in node.Properties.Keys)
+                    {
+                        properties[key] = node.Properties[key];
+                    }
+
+                    var label = "";
+                    if (node.Properties.ContainsKey("Name") && node.Properties["Name"] != null)
+                    {
+                        label = node.Properties["Name"].ToString() ?? "";
+                    }
+                    else if (node.Properties.ContainsKey("Title") && node.Properties["Title"] != null)
+                    {
+                        label = node.Properties["Title"].ToString() ?? "";
+                    }
+
+                    var group = node.Labels.FirstOrDefault() ?? "";
+                    var degree = record["degree"].As<int>();
+
+                    var neighborsList = new List<GraphExplorerNeighborSummaryDto>();
+                    var neighborsData = record["neighbors"] as IEnumerable<object>;
+                    if (neighborsData != null)
+                    {
+                        foreach (var item in neighborsData)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                var nId = dict.ContainsKey("neighborId") ? dict["neighborId"]?.ToString() ?? "" : "";
+                                if (string.IsNullOrEmpty(nId)) continue;
+
+                                neighborsList.Add(new GraphExplorerNeighborSummaryDto
+                                {
+                                    Id = nId,
+                                    Label = dict.ContainsKey("neighborLabel") ? dict["neighborLabel"]?.ToString() ?? "" : "",
+                                    Group = dict.ContainsKey("neighborGroup") ? dict["neighborGroup"]?.ToString() ?? "" : "",
+                                    RelationType = dict.ContainsKey("relType") ? dict["relType"]?.ToString() ?? "" : "",
+                                    Direction = dict.ContainsKey("direction") ? dict["direction"]?.ToString() ?? "" : ""
+                                });
+                            }
+                        }
+                    }
+
+                    detail = new GraphExplorerNodeDetailDto
+                    {
+                        Id = id,
+                        Label = label,
+                        Group = group,
+                        Properties = properties,
+                        DegreeCount = degree,
+                        Neighbors = neighborsList
+                    };
+                }
+            });
+
+            return detail;
+        }
+
+        public async Task<GraphExplorerPathResponseDto> GetShortestPathAsync(string fromId, string toId, int maxDepth)
+        {
+            var response = new GraphExplorerPathResponseDto();
+            if (string.IsNullOrWhiteSpace(fromId) || string.IsNullOrWhiteSpace(toId))
+            {
+                return response;
+            }
+
+            maxDepth = Math.Clamp(maxDepth, 1, 10);
+
+            var query = $@"
+                MATCH (from), (to)
+                WHERE from.Id = $fromId AND to.Id = $toId
+                MATCH path = shortestPath((from)-[*..{maxDepth}]-(to))
+                WITH nodes(path) AS pathNodes, relationships(path) AS pathRels
+                RETURN [n IN pathNodes | {{id: n.Id, label: coalesce(n.Name, n.Title, ''), group: labels(n)[0]}}] AS nodes,
+                       [r IN pathRels | {{source: startNode(r).Id, target: endNode(r).Id, type: type(r)}}] AS links";
+
+            await using var session = _neo4jDriver.AsyncSession();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { fromId, toId });
+                if (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var nodesData = record["nodes"] as IEnumerable<object>;
+                    var linksData = record["links"] as IEnumerable<object>;
+
+                    var nodes = new List<GraphNodeDto>();
+                    var links = new List<GraphLinkDto>();
+
+                    if (nodesData != null)
+                    {
+                        foreach (var item in nodesData)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                nodes.Add(new GraphNodeDto
+                                {
+                                    Id = dict.ContainsKey("id") ? dict["id"]?.ToString() ?? "" : "",
+                                    Label = dict.ContainsKey("label") ? dict["label"]?.ToString() ?? "" : "",
+                                    Group = dict.ContainsKey("group") ? dict["group"]?.ToString() ?? "" : ""
+                                });
+                            }
+                        }
+                    }
+
+                    if (linksData != null)
+                    {
+                        foreach (var item in linksData)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                links.Add(new GraphLinkDto
+                                {
+                                    Source = dict.ContainsKey("source") ? dict["source"]?.ToString() ?? "" : "",
+                                    Target = dict.ContainsKey("target") ? dict["target"]?.ToString() ?? "" : "",
+                                    Type = dict.ContainsKey("type") ? dict["type"]?.ToString() ?? "" : ""
+                                });
+                            }
+                        }
+                    }
+
+                    if (nodes.Count > 0)
+                    {
+                        response.PathFound = true;
+                        response.PathLength = links.Count;
+                        response.Nodes = nodes;
+                        response.Links = links;
+                    }
+                }
+            });
+
+            return response;
+        }
+
         private GraphNodeDto MapNode(INode node, string guid)
         {
             var properties = node.Properties;

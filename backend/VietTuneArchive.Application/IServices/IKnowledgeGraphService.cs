@@ -29,5 +29,15 @@ namespace VietTuneArchive.Application.IServices
         /// VD: Tất cả Instrument <-> EthnicGroup relationships.
         /// </summary>
         Task<GraphResponseDto> GetRelationshipGraphAsync(string sourceType, string targetType, int limit = 100);
+
+        /// <summary>
+        /// Lấy chi tiết thông tin của 1 node bao gồm stats, quan hệ 1-hop, properties.
+        /// </summary>
+        Task<NodeDetailDto?> GetNodeDetailAsync(System.Guid id, string nodeType);
+
+        /// <summary>
+        /// Tìm đường đi ngắn nhất giữa 2 node.
+        /// </summary>
+        Task<ShortestPathResponseDto> GetShortestPathAsync(System.Guid fromId, string fromType, System.Guid toId, string toType, int maxDepth);
     }
 }

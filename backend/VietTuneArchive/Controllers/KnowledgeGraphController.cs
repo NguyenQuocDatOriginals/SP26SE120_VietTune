@@ -92,5 +92,80 @@ namespace VietTuneArchive.API.Controllers
             var result = await _graphService.GetRelationshipGraphAsync(source, target, limit);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Lấy thông tin chi tiết của 1 node — dùng cho Info Panel khi user click vào node.
+        /// </summary>
+        [HttpGet("node/{id}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<NodeDetailDto>> GetNodeDetail(
+            string id, 
+            [FromQuery] string nodeType)
+        {
+            if (!System.Guid.TryParse(id, out var guid))
+            {
+                return BadRequest("Invalid ID format.");
+            }
+
+            var allowedTypes = new HashSet<string>
+            {
+                "EthnicGroup", "Instrument", "Ceremony", "Recording", "Province", "VocalStyle", "MusicalScale", "Tag"
+            };
+
+            if (string.IsNullOrWhiteSpace(nodeType) || !allowedTypes.Contains(nodeType))
+            {
+                return BadRequest("Invalid node type.");
+            }
+
+            var result = await _graphService.GetNodeDetailAsync(guid, nodeType);
+            if (result == null)
+            {
+                return NotFound($"Node not found with ID {id} and Type {nodeType}.");
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Tìm đường đi ngắn nhất giữa 2 node.
+        /// </summary>
+        [HttpGet("shortest-path")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ShortestPathResponseDto>> GetShortestPath(
+            [FromQuery] string fromId,
+            [FromQuery] string fromType,
+            [FromQuery] string toId,
+            [FromQuery] string toType,
+            [FromQuery] int maxDepth = 6)
+        {
+            if (!System.Guid.TryParse(fromId, out var fromGuid) || !System.Guid.TryParse(toId, out var toGuid))
+            {
+                return BadRequest("Invalid ID format for fromId or toId.");
+            }
+
+            if (fromGuid == toGuid)
+            {
+                return BadRequest("fromId and toId must be different.");
+            }
+
+            var allowedTypes = new HashSet<string>
+            {
+                "EthnicGroup", "Instrument", "Ceremony", "Recording", "Province", "VocalStyle", "MusicalScale", "Tag"
+            };
+
+            if (string.IsNullOrWhiteSpace(fromType) || !allowedTypes.Contains(fromType) ||
+                string.IsNullOrWhiteSpace(toType) || !allowedTypes.Contains(toType))
+            {
+                return BadRequest("Invalid node type.");
+            }
+
+            if (maxDepth < 1 || maxDepth > 10)
+            {
+                return BadRequest("maxDepth must be between 1 and 10.");
+            }
+
+            var result = await _graphService.GetShortestPathAsync(fromGuid, fromType, toGuid, toType, maxDepth);
+            return Ok(result);
+        }
     }
 }
