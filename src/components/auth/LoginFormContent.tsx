@@ -244,7 +244,7 @@ export default function LoginFormContent({
           aria-modal="true"
           aria-labelledby="login-otp-title"
         >
-          <div className="login-otp-card bg-[#fff2d6] w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+          <div className="login-otp-card bg-cream-100 w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-red-700 px-6 py-4 flex justify-between items-center text-white">
               <h3 id="login-otp-title" className="text-lg font-bold">
                 Xác thực email

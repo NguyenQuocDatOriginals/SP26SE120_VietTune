@@ -376,7 +376,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer bg-surface-panel hover:bg-[#F5F0E8]"
+        className="w-full p-6 flex items-center justify-between transition-all duration-200 cursor-pointer bg-surface-panel hover:bg-surface-hover"
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary-100/90 rounded-lg shadow-sm">

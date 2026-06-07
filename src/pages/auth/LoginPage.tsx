@@ -48,7 +48,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#FFF2D6]">
+    <div className="min-h-screen relative overflow-hidden bg-cream-100">
       <div
         className="absolute inset-0 z-0"
         style={{

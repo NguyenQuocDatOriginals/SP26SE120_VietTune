@@ -73,7 +73,7 @@ export function ModerationModals({
           className="rounded-2xl shadow-2xl border border-secondary-200/70 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform outline-none bg-surface-panel animate-[slideUp_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-[#FFF8EA] to-cream-50/80">
+          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-surface-accent to-cream-50/80">
             <h2
               id="moderation-unclaim-dialog-title"
               className="text-2xl font-bold text-neutral-900"
@@ -155,7 +155,7 @@ export function ModerationModals({
           className="rounded-2xl shadow-2xl border border-secondary-200/70 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform bg-surface-panel animate-[slideUp_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-[#FFF8EA] to-cream-50/80">
+          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-surface-accent to-cream-50/80">
             <h2
               id="moderation-approve-dialog-title"
               className="text-2xl font-bold text-neutral-900"
@@ -270,7 +270,7 @@ export function ModerationModals({
           className="rounded-2xl shadow-2xl border border-secondary-200/70 backdrop-blur-sm max-w-3xl w-full overflow-hidden flex flex-col pointer-events-auto transform bg-surface-panel animate-[slideUp_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-[#FFF8EA] to-cream-50/80">
+          <div className="flex items-center justify-between p-6 border-b border-secondary-200/80 bg-gradient-to-b from-surface-accent to-cream-50/80">
             <h2
               id="moderation-reject-confirm-title"
               className="text-2xl font-bold text-neutral-900"

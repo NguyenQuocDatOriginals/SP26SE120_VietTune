@@ -440,7 +440,7 @@ export default function SearchBar({ onSearch, initialFilters = {} }: SearchBarPr
         <button
           type="button"
           onClick={handleClearAll}
-          className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600 bg-surface-panel hover:bg-[#F5F0E8]"
+          className="px-6 py-2.5 text-neutral-800 rounded-xl transition-colors shadow-sm hover:shadow-md border-2 border-primary-600 bg-surface-panel hover:bg-surface-hover"
         >
           Xóa bộ lọc
         </button>

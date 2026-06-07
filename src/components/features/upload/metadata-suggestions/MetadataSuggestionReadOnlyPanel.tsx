@@ -24,7 +24,7 @@ export default function MetadataSuggestionReadOnlyPanel({
 
   return (
     <section
-      className="mt-3 rounded-xl border border-neutral-200/90 bg-[#fafaf8] p-3"
+      className="mt-3 rounded-xl border border-neutral-200/90 bg-surface-muted p-3"
       aria-label="Gợi ý metadata chỉ đọc"
     >
       <div className="flex items-start gap-2">

@@ -133,7 +133,7 @@ export default function ConfirmAccountPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#FFF2D6]">
+    <div className="relative min-h-screen overflow-hidden bg-cream-100">
       <div
         className="absolute inset-0 z-0"
         style={{

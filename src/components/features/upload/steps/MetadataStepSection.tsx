@@ -654,7 +654,7 @@ export default function MetadataStepSection({
                       className={`px-4 py-2 rounded-xl text-sm text-neutral-800 border border-neutral-300 transition-colors shadow-sm inline-block ${
                         isFormDisabled
                           ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:shadow-md cursor-pointer hover:bg-[#F5F0E8]'
+                          : 'hover:shadow-md cursor-pointer hover:bg-surface-hover'
                       } bg-surface-panel`}
                     >
                       Chọn file

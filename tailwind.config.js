@@ -52,6 +52,9 @@ export default {
         /** Panel/card cream — use `bg-surface-panel`, `from-surface-panel`, etc. */
         surface: {
           panel: "#FFFCF5",
+          hover: "#F5F0E8",
+          muted: "#FAFAF8",
+          accent: "#FFF8EA",
         },
       },
       keyframes: {

@@ -34,7 +34,7 @@ export default function StageTransitionConfirmDialog({
         className="w-full max-w-xl overflow-hidden rounded-2xl border border-secondary-200/70 bg-surface-panel shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-secondary-200/80 bg-gradient-to-b from-[#FFF8EA] to-cream-50/80 p-5">
+        <div className="flex items-center justify-between border-b border-secondary-200/80 bg-gradient-to-b from-surface-accent to-cream-50/80 p-5">
           <h2 id="stage-transition-confirm-title" className="text-xl font-bold text-neutral-900">
             Xác nhận chuyển giai đoạn
           </h2>

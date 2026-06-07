@@ -82,7 +82,7 @@ export default function MainLayout() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden bg-[#FFF2D6]">
+    <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden bg-cream-100">
       <NotificationFeedBootstrap />
       <Header />
       {/* Đủ chừa fixed header (pt-4 + nav có thể wrap 2 dòng); lg:pt-[4.75rem] trước đây quá thấp → nội dung/Hồ sơ bị che */}
