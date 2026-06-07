@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
 using VietTuneArchive.Application.Responses;
@@ -65,6 +67,17 @@ namespace VietTuneArchive.API.Controllers
         public async Task<ActionResult<ServiceResponse<List<InstrumentDto>>>> Search([FromQuery] string keyword)
         {
             var result = await _instrumentService.SearchAsync(keyword);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
+
+        /// <summary>
+        /// Search instruments by name with Vietnamese diacritics support
+        /// </summary>
+        [HttpGet("search-by-name")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ServiceResponse<List<InstrumentDto>>>> SearchByName([FromQuery] string? name)
+        {
+            var result = await _instrumentService.SearchByNameAsync(name);
             return result.Success ? Ok(result) : NotFound(result);
         }
 

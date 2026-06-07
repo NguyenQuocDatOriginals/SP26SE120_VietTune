@@ -27,6 +27,18 @@ namespace VietTuneArchive.Application.Mapper
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
                 .ReverseMap()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserId));
+            CreateMap<CreateExpertUserDTO, User>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(_ => "Expert"))
+                .ForMember(dest => dest.IsEmailConfirmed, opt => opt.MapFrom(_ => true))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(_ => true))
+                .ForMember(dest => dest.ContributionScore, opt => opt.MapFrom(_ => 0))
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.ConfirmEmailToken, opt => opt.Ignore())
+                .ForMember(dest => dest.ResetPasswordToken, opt => opt.Ignore())
+                .ForMember(dest => dest.ResetPasswordTokenExpiry, opt => opt.Ignore());
             CreateMap<RefreshToken, RefreshTokenDto>().ReverseMap();
             CreateMap<AuditLog, AuditLogDto>().ReverseMap();
 

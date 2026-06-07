@@ -52,6 +52,33 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
+        /// Search ethnic groups by name with Vietnamese diacritics support
+        /// </summary>
+        public async Task<ServiceResponse<List<EthnicGroupDto>>> SearchByNameAsync(string? name)
+        {
+            try
+            {
+                var ethnicGroups = await _ethnicGroupRepository.SearchByNameAsync(name);
+                var dtos = _mapper.Map<List<EthnicGroupDto>>(ethnicGroups);
+                return new ServiceResponse<List<EthnicGroupDto>>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Message = $"Found {dtos.Count} ethnic groups matching: {name}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<List<EthnicGroupDto>>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        /// <summary>
         /// Get ethnic groups by primary region
         /// </summary>
         public async Task<ServiceResponse<List<EthnicGroupDto>>> GetByRegionAsync(string region)

@@ -48,22 +48,19 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
-        /// Search vocal styles by name
+        /// Search vocal styles by name with Vietnamese diacritics support
         /// </summary>
-        public async Task<ServiceResponse<List<VocalStyleDto>>> SearchByNameAsync(string name)
+        public async Task<ServiceResponse<List<VocalStyleDto>>> SearchByNameAsync(string? name)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(name))
-                    throw new ArgumentException("Search name cannot be empty", nameof(name));
-
-                var vocalStyles = await _vocalStyleRepository.GetAsync(vs => vs.Name.Contains(name));
+                var vocalStyles = await _vocalStyleRepository.SearchByNameAsync(name);
                 var dtos = _mapper.Map<List<VocalStyleDto>>(vocalStyles);
                 return new ServiceResponse<List<VocalStyleDto>>
                 {
                     Success = true,
                     Data = dtos,
-                    Message = $"Found {dtos.Count} vocal styles"
+                    Message = $"Found {dtos.Count} vocal styles matching: {name}"
                 };
             }
             catch (Exception ex)

@@ -118,6 +118,31 @@ namespace VietTuneArchive.Application.Services
             }
         }
 
+        public async Task<ServiceResponse<List<InstrumentDto>>> SearchByNameAsync(string? name)
+        {
+            try
+            {
+                var instruments = await _instrumentRepository.SearchByNameAsync(name);
+                var dtos = _mapper.Map<List<InstrumentDto>>(instruments.ToList());
+
+                return new ServiceResponse<List<InstrumentDto>>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Message = $"Found {dtos.Count} instruments matching: {name}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResponse<List<InstrumentDto>>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
         public async Task<ServiceResponse<List<string>>> GetAllCategoriesAsync()
         {
             try
