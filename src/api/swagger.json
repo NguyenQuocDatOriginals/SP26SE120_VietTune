@@ -3140,6 +3140,99 @@
         }
       }
     },
+    "/api/graph-explorer/node/{id}": {
+      "get": {
+        "tags": [
+          "GraphExplorer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/graph-explorer/shortest-path": {
+      "get": {
+        "tags": [
+          "GraphExplorer"
+        ],
+        "parameters": [
+          {
+            "name": "fromId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxDepth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Instrument": {
       "get": {
         "tags": [
@@ -3921,146 +4014,6 @@
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/KnowledgeGraph/explore": {
-      "post": {
-        "tags": [
-          "KnowledgeGraph"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/KnowledgeGraph/search": {
-      "get": {
-        "tags": [
-          "KnowledgeGraph"
-        ],
-        "parameters": [
-          {
-            "name": "query",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "types",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/KnowledgeGraph/overview": {
-      "get": {
-        "tags": [
-          "KnowledgeGraph"
-        ],
-        "parameters": [
-          {
-            "name": "maxNodes",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/KnowledgeGraph/stats": {
-      "get": {
-        "tags": [
-          "KnowledgeGraph"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/KnowledgeGraph/relationship": {
-      "get": {
-        "tags": [
-          "KnowledgeGraph"
-        ],
-        "parameters": [
-          {
-            "name": "source",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "target",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 100
             }
           }
         ],
@@ -5648,6 +5601,13 @@
         ],
         "parameters": [
           {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "ethnicGroupId",
             "in": "query",
             "schema": {
@@ -5926,6 +5886,13 @@
           "RecordingGuest"
         ],
         "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "ethnicGroupId",
             "in": "query",
@@ -9338,6 +9305,130 @@
         },
         "additionalProperties": false
       },
+      "VietTuneArchive.Application.DTOs.GraphExplorerNeighborSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "relationType": {
+            "type": "string",
+            "nullable": true
+          },
+          "direction": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true
+          },
+          "degreeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "neighbors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphExplorerNeighborSummaryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphNodeDto"
+            },
+            "nullable": true
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VietTuneArchive.Application.DTOs.GraphLinkDto"
+            },
+            "nullable": true
+          },
+          "pathFound": {
+            "type": "boolean"
+          },
+          "pathLength": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.DTOs.GraphLinkDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "target": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VietTuneArchive.Application.DTOs.GraphNodeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "group": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "VietTuneArchive.Application.Mapper.DTOs.AdminDto.SubmissionAdminDto": {
         "type": "object",
         "properties": {
@@ -10502,35 +10593,6 @@
         },
         "additionalProperties": false
       },
-      "VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest": {
-        "type": "object",
-        "properties": {
-          "nodeId": {
-            "type": "string",
-            "nullable": true
-          },
-          "nodeType": {
-            "type": "string",
-            "nullable": true
-          },
-          "depth": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "maxNodes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "filterTypes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "VietTuneArchive.Application.Mapper.DTOs.LocalTranscriptionResultDto": {
         "type": "object",
         "properties": {
@@ -11044,6 +11106,10 @@
       "VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto": {
         "type": "object",
         "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
           "ethnicGroupIds": {
             "type": "array",
             "items": {

@@ -2775,6 +2775,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/graph-explorer/node/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"];
+                        "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"];
+                        "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/graph-explorer/shortest-path": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    fromId?: string;
+                    toId?: string;
+                    maxDepth?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"];
+                        "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"];
+                        "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Instrument": {
         parameters: {
             query?: never;
@@ -3475,187 +3555,6 @@ export interface paths {
                 path: {
                     revisionId: string;
                 };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/KnowledgeGraph/explore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"];
-                    "text/json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"];
-                    "application/*+json": components["schemas"]["VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/KnowledgeGraph/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    query?: string;
-                    types?: string;
-                    limit?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/KnowledgeGraph/overview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    maxNodes?: number;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/KnowledgeGraph/stats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/KnowledgeGraph/relationship": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: {
-                    source?: string;
-                    target?: string;
-                    limit?: number;
-                };
-                header?: never;
-                path?: never;
                 cookie?: never;
             };
             requestBody?: never;
@@ -5175,6 +5074,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    title?: string;
                     ethnicGroupId?: string;
                     instrumentId?: string;
                     ceremonyId?: string;
@@ -5415,6 +5315,7 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    title?: string;
                     ethnicGroupId?: string;
                     instrumentId?: string;
                     ceremonyId?: string;
@@ -8540,6 +8441,41 @@ export interface components {
         "VietTuneArchive.API.Controllers.ChatController.ChatRequest": {
             message?: string | null;
         };
+        "VietTuneArchive.Application.DTOs.GraphExplorerNeighborSummaryDto": {
+            id?: string | null;
+            label?: string | null;
+            group?: string | null;
+            relationType?: string | null;
+            direction?: string | null;
+        };
+        "VietTuneArchive.Application.DTOs.GraphExplorerNodeDetailDto": {
+            id?: string | null;
+            label?: string | null;
+            group?: string | null;
+            properties?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: int32 */
+            degreeCount?: number;
+            neighbors?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphExplorerNeighborSummaryDto"][] | null;
+        };
+        "VietTuneArchive.Application.DTOs.GraphExplorerPathResponseDto": {
+            nodes?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphNodeDto"][] | null;
+            links?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphLinkDto"][] | null;
+            pathFound?: boolean;
+            /** Format: int32 */
+            pathLength?: number | null;
+        };
+        "VietTuneArchive.Application.DTOs.GraphLinkDto": {
+            source?: string | null;
+            target?: string | null;
+            type?: string | null;
+        };
+        "VietTuneArchive.Application.DTOs.GraphNodeDto": {
+            id?: string | null;
+            label?: string | null;
+            group?: string | null;
+        };
         "VietTuneArchive.Application.Mapper.DTOs.AdminDto.SubmissionAdminDto": {
             id?: string | null;
             title?: string | null;
@@ -8944,15 +8880,6 @@ export interface components {
             /** Format: int32 */
             num_frames?: number;
         };
-        "VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest": {
-            nodeId?: string | null;
-            nodeType?: string | null;
-            /** Format: int32 */
-            depth?: number;
-            /** Format: int32 */
-            maxNodes?: number;
-            filterTypes?: string[] | null;
-        };
         "VietTuneArchive.Application.Mapper.DTOs.LocalTranscriptionResultDto": {
             text?: string | null;
             language?: string | null;
@@ -9123,6 +9050,7 @@ export interface components {
             instrumentIds?: string[] | null;
         };
         "VietTuneArchive.Application.Mapper.DTOs.RecordingFilterMultiDto": {
+            title?: string | null;
             ethnicGroupIds?: string[] | null;
             instrumentIds?: string[] | null;
             ceremonyIds?: string[] | null;
