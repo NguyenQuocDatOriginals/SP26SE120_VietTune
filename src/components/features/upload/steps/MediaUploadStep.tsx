@@ -206,7 +206,7 @@ export default function MediaUploadStep({
               className={`flex min-h-[44px] items-center justify-center rounded-full border border-secondary-200/60 px-4 py-2 text-sm shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 ${
                 mediaType === 'audio'
                   ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
-                  : 'text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]'
+                  : 'text-neutral-800 bg-surface-panel hover:bg-surface-hover'
               } ${
                 isFormDisabled || (file != null && mediaType === 'video')
                   ? 'opacity-50 cursor-not-allowed'
@@ -228,7 +228,7 @@ export default function MediaUploadStep({
               className={`flex min-h-[44px] items-center justify-center rounded-full border border-secondary-200/60 px-4 py-2 text-sm shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 ${
                 mediaType === 'video'
                   ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
-                  : 'text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]'
+                  : 'text-neutral-800 bg-surface-panel hover:bg-surface-hover'
               } ${
                 isFormDisabled || (file != null && mediaType === 'audio')
                   ? 'opacity-50 cursor-not-allowed'

@@ -6,9 +6,20 @@ import {
 } from '@/services/researcherRecordingFilterSearch';
 import { EMPTY_SEARCH_FILTERS } from '@/features/researcher/researcherPortalTypes';
 import { RecordingQuality, RecordingType, VerificationStatus } from '@/types';
-import { Region } from '@/types';
+import { InstrumentCategory, Region } from '@/types';
 import { UserRole } from '@/types';
-import type { Recording } from '@/types';
+import type { Instrument, Recording } from '@/types';
+
+function makeInstrument(
+  overrides: Pick<Instrument, 'id' | 'name' | 'nameVietnamese'>,
+): Instrument {
+  return {
+    category: InstrumentCategory.STRING,
+    images: [],
+    recordingCount: 0,
+    ...overrides,
+  };
+}
 
 function makeRecording(overrides: Partial<Recording> & Pick<Recording, 'id' | 'title'>): Recording {
   return {
@@ -23,7 +34,7 @@ function makeRecording(overrides: Partial<Recording> & Pick<Recording, 'id' | 't
     recordingType: RecordingType.FOLK_SONG,
     duration: 120,
     audioUrl: 'https://example.com/a.mp3',
-    instruments: [{ id: 'i1', name: 'Đàn tranh', nameVietnamese: 'Đàn tranh' }],
+    instruments: [makeInstrument({ id: 'i1', name: 'Đàn tranh', nameVietnamese: 'Đàn tranh' })],
     performers: [],
     uploadedDate: '2026-01-01T00:00:00.000Z',
     uploader: {
@@ -63,7 +74,7 @@ describe('buildResearcherFacetOptions', () => {
           recordingCount: 1,
         },
         region: Region.NORTHERN_MOUNTAINS,
-        instruments: [{ id: 'i2', name: 'Khèn', nameVietnamese: 'Khèn' }],
+        instruments: [makeInstrument({ id: 'i2', name: 'Khèn', nameVietnamese: 'Khèn' })],
         tags: ['Đám cưới'],
         metadata: { recordingQuality: RecordingQuality.FIELD_RECORDING, ritualContext: 'Đám cưới' },
       }),
@@ -93,7 +104,7 @@ describe('applyResearcherFilters', () => {
         recordingCount: 1,
       },
       region: Region.NORTHERN_MOUNTAINS,
-      instruments: [{ id: 'i2', name: 'Khèn', nameVietnamese: 'Khèn' }],
+      instruments: [makeInstrument({ id: 'i2', name: 'Khèn', nameVietnamese: 'Khèn' })],
       tags: ['Đám cưới'],
       metadata: { recordingQuality: RecordingQuality.FIELD_RECORDING, ritualContext: 'Đám cưới' },
     }),

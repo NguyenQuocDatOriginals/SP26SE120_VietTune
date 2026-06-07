@@ -149,7 +149,7 @@ export default function SingleTrackPlayer({ recording, className = '' }: SingleT
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-primary-100 bg-gradient-to-b from-white to-[#FFF7E6] px-3 py-3">
+      <div className="mt-4 rounded-xl border border-primary-100 bg-gradient-to-b from-white to-cream-50 px-3 py-3">
         <div className="mb-2 flex items-center justify-between text-xs font-medium text-neutral-700">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>

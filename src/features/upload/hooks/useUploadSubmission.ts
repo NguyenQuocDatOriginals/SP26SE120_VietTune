@@ -23,7 +23,6 @@ import type {
 import { submissionService } from '@/services/submissionService';
 import { submissionVersionApi } from '@/services/submissionVersionApi';
 import { uploadFileToSupabase } from '@/services/uploadService';
-import { UPLOAD_METADATA_FIELDS_PENDING_BACKEND } from '@/features/upload/uploadFormValidation';
 import type { DetectedInstrument, MetadataSuggestion } from '@/types/instrumentDetection';
 import { UserRole } from '@/types';
 import { uiToast } from '@/uiToast';
@@ -485,19 +484,15 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
           gpsLongitude: options.capturedGpsLon ?? null,
           keySignature: undefined,
           instrumentIds: selectedInstrumentIds,
-          ...(UPLOAD_METADATA_FIELDS_PENDING_BACKEND
-            ? {}
-            : {
-                composer: options.composerUnknown
-                  ? 'Dân gian/Không rõ'
-                  : options.composer || undefined,
-                language: options.noLanguage
-                  ? 'Không có ngôn ngữ'
-                  : options.language === 'Khác'
-                    ? options.customLanguage
-                    : options.language || undefined,
-                recordingLocation: options.recordingLocation || undefined,
-              }),
+          composer: options.composerUnknown
+            ? 'Dân gian/Không rõ'
+            : options.composer || undefined,
+          language: options.noLanguage
+            ? 'Không có ngôn ngữ'
+            : options.language === 'Khác'
+              ? options.customLanguage
+              : options.language || undefined,
+          recordingLocation: options.recordingLocation || undefined,
           ...(isFinal && !options.isEditMode ? { status: 1 as const } : {}),
         };
 
@@ -519,6 +514,20 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
               {
                 field: 'performerName',
                 after: options.artistUnknown ? 'Không rõ nghệ sĩ' : options.artist || null,
+              },
+              {
+                field: 'composer',
+                after: options.composerUnknown
+                  ? 'Dân gian/Không rõ'
+                  : options.composer || null,
+              },
+              {
+                field: 'language',
+                after: options.noLanguage
+                  ? 'Không có ngôn ngữ'
+                  : options.language === 'Khác'
+                    ? options.customLanguage || null
+                    : options.language || null,
               },
               { field: 'recordingLocation', after: options.recordingLocation || null },
               { field: 'updatedAt', after: new Date().toISOString() },

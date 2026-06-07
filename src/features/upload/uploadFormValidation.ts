@@ -1,7 +1,7 @@
 import { normalizePerformanceTypeKey } from '@/features/upload/performanceTypeUtils';
 
-/** Backend Recording entity has no composer/language/recordingLocation columns yet. */
-export const UPLOAD_METADATA_FIELDS_PENDING_BACKEND = true;
+/** Backend persists composer/language/recordingLocation on Recording (RecordingDto / GET). */
+export const UPLOAD_METADATA_FIELDS_PENDING_BACKEND = false;
 
 export type UploadValidationContext = {
   isEditMode: boolean;

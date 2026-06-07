@@ -83,7 +83,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF2D6] relative overflow-hidden">
+    <div className="min-h-screen bg-cream-100 relative overflow-hidden">
       <div
         className="absolute inset-0 z-0"
         style={{

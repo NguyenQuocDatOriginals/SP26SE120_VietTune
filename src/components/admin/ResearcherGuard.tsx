@@ -143,7 +143,7 @@ export default function ResearcherGuard() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer focus:outline-none text-neutral-800 bg-surface-panel hover:bg-[#F5F0E8]"
+                className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border border-neutral-200/80 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer focus:outline-none text-neutral-800 bg-surface-panel hover:bg-surface-hover"
               >
                 Quay lại
               </button>

@@ -10392,6 +10392,18 @@
             "format": "int32",
             "nullable": true
           },
+          "composer": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "recordingLocation": {
+            "type": "string",
+            "nullable": true
+          },
           "recordingDate": {
             "type": "string",
             "format": "date-time",
@@ -10977,6 +10989,18 @@
           "performerAge": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "composer": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          },
+          "recordingLocation": {
+            "type": "string",
             "nullable": true
           },
           "recordingDate": {

@@ -277,7 +277,7 @@ export default function ChatbotPage() {
 
             <div
               ref={listRef}
-              className="flex-1 overflow-y-auto bg-gradient-to-br from-surface-panel to-[#FFF1F3] p-4 space-y-4"
+              className="flex-1 overflow-y-auto bg-gradient-to-br from-surface-panel to-cream-50 p-4 space-y-4"
             >
               {isLoadingMessages ? (
                 <div className="flex justify-center h-full items-center text-neutral-500 font-medium">

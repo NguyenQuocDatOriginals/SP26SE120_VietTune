@@ -155,7 +155,7 @@ export default function MetadataSuggestionPanel({
   }, [uiGroups]);
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-[#fafaf8] p-3">
+    <div className="rounded-xl border border-neutral-200 bg-surface-muted p-3">
       <p className="text-sm font-semibold text-neutral-900">Gợi ý metadata từ AI nhạc cụ</p>
       <p className="mt-0.5 text-[11px] text-neutral-600">
         Gợi ý hỗ trợ điền form — không thay thế xác minh của chuyên gia.

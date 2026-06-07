@@ -161,11 +161,11 @@ export default function KnowledgeBasePanel({
     return 'warning';
   };
 
-  const outerClass = embedded ? '' : 'min-h-screen';
+  const outerClass = embedded ? '' : 'min-h-screen bg-cream-50';
   const innerPad = embedded ? '' : 'py-8';
 
   return (
-    <div className={outerClass} style={embedded ? undefined : { backgroundColor: '#FFF7E6' }}>
+    <div className={outerClass}>
       <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${innerPad}`}>
         {breadcrumbSlot}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
