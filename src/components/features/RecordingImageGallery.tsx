@@ -1,8 +1,9 @@
 import { ImageIcon } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 import { useRecordingImages } from '@/hooks/useRecordingImages';
 import { cn } from '@/utils/helpers';
+import ImageLightbox from '@/components/common/ImageLightbox';
 
 type RecordingImageGalleryProps = {
   recordingId?: string;
@@ -16,6 +17,13 @@ function RecordingImageGalleryInner({
   title = 'Hình ảnh bản thu',
 }: RecordingImageGalleryProps) {
   const { images, loading, error } = useRecordingImages(recordingId);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const handleImageClick = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   if (!recordingId) return null;
 
@@ -46,7 +54,8 @@ function RecordingImageGalleryInner({
           {images.map((image, index) => (
             <figure
               key={image.id}
-              className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm cursor-pointer hover:ring-2 hover:ring-primary-500 hover:ring-offset-1 transition-all"
+              onClick={() => handleImageClick(index)}
             >
               <img
                 src={image.imageUrl}
@@ -64,6 +73,14 @@ function RecordingImageGalleryInner({
           ))}
         </div>
       )}
+      
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        images={images.map(img => img.imageUrl)}
+        currentIndex={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+        onNavigate={setLightboxIndex}
+      />
     </section>
   );
 }
