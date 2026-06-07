@@ -39,10 +39,11 @@ export type ConfirmModerationApproveParams = {
 export async function confirmModerationApprove(p: ConfirmModerationApproveParams): Promise<void> {
   const id = p.submissionId;
   const { user } = p;
-  const it = p.allItems.find((x) => x.id === id);
+  const it = p.allItems.find((x) => x.submissionId === id || x.id === id);
   if (!it || it.moderation?.claimedBy !== user.id) return;
+  const subId = it.submissionId || id;
 
-  const currentFormData = p.verificationForms[id] || {};
+  const currentFormData = p.verificationForms[it.id || ''] || {};
   const verificationData = {
     ...(it.moderation?.verificationData || {}),
     ...currentFormData,
@@ -55,11 +56,11 @@ export async function confirmModerationApprove(p: ConfirmModerationApproveParams
     clearTimeout(p.expertNotesDebounceRef.current);
     p.expertNotesDebounceRef.current = null;
   }
-  await expertWorkflowService.setExpertReviewNotes(id, p.expertReviewNotesDraft[id] ?? '');
-  const sessionDraft = (p.expertReviewNotesDraft[id] ?? '').trim();
+  await expertWorkflowService.setExpertReviewNotes(subId, p.expertReviewNotesDraft[it.id || ''] ?? '');
+  const sessionDraft = (p.expertReviewNotesDraft[it.id || ''] ?? '').trim();
   const combinedApproveNotes = [sessionDraft, trimmedApproveNotes].filter(Boolean).join('\n\n');
 
-  const overlaySnapshot = await expertWorkflowService.snapshotSubmissionOverlay(id);
+  const overlaySnapshot = await expertWorkflowService.snapshotSubmissionOverlay(subId);
   const reviewedAt = new Date().toISOString();
   const moderationApproved = {
     ...it.moderation,
@@ -84,7 +85,7 @@ export async function confirmModerationApprove(p: ConfirmModerationApproveParams
 
   try {
     await expertWorkflowService.commitApproveLocal(
-      id,
+      subId,
       user.id,
       user.username ?? '',
       verificationData,
@@ -97,7 +98,7 @@ export async function confirmModerationApprove(p: ConfirmModerationApproveParams
 
   uiToast.success('moderation.approve.success');
 
-  const nextExpert = p.allItems.map((x) => (x.id === id ? optimisticItem : x));
+  const nextExpert = p.allItems.map((x) => (x.id === it.id ? optimisticItem : x));
   const { expertItems, visibleItems } = projectModerationLists(
     nextExpert,
     user.id,
@@ -110,41 +111,41 @@ export async function confirmModerationApprove(p: ConfirmModerationApproveParams
   p.setApproveExpertNotes('');
   p.setVerificationStep((prev) => {
     const newState = { ...prev };
-    delete newState[id];
+    if (it.id) delete newState[it.id];
     return newState;
   });
   p.setVerificationForms((prev) => {
     const newState = { ...prev };
-    delete newState[id];
+    if (it.id) delete newState[it.id];
     return newState;
   });
   p.setShowVerificationDialog(null);
   p.setPortalModal(null);
-  if (p.selectedId === id) p.setSelectedId(null);
+  if (p.selectedId === it.id) p.setSelectedId(null);
 
   void (async () => {
-    const syncRes = await expertWorkflowService.syncApproveToServer(id);
+    const syncRes = await expertWorkflowService.syncApproveToServer(subId);
     if (!syncRes.ok) {
       reportError(
         toReportableError(syncRes.error, 'syncApproveToServer failed'),
         undefined,
         { region: 'moderation', action: 'syncApproveToServer' },
       );
-      await expertWorkflowService.restoreSubmissionOverlay(id, overlaySnapshot);
+      await expertWorkflowService.restoreSubmissionOverlay(subId, overlaySnapshot);
       uiToast.error('moderation.approve.server_failed');
       await p.load();
       return;
     }
     await expertWorkflowService.logExpertModerationDecision({
-      submissionId: id,
+      submissionId: subId,
       userId: user.id,
       action: 'expert_approve',
       combinedNotes: combinedApproveNotes,
     });
-    await expertWorkflowService.clearExpertReviewNotes(id);
+    await expertWorkflowService.clearExpertReviewNotes(subId);
     p.setExpertReviewNotesDraft((prev) => {
       const next = { ...prev };
-      delete next[id];
+      if (it.id) delete next[it.id];
       return next;
     });
     await p.load();
@@ -173,11 +174,12 @@ export type ExecuteModerationRejectParams = {
 
 export async function executeModerationReject(p: ExecuteModerationRejectParams): Promise<boolean> {
   const { id, user, decision } = p;
-  const it = p.allItems.find((x) => x.id === id);
+  const it = p.allItems.find((x) => x.submissionId === id || x.id === id);
   if (!it) return false;
   if (it.moderation?.claimedBy !== user.id && it.moderation?.reviewerId !== user.id) {
     return false;
   }
+  const subId = it.submissionId || id;
   const expertNotesPayload = (p.confirmExpertNotes ?? '').trim() || (p.note ?? '').trim();
   const requiresComment =
     decision === ReviewDecision.Reject || decision === ReviewDecision.RequestUpdate;
@@ -190,11 +192,11 @@ export async function executeModerationReject(p: ExecuteModerationRejectParams):
     clearTimeout(p.expertNotesDebounceRef.current);
     p.expertNotesDebounceRef.current = null;
   }
-  await expertWorkflowService.setExpertReviewNotes(id, p.expertReviewNotesDraft[id] ?? '');
-  const sessionRejectDraft = (p.expertReviewNotesDraft[id] ?? '').trim();
+  await expertWorkflowService.setExpertReviewNotes(subId, p.expertReviewNotesDraft[it.id || ''] ?? '');
+  const sessionRejectDraft = (p.expertReviewNotesDraft[it.id || ''] ?? '').trim();
   const combinedRejectNotes = [sessionRejectDraft, expertNotesPayload].filter(Boolean).join('\n\n');
 
-  const overlaySnapshot = await expertWorkflowService.snapshotSubmissionOverlay(id);
+  const overlaySnapshot = await expertWorkflowService.snapshotSubmissionOverlay(subId);
   const reviewedAt = new Date().toISOString();
   const nextStatus =
     decision === ReviewDecision.Reject
@@ -220,7 +222,7 @@ export async function executeModerationReject(p: ExecuteModerationRejectParams):
 
   try {
     await expertWorkflowService.commitRejectLocal(
-      id,
+      subId,
       user.id,
       user.username ?? '',
       decision,
@@ -235,7 +237,7 @@ export async function executeModerationReject(p: ExecuteModerationRejectParams):
     return false;
   }
 
-  const nextExpert = p.allItems.map((x) => (x.id === id ? optimisticItem : x));
+  const nextExpert = p.allItems.map((x) => (x.id === it.id ? optimisticItem : x));
   const { expertItems, visibleItems } = projectModerationLists(
     nextExpert,
     user.id,
@@ -251,7 +253,7 @@ export async function executeModerationReject(p: ExecuteModerationRejectParams):
 
   void (async () => {
     const syncRes = await expertWorkflowService.syncRejectToServer(
-      id,
+      subId,
       user.id,
       decision,
       combinedRejectNotes,
@@ -262,21 +264,21 @@ export async function executeModerationReject(p: ExecuteModerationRejectParams):
         undefined,
         { region: 'moderation', action: 'syncRejectToServer' },
       );
-      await expertWorkflowService.restoreSubmissionOverlay(id, overlaySnapshot);
+      await expertWorkflowService.restoreSubmissionOverlay(subId, overlaySnapshot);
       uiToast.error('moderation.reject.server_failed');
       await p.load();
       return;
     }
     await expertWorkflowService.logExpertModerationDecision({
-      submissionId: id,
+      submissionId: subId,
       userId: user.id,
       action: 'expert_reject',
       combinedNotes: combinedRejectNotes,
     });
-    await expertWorkflowService.clearExpertReviewNotes(id);
+    await expertWorkflowService.clearExpertReviewNotes(subId);
     p.setExpertReviewNotesDraft((prev) => {
       const next = { ...prev };
-      delete next[id];
+      if (it.id) delete next[it.id];
       return next;
     });
     await p.load();

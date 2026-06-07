@@ -22,6 +22,8 @@ import { formatDateTime, formatDate, formatDuration } from '@/utils/helpers';
 import { getRegionDisplayName } from '@/utils/recordingTags';
 import { SURFACE_CARD } from '@/utils/surfaceTokens';
 import { isYouTubeUrl } from '@/utils/youtube';
+import { useRecordingImages } from '@/hooks/useRecordingImages';
+import RecordingImageGallery from '@/components/features/RecordingImageGallery';
 
 type LocationState = { from?: string; preloadedRecording?: Recording };
 
@@ -109,6 +111,8 @@ export default function RecordingDetailPage() {
 
   const { recording, loading, notFound, annotations, embargo, disputes, refetchDisputes } =
     useRecordingDetail(id, preloadedRecording);
+
+  const { images } = useRecordingImages(recording?.id);
 
   const topicChips = useMemo(() => (recording ? buildTopicChips(recording) : []), [recording]);
   const recordingLocation = useMemo(
@@ -555,6 +559,31 @@ export default function RecordingDetailPage() {
                 )}
               </dl>
             </div>
+
+            {/* Images */}
+            {((images && images.length > 0) || recording.coverImage) && (
+              <>
+                {images && images.length > 0 ? (
+                  <RecordingImageGallery recordingId={recording.id} />
+                ) : (
+                  recording.coverImage && (
+                    <div className={SURFACE_CARD}>
+                      <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
+                        Hình ảnh bản thu
+                      </h3>
+                      <figure className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+                        <img
+                          src={recording.coverImage}
+                          alt="Cover"
+                          className="w-full h-auto object-cover max-h-64"
+                          loading="lazy"
+                        />
+                      </figure>
+                    </div>
+                  )
+                )}
+              </>
+            )}
 
             {/* Instruments */}
             {recording.instruments.length > 0 && (

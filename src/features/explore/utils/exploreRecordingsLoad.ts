@@ -1,5 +1,5 @@
 import type { ExploreSearchMode } from '@/components/features/ExploreSearchHeader';
-import { applyGuestFilters, hasActiveGuestFilters } from '@/features/explore/utils/exploreGuestFilters';
+import { applyGuestFilters } from '@/features/explore/utils/exploreGuestFilters';
 import { recordingService } from '@/services/recordingService';
 import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
 import { semanticSearchService } from '@/services/semanticSearchService';
@@ -179,43 +179,20 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
     // ── Guest keyword / facets ───────────────────────────────────────────
     } else if (!isAuthenticated) {
       const activeFilters = exploreMode === 'semantic' ? facetOnly : filters;
-      if (!hasActiveGuestFilters(activeFilters)) {
-        const guestRes = await recordingService.getGuestRecordings(currentPage, EXPLORE_PAGE_SIZE, apiOpts);
-        const rawItems = Array.isArray(guestRes?.items) ? guestRes.items : [];
-        const filteredGuestItems = applyGuestFilters(rawItems, activeFilters);
-        const total =
-          typeof guestRes?.total === 'number' && Number.isFinite(guestRes.total)
-            ? guestRes.total
-            : filteredGuestItems.length;
-        const totalPages =
-          typeof guestRes?.totalPages === 'number' && guestRes.totalPages >= 1
-            ? guestRes.totalPages
-            : Math.max(1, Math.ceil(total / EXPLORE_PAGE_SIZE));
-        response = {
-          items: filteredGuestItems,
-          total,
-          totalPages,
-        };
-      } else {
-        const guestRes = await recordingService.getGuestRecordingsByFilter(
-          activeFilters,
-          1,
-          GUEST_FILTER_POOL_SIZE,
-          apiOpts,
-        );
-        const pool = Array.isArray(guestRes?.items) ? guestRes.items : [];
-        const filtered = applyGuestFilters(pool, activeFilters);
-        const sorted = sortByUploadedDesc(filtered);
-        const start = Math.max(0, (currentPage - 1) * EXPLORE_PAGE_SIZE);
-        response = {
-          items: sorted.slice(start, start + EXPLORE_PAGE_SIZE),
-          total: sorted.length,
-          totalPages: Math.max(1, Math.ceil(sorted.length / EXPLORE_PAGE_SIZE)),
-        };
-      }
+      const guestRes = await recordingService.getGuestRecordingsByFilter(
+        activeFilters,
+        currentPage,
+        EXPLORE_PAGE_SIZE,
+        apiOpts,
+      );
+      response = {
+        items: guestRes.items,
+        total: guestRes.total,
+        totalPages: guestRes.totalPages,
+      };
 
-    // ── Authenticated keyword / facets ───────────────────────────────────
-    } else if (Object.keys(exploreMode === 'semantic' ? facetOnly : filters).length > 0) {
+    // ── Authenticated keyword / facets / default ─────────────────────────
+    } else {
       const activeFilters = exploreMode === 'semantic' ? facetOnly : filters;
       const res = await recordingService.searchRecordings(activeFilters, currentPage, EXPLORE_PAGE_SIZE, apiOpts);
       response = asApiResponse(res);
@@ -237,18 +214,6 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
           /* keep original empty response */
         }
       }
-
-    // ── Authenticated default view (no filters) ─────────────────────────
-    } else {
-      const verified = await fetchFullCatalog(isAuthenticated, signal);
-      const sorted = sortByUploadedDesc(verified);
-      const start = Math.max(0, (currentPage - 1) * EXPLORE_PAGE_SIZE);
-      const items = sorted.slice(start, start + EXPLORE_PAGE_SIZE);
-      response = {
-        items,
-        total: sorted.length,
-        totalPages: Math.max(1, Math.ceil(sorted.length / EXPLORE_PAGE_SIZE)),
-      };
     }
   } catch (error) {
     if (isExploreRequestAborted(error)) throw error;

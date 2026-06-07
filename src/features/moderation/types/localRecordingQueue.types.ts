@@ -7,6 +7,7 @@ export interface LocalRecordingMini {
   id?: string;
   /** Recording entity UUID — distinct from submission id when nested RecordingDto has no id. */
   recordingId?: string;
+  submissionId?: string;
   title?: string;
   mediaType?: 'audio' | 'video' | 'youtube';
   audioData?: string | null;

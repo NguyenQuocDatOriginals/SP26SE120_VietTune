@@ -138,7 +138,7 @@ function AccordionSection({
 
 function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole }: FilterSidebarProps) {
   const set = (patch: Partial<ExploreFacetDraft>) => onChange({ ...selected, ...patch });
-  const isResearcher = userRole === UserRole.RESEARCHER;
+  const isSimplifiedView = userRole === UserRole.RESEARCHER || userRole === UserRole.CONTRIBUTOR;
 
   const ethnicityCount = selected.ethnicityIds.length;
   const recordingTypeCount = selected.recordingTypes.length;
@@ -155,7 +155,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
           '[scrollbar-gutter:stable]',
         )}
       >
-        <AccordionSection title="Dân tộc" defaultOpen badge={ethnicityCount}>
+        <AccordionSection title="Dân tộc" badge={ethnicityCount}>
           <MemoSearchableCheckboxList
             items={options.ethnicities}
             placeholder="Tìm dân tộc…"
@@ -166,7 +166,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
           />
         </AccordionSection>
 
-        {!isResearcher && (
+        {!isSimplifiedView && (
           <AccordionSection title="Thể loại ghi âm" defaultOpen badge={recordingTypeCount}>
           {options.recordingTypes.map((t) => {
             const checked = selected.recordingTypes.includes(t.value);
@@ -192,7 +192,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
         </AccordionSection>
         )}
 
-        {!isResearcher && (
+        {!isSimplifiedView && (
         <AccordionSection title="Dòng nhạc / thể loại dân gian" badge={genreCount}>
           <MemoSearchableCheckboxList
             items={options.genreTags}
@@ -221,7 +221,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
           />
         </AccordionSection>
 
-        <AccordionSection title={isResearcher ? "Vùng miền" : "Khu vực"} badge={regionActive}>
+        <AccordionSection title={isSimplifiedView ? "Vùng miền" : "Khu vực"} badge={regionActive}>
           <select
             value={selected.region ?? ''}
             onChange={(e) => {
@@ -246,7 +246,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
           </select>
         </AccordionSection>
 
-        {!isResearcher && (
+        {!isSimplifiedView && (
         <AccordionSection title="Bối cảnh văn hóa" badge={contextCount}>
           <MemoSearchableCheckboxList
             items={options.culturalContexts}
@@ -259,7 +259,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
         </AccordionSection>
         )}
 
-        {isResearcher && (
+        {isSimplifiedView && (
           <AccordionSection title="Nghi lễ" badge={selected.ceremonyId ? 1 : 0}>
             <MemoSearchableCheckboxList
               items={options.ceremonies || []}
@@ -272,7 +272,7 @@ function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole
           </AccordionSection>
         )}
 
-        {isResearcher && (
+        {isSimplifiedView && (
           <AccordionSection title="Xã / Phường" badge={selected.communeId ? 1 : 0}>
             <MemoSearchableCheckboxList
               items={options.communes || []}

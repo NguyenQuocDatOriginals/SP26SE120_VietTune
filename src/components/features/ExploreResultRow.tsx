@@ -119,7 +119,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
   const openDetail = () =>
     navigate(`/recordings/${r.id}`, { state: { from: returnTo, preloadedRecording: r } });
 
-  const isResearcher = userRole === UserRole.RESEARCHER;
+  const isFullDisplay = userRole === UserRole.RESEARCHER || userRole === UserRole.CONTRIBUTOR;
   const rawPairs = [
     { label: 'Dân tộc', value: getEthnicityLabel(r) },
     { label: 'Vùng miền', value: getRegionLabel(r) },
@@ -130,7 +130,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
 
   let displayPairs = rawPairs.filter((x) => Boolean(x.value));
   
-  if (isResearcher) {
+  if (isFullDisplay) {
     displayPairs = rawPairs.map(x => ({
       label: x.label,
       value: x.value || 'Chưa cập nhật'
@@ -183,7 +183,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
                 key={`${r.id ?? rowIndex}-${item.label}`}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors',
-                  (!isResearcher && itemIdx >= 3) && 'max-sm:hidden',
+                  (!isFullDisplay && itemIdx >= 3) && 'max-sm:hidden',
                   item.value === 'Chưa cập nhật'
                     ? 'border-neutral-200/60 bg-neutral-50/50 text-neutral-500 hover:bg-neutral-100'
                     : 'border-neutral-200/70 bg-neutral-50/80 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-100/80',
@@ -196,7 +196,7 @@ export const ExploreResultRow = memo(function ExploreResultRow({
                 </span>
               </span>
             ))}
-            {(!isResearcher && displayPairs.length > 3) && (
+            {(!isFullDisplay && displayPairs.length > 3) && (
               <span className="inline-flex items-center rounded-xl border border-neutral-200/70 bg-neutral-50/80 px-3 py-1.5 text-xs font-medium text-neutral-600 sm:hidden">
                 +{displayPairs.length - 3} thêm
               </span>

@@ -24,7 +24,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useExploreData } from '@/hooks/useExploreData';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { getSemanticSearchCircuitBreakerState } from '@/services/semanticSearchService';
-import { SearchFilters, Region, RecordingType, VerificationStatus } from '@/types';
+import { SearchFilters, Region, RecordingType, VerificationStatus, UserRole } from '@/types';
 import { cn } from '@/utils/helpers';
 import { SURFACE_PANEL_GRADIENT } from '@/utils/surfaceTokens';
 
@@ -124,14 +124,19 @@ function buildExploreSearchParams(
 export default function ExplorePage() {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const isSimplifiedRole = user?.role === UserRole.RESEARCHER || user?.role === UserRole.CONTRIBUTOR;
   const [searchParams, setSearchParams] = useSearchParams();
   const returnTo = location.pathname + location.search;
   const exploreFilterOptions = useExploreFilterOptions();
 
-  const initialFiltersFromUrl = useMemo(
-    () => filtersFromSearchParams(searchParams),
-    [searchParams],
-  );
+  const initialFiltersFromUrl = useMemo(() => {
+    const parsed = filtersFromSearchParams(searchParams);
+    const isSem = searchParams.get('mode') === 'semantic';
+    if (isSem && isSimplifiedRole) {
+      return {};
+    }
+    return parsed;
+  }, [searchParams, isSimplifiedRole]);
 
   const [filters, setFilters] = useState<SearchFilters>(initialFiltersFromUrl);
   const [currentPage, setCurrentPage] = useState(1);
@@ -265,9 +270,15 @@ export default function ExplorePage() {
   const onExploreModeChange = useCallback(
     (m: ExploreSearchMode) => {
       setCurrentPage(1);
-      setSearchParams(buildExploreSearchParams(filters, m, semanticInput), { replace: true });
+      if (m === 'semantic' && isSimplifiedRole) {
+        setFacetDraft(createEmptyExploreFacetDraft());
+        const emptyFilters: SearchFilters = {};
+        setSearchParams(buildExploreSearchParams(emptyFilters, 'semantic', semanticInput), { replace: true });
+      } else {
+        setSearchParams(buildExploreSearchParams(filters, m, semanticInput), { replace: true });
+      }
     },
-    [filters, semanticInput, setSearchParams],
+    [filters, semanticInput, setSearchParams, isSimplifiedRole],
   );
 
   const clearAllExplore = useCallback(() => {
@@ -335,6 +346,8 @@ export default function ExplorePage() {
     queueMicrotask(() => filterDrawerTriggerRef.current?.focus());
   }, [clearAllExplore]);
 
+  const hideFilters = exploreMode === 'semantic' && isSimplifiedRole;
+
   return (
     <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -349,31 +362,33 @@ export default function ExplorePage() {
         </div>
 
         {/* Mobile / tablet: open filter drawer */}
-        <div className="mb-4 flex lg:hidden">
-          <button
-            ref={filterDrawerTriggerRef}
-            type="button"
-            id="explore-filter-drawer-trigger"
-            aria-expanded={filterDrawerOpen}
-            aria-controls="explore-filter-drawer"
-            onClick={() => setFilterDrawerOpen(true)}
-            className="inline-flex items-center gap-2 min-h-[44px] rounded-xl border border-secondary-300/70 bg-gradient-to-br from-secondary-100 to-secondary-200/70 px-4 py-2 text-sm font-semibold text-primary-900 shadow-sm transition-colors hover:from-secondary-200 hover:to-secondary-300/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-400"
-          >
-            <ListFilter
-              className="h-5 w-5 shrink-0 text-primary-600"
-              strokeWidth={2.25}
-              aria-hidden
-            />
-            Bộ lọc
-            {filterBadgeActive ? (
-              <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
-                Đang bật
-              </span>
-            ) : null}
-          </button>
-        </div>
+        {!hideFilters && (
+          <div className="mb-4 flex lg:hidden">
+            <button
+              ref={filterDrawerTriggerRef}
+              type="button"
+              id="explore-filter-drawer-trigger"
+              aria-expanded={filterDrawerOpen}
+              aria-controls="explore-filter-drawer"
+              onClick={() => setFilterDrawerOpen(true)}
+              className="inline-flex items-center gap-2 min-h-[44px] rounded-xl border border-secondary-300/70 bg-gradient-to-br from-secondary-100 to-secondary-200/70 px-4 py-2 text-sm font-semibold text-primary-900 shadow-sm transition-colors hover:from-secondary-200 hover:to-secondary-300/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary-400"
+            >
+              <ListFilter
+                className="h-5 w-5 shrink-0 text-primary-600"
+                strokeWidth={2.25}
+                aria-hidden
+              />
+              Bộ lọc
+              {filterBadgeActive ? (
+                <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
+                  Đang bật
+                </span>
+              ) : null}
+            </button>
+          </div>
+        )}
 
-        {filterDrawerOpen ? (
+        {filterDrawerOpen && !hideFilters ? (
           <button
             type="button"
             aria-label="Đóng bộ lọc"
@@ -383,62 +398,70 @@ export default function ExplorePage() {
         ) : null}
 
         {/* Phase 1: desktop = filter column (left) + results (right); mobile = drawer for filters */}
-        <div className="lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-8 xl:gap-10 lg:items-start">
-          <aside
-            id="explore-filter-drawer"
-            className={cn(
-              'flex min-h-0 max-h-[min(100vh-6rem,56rem)] flex-col overflow-hidden rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:max-h-[calc(100vh-7rem)]',
-              'lg:sticky lg:top-24 lg:self-start',
-              'max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-50 max-lg:h-full max-lg:max-h-none max-lg:max-w-[min(100vw,22rem)] max-lg:w-full max-lg:rounded-none max-lg:rounded-l-2xl max-lg:border-y-0 max-lg:border-r-0',
-              filterDrawerOpen
-                ? 'max-lg:translate-x-0 max-lg:pointer-events-auto'
-                : 'max-lg:translate-x-full max-lg:pointer-events-none',
-              'max-lg:transition-transform max-lg:duration-200 max-lg:ease-out',
-            )}
-            aria-hidden={isNarrowViewport && !filterDrawerOpen ? true : undefined}
-            {...(isNarrowViewport && filterDrawerOpen
-              ? ({
-                  role: 'dialog',
-                  'aria-modal': true,
-                  'aria-labelledby': 'explore-filter-drawer-title',
-                } as const)
-              : {})}
-          >
-            <div className="mb-4 flex shrink-0 items-start justify-between gap-3">
-              <h2
-                id="explore-filter-drawer-title"
-                className="flex min-w-0 items-center gap-2 text-xl font-semibold text-neutral-900 sm:gap-3 sm:text-2xl"
-              >
-                <span className="flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100/95 to-secondary-100/90 p-2 shadow-sm ring-1 ring-secondary-200/50">
-                  <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} aria-hidden />
-                </span>
-                <span className="leading-tight">Bộ lọc tìm kiếm</span>
-              </h2>
-              <button
-                ref={filterDrawerCloseRef}
-                type="button"
-                className="shrink-0 rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 lg:hidden"
-                onClick={closeFilterDrawer}
-                aria-label="Đóng bộ lọc"
-              >
-                <X className="h-5 w-5" strokeWidth={2.25} />
-              </button>
-            </div>
-            <p className="mb-4 shrink-0 text-sm font-medium leading-relaxed text-neutral-600 sm:text-base">
-              Chọn tiêu chí trong từng nhóm, sau đó nhấn{' '}
-              <strong className="font-semibold text-neutral-800">Áp dụng</strong> để lọc kết quả.
-            </p>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <FilterSidebar
-                options={exploreFilterOptions}
-                selected={facetDraft}
-                onChange={setFacetDraft}
-                onApply={handleFacetApply}
-                onReset={handleFacetReset}
-                userRole={user?.role}
-              />
-            </div>
-          </aside>
+        <div
+          className={cn(
+            hideFilters
+              ? 'w-full'
+              : 'lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-8 xl:gap-10 lg:items-start',
+          )}
+        >
+          {!hideFilters && (
+            <aside
+              id="explore-filter-drawer"
+              className={cn(
+                'flex min-h-0 max-h-[min(100vh-6rem,56rem)] flex-col overflow-hidden rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-8 lg:max-h-[calc(100vh-7rem)]',
+                'lg:sticky lg:top-24 lg:self-start',
+                'max-lg:fixed max-lg:inset-y-0 max-lg:right-0 max-lg:z-50 max-lg:h-full max-lg:max-h-none max-lg:max-w-[min(100vw,22rem)] max-lg:w-full max-lg:rounded-none max-lg:rounded-l-2xl max-lg:border-y-0 max-lg:border-r-0',
+                filterDrawerOpen
+                  ? 'max-lg:translate-x-0 max-lg:pointer-events-auto'
+                  : 'max-lg:translate-x-full max-lg:pointer-events-none',
+                'max-lg:transition-transform max-lg:duration-200 max-lg:ease-out',
+              )}
+              aria-hidden={isNarrowViewport && !filterDrawerOpen ? true : undefined}
+              {...(isNarrowViewport && filterDrawerOpen
+                ? ({
+                    role: 'dialog',
+                    'aria-modal': true,
+                    'aria-labelledby': 'explore-filter-drawer-title',
+                  } as const)
+                : {})}
+            >
+              <div className="mb-4 flex shrink-0 items-start justify-between gap-3">
+                <h2
+                  id="explore-filter-drawer-title"
+                  className="flex min-w-0 items-center gap-2 text-xl font-semibold text-neutral-900 sm:gap-3 sm:text-2xl"
+                >
+                  <span className="flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100/95 to-secondary-100/90 p-2 shadow-sm ring-1 ring-secondary-200/50">
+                    <Search className="h-5 w-5 text-primary-600" strokeWidth={2.5} aria-hidden />
+                  </span>
+                  <span className="leading-tight">Bộ lọc tìm kiếm</span>
+                </h2>
+                <button
+                  ref={filterDrawerCloseRef}
+                  type="button"
+                  className="shrink-0 rounded-lg p-2 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 lg:hidden"
+                  onClick={closeFilterDrawer}
+                  aria-label="Đóng bộ lọc"
+                >
+                  <X className="h-5 w-5" strokeWidth={2.25} />
+                </button>
+              </div>
+              <p className="mb-4 shrink-0 text-sm font-medium leading-relaxed text-neutral-600 sm:text-base">
+                Chọn tiêu chí trong từng nhóm, sau đó nhấn{' '}
+                <strong className="font-semibold text-neutral-800">Áp dụng</strong> để lọc kết quả.
+              </p>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <FilterSidebar
+                  options={exploreFilterOptions}
+                  selected={facetDraft}
+                  onChange={setFacetDraft}
+                  onApply={handleFacetApply}
+                  onReset={handleFacetReset}
+                  userRole={user?.role}
+                />
+              </div>
+            </aside>
+          )}
 
           <main className="min-w-0 lg:mt-0 mt-2">
             <ExploreSearchHeader

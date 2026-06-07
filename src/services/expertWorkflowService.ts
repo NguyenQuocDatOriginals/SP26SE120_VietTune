@@ -336,7 +336,9 @@ export const expertWorkflowService = {
     return baseList.map((item) => {
       const id = item.id;
       if (!id) return item;
-      return mergeBaseWithPatch(item, map[id] ?? null);
+      const subId = item.submissionId;
+      const patch = (subId && map[subId]) || map[id] || null;
+      return mergeBaseWithPatch(item, patch);
     });
   },
 
@@ -344,7 +346,9 @@ export const expertWorkflowService = {
   async applyOverlayToRecording(base: LocalRecording | null): Promise<LocalRecording | null> {
     if (!base?.id) return base;
     const map = await readMap();
-    return mergeBaseWithPatch(base, map[base.id] ?? null);
+    const subId = base.submissionId;
+    const patch = (subId && map[subId]) || map[base.id] || null;
+    return mergeBaseWithPatch(base, patch);
   },
 
   /** Claim submission: Phase 2 calls PUT /Submission/assign-reviewer-submission first. */

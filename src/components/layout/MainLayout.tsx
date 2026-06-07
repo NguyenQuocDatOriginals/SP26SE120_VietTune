@@ -85,8 +85,8 @@ export default function MainLayout() {
     <div className="flex flex-col min-h-screen min-w-0 overflow-x-hidden bg-cream-100">
       <NotificationFeedBootstrap />
       <Header />
-      {/* Đủ chừa fixed header (pt-4 + nav có thể wrap 2 dòng); lg:pt-[4.75rem] trước đây quá thấp → nội dung/Hồ sơ bị che */}
-      <main className="flex-grow min-w-0 w-full pt-32 lg:pt-40" style={mainBackgroundStyle}>
+      {/* Đủ chừa fixed header (pt-4 + nav có thể wrap 2 dòng); khoảng đệm tối ưu để nội dung cân đối với header */}
+      <main className="flex-grow min-w-0 w-full pt-24 lg:pt-20" style={mainBackgroundStyle}>
         <ErrorBoundary region="main">
           <Outlet />
         </ErrorBoundary>

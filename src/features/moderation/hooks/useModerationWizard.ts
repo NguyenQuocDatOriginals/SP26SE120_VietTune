@@ -84,7 +84,10 @@ export function useModerationWizard(opts: {
   const validateStep = useCallback(
     (id: string | null, step: number): boolean => {
       if (!id) return false;
-      const formData = verificationForms[id];
+      const item = allItems.find((x) => x.submissionId === id || x.id === id);
+      if (!item) return false;
+      const recId = item.id || id;
+      const formData = verificationForms[recId];
       if (!formData) return false;
 
       if (step === 1) {
@@ -93,8 +96,7 @@ export function useModerationWizard(opts: {
       }
       if (step === 2) {
         const step2 = formData.step2;
-        const declaredInstruments =
-          allItems.find((x) => x.id === id)?.culturalContext?.instruments ?? [];
+        const declaredInstruments = item.culturalContext?.instruments ?? [];
         return getMissingStep2Fields(step2, declaredInstruments).length === 0;
       }
       if (step === 3) {
@@ -117,8 +119,10 @@ export function useModerationWizard(opts: {
   const getCurrentVerificationStep = useCallback(
     (id: string | null): number => {
       if (!id) return 1;
-      const item = allItems.find((it) => it.id === id);
-      return verificationStep[id] || item?.moderation?.verificationStep || 1;
+      const item = allItems.find((it) => it.submissionId === id || it.id === id);
+      if (!item) return 1;
+      const recId = item.id || id;
+      return verificationStep[recId] || item.moderation?.verificationStep || 1;
     },
     [allItems, verificationStep],
   );
@@ -129,17 +133,21 @@ export function useModerationWizard(opts: {
       const currentStep = getCurrentVerificationStep(id);
       if (currentStep <= 1) return;
 
-      const prevStep = currentStep - 1;
-      setVerificationStep((prev) => ({ ...prev, [id]: prevStep }));
+      const it = allItems.find((x) => x.submissionId === id || x.id === id);
+      if (!it) return;
+      const subId = it.submissionId || id;
+      const recId = it.id || id;
 
-      const it = allItems.find((x) => x.id === id);
-      if (it?.moderation?.claimedBy !== userId) return;
-      const currentFormData = verificationForms[id] || {};
+      const prevStep = currentStep - 1;
+      setVerificationStep((prev) => ({ ...prev, [recId]: prevStep }));
+
+      if (it.moderation?.claimedBy !== userId) return;
+      const currentFormData = verificationForms[recId] || {};
       const verificationData = {
         ...(it.moderation?.verificationData || {}),
         ...currentFormData,
       } as ModerationVerificationData;
-      const ok = await expertWorkflowService.updateVerificationStep(id, {
+      const ok = await expertWorkflowService.updateVerificationStep(subId, {
         verificationStep: prevStep,
         verificationData,
       });
@@ -151,26 +159,30 @@ export function useModerationWizard(opts: {
   const confirmStageTransition = useCallback(
     async (id: string, fromStep: 1 | 2) => {
       if (!id || !userId) return;
-      const nextStep = fromStep + 1;
-      setVerificationStep((prev) => ({ ...prev, [id]: nextStep }));
+      const it = allItems.find((x) => x.submissionId === id || x.id === id);
+      if (!it) return;
+      const subId = it.submissionId || id;
+      const recId = it.id || id;
 
-      const it = allItems.find((x) => x.id === id);
-      if (it?.moderation?.claimedBy !== userId) return;
-      const currentFormData = verificationForms[id] || {};
+      const nextStep = fromStep + 1;
+      setVerificationStep((prev) => ({ ...prev, [recId]: nextStep }));
+
+      if (it.moderation?.claimedBy !== userId) return;
+      const currentFormData = verificationForms[recId] || {};
       const verificationData = {
         ...(it.moderation?.verificationData || {}),
         ...currentFormData,
       } as ModerationVerificationData;
 
       if (fromStep === 1) {
-        const stageOneResult = await expertWorkflowService.completeStageOne(id);
+        const stageOneResult = await expertWorkflowService.completeStageOne(subId);
         if (!stageOneResult.ok) {
-          setVerificationStep((prev) => ({ ...prev, [id]: fromStep }));
+          setVerificationStep((prev) => ({ ...prev, [recId]: fromStep }));
           uiToast.error('Không thể chuyển sang giai đoạn Xác minh. Vui lòng thử lại.');
           return;
         }
         await expertWorkflowService.logExpertModerationDecision({
-          submissionId: id,
+          submissionId: subId,
           userId,
           action: 'expert_complete_stage_one',
           combinedNotes: `Hoàn tất giai đoạn Sàng lọc (bước 1) lúc ${new Date().toISOString()}.`,
@@ -178,26 +190,26 @@ export function useModerationWizard(opts: {
       }
 
       if (fromStep === 2) {
-        const stageTwoResult = await expertWorkflowService.completeStageTwo(id);
+        const stageTwoResult = await expertWorkflowService.completeStageTwo(subId);
         if (!stageTwoResult.ok) {
-          setVerificationStep((prev) => ({ ...prev, [id]: fromStep }));
+          setVerificationStep((prev) => ({ ...prev, [recId]: fromStep }));
           uiToast.error('Không thể chuyển sang giai đoạn Xuất bản. Vui lòng thử lại.');
           return;
         }
         await expertWorkflowService.logExpertModerationDecision({
-          submissionId: id,
+          submissionId: subId,
           userId,
           action: 'expert_complete_stage_two',
           combinedNotes: `Hoàn tất giai đoạn Xác minh (bước 2) lúc ${new Date().toISOString()}.`,
         });
       }
 
-      const ok = await expertWorkflowService.updateVerificationStep(id, {
+      const ok = await expertWorkflowService.updateVerificationStep(subId, {
         verificationStep: nextStep,
         verificationData,
       });
       if (!ok) {
-        setVerificationStep((prev) => ({ ...prev, [id]: fromStep }));
+        setVerificationStep((prev) => ({ ...prev, [recId]: fromStep }));
         uiToast.error('Không thể lưu trạng thái bước kiểm duyệt. Vui lòng thử lại.');
         return;
       }
@@ -211,12 +223,16 @@ export function useModerationWizard(opts: {
       if (!id || !userId) return;
       const currentStep = getCurrentVerificationStep(id);
 
+      const it = allItems.find((x) => x.submissionId === id || x.id === id);
+      if (!it) return;
+      const subId = it.submissionId || id;
+      const recId = it.id || id;
+
       if (currentStep < 3) {
-        if (!validateStep(id, currentStep)) {
+        if (!validateStep(recId, currentStep)) {
           if (currentStep === 2) {
-            const step2 = verificationForms[id]?.step2;
-            const declaredInstruments =
-              allItems.find((x) => x.id === id)?.culturalContext?.instruments ?? [];
+            const step2 = verificationForms[recId]?.step2;
+            const declaredInstruments = it.culturalContext?.instruments ?? [];
             const missing = getMissingStep2Fields(step2, declaredInstruments);
             if (missing.length > 0) {
               uiToast.warning(`Bạn còn thiếu: ${missing.join(', ')}`);
@@ -229,18 +245,17 @@ export function useModerationWizard(opts: {
           return;
         }
         if (currentStep === 1 || currentStep === 2) {
-          onRequireStageTransitionConfirm({ submissionId: id, fromStep: currentStep });
+          onRequireStageTransitionConfirm({ submissionId: subId, fromStep: currentStep });
           return;
         }
       }
 
       if (currentStep < 3) return;
 
-      if (!validateStep(id, currentStep)) {
+      if (!validateStep(recId, currentStep)) {
         if (currentStep === 2) {
-          const step2 = verificationForms[id]?.step2;
-          const declaredInstruments =
-            allItems.find((x) => x.id === id)?.culturalContext?.instruments ?? [];
+          const step2 = verificationForms[recId]?.step2;
+          const declaredInstruments = it.culturalContext?.instruments ?? [];
           const missing = getMissingStep2Fields(step2, declaredInstruments);
           if (missing.length > 0) {
             uiToast.warning(`Bạn còn thiếu: ${missing.join(', ')}`);
@@ -253,7 +268,7 @@ export function useModerationWizard(opts: {
         return;
       }
       uiToast.info('moderation.wizard.ready_for_approve');
-      onRequireApproveConfirm(id);
+      onRequireApproveConfirm(subId);
     },
     [
       allItems,
@@ -269,8 +284,11 @@ export function useModerationWizard(opts: {
   const updateVerificationForm = useCallback(
     (id: string | null, step: number, field: string, value: unknown) => {
       if (!id) return;
+      const item = allItems.find((x) => x.submissionId === id || x.id === id);
+      if (!item) return;
+      const recId = item.id || id;
       setVerificationForms((prev) => {
-        const current = prev[id] || {};
+        const current = prev[recId] || {};
         const stepData =
           (current[`step${step}` as keyof ModerationVerificationData] as Record<string, unknown>) ||
           {};
@@ -281,8 +299,7 @@ export function useModerationWizard(opts: {
         } as Record<string, unknown>;
 
         if (step === 2 && field === 'instrumentOverrides') {
-          const declaredInstruments =
-            allItems.find((x) => x.id === id)?.culturalContext?.instruments ?? [];
+          const declaredInstruments = item.culturalContext?.instruments ?? [];
           const overrides = value as Record<string, 'confirmed' | 'rejected' | 'added'>;
           if (hasAllInstrumentDecisions(declaredInstruments, overrides)) {
             nextStepData.instrumentsVerified = true;
@@ -291,7 +308,7 @@ export function useModerationWizard(opts: {
 
         return {
           ...prev,
-          [id]: {
+          [recId]: {
             ...current,
             [`step${step}`]: {
               ...nextStepData,

@@ -100,6 +100,10 @@ export default function ModerationPage() {
   /** T5: working expert notes per submission (draft); Phase 1 → localStorage; Phase 2 → same draft + audit on decision. */
   const [expertReviewNotesDraft, setExpertReviewNotesDraft] = useState<Record<string, string>>({});
   const expertNotesDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const allItemsRef = useRef(allItems);
+  useEffect(() => {
+    allItemsRef.current = allItems;
+  }, [allItems]);
   /** Announces queue length changes (e.g. after approve/reject removes an item from the filtered list). */
   const [moderationA11yMessage, setModerationA11yMessage] = useState('');
   const prevItemsLengthRef = useRef<number | null>(null);
@@ -232,6 +236,13 @@ export default function ModerationPage() {
       try {
         const raw = await getLocalRecordingFull(selectedId);
         if (cancelled || !raw) return;
+
+        // Find existing list item to preserve submissionId
+        const listItem = allItemsRef.current.find((it) => it.id === selectedId);
+        if (listItem?.submissionId && !raw.submissionId) {
+          raw.submissionId = listItem.submissionId;
+        }
+
         const overlaid = await applyOverlayToRecording(raw as LocalRecording);
         if (cancelled || !overlaid) return;
         const migrated = migrateVideoDataToVideoData([overlaid as LocalRecordingMini])[0];
@@ -256,6 +267,13 @@ export default function ModerationPage() {
       try {
         const raw = await getLocalRecordingFull(showVerificationDialog);
         if (cancelled || !raw) return;
+
+        // Find existing list item to preserve submissionId
+        const listItem = allItemsRef.current.find((it) => it.id === showVerificationDialog);
+        if (listItem?.submissionId && !raw.submissionId) {
+          raw.submissionId = listItem.submissionId;
+        }
+
         const overlaid = await applyOverlayToRecording(raw as LocalRecording);
         if (cancelled || !overlaid) return;
         const migrated = migrateVideoDataToVideoData([overlaid as LocalRecordingMini])[0];
@@ -271,9 +289,15 @@ export default function ModerationPage() {
           setAllItems((prev) => {
             const idx = prev.findIndex((it) => it.id === showVerificationDialog);
             if (idx >= 0) {
+              const existing = prev[idx];
               return prev.map((it) =>
                 it.id === showVerificationDialog
-                  ? { ...metaOnly, moderation: migrated.moderation }
+                  ? {
+                      ...existing,
+                      ...metaOnly,
+                      submissionId: existing.submissionId || metaOnly.submissionId,
+                      moderation: migrated.moderation,
+                    }
                   : it,
               );
             }
@@ -428,7 +452,8 @@ export default function ModerationPage() {
         void load();
         return;
       }
-      const claimResult = await claimSubmission(id, user.id, user.username ?? '');
+      const subId = it.submissionId || id;
+      const claimResult = await claimSubmission(subId, user.id, user.username ?? '');
       if (!claimResult.success) {
         if (claimResult.httpStatus === 409) {
           uiToast.warning('Bản thu này đã được chuyên gia khác nhận. Vui lòng tải lại hàng đợi.');
@@ -467,8 +492,10 @@ export default function ModerationPage() {
   /** Luôn mở modal xác nhận trước khi unassign. */
   const unclaim = useCallback((id?: string) => {
     if (!id) return;
-    setPortalModal({ kind: 'unclaim', submissionId: id });
-  }, []);
+    const it = allItems.find((x) => x.id === id);
+    const subId = it?.submissionId || id;
+    setPortalModal({ kind: 'unclaim', submissionId: subId });
+  }, [allItems]);
 
   const openDeleteRecordingModal = useCallback((id: string) => {
     setPortalModal({ kind: 'delete', submissionId: id });

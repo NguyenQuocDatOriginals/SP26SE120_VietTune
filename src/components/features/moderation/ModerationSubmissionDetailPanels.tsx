@@ -41,7 +41,7 @@ export function ModerationSubmissionDetailPanels({
   onExpertReviewNotesChange: (submissionId: string, text: string) => void;
   infoRows: readonly ModerationSubmissionInfoRow[];
 }) {
-  const submissionId = item.id;
+  const submissionId = item.submissionId || item.id;
   const showExpertNotes =
     !!submissionId &&
     !!currentUserId &&

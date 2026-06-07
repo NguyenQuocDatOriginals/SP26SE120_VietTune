@@ -1,5 +1,4 @@
-import { apiFetch, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
-import type { components } from '@/api/generated';
+import { apiFetchLoose, apiOk, asApiEnvelope, openApiQueryRecord } from '@/api';
 import type {
   KnowledgeGraphApiEdge,
   KnowledgeGraphApiGraphResponse,
@@ -8,7 +7,13 @@ import type {
   KnowledgeGraphStats,
 } from '@/types/knowledgeGraphApi';
 
-type GraphExploreBody = components['schemas']['VietTuneArchive.Application.Mapper.DTOs.KnowledgeGraph.GraphExploreRequest'];
+type GraphExploreBody = {
+  nodeId?: string | null;
+  nodeType?: string | null;
+  depth?: number;
+  maxNodes?: number;
+  filterTypes?: string[] | null;
+};
 
 function pickRecord<T extends object>(row: unknown, keys: (keyof T)[]): Partial<T> {
   if (!row || typeof row !== 'object') return {};
@@ -90,6 +95,7 @@ function parseSearchNodes(raw: unknown): KnowledgeGraphApiNode[] {
   return raw.map(asNodeDto).filter(Boolean) as KnowledgeGraphApiNode[];
 }
 
+// Map stats response
 function parseStats(raw: unknown): KnowledgeGraphStats {
   if (!raw || typeof raw !== 'object') {
     return {
@@ -144,7 +150,7 @@ export const knowledgeGraphService = {
     const maxNodes = params.maxNodes ?? 100;
     const raw = await apiOk(
       asApiEnvelope<unknown>(
-        apiFetch.GET('/api/KnowledgeGraph/overview', {
+        apiFetchLoose.GET('/api/KnowledgeGraph/overview', {
           params: { query: openApiQueryRecord({ maxNodes }) },
           signal: params.signal,
         }),
@@ -159,7 +165,7 @@ export const knowledgeGraphService = {
   ): Promise<KnowledgeGraphApiGraphResponse> {
     const raw = await apiOk(
       asApiEnvelope<unknown>(
-        apiFetch.POST('/api/KnowledgeGraph/explore', {
+        apiFetchLoose.POST('/api/KnowledgeGraph/explore', {
           body: toExploreBody(body) as GraphExploreBody,
           signal,
         }),
@@ -176,7 +182,7 @@ export const knowledgeGraphService = {
   }): Promise<KnowledgeGraphApiNode[]> {
     const raw = await apiOk(
       asApiEnvelope<unknown>(
-        apiFetch.GET('/api/KnowledgeGraph/search', {
+        apiFetchLoose.GET('/api/KnowledgeGraph/search', {
           params: {
             query: openApiQueryRecord({
               query: params.query,
@@ -194,7 +200,7 @@ export const knowledgeGraphService = {
   async getStats(signal?: AbortSignal): Promise<KnowledgeGraphStats> {
     const raw = await apiOk(
       asApiEnvelope<unknown>(
-        apiFetch.GET('/api/KnowledgeGraph/stats', {
+        apiFetchLoose.GET('/api/KnowledgeGraph/stats', {
           signal,
         }),
       ),

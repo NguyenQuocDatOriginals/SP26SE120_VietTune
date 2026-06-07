@@ -24,6 +24,8 @@ export function applyGuestFilters(rows: Recording[], filters: SearchFilters): Re
   const tags = (filters.tags ?? []).map((t) => normalizeSearchText(t)).filter(Boolean);
   const ethnicityIds = filters.ethnicityIds ?? [];
   const instrumentIds = filters.instrumentIds ?? [];
+  const ceremonyId = filters.ceremonyId?.trim();
+  const communeId = filters.communeId?.trim();
 
   return rows.filter((r) => {
     if (query) {
@@ -69,6 +71,15 @@ export function applyGuestFilters(rows: Recording[], filters: SearchFilters): Re
       const ts = new Date(r.recordedDate || r.uploadedDate || 0).getTime();
       if (Number.isFinite(dateFrom) && ts < (dateFrom as number)) return false;
       if (Number.isFinite(dateTo) && ts > (dateTo as number)) return false;
+    }
+    if (ceremonyId) {
+      // Local check could match UUID or string name if mapped poorly. We just check if it matches.
+      const rCeremony = (r as any).ceremonyId || r.metadata?.ritualContext;
+      if (rCeremony !== ceremonyId) return false;
+    }
+    if (communeId) {
+      const rCommune = (r as any).communeId;
+      if (rCommune !== communeId) return false;
     }
     return true;
   });

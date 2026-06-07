@@ -2,13 +2,11 @@ import {
   AlertCircle,
   Check,
   FileAudio,
-  ImagePlus,
   Music,
   Plus,
   Sparkles,
   Upload,
   Video,
-  X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import React from 'react';
@@ -136,10 +134,6 @@ export default function MediaUploadStep({
   onUseAiAnalysisChange,
   onMediaTypeChange,
   onResetSelectedFile,
-  recordingImagePreviews,
-  existingRecordingImageUrls,
-  onRecordingImagesChange,
-  onRemoveRecordingImage,
   formatFileSize,
   formatDuration,
 }: MediaUploadStepProps) {

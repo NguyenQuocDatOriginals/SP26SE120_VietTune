@@ -6,6 +6,7 @@ import type {
 } from '@/api';
 import type { RecordingUploadDto } from '@/api';
 import { legacyGetAnonymous } from '@/api/legacyHttp';
+import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import { PAGE_SIZE_DEFAULT } from '@/config/pagination';
 import {
   Recording,
@@ -20,7 +21,6 @@ import {
   InstrumentCategory,
 } from '@/types';
 import { pickContributorFieldsFromApiRow } from '@/utils/contributorFields';
-import { normalizeSearchText } from '@/utils/searchText';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -66,7 +66,7 @@ function normalizeObjectKeys(input: unknown): unknown {
   return out;
 }
 
-function mapGuestRowToRecording(row: unknown, index: number): Recording {
+function mapGuestRowToRecording(row: unknown, index: number, lookups?: Record<string, any>): Recording {
   const normalized = asRecord(normalizeObjectKeys(row)) ?? {};
   const id =
     pickString(normalized, ['id', 'recordingId', 'submissionId']) || `guest-recording-${index}`;
@@ -81,17 +81,19 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
   const uploadedDate =
     pickString(normalized, ['uploadedDate', 'createdAt', 'uploadedAt']) ||
     new Date(0).toISOString();
-  const regionRaw = pickString(normalized, ['region', 'regionCode']);
-  const regionValues = Object.values(Region);
-  const region = regionValues.includes(regionRaw as Region)
-    ? (regionRaw as Region)
-    : Region.RED_RIVER_DELTA;
+  let topLevelInstruments: string[] = [];
+  const rawInsts = normalized.instruments || normalized.instrumentList;
+  if (Array.isArray(rawInsts)) {
+    topLevelInstruments = rawInsts.map(i => {
+      if (typeof i === 'string') return i;
+      if (i && typeof i === 'object') return (i as any).nameVietnamese || (i as any).name || '';
+      return '';
+    }).filter(Boolean);
+  }
+  if (topLevelInstruments.length === 0) {
+    topLevelInstruments = pickStringArray(normalized, ['instrumentNames', 'instrumentTags']);
+  }
 
-  const topLevelInstruments = pickStringArray(normalized, [
-    'instrumentNames',
-    'instruments',
-    'instrumentTags',
-  ]);
   const culturalContext = asRecord(normalized.culturalContext);
   const contextInstruments = culturalContext
     ? pickStringArray(culturalContext, ['instruments'])
@@ -101,6 +103,28 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
   );
   const rawTags = pickStringArray(normalized, ['tags', 'tagNames', 'metadataTags', 'keywords']);
 
+  const ethObj = asRecord(normalized.ethnicity) || asRecord(normalized.ethnicGroup);
+  const ethId = (ethObj?.id as string) || pickString(normalized, ['ethnicityId', 'ethnicGroupId']);
+  const ethName = (ethObj?.nameVietnamese as string) || (ethObj?.name as string) || pickString(normalized, ['ethnicityName', 'ethnicGroupName']) || (ethId && lookups?.ethnicById?.[String(ethId).trim().toLowerCase()]);
+
+  const ceremonyId = pickString(normalized, ['ceremonyId']);
+  if (ceremonyId && !normalized.ceremonyName) {
+     const ceremonyName = lookups?.ceremonyById?.[String(ceremonyId).trim().toLowerCase()];
+     if (ceremonyName) normalized.ceremonyName = ceremonyName;
+  }
+
+  const communeId = pickString(normalized, ['communeId']);
+  if (communeId && !normalized.communeName) {
+     const communeName = lookups?.communeById?.[String(communeId).trim().toLowerCase()];
+     if (communeName) normalized.communeName = communeName;
+  }
+
+  const regionRaw = pickString(normalized, ['region', 'regionCode']) || (ethObj?.region as string);
+  const regionValues = Object.values(Region);
+  const region = regionValues.includes(regionRaw as Region)
+    ? (regionRaw as Region)
+    : Region.RED_RIVER_DELTA;
+
   const contrib = pickContributorFieldsFromApiRow(normalized);
   const uploaderIdFlat = pickString(normalized, ['uploaderId', 'uploadedById']);
   const uploaderDisplayName =
@@ -108,16 +132,15 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
   const uploaderHandle = contrib.username || '';
 
   return {
+    ...normalized,
     id,
     title,
     titleVietnamese: pickString(normalized, ['titleVietnamese']),
     description: pickString(normalized, ['description']),
     ethnicity: {
-      id: pickString(normalized, ['ethnicityId']) || 'guest-ethnicity',
-      name: pickString(normalized, ['ethnicityName', 'ethnicity']) || 'Không xác định',
-      nameVietnamese:
-        pickString(normalized, ['ethnicityNameVietnamese', 'ethnicityName', 'ethnicity']) ||
-        'Không xác định',
+      id: ethId || 'guest-ethnicity',
+      name: ethName || 'Không xác định',
+      nameVietnamese: ethName || 'Không xác định',
       region,
       recordingCount: 0,
     },
@@ -159,10 +182,8 @@ function mapGuestRowToRecording(row: unknown, index: number): Recording {
   };
 }
 
-function pickGuestRows(input: unknown): Recording[] {
-  if (Array.isArray(input)) return input.map((row, idx) => mapGuestRowToRecording(row, idx));
-  const root = asRecord(input);
-  if (!root) return [];
+function pickGuestRows(input: unknown, lookups?: Record<string, any>): Recording[] {
+  const root = asRecord(input) ?? {};
   const candidates: unknown[] = [
     root.items,
     root.data,
@@ -173,21 +194,27 @@ function pickGuestRows(input: unknown): Recording[] {
     asRecord(root.data)?.data,
     asRecord(root.result)?.items,
   ];
+  let rows: unknown[] = [];
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
-      return candidate.map((row, idx) => mapGuestRowToRecording(row, idx));
+      rows = candidate;
+      break;
     }
   }
-  return [];
+  if (rows.length === 0 && Array.isArray(input)) {
+    rows = input;
+  }
+  return rows.map((row, idx) => mapGuestRowToRecording(row, idx, lookups));
 }
 
 function toGuestPaginatedResponse(
   input: unknown,
   page: number,
   pageSize: number,
+  lookups?: Record<string, any>
 ): PaginatedResponse<Recording> {
   const root = asRecord(input) ?? {};
-  const rows = pickGuestRows(input);
+  const rows = pickGuestRows(input, lookups);
   const pageRaw = root.page ?? asRecord(root.data)?.page;
   const pageSizeRaw = root.pageSize ?? asRecord(root.data)?.pageSize;
   const totalRaw =
@@ -211,27 +238,10 @@ function toPaginatedRecordingsResponse(
   input: unknown,
   page: number,
   pageSize: number,
+  lookups?: Record<string, any>
 ): PaginatedResponse<Recording> {
   const root = asRecord(input) ?? {};
-  const candidates: unknown[] = [
-    root.items,
-    root.data,
-    root.records,
-    root.result,
-    asRecord(root.data)?.items,
-    asRecord(root.data)?.records,
-    asRecord(root.data)?.data,
-    asRecord(root.result)?.items,
-  ];
-  let items: Recording[] = [];
-  for (const candidate of candidates) {
-    if (!Array.isArray(candidate)) continue;
-    items = candidate as Recording[];
-    break;
-  }
-  if (items.length === 0 && Array.isArray(input)) {
-    items = input as Recording[];
-  }
+  const items = pickGuestRows(input, lookups);
   const pageRaw = root.page ?? asRecord(root.data)?.page;
   const pageSizeRaw = root.pageSize ?? asRecord(root.data)?.pageSize;
   const totalRaw =
@@ -251,64 +261,6 @@ function toPaginatedRecordingsResponse(
   };
 }
 
-function hasMetadataFilters(filters: SearchFilters): boolean {
-  return Boolean(
-    (filters.ethnicityIds?.length ?? 0) > 0 ||
-      (filters.instrumentIds?.length ?? 0) > 0 ||
-      (filters.regions?.length ?? 0) > 0 ||
-      (filters.recordingTypes?.length ?? 0) > 0 ||
-      (filters.verificationStatus?.length ?? 0) > 0 ||
-      (filters.tags?.length ?? 0) > 0 ||
-      filters.dateFrom ||
-      filters.dateTo,
-  );
-}
-
-function matchesMetadataFilters(recording: Recording, filters: SearchFilters): boolean {
-  if (filters.ethnicityIds?.length) {
-    const ok = filters.ethnicityIds.some(
-      (id) =>
-        id === recording.ethnicity?.id ||
-        id === recording.ethnicity?.name ||
-        id === recording.ethnicity?.nameVietnamese,
-    );
-    if (!ok) return false;
-  }
-  if (filters.instrumentIds?.length) {
-    const ok = filters.instrumentIds.some((id) =>
-      (recording.instruments ?? []).some(
-        (inst) => inst.id === id || inst.name === id || inst.nameVietnamese === id,
-      ),
-    );
-    if (!ok) return false;
-  }
-  if (filters.regions?.length && !filters.regions.includes(recording.region)) return false;
-  if (
-    filters.recordingTypes?.length &&
-    !filters.recordingTypes.includes(recording.recordingType)
-  ) {
-    return false;
-  }
-  if (
-    filters.verificationStatus?.length &&
-    !filters.verificationStatus.includes(recording.verificationStatus)
-  ) {
-    return false;
-  }
-  if (filters.tags?.length) {
-    const hay = normalizeSearchText((recording.tags ?? []).join(' '));
-    const queryTags = filters.tags.map((x) => normalizeSearchText(x)).filter(Boolean);
-    if (!queryTags.every((tag) => hay.includes(tag))) return false;
-  }
-  if (filters.dateFrom || filters.dateTo) {
-    const ts = new Date(recording.recordedDate || recording.uploadedDate || 0).getTime();
-    const fromTs = filters.dateFrom ? new Date(filters.dateFrom).getTime() : Number.NaN;
-    const toTs = filters.dateTo ? new Date(filters.dateTo).getTime() : Number.NaN;
-    if (Number.isFinite(fromTs) && ts < fromTs) return false;
-    if (Number.isFinite(toTs) && ts > toTs) return false;
-  }
-  return true;
-}
 
 type RecordingSearchByFilterResponse =
   | Record<string, unknown>[]
@@ -338,7 +290,8 @@ export const recordingService = {
         }),
       ),
     );
-    return toPaginatedRecordingsResponse(data, page, pageSize);
+    const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+    return toPaginatedRecordingsResponse(data, page, pageSize, lookups);
   },
 
   /** Guest title search (no Authorization): GET /api/RecordingGuest/search-by-title */
@@ -354,11 +307,13 @@ export const recordingService = {
     };
     try {
       const data = await legacyGetAnonymous<unknown>('/RecordingGuest/search-by-title', reqOpts);
-      return toGuestPaginatedResponse(data, page, pageSize);
+      const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+      return toGuestPaginatedResponse(data, page, pageSize, lookups);
     } catch (primaryErr) {
       try {
         const data = await legacyGetAnonymous<unknown>('/recordingGuest/search-by-title', reqOpts);
-        return toGuestPaginatedResponse(data, page, pageSize);
+        const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+        return toGuestPaginatedResponse(data, page, pageSize, lookups);
       } catch {
         throw primaryErr;
       }
@@ -393,11 +348,13 @@ export const recordingService = {
     const reqOpts = { signal: opts?.signal, params: { page, pageSize } };
     try {
       const data = await legacyGetAnonymous<unknown>('/RecordingGuest', reqOpts);
-      return toGuestPaginatedResponse(data, page, pageSize);
+      const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+      return toGuestPaginatedResponse(data, page, pageSize, lookups);
     } catch (primaryErr) {
       try {
         const data = await legacyGetAnonymous<unknown>('/recordingGuest', reqOpts);
-        return toGuestPaginatedResponse(data, page, pageSize);
+        const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+        return toGuestPaginatedResponse(data, page, pageSize, lookups);
       } catch {
         throw primaryErr;
       }
@@ -412,22 +369,6 @@ export const recordingService = {
     opts?: { signal?: AbortSignal },
   ) => {
     const q = filters.query?.trim();
-    if (q) {
-      const titleRes = await recordingService.searchGuestRecordingsByTitle(q, page, pageSize, opts);
-      if (!hasMetadataFilters({ ...filters, query: undefined })) {
-        return titleRes;
-      }
-      const filtered = titleRes.items.filter((item) =>
-        matchesMetadataFilters(item, { ...filters, query: undefined }),
-      );
-      return {
-        items: filtered,
-        total: filtered.length,
-        totalPages: Math.max(1, Math.ceil(filtered.length / Math.max(1, pageSize))),
-        page,
-        pageSize,
-      };
-    }
     const ethnicId = filters.ethnicityIds?.find((id) => id?.trim());
     const instrumentId = filters.instrumentIds?.find((id) => id?.trim());
     const regionCode = filters.regions?.[0];
@@ -436,6 +377,7 @@ export const recordingService = {
       params: {
         page,
         pageSize,
+        ...(q ? { title: q } : {}),
         ...(ethnicId ? { ethnicGroupId: ethnicId.trim() } : {}),
         ...(instrumentId ? { instrumentId: instrumentId.trim() } : {}),
         ...(regionCode ? { regionCode: String(regionCode) } : {}),
@@ -445,11 +387,13 @@ export const recordingService = {
     };
     try {
       const data = await legacyGetAnonymous<unknown>('/RecordingGuest/search-by-filter', reqOpts);
-      return toGuestPaginatedResponse(data, page, pageSize);
+      const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+      return toGuestPaginatedResponse(data, page, pageSize, lookups);
     } catch (primaryErr) {
       try {
         const data = await legacyGetAnonymous<unknown>('/recordingGuest/search-by-filter', reqOpts);
-        return toGuestPaginatedResponse(data, page, pageSize);
+        const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+        return toGuestPaginatedResponse(data, page, pageSize, lookups);
       } catch {
         throw primaryErr;
       }
@@ -495,22 +439,6 @@ export const recordingService = {
     opts?: { signal?: AbortSignal },
   ) => {
     const q = filters.query?.trim();
-    if (q) {
-      const titleRes = await recordingService.searchRecordingsByTitle(q, page, pageSize, opts);
-      if (!hasMetadataFilters({ ...filters, query: undefined })) {
-        return titleRes;
-      }
-      const filtered = titleRes.items.filter((item) =>
-        matchesMetadataFilters(item, { ...filters, query: undefined }),
-      );
-      return {
-        items: filtered,
-        total: filtered.length,
-        totalPages: Math.max(1, Math.ceil(filtered.length / Math.max(1, pageSize))),
-        page,
-        pageSize,
-      };
-    }
     const ethnicId = filters.ethnicityIds?.find((id) => id?.trim());
     const instrumentId = filters.instrumentIds?.find((id) => id?.trim());
     const regionCode = filters.regions?.[0];
@@ -518,20 +446,23 @@ export const recordingService = {
       page,
       pageSize,
     };
+    if (q) merged.title = q;
     if (ethnicId) merged.ethnicGroupId = ethnicId.trim();
     if (instrumentId) merged.instrumentId = instrumentId.trim();
     if (regionCode) merged.regionCode = String(regionCode);
     if (filters.ceremonyId) merged.ceremonyId = filters.ceremonyId.trim();
     if (filters.communeId) merged.communeId = filters.communeId.trim();
 
-    return apiOk(
-      asApiEnvelope<PaginatedResponse<Recording>>(
+    const data = await apiOk(
+      asApiEnvelope<unknown>(
         apiFetchLoose.GET('/api/Recording/search-by-filter', {
           params: { query: openApiQueryRecord(merged) },
           signal: opts?.signal,
         }),
       ),
     );
+    const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+    return toPaginatedRecordingsResponse(data, page, pageSize, lookups);
   },
 
   // Upload new recording (backend: POST /api/Recording with JSON body)
