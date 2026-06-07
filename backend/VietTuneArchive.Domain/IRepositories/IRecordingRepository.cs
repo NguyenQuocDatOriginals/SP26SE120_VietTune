@@ -6,6 +6,7 @@ namespace VietTuneArchive.Domain.IRepositories
     {
         Task<IEnumerable<Recording>> SearchByTitle(string title);
         Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterAsync(
+            string? title,
             Guid? ethnicGroupId,
             Guid? instrumentId,
             Guid? ceremonyId,
@@ -16,6 +17,7 @@ namespace VietTuneArchive.Domain.IRepositories
             string sortOrder = "desc");
 
         Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterMultiAsync(
+            string? title,
             IEnumerable<Guid>? ethnicGroupIds,
             IEnumerable<Guid>? instrumentIds,
             IEnumerable<Guid>? ceremonyIds,

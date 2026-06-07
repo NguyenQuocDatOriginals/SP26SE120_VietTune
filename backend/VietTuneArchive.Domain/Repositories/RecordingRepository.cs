@@ -76,6 +76,7 @@ namespace VietTuneArchive.Domain.Repositories
         }
 
         public async Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterAsync(
+            string? title,
             Guid? ethnicGroupId,
             Guid? instrumentId,
             Guid? ceremonyId,
@@ -91,7 +92,7 @@ namespace VietTuneArchive.Domain.Repositories
             if (pageSize > 100) pageSize = 100;
             if (string.IsNullOrWhiteSpace(sortOrder)) sortOrder = "desc";
 
-            // Build query
+            // Build query with all database filters (status, ethnic group, ceremony, commune, region, instrument)
             var query = _context.Recordings
                 .Include(r => r.Commune)
                     .ThenInclude(c => c.District)
@@ -102,7 +103,7 @@ namespace VietTuneArchive.Domain.Repositories
                     .ThenInclude(ri => ri.Instrument)
                 .Where(r => r.Status == SubmissionStatus.Approved || r.Status == SubmissionStatus.Embargoed);
 
-            // Apply filters
+            // Apply database filters (before fetching data)
             if (ethnicGroupId.HasValue && ethnicGroupId.Value != Guid.Empty)
             {
                 query = query.Where(r => r.EthnicGroupId == ethnicGroupId.Value);
@@ -130,9 +131,6 @@ namespace VietTuneArchive.Domain.Repositories
                 query = query.Where(r => r.RecordingInstruments.Any(ri => ri.InstrumentId == instrumentId.Value));
             }
 
-            // Get total count before pagination
-            var total = await query.CountAsync();
-
             // Apply sorting
             if (sortOrder.ToLower() == "asc")
             {
@@ -143,16 +141,32 @@ namespace VietTuneArchive.Domain.Repositories
                 query = query.OrderByDescending(r => r.CreatedAt);
             }
 
+            // Fetch data from database first
+            var allData = await query.ToListAsync();
+
+            // Apply title filter with Vietnamese diacritics support (in-memory)
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                string normalizedSearchTitle = RemoveVietnameseDiacritics(title).ToLower();
+                allData = allData
+                    .Where(r => RemoveVietnameseDiacritics(r.Title ?? "").ToLower().Contains(normalizedSearchTitle))
+                    .ToList();
+            }
+
+            // Get total count after all filters
+            var total = allData.Count;
+
             // Apply pagination
-            var data = await query
+            var data = allData
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             return (data, total);
         }
 
         public async Task<(IEnumerable<Recording> Data, int Total)> SearchByFilterMultiAsync(
+            string? title,
             IEnumerable<Guid>? ethnicGroupIds,
             IEnumerable<Guid>? instrumentIds,
             IEnumerable<Guid>? ceremonyIds,
@@ -175,7 +189,7 @@ namespace VietTuneArchive.Domain.Repositories
             var regionCodesList = regionCodes?.Where(r => !string.IsNullOrWhiteSpace(r)).ToList() ?? new List<string>();
             var communeIdsList = communeIds?.Where(g => g != Guid.Empty).ToList() ?? new List<Guid>();
 
-            // Build query
+            // Build query with all database filters
             var query = _context.Recordings
                 .Include(r => r.Commune)
                     .ThenInclude(c => c.District)
@@ -186,7 +200,7 @@ namespace VietTuneArchive.Domain.Repositories
                     .ThenInclude(ri => ri.Instrument)
                 .Where(r => r.Status == SubmissionStatus.Approved || r.Status == SubmissionStatus.Embargoed);
 
-            // Apply filters - use OR logic within each field, AND between fields
+            // Apply database filters (before fetching data)
             if (ethnicGroupIdsList.Count > 0)
             {
                 query = query.Where(r => ethnicGroupIdsList.Contains(r.EthnicGroupId ?? Guid.Empty));
@@ -214,9 +228,6 @@ namespace VietTuneArchive.Domain.Repositories
                 query = query.Where(r => r.RecordingInstruments.Any(ri => instrumentIdsList.Contains(ri.InstrumentId)));
             }
 
-            // Get total count before pagination
-            var total = await query.CountAsync();
-
             // Apply sorting
             if (sortOrder.ToLower() == "asc")
             {
@@ -227,11 +238,26 @@ namespace VietTuneArchive.Domain.Repositories
                 query = query.OrderByDescending(r => r.CreatedAt);
             }
 
+            // Fetch data from database first
+            var allData = await query.ToListAsync();
+
+            // Apply title filter with Vietnamese diacritics support (in-memory)
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                string normalizedSearchTitle = RemoveVietnameseDiacritics(title).ToLower();
+                allData = allData
+                    .Where(r => RemoveVietnameseDiacritics(r.Title ?? "").ToLower().Contains(normalizedSearchTitle))
+                    .ToList();
+            }
+
+            // Get total count after all filters
+            var total = allData.Count;
+
             // Apply pagination
-            var data = await query
+            var data = allData
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             return (data, total);
         }

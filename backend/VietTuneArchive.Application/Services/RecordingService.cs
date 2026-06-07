@@ -219,6 +219,7 @@ namespace VietTuneArchive.Application.Services
                     throw new ArgumentNullException(nameof(filter), "Filter cannot be null");
 
                 var (recordings, total) = await _recordingRepository.SearchByFilterAsync(
+                    filter.Title,
                     filter.EthnicGroupId,
                     filter.InstrumentId,
                     filter.CeremonyId,
@@ -280,6 +281,7 @@ namespace VietTuneArchive.Application.Services
                     throw new ArgumentNullException(nameof(filter), "Filter cannot be null");
 
                 var (recordings, total) = await _recordingRepository.SearchByFilterMultiAsync(
+                    filter.Title,
                     filter.EthnicGroupIds,
                     filter.InstrumentIds,
                     filter.CeremonyIds,
