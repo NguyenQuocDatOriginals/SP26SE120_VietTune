@@ -31,6 +31,7 @@ export type CreateExpertPayload = {
   email: string;
   password: string;
   fullName: string;
+  phone?: string;
 };
 
 export type CreateExpertResult = {
@@ -207,6 +208,7 @@ export const adminApi = {
         email: payload.email.trim(),
         password: payload.password,
         fullName: payload.fullName.trim(),
+        phone: payload.phone?.trim() || '',
       };
       await apiOk(
         apiFetch.POST('/api/User/create-expert', { body }),
