@@ -28,7 +28,7 @@ import { SearchFilters, Region, RecordingType, VerificationStatus, UserRole } fr
 import { cn } from '@/utils/helpers';
 import { SURFACE_PANEL_GRADIENT } from '@/utils/surfaceTokens';
 
-const EXPLORE_PAGE_SIZE = 20;
+
 
 function filtersFromSearchParams(searchParams: URLSearchParams): SearchFilters {
   const q = searchParams.get('q')?.trim();
@@ -153,6 +153,8 @@ export default function ExplorePage() {
 
   const [semanticReloadTick, setSemanticReloadTick] = useState(0);
 
+  const pageSize = isSimplifiedRole ? 10 : 20;
+
   const { recordings, loading, totalResults, searchError, setSearchError, semanticElapsedMs } =
     useExploreData({
       currentPage,
@@ -161,6 +163,7 @@ export default function ExplorePage() {
       sqFromUrl,
       isAuthenticated,
       reloadTick: semanticReloadTick,
+      pageSize,
     });
 
   const semanticCircuitCooling = useMemo(
@@ -326,7 +329,9 @@ export default function ExplorePage() {
   const hasFilters = Object.keys(filters).length > 0;
   const hasSemanticQuery = sqFromUrl.trim().length > 0;
   const filterBadgeActive = hasFilters || hasSemanticQuery;
-  const totalPages = Math.max(1, Math.ceil(totalResults / EXPLORE_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
+  const startRecord = totalResults > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endRecord = Math.min(currentPage * pageSize, totalResults);
 
   const deferredRecordings = useDeferredValue(recordings);
 
@@ -420,10 +425,10 @@ export default function ExplorePage() {
               aria-hidden={isNarrowViewport && !filterDrawerOpen ? true : undefined}
               {...(isNarrowViewport && filterDrawerOpen
                 ? ({
-                    role: 'dialog',
-                    'aria-modal': true,
-                    'aria-labelledby': 'explore-filter-drawer-title',
-                  } as const)
+                  role: 'dialog',
+                  'aria-modal': true,
+                  'aria-labelledby': 'explore-filter-drawer-title',
+                } as const)
                 : {})}
             >
               <div className="mb-4 flex shrink-0 items-start justify-between gap-3">
@@ -583,6 +588,9 @@ export default function ExplorePage() {
                       : hasFilters || hasSemanticQuery
                         ? `Tìm thấy ${totalResults} bản thu`
                         : `Có ${totalResults} bản thu đã được kiểm duyệt`}
+                    <span className="block text-sm text-neutral-500 mt-1 font-normal">
+                      Đang hiển thị bản thu {startRecord}-{endRecord}
+                    </span>
                   </p>
                   <div className="space-y-4">
                     {deferredRecordings.map((r, idx) => (

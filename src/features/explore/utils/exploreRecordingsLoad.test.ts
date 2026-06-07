@@ -121,12 +121,11 @@ describe('loadExploreRecordings semantic mode', () => {
 
 describe('loadExploreRecordings guest mode', () => {
   beforeEach(() => {
-    vi.mocked(recordingService.getGuestRecordings).mockReset();
     vi.mocked(recordingService.getGuestRecordingsByFilter).mockReset();
   });
 
-  it('without client filters, uses server page and totals from RecordingGuest', async () => {
-    vi.mocked(recordingService.getGuestRecordings).mockResolvedValue({
+  it('without client filters, uses server page and totals from RecordingGuestByFilter', async () => {
+    vi.mocked(recordingService.getGuestRecordingsByFilter).mockResolvedValue({
       items: [mkRecording({ id: 'x1', title: 'A', uploadedDate: '2024-01-01T00:00:00.000Z' })],
       total: 240,
       totalPages: 12,
@@ -142,25 +141,33 @@ describe('loadExploreRecordings guest mode', () => {
       isAuthenticated: false,
     });
 
-    expect(recordingService.getGuestRecordings).toHaveBeenCalledWith(3, 20, expect.any(Object));
+    expect(recordingService.getGuestRecordingsByFilter).toHaveBeenCalledWith({}, 3, 20, expect.any(Object));
     expect(r.totalResults).toBe(240);
     expect(r.recordings).toHaveLength(1);
   });
 
-  it('with client filters, fetches a pool then paginates filtered rows', async () => {
-    const pool = Array.from({ length: 25 }, (_, i) =>
+  it('with client filters, uses server page and totals from RecordingGuestByFilter', async () => {
+    const page1Pool = Array.from({ length: 20 }, (_, i) =>
       mkRecording({
         id: `g-${i}`,
         title: `track common ${i}`,
         uploadedDate: new Date(2025, 0, 31 - i).toISOString(),
       }),
     );
+    const page2Pool = Array.from({ length: 5 }, (_, i) =>
+      mkRecording({
+        id: `g-${i + 20}`,
+        title: `track common ${i + 20}`,
+        uploadedDate: new Date(2025, 0, 11 - i).toISOString(),
+      }),
+    );
+
     vi.mocked(recordingService.getGuestRecordingsByFilter).mockResolvedValue({
-      items: pool,
-      total: 500,
-      totalPages: 1,
+      items: page1Pool,
+      total: 25,
+      totalPages: 2,
       page: 1,
-      pageSize: 500,
+      pageSize: 20,
     });
 
     const r1 = await loadExploreRecordings({
@@ -173,7 +180,7 @@ describe('loadExploreRecordings guest mode', () => {
     expect(recordingService.getGuestRecordingsByFilter).toHaveBeenCalledWith(
       { query: 'common' },
       1,
-      500,
+      20,
       expect.any(Object),
     );
     expect(r1.totalResults).toBe(25);
@@ -182,11 +189,11 @@ describe('loadExploreRecordings guest mode', () => {
 
     vi.mocked(recordingService.getGuestRecordingsByFilter).mockClear();
     vi.mocked(recordingService.getGuestRecordingsByFilter).mockResolvedValue({
-      items: pool,
-      total: 500,
-      totalPages: 1,
-      page: 1,
-      pageSize: 500,
+      items: page2Pool,
+      total: 25,
+      totalPages: 2,
+      page: 2,
+      pageSize: 20,
     });
 
     const r2 = await loadExploreRecordings({
@@ -196,6 +203,12 @@ describe('loadExploreRecordings guest mode', () => {
       sqActive: '',
       isAuthenticated: false,
     });
+    expect(recordingService.getGuestRecordingsByFilter).toHaveBeenCalledWith(
+      { query: 'common' },
+      2,
+      20,
+      expect.any(Object),
+    );
     expect(r2.totalResults).toBe(25);
     expect(r2.recordings).toHaveLength(5);
     expect(r2.recordings.map((x) => x.id)).toEqual(['g-20', 'g-21', 'g-22', 'g-23', 'g-24']);

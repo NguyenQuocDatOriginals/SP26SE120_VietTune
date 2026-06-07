@@ -49,6 +49,7 @@ export type ExploreLoadInput = {
   filters: SearchFilters;
   sqActive: string;
   isAuthenticated: boolean;
+  pageSize?: number;
 };
 
 export type ExploreLoadSuccess = {
@@ -136,8 +137,9 @@ async function fetchFullCatalog(
  * Single Explore fetch path: keyword vs semantic, guest vs auth, with optional AbortSignal.
  */
 export async function loadExploreRecordings(input: ExploreLoadInput): Promise<ExploreLoadSuccess> {
-  const { signal, currentPage, exploreMode, filters, sqActive, isAuthenticated } = input;
+  const { signal, currentPage, exploreMode, filters, sqActive, isAuthenticated, pageSize } = input;
   const apiOpts = { signal };
+  const limit = pageSize ?? EXPLORE_PAGE_SIZE;
 
   const facetOnly: SearchFilters = { ...filters };
   if (exploreMode === 'semantic') delete facetOnly.query;
@@ -160,11 +162,11 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
         }));
         const needFacet = !isAuthenticated || Object.keys(facetOnly).length > 0;
         const pooled = needFacet ? applyGuestFilters(ranked, facetOnly) : ranked;
-        const start = Math.max(0, (currentPage - 1) * EXPLORE_PAGE_SIZE);
+        const start = Math.max(0, (currentPage - 1) * limit);
         response = {
-          items: pooled.slice(start, start + EXPLORE_PAGE_SIZE),
+          items: pooled.slice(start, start + limit),
           total: pooled.length,
-          totalPages: Math.max(1, Math.ceil(pooled.length / EXPLORE_PAGE_SIZE)),
+          totalPages: Math.max(1, Math.ceil(pooled.length / limit)),
         };
       } catch (semErr) {
         if (isExploreRequestAborted(semErr)) throw semErr;
@@ -182,7 +184,7 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
       const guestRes = await recordingService.getGuestRecordingsByFilter(
         activeFilters,
         currentPage,
-        EXPLORE_PAGE_SIZE,
+        limit,
         apiOpts,
       );
       response = {
@@ -194,7 +196,7 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
     // ── Authenticated keyword / facets / default ─────────────────────────
     } else {
       const activeFilters = exploreMode === 'semantic' ? facetOnly : filters;
-      const res = await recordingService.searchRecordings(activeFilters, currentPage, EXPLORE_PAGE_SIZE, apiOpts);
+      const res = await recordingService.searchRecordings(activeFilters, currentPage, limit, apiOpts);
       response = asApiResponse(res);
 
       if (response.items.length === 0 && activeFilters.query) {
@@ -202,12 +204,12 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
           const catalog = await fetchFullCatalog(isAuthenticated, signal);
           const clientFiltered = applyGuestFilters(catalog, activeFilters);
           if (clientFiltered.length > 0) {
-            const start = Math.max(0, (currentPage - 1) * EXPLORE_PAGE_SIZE);
-            const paged = clientFiltered.slice(start, start + EXPLORE_PAGE_SIZE);
+            const start = Math.max(0, (currentPage - 1) * limit);
+            const paged = clientFiltered.slice(start, start + limit);
             response = {
               items: paged,
               total: clientFiltered.length,
-              totalPages: Math.max(1, Math.ceil(clientFiltered.length / EXPLORE_PAGE_SIZE)),
+              totalPages: Math.max(1, Math.ceil(clientFiltered.length / limit)),
             };
           }
         } catch {
@@ -233,7 +235,7 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
         ? applyGuestFilters(catalog, activeFilters)
         : catalog;
       const sorted = sortByUploadedDesc(filteredFallback);
-      const sliceLen = EXPLORE_PAGE_SIZE;
+      const sliceLen = limit;
       response = {
         items: sorted.slice(0, sliceLen),
         total: sorted.length,

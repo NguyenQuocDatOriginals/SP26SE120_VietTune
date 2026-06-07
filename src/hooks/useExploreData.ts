@@ -17,6 +17,7 @@ type Params = {
   isAuthenticated: boolean;
   /** Increment to force refetch (e.g. semantic retry). */
   reloadTick?: number;
+  pageSize?: number;
 };
 
 export function useExploreData({
@@ -26,6 +27,7 @@ export function useExploreData({
   sqFromUrl,
   isAuthenticated,
   reloadTick = 0,
+  pageSize,
 }: Params) {
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export function useExploreData({
           filters,
           sqActive: sqFromUrl.trim(),
           isAuthenticated,
+          pageSize,
         });
         if (cancelled || controller.signal.aborted) return;
         setRecordings(r.recordings);
@@ -93,7 +96,7 @@ export function useExploreData({
       cancelled = true;
       controller.abort();
     };
-  }, [currentPage, exploreMode, filters, isAuthenticated, sqFromUrl, reloadTick]);
+  }, [currentPage, exploreMode, filters, isAuthenticated, sqFromUrl, reloadTick, pageSize]);
 
   return {
     recordings,

@@ -48,12 +48,24 @@ Tài liệu này ghi lại các thay đổi và sửa chữa đã được thự
   - Thêm phương án dự phòng (fallback) hiển thị ảnh bìa `recording.coverImage` dưới dạng thẻ ảnh độc lập nếu bản ghi không có album ảnh tải lên nhưng có liên kết ảnh bìa.
   - Đặt cấu trúc hiển thị chính xác ở sidebar phía dưới card "Thông tin" và phía trên card "Nhạc cụ".
 
-### 9. Sửa Lỗi Nội Dung Bị Đẩy Lên Sát Header (Spacing/Layout)
-- **Vấn đề:** Ở tất cả các trang, do Header được cố định (`fixed top-0`), nội dung chính (`<main>`) phải dùng `padding-top` để chừa khoảng trống. Tuy nhiên, khoảng đệm `pt-32` (128px) ở mobile/tablet và `lg:pt-40` (160px) ở desktop trước đây quá nhỏ, dẫn đến nội dung chính (như tiêu đề trang Explore) bị đẩy sát lên trên, sát vào mép dưới của Header.
+### 9. Điều Chỉnh Khoảng Cách Từ Navbar Đến Nội Dung Dưới (Spacing/Layout)
+- **Yêu cầu:** Giảm độ khoảng cách (gap) của navbar và nội dung bên dưới bằng 1/3 so với hiện tại.
 - **Đã sửa (`src/components/layout/MainLayout.tsx`):**
-  - Tăng khoảng đệm `padding-top` của thẻ `<main>` từ `pt-32 lg:pt-40` lên thành `pt-36 lg:pt-48` (tương đương 144px cho mobile/tablet và 192px cho desktop). Thay đổi này giúp tạo ra một khoảng trống an toàn, thoáng đãng và chuẩn mực giữa Header và nội dung ở mọi độ rộng màn hình.
+  - Điều chỉnh `padding-top` của thẻ `<main>` từ `pt-36 lg:pt-48` (144px cho mobile, 192px cho desktop) xuống còn `pt-24 lg:pt-32` (96px cho mobile, 128px cho desktop). Việc giảm này tương đương với đúng 1/3 lượng padding ban đầu, mang lại giao diện cân đối và gọn gàng hơn.
+
+### 10. Phân Trang Cho Search Với Filter Cho Contributor Và Researcher
+- **Yêu cầu:** Thiết lập phân trang (10 bản ghi một trang) cho phần tìm kiếm có bộ lọc đối với cả hai vai trò Contributor và Researcher.
+- **Đã sửa:**
+  - **`src/pages/ExplorePage.tsx`**: Xác định động giá trị `pageSize` dựa vào vai trò người dùng (10 đối với `UserRole.CONTRIBUTOR` và `UserRole.RESEARCHER`, và 20 đối với khách hoặc các vai trò khác). Chuyển tham số này vào hook `useExploreData` và cập nhật cách tính tổng số trang (`totalPages`). Tính toán động chỉ số bản ghi đầu/cuối của trang đang xem và hiển thị thông tin dạng `"Đang hiển thị X-Y (trên Z bản ghi)"` phía dưới tổng số kết quả.
+  - **`src/hooks/useExploreData.ts`**: Tiếp nhận tham số `pageSize` và chuyển tiếp cho helper `loadExploreRecordings`.
+  - **`src/features/explore/utils/exploreRecordingsLoad.ts`**: Nhận `pageSize` trong cấu hình `ExploreLoadInput` (mặc định là `EXPLORE_PAGE_SIZE = 20` nếu không có) và áp dụng làm giới hạn (limit) cho mọi thao tác cắt mảng cục bộ (semantic search fallback) cũng như truyền xuống tham số giới hạn phân trang của các API tìm kiếm (`getGuestRecordingsByFilter` và `searchRecordings`).
 
 ---
-**Tình Trạng:** Hoàn thành tốt. Trang kiểm duyệt Expert đã gọi chuẩn các API Server bằng `submissionId` thay vì `recordingId`, loại bỏ hoàn toàn lỗi 400/409. Trang chi tiết bản ghi của Contributor và Researcher đã hiển thị đầy đủ hình ảnh/ảnh bìa ở vị trí yêu cầu trong sidebar. Các trang đã được điều chỉnh padding để chừa khoảng trống hợp lý và đẹp mắt dưới thanh Header.
+**Tình Trạng:** Hoàn thành xuất sắc.
+- Expert Moderation API đã chuyển đổi hoàn toàn sang sử dụng `submissionId`.
+- Đã hiển thị hình ảnh bản ghi ở sidebar trang chi tiết bản ghi (cho Contributor & Researcher).
+- Layout spacing giữa header và content đã được tối ưu giảm đi 1/3 (còn `pt-24 lg:pt-32`).
+- Đã triển khai phân trang 10 records/trang khi thực hiện tìm kiếm có bộ lọc đối với cả Contributor và Researcher.
+- Đã bổ sung nhãn thông báo chi tiết phạm vi bản ghi đang hiển thị ở trang hiện tại (dạng `"Đang hiển thị 1-10 (trên 32 bản thu)"`).
 
 
