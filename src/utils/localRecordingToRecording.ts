@@ -163,6 +163,12 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
   if (regionNameExtra) extras.regionName = regionNameExtra;
   if (communeLabel) extras.communeName = communeLabel;
   if (evt) extras.ceremonyName = evt;
+  const recordingLocation = local.basicInfo?.recordingLocation?.trim();
+  if (recordingLocation) extras.recordingLocation = recordingLocation;
+  const composer = local.basicInfo?.composer?.trim();
+  if (composer) extras.composer = composer;
+  const language = local.basicInfo?.language?.trim();
+  if (language) extras.language = language;
 
   return { ...base, ...extras } as Recording;
 }

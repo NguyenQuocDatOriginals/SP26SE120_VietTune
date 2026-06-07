@@ -252,11 +252,7 @@ export function unwrapServiceResponse<T>(input: unknown): T | null {
  * OpenAPI `RecordingDto` (VietTuneArchive v1) — additionalProperties: false.
  * Only keys allowed by the spec are sent; omit undefined optional fields.
  */
-export type RecordingUploadDto = ApiRecordingDto & {
-  composer?: string | null;
-  language?: string | null;
-  recordingLocation?: string | null;
-};
+export type RecordingUploadDto = ApiRecordingDto;
 
 function isLikelyUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim());
@@ -286,6 +282,9 @@ export function sanitizeRecordingDtoForUpload(dto: RecordingUploadDto): ApiRecor
     'lyricsVietnamese',
     'performerName',
     'performerAge',
+    'composer',
+    'language',
+    'recordingLocation',
     'recordingDate',
     'gpsLatitude',
     'gpsLongitude',
@@ -337,6 +336,9 @@ export function buildRecordingUploadPayload(recording: LocalRecording): Record<s
         : null,
     durationSeconds: duration ?? null,
     performerName: recording.basicInfo?.artist ?? null,
+    composer: recording.basicInfo?.composer ?? null,
+    language: recording.basicInfo?.language ?? null,
+    recordingLocation: recording.basicInfo?.recordingLocation ?? null,
     recordingDate: recording.recordedDate ?? recording.basicInfo?.recordingDate ?? null,
     gpsLatitude: recording.gpsLatitude ?? null,
     gpsLongitude: recording.gpsLongitude ?? null,

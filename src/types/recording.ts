@@ -113,6 +113,8 @@ export interface LocalRecording {
     artist?: string;
     genre?: string;
     recordingDate?: string;
+    composer?: string;
+    language?: string;
     recordingLocation?: string;
   };
   culturalContext?: {

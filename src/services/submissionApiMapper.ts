@@ -213,6 +213,11 @@ export function mapSubmissionToLocalRecording(
         (pickField(rec, 'performerName', 'PerformerName') as string | undefined) ||
         (pickField(x, 'performerName', 'PerformerName') as string | undefined) ||
         (pickField(x, 'submittedBy', 'SubmittedBy') as string | undefined),
+      composer: pickField(rec, 'composer', 'Composer') as string | undefined,
+      language: pickField(rec, 'language', 'Language') as string | undefined,
+      recordingLocation: pickField(rec, 'recordingLocation', 'RecordingLocation') as
+        | string
+        | undefined,
     },
     uploader: {
       id: uploaderId,
