@@ -12,5 +12,8 @@ namespace VietTuneArchive.Application.IServices.IThirdPartyServices
         Task<GraphExplorerPathResponseDto> GetShortestPathAsync(string fromId, string toId, int maxDepth);
         Task<GraphResponseDto> GetOverviewGraphAsync(int maxNodes = 100);
         Task<GraphResponseDto> GetRelationshipGraphAsync(string sourceType, string targetType, int limit = 100);
+        Task<TopConnectedNodesResponseDto> GetTopConnectedNodesAsync(string? group, int limit);
+        Task<MultiShortestPathResponseDto> GetMultiShortestPathAsync(List<string> nodeIds, int maxDepth);
+        Task<CommonPointsResponseDto> GetCommonPointsAsync(string nodeId1, string nodeId2, int maxDepth);
     }
 }

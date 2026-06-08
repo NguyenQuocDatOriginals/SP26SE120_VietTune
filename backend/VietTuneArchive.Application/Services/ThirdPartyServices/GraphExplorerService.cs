@@ -452,6 +452,288 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
             };
         }
 
+        public async Task<TopConnectedNodesResponseDto> GetTopConnectedNodesAsync(string? group, int limit)
+        {
+            limit = Math.Clamp(limit, 1, 100);
+
+            var query = @"
+                MATCH (n)
+                WHERE ($group IS NULL OR $group IN labels(n)) AND n.Id IS NOT NULL
+                RETURN 
+                  n.Id AS id,
+                  coalesce(n.Name, n.Title, '') AS label,
+                  coalesce(labels(n)[0], '') AS group,
+                  COUNT { (n)--() } AS degreeCount
+                ORDER BY degreeCount DESC
+                LIMIT $limit";
+
+            await using var session = _neo4jDriver.AsyncSession();
+            var rankList = new List<ConnectedNodeRankDto>();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { group = string.IsNullOrEmpty(group) ? null : group, limit });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    rankList.Add(new ConnectedNodeRankDto
+                    {
+                        Id = record["id"]?.ToString() ?? "",
+                        Label = record["label"]?.ToString() ?? "",
+                        Group = record["group"]?.ToString() ?? "",
+                        DegreeCount = record["degreeCount"].As<int>()
+                    });
+                }
+            });
+
+            return new TopConnectedNodesResponseDto
+            {
+                Group = group,
+                Limit = limit,
+                RankList = rankList
+            };
+        }
+
+        public async Task<MultiShortestPathResponseDto> GetMultiShortestPathAsync(List<string> nodeIds, int maxDepth)
+        {
+            maxDepth = Math.Clamp(maxDepth, 1, 10);
+
+            // 1. Generate all unique pairs (i, j) with i < j
+            var pairs = nodeIds
+                .SelectMany((fromId, i) => nodeIds
+                    .Skip(i + 1)
+                    .Select(toId => new Dictionary<string, string>
+                    {
+                        ["fromId"] = fromId,
+                        ["toId"]   = toId
+                    }))
+                .ToList();
+
+            var query = $@"
+                UNWIND $pairs AS pair
+                MATCH (from), (to)
+                WHERE from.Id = pair.fromId AND to.Id = pair.toId
+                OPTIONAL MATCH path = shortestPath((from)-[*..{maxDepth}]-(to))
+                RETURN
+                  pair.fromId AS fromId,
+                  pair.toId   AS toId,
+                  path IS NOT NULL AS pathFound,
+                  CASE WHEN path IS NOT NULL THEN length(path) ELSE null END AS pathLength,
+                  CASE WHEN path IS NOT NULL
+                       THEN [n IN nodes(path) | {{ id: n.Id, label: coalesce(n.Name, n.Title, ''), group: labels(n)[0] }}]
+                       ELSE []
+                  END AS nodes,
+                  CASE WHEN path IS NOT NULL
+                       THEN [r IN relationships(path) | {{ source: startNode(r).Id, target: endNode(r).Id, type: type(r) }}]
+                       ELSE []
+                  END AS links";
+
+            await using var session = _neo4jDriver.AsyncSession();
+            var pairPaths = new List<PairPathResultDto>();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query, new { pairs });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var fromId = record["fromId"]?.ToString() ?? "";
+                    var toId = record["toId"]?.ToString() ?? "";
+                    var pathFound = record["pathFound"].As<bool>();
+                    int? pathLength = null;
+                    if (pathFound && record["pathLength"] != null)
+                    {
+                        pathLength = record["pathLength"].As<int>();
+                    }
+
+                    var nodesData = record["nodes"] as IEnumerable<object>;
+                    var linksData = record["links"] as IEnumerable<object>;
+
+                    var nodes = new List<GraphNodeDto>();
+                    var links = new List<GraphLinkDto>();
+
+                    if (nodesData != null)
+                    {
+                        foreach (var item in nodesData)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                nodes.Add(new GraphNodeDto
+                                {
+                                    Id = dict.ContainsKey("id") ? dict["id"]?.ToString() ?? "" : "",
+                                    Label = dict.ContainsKey("label") ? dict["label"]?.ToString() ?? "" : "",
+                                    Group = dict.ContainsKey("group") ? dict["group"]?.ToString() ?? "" : ""
+                                });
+                            }
+                        }
+                    }
+
+                    if (linksData != null)
+                    {
+                        foreach (var item in linksData)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                links.Add(new GraphLinkDto
+                                {
+                                    Source = dict.ContainsKey("source") ? dict["source"]?.ToString() ?? "" : "",
+                                    Target = dict.ContainsKey("target") ? dict["target"]?.ToString() ?? "" : "",
+                                    Type = dict.ContainsKey("type") ? dict["type"]?.ToString() ?? "" : ""
+                                });
+                            }
+                        }
+                    }
+
+                    pairPaths.Add(new PairPathResultDto
+                    {
+                        FromId = fromId,
+                        ToId = toId,
+                        PathFound = pathFound,
+                        PathLength = pathLength,
+                        Nodes = nodes,
+                        Links = links
+                    });
+                }
+            });
+
+            return new MultiShortestPathResponseDto
+            {
+                Pairs = pairPaths
+            };
+        }
+
+        public async Task<CommonPointsResponseDto> GetCommonPointsAsync(string nodeId1, string nodeId2, int maxDepth)
+        {
+            maxDepth = Math.Clamp(maxDepth, 1, 3);
+
+            var response = new CommonPointsResponseDto
+            {
+                NodeId1 = nodeId1,
+                NodeId2 = nodeId2,
+                MaxDepth = maxDepth,
+                CommonNodesCount = 0
+            };
+
+            var startNodesQuery = @"
+                MATCH (n)
+                WHERE n.Id IN [$nodeId1, $nodeId2]
+                RETURN n.Id AS id, coalesce(n.Name, n.Title, '') AS label, labels(n)[0] AS group";
+
+            var startNodesDict = new Dictionary<string, GraphNodeDto>();
+
+            await using var session = _neo4jDriver.AsyncSession();
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(startNodesQuery, new { nodeId1, nodeId2 });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var id = record["id"]?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        startNodesDict[id] = new GraphNodeDto
+                        {
+                            Id = id,
+                            Label = record["label"]?.ToString() ?? "",
+                            Group = record["group"]?.ToString() ?? ""
+                        };
+                    }
+                }
+            });
+
+            if (!startNodesDict.ContainsKey(nodeId1) || !startNodesDict.ContainsKey(nodeId2))
+            {
+                return response;
+            }
+
+            var commonQuery = $@"
+                MATCH (a), (b)
+                WHERE a.Id = $nodeId1 AND b.Id = $nodeId2
+                MATCH p1 = shortestPath((a)-[*..{maxDepth}]-(c))
+                MATCH p2 = shortestPath((b)-[*..{maxDepth}]-(c))
+                WHERE c <> a AND c <> b
+                RETURN 
+                  c.Id AS commonNodeId,
+                  [n IN nodes(p1) + nodes(p2) | {{ id: n.Id, label: coalesce(n.Name, n.Title, ''), group: labels(n)[0] }}] AS pathNodes,
+                  [r IN relationships(p1) + relationships(p2) | {{ source: startNode(r).Id, target: endNode(r).Id, type: type(r) }}] AS pathLinks";
+
+            var nodesDict = new Dictionary<string, GraphNodeDto>();
+            var linksDict = new Dictionary<string, GraphLinkDto>();
+            var commonNodeIds = new HashSet<string>();
+
+            foreach (var kvp in startNodesDict)
+            {
+                nodesDict[kvp.Key] = kvp.Value;
+            }
+
+            await session.ExecuteReadAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(commonQuery, new { nodeId1, nodeId2 });
+                while (await cursor.FetchAsync())
+                {
+                    var record = cursor.Current;
+                    var commonNodeId = record["commonNodeId"]?.ToString();
+                    if (!string.IsNullOrEmpty(commonNodeId))
+                    {
+                        commonNodeIds.Add(commonNodeId);
+                    }
+
+                    var pathNodes = record["pathNodes"] as IEnumerable<object>;
+                    var pathLinks = record["pathLinks"] as IEnumerable<object>;
+
+                    if (pathNodes != null)
+                    {
+                        foreach (var item in pathNodes)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                var id = dict.ContainsKey("id") ? dict["id"]?.ToString() ?? "" : "";
+                                if (!string.IsNullOrEmpty(id) && !nodesDict.ContainsKey(id))
+                                {
+                                    nodesDict[id] = new GraphNodeDto
+                                    {
+                                        Id = id,
+                                        Label = dict.ContainsKey("label") ? dict["label"]?.ToString() ?? "" : "",
+                                        Group = dict.ContainsKey("group") ? dict["group"]?.ToString() ?? "" : ""
+                                    };
+                                }
+                            }
+                        }
+                    }
+
+                    if (pathLinks != null)
+                    {
+                        foreach (var item in pathLinks)
+                        {
+                            if (item is IDictionary<string, object> dict)
+                            {
+                                var source = dict.ContainsKey("source") ? dict["source"]?.ToString() ?? "" : "";
+                                var target = dict.ContainsKey("target") ? dict["target"]?.ToString() ?? "" : "";
+                                var type = dict.ContainsKey("type") ? dict["type"]?.ToString() ?? "" : "";
+                                var key = $"{source}-{target}-{type}";
+                                if (!string.IsNullOrEmpty(source) && !string.IsNullOrEmpty(target) && !linksDict.ContainsKey(key))
+                                {
+                                    linksDict[key] = new GraphLinkDto
+                                    {
+                                        Source = source,
+                                        Target = target,
+                                        Type = type
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            response.CommonNodesCount = commonNodeIds.Count;
+            response.Nodes = nodesDict.Values.ToList();
+            response.Links = linksDict.Values.ToList();
+
+            return response;
+        }
+
         private GraphNodeDto MapNode(INode node, string guid)
         {
             var properties = node.Properties;
