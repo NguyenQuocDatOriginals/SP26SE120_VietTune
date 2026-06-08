@@ -139,17 +139,16 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
                 MATCH (n)
                 WHERE n.Id = $id
                 OPTIONAL MATCH (n)-[r]-(neighbor)
-                WITH n, r, neighbor
+                WITH n, type(r) AS relType, r, neighbor
                 ORDER BY neighbor.Name ASC, neighbor.Title ASC
-                WITH n,
-                     collect(DISTINCT {
-                       relType: type(r),
-                       direction: CASE WHEN startNode(r) = n THEN 'OUT' ELSE 'IN' END,
-                       neighborId: neighbor.Id,
-                       neighborLabel: coalesce(neighbor.Name, neighbor.Title, ''),
-                       neighborGroup: labels(neighbor)[0]
-                     })[0..20] AS neighbors
-                RETURN n, neighbors, COUNT { (n)--() } AS degree";
+                WITH n, relType, collect(DISTINCT {
+                  relType: relType,
+                  direction: CASE WHEN startNode(r) = n THEN 'OUT' ELSE 'IN' END,
+                  neighborId: neighbor.Id,
+                  neighborLabel: coalesce(neighbor.Name, neighbor.Title, ''),
+                  neighborGroup: labels(neighbor)[0]
+                })[0..50] AS relNeighbors
+                RETURN n, collect(relNeighbors) AS neighbors, COUNT { (n)--() } AS degree";
 
             await using var session = _neo4jDriver.AsyncSession();
             GraphExplorerNodeDetailDto? detail = null;
@@ -201,6 +200,26 @@ namespace VietTuneArchive.Application.Services.ThirdPartyServices
                                     RelationType = dict.ContainsKey("relType") ? dict["relType"]?.ToString() ?? "" : "",
                                     Direction = dict.ContainsKey("direction") ? dict["direction"]?.ToString() ?? "" : ""
                                 });
+                            }
+                            else if (item is IEnumerable<object> subList)
+                            {
+                                foreach (var subItem in subList)
+                                {
+                                    if (subItem is IDictionary<string, object> subDict)
+                                    {
+                                        var nId = subDict.ContainsKey("neighborId") ? subDict["neighborId"]?.ToString() ?? "" : "";
+                                        if (string.IsNullOrEmpty(nId)) continue;
+
+                                        neighborsList.Add(new GraphExplorerNeighborSummaryDto
+                                        {
+                                            Id = nId,
+                                            Label = subDict.ContainsKey("neighborLabel") ? subDict["neighborLabel"]?.ToString() ?? "" : "",
+                                            Group = subDict.ContainsKey("neighborGroup") ? subDict["neighborGroup"]?.ToString() ?? "" : "",
+                                            RelationType = subDict.ContainsKey("relType") ? subDict["relType"]?.ToString() ?? "" : "",
+                                            Direction = subDict.ContainsKey("direction") ? subDict["direction"]?.ToString() ?? "" : ""
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
