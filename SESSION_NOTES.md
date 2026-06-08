@@ -61,11 +61,22 @@ Tài liệu này ghi lại các thay đổi và sửa chữa đã được thự
   - **`src/features/explore/utils/exploreRecordingsLoad.ts`**: Nhận `pageSize` trong cấu hình `ExploreLoadInput` (mặc định là `EXPLORE_PAGE_SIZE = 20` nếu không có) và áp dụng làm giới hạn (limit) cho mọi thao tác cắt mảng cục bộ (semantic search fallback) cũng như truyền xuống tham số giới hạn phân trang của các API tìm kiếm (`getGuestRecordingsByFilter` và `searchRecordings`).
 
 ---
+### 11. Cập Nhật Tên Người Đóng Góp, Bản Thu Tương Tự & Sửa Lỗi Hiển Thị Chi Tiết Bản Ghi
+- **Tên Người Đóng Góp (Contributor FullName):** Sử dụng endpoint `/api/User/GetById` để lấy `fullName` thông qua custom hook/component `<ContributorName />` và hiển thị tại các nơi hiển thị "Người đóng góp" trên trang chi tiết bản ghi, danh sách duyệt của expert, và bảng quản trị viên.
+- **Hàng đợi kiểm duyệt (Moderation Queue Sidebar):** Hiển thị tên người đóng góp đã được giải quyết thay cho username cũ hoặc "Khách" ở sidebar bên trái.
+- **Bản thu tương tự (Similar Recordings):** 
+  - Hiển thị đầy đủ các trường thông tin (Nghệ sĩ, Dân tộc, Địa điểm, Thể loại, Nhạc cụ, Người đóng góp, Trạng thái).
+  - Khi click vào bản thu tương tự sẽ mở trang chi tiết bản thu đó trên tab mới (`target="_blank"`).
+  - Hủy bỏ việc nuốt lỗi 400/404 ở hàm `fetchRelatedSubmissions` để hiển thị cảnh báo/thông báo lỗi chi tiết khi API lỗi.
+- **Trang kiểm duyệt (Moderation Page):** Thêm hiệu ứng loading spinner (`LoadingSpinner`) khi dữ liệu hàng đợi kiểm duyệt đang tải thay vì để hiển thị dữ liệu trống.
+- **Chi tiết bản thu (Recording Detail Page):** Đã bổ sung hiển thị các trường `Tác giả / Sáng tác` (Composer), `Ngôn ngữ` (Language), và cập nhật hiển thị `Vị trí ghi âm` (RecordingLocation) bằng cách giải quyết dữ liệu động từ cả gốc của object lẫn nested object `basicInfo` / `_originalLocalData`.
+
+---
 **Tình Trạng:** Hoàn thành xuất sắc.
-- Expert Moderation API đã chuyển đổi hoàn toàn sang sử dụng `submissionId`.
-- Đã hiển thị hình ảnh bản ghi ở sidebar trang chi tiết bản ghi (cho Contributor & Researcher).
-- Layout spacing giữa header và content đã được tối ưu giảm đi 1/3 (còn `pt-24 lg:pt-32`).
-- Đã triển khai phân trang 10 records/trang khi thực hiện tìm kiếm có bộ lọc đối với cả Contributor và Researcher.
-- Đã bổ sung nhãn thông báo chi tiết phạm vi bản ghi đang hiển thị ở trang hiện tại (dạng `"Đang hiển thị 1-10 (trên 32 bản thu)"`).
+- Đã hiển thị Composer, Language, và Location chuẩn trên trang chi tiết bản ghi.
+- Đã cập nhật đầy đủ tên người đóng góp ở mọi vị trí yêu cầu.
+- Đã cấu hình và hiển thị bản thu tương tự (clickable link, target="_blank", đầy đủ fields, hiển thị chi tiết lỗi).
+- Đã bổ sung hiệu ứng loading cho hàng đợi kiểm duyệt.
+- Đã sửa các test unit liên quan để đạt tỷ lệ pass 100%.
 
 

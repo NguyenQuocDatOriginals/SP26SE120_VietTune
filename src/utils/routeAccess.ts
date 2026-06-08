@@ -123,7 +123,7 @@ export function getDefaultPostLoginPath(user: User): string {
     case UserRole.ADMIN:
       return '/admin';
     case UserRole.RESEARCHER:
-      return '/researcher';
+      return '/';
     case UserRole.EXPERT:
       return '/moderation';
     default:

@@ -36,6 +36,15 @@ export const ritualService = {
     return normalizePagedResponse<ApiCeremonyDto>(res).items;
   },
 
+  searchCeremoniesByName: async (name: string) => {
+    const res = await apiOk(
+      asApiEnvelope(
+        apiFetch.GET('/api/Ceremony/search-by-name', { params: { query: { name } } }),
+      ),
+    );
+    return unwrapServiceResponse<ApiCeremonyDto[]>(res) ?? [];
+  },
+
   createCeremony: async (data: Partial<ApiCeremonyDto>) => {
     const res = await apiOk<ApiServiceResponseCeremonyDto>(
       asApiEnvelope<ApiServiceResponseCeremonyDto>(

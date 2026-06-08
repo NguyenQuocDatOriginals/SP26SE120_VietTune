@@ -267,8 +267,7 @@ export async function fetchRelatedSubmissions(submissionId: string): Promise<Loc
     );
     return extractSubmissionRows(res).map((row) => mapSubmissionToLocalRecording(row, lookups));
   } catch (err: unknown) {
-    const status = getHttpStatus(err);
-    if (status === 400 || status === 404) return [];
+    console.error('fetchRelatedSubmissions error:', err);
     throw err;
   }
 }

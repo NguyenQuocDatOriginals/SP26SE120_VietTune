@@ -43,12 +43,6 @@ export default function MainLayout() {
     return isIOS || prefersReducedMotion ? 'scroll' : 'fixed';
   }, []);
 
-  // Researcher: trang chủ là Cổng nghiên cứu — chuyển "/" sang "/researcher" nếu đã xác thực và kích hoạt
-  useEffect(() => {
-    if (location.pathname === '/' && user?.role === UserRole.RESEARCHER && user?.isActive) {
-      navigate('/researcher', { replace: true });
-    }
-  }, [location.pathname, user?.role, user?.isActive, navigate]);
 
   // Expert: trang chủ là Kiểm duyệt — chuyển "/" sang "/moderation" nếu đã xác thực và kích hoạt
   useEffect(() => {
@@ -63,8 +57,7 @@ export default function MainLayout() {
     const skipSave =
       currentPath === '/login' ||
       currentPath === '/register' ||
-      (currentPath === '/' &&
-        (user?.role === UserRole.RESEARCHER || user?.role === UserRole.EXPERT));
+      (currentPath === '/' && user?.role === UserRole.EXPERT);
     if (!skipSave) {
       void setItem('lastVisitedPage', currentPath);
     }

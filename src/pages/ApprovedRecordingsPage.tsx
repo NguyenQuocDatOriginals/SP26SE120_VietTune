@@ -2,6 +2,7 @@ import { Edit, Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ContributorName } from '@/hooks/useUserFullName';
 import BackButton from '@/components/common/BackButton';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import AudioPlayer from '@/components/features/AudioPlayer';
@@ -200,7 +201,11 @@ export default function ApprovedRecordingsPage() {
               Nghệ sĩ: {it.basicInfo?.artist || 'Không rõ'}
             </div>
             <div className="text-sm text-neutral-600 mb-1">
-              Người đóng góp: {it.uploader?.username || 'Khách'}
+              Người đóng góp:{' '}
+              <ContributorName
+                userId={it.uploader?.id}
+                fallback={it.uploader?.fullName || it.uploader?.username}
+              />
             </div>
             <div className="text-sm text-neutral-500 mb-1">
               Thời điểm tải lên: {formatDateTime(it.uploadedDate)}
@@ -458,8 +463,9 @@ export default function ApprovedRecordingsPage() {
                   <div>
                     <p className="font-medium text-neutral-900">{sub.recordingTitle}</p>
                     <p className="text-sm text-neutral-600">
-                      Người đóng góp: {sub.contributorName} · Gửi lúc:{' '}
-                      {formatViDateTimeShortBangkok(sub.submittedAt)}
+                      Người đóng góp:{' '}
+                      <ContributorName userId={sub.contributorId} fallback={sub.contributorName} />{' '}
+                      · Gửi lúc: {formatViDateTimeShortBangkok(sub.submittedAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -506,8 +512,9 @@ export default function ApprovedRecordingsPage() {
                   <div>
                     <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
                     <p className="text-sm text-neutral-600">
-                      Người đóng góp: {req.contributorName} · Yêu cầu lúc:{' '}
-                      {formatViDateTimeShortBangkok(req.requestedAt)}
+                      Người đóng góp:{' '}
+                      <ContributorName userId={req.contributorId} fallback={req.contributorName} />{' '}
+                      · Yêu cầu lúc: {formatViDateTimeShortBangkok(req.requestedAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

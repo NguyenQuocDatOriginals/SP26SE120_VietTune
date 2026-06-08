@@ -12,9 +12,10 @@ import { uiToast, notifyLine } from '@/uiToast';
 interface UseMasterDataEntityOptions {
   kind: EntityKind;
   pageSize?: number;
+  searchQuery?: string;
 }
 
-export function useMasterDataEntity({ kind, pageSize = 50 }: UseMasterDataEntityOptions) {
+export function useMasterDataEntity({ kind, pageSize = 50, searchQuery = '' }: UseMasterDataEntityOptions) {
   const [items, setItems] = useState<ReferenceEntity<Record<string, unknown>>[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -23,11 +24,11 @@ export function useMasterDataEntity({ kind, pageSize = 50 }: UseMasterDataEntity
 
   const { invalidateCache } = useMasterDataInvalidation();
 
-  const fetchItems = useCallback(async (targetPage: number) => {
+  const fetchItems = useCallback(async (targetPage: number, search = searchQuery) => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await masterDataService.list(kind, targetPage, pageSize);
+      const result = await masterDataService.list(kind, targetPage, pageSize, search);
       setItems(result.items);
       setTotal(result.total);
       setPage(targetPage);
@@ -37,11 +38,11 @@ export function useMasterDataEntity({ kind, pageSize = 50 }: UseMasterDataEntity
     } finally {
       setIsLoading(false);
     }
-  }, [kind, pageSize]);
+  }, [kind, pageSize, searchQuery]);
 
   useEffect(() => {
-    void fetchItems(1);
-  }, [fetchItems]);
+    void fetchItems(1, searchQuery);
+  }, [fetchItems, searchQuery]);
 
   const createItem = async (data: EntityFormValues) => {
     try {

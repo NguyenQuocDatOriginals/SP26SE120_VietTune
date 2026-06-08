@@ -1,6 +1,7 @@
 import { FileEdit, Trash2, UserMinus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { ContributorName } from '@/hooks/useUserFullName';
 import { ExpertSelectDropdown } from '@/components/admin/AdminDashboardDropdowns';
 import { formatViDateTimeShortBangkok } from '@/config/datetimeDisplay';
 import { recordingRequestService } from '@/services/recordingRequestService';
@@ -62,7 +63,12 @@ export function AdminRecordingRequestsPanel({
                     <div>
                       <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
                       <p className="text-sm text-neutral-600">
-                        Người đóng góp: {req.contributorName} ·{' '}
+                        Người đóng góp:{' '}
+                        <ContributorName
+                          userId={req.contributorId}
+                          fallback={req.contributorName}
+                        />{' '}
+                        ·{' '}
                         {formatViDateTimeShortBangkok(req.requestedAt)}
                       </p>
                     </div>
@@ -145,7 +151,12 @@ export function AdminRecordingRequestsPanel({
                     <div>
                       <p className="font-medium text-neutral-900">{req.recordingTitle}</p>
                       <p className="text-sm text-neutral-600">
-                        Người đóng góp: {req.contributorName} ·{' '}
+                        Người đóng góp:{' '}
+                        <ContributorName
+                          userId={req.contributorId}
+                          fallback={req.contributorName}
+                        />{' '}
+                        ·{' '}
                         {formatViDateTimeShortBangkok(req.requestedAt)}
                       </p>
                     </div>

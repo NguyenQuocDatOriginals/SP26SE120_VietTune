@@ -95,7 +95,7 @@ export function mapSubmissionToLocalRecording(
         : '';
   const topLevelRecordingId = String(x.recordingId ?? x.RecordingId ?? '').trim();
   const recordingId = recordingEntityId || topLevelRecordingId || '';
-  const id = recordingId || submissionId;
+  const id = submissionId || recordingId;
   const title =
     (pickField(rec, 'title', 'Title') as string | undefined) ||
     (pickField(x, 'title', 'Title') as string | undefined) ||

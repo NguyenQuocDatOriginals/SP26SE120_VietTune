@@ -91,7 +91,7 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
   const tagsWithEvent = evt && !tagsBase.some((t) => t === evt) ? [...tagsBase, evt] : tagsBase;
 
   const base: Recording = {
-    id: local.id ?? 'local-' + Math.random().toString(36).slice(2),
+    id: local.recordingId || local.id || 'local-' + Math.random().toString(36).slice(2),
     title: local.basicInfo?.title || local.title || 'Không có tiêu đề',
     titleVietnamese: local.basicInfo?.title || local.title || 'Không có tiêu đề',
     description: local.description || 'Bản thu được tải lên từ thiết bị của bạn',

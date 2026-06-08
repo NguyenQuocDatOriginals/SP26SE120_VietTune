@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import AnnotationPanel from '@/components/features/annotation/AnnotationPanel';
 import KnowledgeBasePanel from '@/components/features/kb/KnowledgeBasePanel';
 import ModerationAITab from '@/components/features/moderation/ModerationAITab';
@@ -54,7 +55,7 @@ export default function ModerationPage() {
   const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
   const [queueSearchQuery, setQueueSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<ModerationStageFilterKey>('ALL');
-  const { items, setItems, allItems, setAllItems, load, queueStatusMeta } = useExpertQueue({
+  const { items, setItems, allItems, setAllItems, load, queueStatusMeta, loading: queueLoading } = useExpertQueue({
     userId: user?.id,
     statusFilter,
     dateSort,
@@ -634,7 +635,16 @@ export default function ModerationPage() {
         <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-amber-200/70 backdrop-blur-sm mb-6 sm:mb-8 transition-all duration-300 min-w-0 overflow-x-hidden bg-white/80">
           <ModerationExpertTabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {/* Tab: Xem duyệt bản thu */}
+          {queueLoading ? (
+            <div className="flex min-h-[450px] items-center justify-center p-8 bg-surface-panel/30">
+              <div className="text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-3 text-sm font-medium text-neutral-600">Đang tải dữ liệu kiểm duyệt...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Tab: Xem duyệt bản thu */}
           {activeTab === 'review' && (
             <ModerationReviewTab
               queueStatusMeta={queueStatusMeta}
@@ -723,7 +733,7 @@ export default function ModerationPage() {
               detailContent={(() => {
                 const listItem = allItems.find((i) => i.id === selectedId);
                 const item = mergeDisplayItem(listItem, selectedItemFull);
-                const recordingId = item?.id ?? selectedId;
+                const recordingId = item?.recordingId || item?.id || selectedId;
                 if (!item || !recordingId) return null;
                 return (
                   <div className="space-y-4">
@@ -744,6 +754,8 @@ export default function ModerationPage() {
                 );
               })()}
             />
+          )}
+          </>
           )}
         </div>
 

@@ -25,6 +25,15 @@ export const ethnicityService = {
     return unwrapServiceResponse<ApiEthnicGroupDto>(res);
   },
 
+  searchEthnicitiesByName: async (name: string) => {
+    const res = await apiOk(
+      asApiEnvelope(
+        apiFetch.GET('/api/EthnicGroup/search-by-name', { params: { query: { name } } }),
+      ),
+    );
+    return unwrapServiceResponse<ApiEthnicGroupDto[]>(res) ?? [];
+  },
+
   createEthnicity: async (data: Partial<ApiEthnicGroupDto>) => {
     const res = await apiOk<ApiServiceResponseEthnicGroupDto>(
       asApiEnvelope<ApiServiceResponseEthnicGroupDto>(

@@ -14,7 +14,6 @@ import { useMasterDataEntity } from '../hooks/useMasterDataEntity';
 import { masterDataService } from '../services/masterDataService';
 import type { EntityKind, ReferenceEntity, EntityFormValues } from '../types/masterDataTypes';
 import { entityConfigs } from '../utils/entityFieldConfig';
-import { normalizeSlug } from '../utils/slugNormalizer';
 
 import BackButton from '@/components/common/BackButton';
 import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
@@ -40,12 +39,12 @@ export function MasterDataPage() {
     createItem,
     updateItem,
     deleteItem,
-  } = useMasterDataEntity({ kind: currentKind, pageSize: 20 });
+  } = useMasterDataEntity({ kind: currentKind, pageSize: 20, searchQuery: debouncedSearch });
 
   const config = entityConfigs[currentKind];
 
   const handlePageChange = (newPage: number) => {
-    void fetchItems(newPage);
+    void fetchItems(newPage, debouncedSearch);
   };
 
   const handleAddClick = () => {
@@ -99,11 +98,7 @@ export function MasterDataPage() {
     }
   };
 
-  const filteredItems = useMemo(() => {
-    if (!debouncedSearch) return items;
-    const searchSlug = normalizeSlug(debouncedSearch);
-    return items.filter((item: ReferenceEntity<Record<string, unknown>>) => normalizeSlug(item.name).includes(searchSlug));
-  }, [items, debouncedSearch]);
+  const filteredItems = items;
 
   const adminBreadcrumbItems = useMemo(
     () => buildAdminBreadcrumbItems(location.pathname, null),

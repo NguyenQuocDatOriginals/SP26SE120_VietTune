@@ -36,6 +36,15 @@ export const vocalStyleService = {
     return normalizePagedResponse<ApiVocalStyleDto>(res).items;
   },
 
+  searchVocalStylesByName: async (name: string) => {
+    const res = await apiOk(
+      asApiEnvelope(
+        apiFetch.GET('/api/VocalStyle/search-by-name', { params: { query: { name } } }),
+      ),
+    );
+    return unwrapServiceResponse<ApiVocalStyleDto[]>(res) ?? [];
+  },
+
   createVocalStyle: async (data: Partial<ApiVocalStyleDto>) => {
     const res = await apiOk<ApiServiceResponseVocalStyleDto>(
       asApiEnvelope<ApiServiceResponseVocalStyleDto>(

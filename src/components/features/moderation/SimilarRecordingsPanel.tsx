@@ -1,5 +1,6 @@
-import { Loader2, Music, MapPin } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
+import { ContributorName } from '@/hooks/useUserFullName';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import { getModerationStatusLabel } from '@/utils/helpers';
 
@@ -48,23 +49,78 @@ export default function SimilarRecordingsPanel({
       ) : null}
 
       {!loading && !error && items.length > 0 ? (
-        <ul className="space-y-2" aria-label="Danh sách bản thu tương tự">
+        <ul className="space-y-3" aria-label="Danh sách bản thu tương tự">
           {items.map((item) => (
-            <li key={item.id} className="rounded-xl border border-neutral-200 bg-white px-3 py-2">
-              <p className="text-sm font-medium text-neutral-900">{resolveTitle(item)}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-neutral-600">
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {item.culturalContext?.province || item.culturalContext?.region || '—'}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Music className="h-3.5 w-3.5" />
-                  {(item.culturalContext?.instruments ?? []).slice(0, 2).join(', ') || '—'}
-                </span>
-              </div>
-              <p className="mt-1 text-[11px] text-neutral-500">
-                Trạng thái: {getModerationStatusLabel(item.moderation?.status)}
-              </p>
+            <li
+              key={item.id}
+              className="rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors shadow-sm"
+            >
+              <a
+                href={`/recordings/${item.recordingId || item.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-3.5 space-y-2 cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-primary-700 hover:text-primary-800 transition-colors">
+                    {resolveTitle(item)}
+                  </p>
+                  <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-medium bg-neutral-100 text-neutral-800 border border-neutral-200">
+                    {getModerationStatusLabel(item.moderation?.status)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-neutral-600">
+                  {item.basicInfo?.artist && (
+                    <div>
+                      <span className="font-medium text-neutral-400">Nghệ sĩ:</span>{' '}
+                      <span className="text-neutral-800">{item.basicInfo.artist}</span>
+                    </div>
+                  )}
+                  {item.culturalContext?.ethnicity && (
+                    <div>
+                      <span className="font-medium text-neutral-400">Dân tộc:</span>{' '}
+                      <span className="text-neutral-800">{item.culturalContext.ethnicity}</span>
+                    </div>
+                  )}
+                  {(item.culturalContext?.province || item.culturalContext?.region) && (
+                    <div>
+                      <span className="font-medium text-neutral-400">Địa điểm:</span>{' '}
+                      <span className="text-neutral-800">
+                        {item.culturalContext.province || item.culturalContext.region}
+                      </span>
+                    </div>
+                  )}
+                  {item.basicInfo?.genre && (
+                    <div>
+                      <span className="font-medium text-neutral-400">Thể loại:</span>{' '}
+                      <span className="text-neutral-800">{item.basicInfo.genre}</span>
+                    </div>
+                  )}
+                  {item.culturalContext?.instruments && item.culturalContext.instruments.length > 0 && (
+                    <div className="col-span-1 sm:col-span-2">
+                      <span className="font-medium text-neutral-400">Nhạc cụ:</span>{' '}
+                      <span className="text-neutral-800">
+                        {item.culturalContext.instruments.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {item.uploader && (
+                    <div className="col-span-1 sm:col-span-2">
+                      <span className="font-medium text-neutral-400">Người đóng góp:</span>{' '}
+                      <span className="text-neutral-800">
+                        <ContributorName
+                          userId={item.uploader.id}
+                          fallback={
+                            (item.uploader as { fullName?: string })?.fullName ||
+                            item.uploader.username
+                          }
+                        />
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </a>
             </li>
           ))}
         </ul>
