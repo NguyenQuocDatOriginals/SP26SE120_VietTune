@@ -7,6 +7,7 @@ namespace VietTuneArchive.Application.IServices
     {
         Task<Result<IEnumerable<UserDTO>>> GetAllAsync();
         Task<Result<UserDTO>> GetByIdAsync(Guid id);
+        Task<Result<string>> GetNameByIdAsync(Guid id);
         Task<Result<CreateExpertUserDTO>> AddAsync(CreateExpertUserDTO userDTO);
         Task<Result<UpdateUserDTO>> UpdateAsync(UpdateUserDTO updateUserDTO);
         Task<Result<UpdateInfoDTO>> UpdateInfoAsync(UpdateInfoDTO updateUserDTO);

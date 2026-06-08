@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
@@ -32,6 +32,17 @@ namespace VietTuneArchive.API.Controllers
                 return NotFound();
 
             return Ok(user);
+        }
+
+        [HttpGet("GetNameById")]
+        [Authorize(Roles = "Admin,Contributor,Researcher,Expert")]
+        public async Task<IActionResult> GetNameById(Guid id)
+        {
+            var result = await _userService.GetNameByIdAsync(id);
+            if (!result.IsSuccess)
+                return NotFound(result.Message);
+
+            return Ok(result.Data);
         }
 
         [HttpPut("update-password")]

@@ -40,6 +40,16 @@ namespace VietTuneArchive.Application.Services
             return Result<UserDTO>.Success(dto);
         }
 
+        public async Task<Result<string>> GetNameByIdAsync(Guid id)
+        {
+            var name = await _userRepository.GetNameByIdAsync(id);
+            if (name == null)
+            {
+                return Result<string>.Failure("Người dùng không tồn tại! Kiểm tra lại Id.");
+            }
+            return Result<string>.Success(name, "Lấy tên người dùng thành công.");
+        }
+
         public async Task<Result<CreateExpertUserDTO>> AddAsync(CreateExpertUserDTO expertUserDTO)
         {
             var getByEmail = await _userRepository.GetByEmailAsync(expertUserDTO.Email);

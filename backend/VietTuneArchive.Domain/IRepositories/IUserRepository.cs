@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage;
 using VietTuneArchive.Domain.Entities;
 
 namespace VietTuneArchive.Domain.IRepositories
@@ -9,6 +9,7 @@ namespace VietTuneArchive.Domain.IRepositories
         Task<User?> GetByIdAsync(Guid id);
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByConfirmationTokenAsync(string token);
+        Task<string?> GetNameByIdAsync(Guid id);
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task DeleteAsync(Guid id);

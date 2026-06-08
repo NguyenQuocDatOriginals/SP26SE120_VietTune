@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using VietTuneArchive.Domain.Context;
 using VietTuneArchive.Domain.Entities;
@@ -21,6 +21,14 @@ namespace VietTuneArchive.Domain.Repositories
         public async Task<User?> GetByIdAsync(Guid id)
         {
             return await _context.Users.Where(u => u.Id == id)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<string?> GetNameByIdAsync(Guid id)
+        {
+            return await _context.Users
+                .Where(u => u.Id == id)
+                .Select(u => u.FullName)
                 .FirstOrDefaultAsync();
         }
 
