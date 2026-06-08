@@ -105,6 +105,49 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
+        /// Search ceremonies by name with Vietnamese diacritics support and pagination
+        /// </summary>
+        public async Task<PagedResponse<CeremonyDto>> SearchByNameAsync(string? name, int pageNumber, int pageSize)
+        {
+            try
+            {
+                if (pageNumber < 1)
+                    throw new ArgumentException("Page number must be greater than 0", nameof(pageNumber));
+                if (pageSize < 1)
+                    throw new ArgumentException("Page size must be greater than 0", nameof(pageSize));
+
+                var ceremonies = await _ceremonyRepository.SearchByNameAsync(name);
+                var ceremoniesList = ceremonies.ToList();
+                var total = ceremoniesList.Count;
+
+                var paginatedCeremonies = ceremoniesList
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var dtos = _mapper.Map<List<CeremonyDto>>(paginatedCeremonies);
+                return new PagedResponse<CeremonyDto>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Total = total,
+                    Page = pageNumber,
+                    PageSize = pageSize,
+                    Message = $"Found {total} ceremonies matching: {name}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new PagedResponse<CeremonyDto>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        /// <summary>
         /// Get all ceremony types
         /// </summary>
         public async Task<ServiceResponse<List<string>>> GetAllTypesAsync()

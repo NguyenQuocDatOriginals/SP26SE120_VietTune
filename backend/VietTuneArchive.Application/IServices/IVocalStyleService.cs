@@ -7,6 +7,7 @@ namespace VietTuneArchive.Application.IServices
     {
         Task<ServiceResponse<List<VocalStyleDto>>> GetByEthnicGroupAsync(Guid ethnicGroupId);
         Task<ServiceResponse<List<VocalStyleDto>>> SearchByNameAsync(string? name);
+        Task<PagedResponse<VocalStyleDto>> SearchByNameAsync(string? name, int pageNumber, int pageSize);
         Task<ServiceResponse<List<VocalStyleDto>>> GetWithDescriptionsAsync();
     }
 }

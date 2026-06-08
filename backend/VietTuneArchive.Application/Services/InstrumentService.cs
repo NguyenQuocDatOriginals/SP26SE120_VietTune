@@ -143,6 +143,47 @@ namespace VietTuneArchive.Application.Services
             }
         }
 
+        public async Task<PagedResponse<InstrumentDto>> SearchByNameAsync(string? name, int pageNumber, int pageSize)
+        {
+            try
+            {
+                if (pageNumber < 1)
+                    throw new ArgumentException("Page number must be greater than 0", nameof(pageNumber));
+                if (pageSize < 1)
+                    throw new ArgumentException("Page size must be greater than 0", nameof(pageSize));
+
+                var instruments = await _instrumentRepository.SearchByNameAsync(name);
+                var instrumentsList = instruments.ToList();
+                var total = instrumentsList.Count;
+
+                var paginatedInstruments = instrumentsList
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var dtos = _mapper.Map<List<InstrumentDto>>(paginatedInstruments);
+
+                return new PagedResponse<InstrumentDto>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Total = total,
+                    Page = pageNumber,
+                    PageSize = pageSize,
+                    Message = $"Found {total} instruments matching: {name}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new PagedResponse<InstrumentDto>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
         public async Task<ServiceResponse<List<string>>> GetAllCategoriesAsync()
         {
             try

@@ -35,10 +35,13 @@ namespace VietTuneArchive.API.Controllers
 
         [HttpGet("search-by-name")]
         [AllowAnonymous]
-        public async Task<ActionResult<ServiceResponse<List<CeremonyDto>>>> SearchByName([FromQuery] string? name)
+        public async Task<ActionResult<PagedResponse<CeremonyDto>>> SearchByName(
+            [FromQuery] string? name,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var result = await _service.SearchByNameAsync(name);
-            return result.Success ? Ok(result) : NotFound(result);
+            var result = await _service.SearchByNameAsync(name, page, pageSize);
+            return Ok(result);
         }
 
         [HttpPost]
