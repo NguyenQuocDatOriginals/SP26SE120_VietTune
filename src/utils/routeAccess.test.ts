@@ -58,6 +58,7 @@ describe('routeAccess', () => {
     expect(resolvePostLoginPath(contributor, '/moderation')).toBe('/');
     expect(resolvePostLoginPath(contributor, '/explore')).toBe('/explore');
     expect(getDefaultPostLoginPath(makeUser(UserRole.ADMIN))).toBe('/admin');
+    expect(getDefaultPostLoginPath(makeUser(UserRole.RESEARCHER))).toBe('/');
   });
 
   it('parseSafeRedirectParam rejects open redirects', () => {

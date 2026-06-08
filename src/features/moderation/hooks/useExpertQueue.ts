@@ -15,6 +15,7 @@ export function useExpertQueue(opts: {
   const { userId, statusFilter, dateSort } = opts;
   const [items, setItems] = useState<LocalRecordingMini[]>([]);
   const [allItems, setAllItems] = useState<LocalRecordingMini[]>([]);
+  const [loading, setLoading] = useState(true);
   const queueLoadInFlightRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -40,6 +41,7 @@ export function useExpertQueue(opts: {
       setAllItems([]);
     } finally {
       queueLoadInFlightRef.current = false;
+      setLoading(false);
     }
   }, [userId, statusFilter, dateSort]);
 
@@ -50,6 +52,7 @@ export function useExpertQueue(opts: {
     setItems,
     allItems,
     setAllItems,
+    loading,
     load,
     queueStatusMeta,
   };

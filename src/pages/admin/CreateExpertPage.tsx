@@ -23,22 +23,22 @@ export default function CreateExpertPage() {
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expertForm, setExpertForm] = useState({
-    username: '',
     email: '',
     fullName: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
   const [expertFormErrors, setExpertFormErrors] = useState<{
-    username?: string;
     email?: string;
     fullName?: string;
+    phone?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
   /** One-time on-screen only (not persisted) so admin can copy the initial password. */
   const [expertPasswordRevealOnce, setExpertPasswordRevealOnce] = useState<{
-    username: string;
+    fullName: string;
     email: string;
     password: string;
   } | null>(null);
@@ -71,17 +71,12 @@ export default function CreateExpertPage() {
 
   const validateExpertForm = (): boolean => {
     const errors: {
-      username?: string;
       email?: string;
       fullName?: string;
+      phone?: string;
       password?: string;
       confirmPassword?: string;
     } = {};
-    if (!expertForm.username.trim()) {
-      errors.username = 'Tên người dùng là bắt buộc';
-    } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(expertForm.username.trim())) {
-      errors.username = 'Tên người dùng 3-20 ký tự, chỉ chữ, số và dấu gạch dưới';
-    }
     if (!expertForm.email.trim()) {
       errors.email = 'Email là bắt buộc';
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(expertForm.email.trim())) {
@@ -128,25 +123,26 @@ export default function CreateExpertPage() {
 
     setIsSubmitting(true);
     try {
-      const username = expertForm.username.trim();
+      const fullName = expertForm.fullName.trim();
       const result = await adminApi.createExpert({
         email: expertForm.email.trim(),
         password: expertForm.password,
-        fullName: expertForm.fullName.trim(),
+        fullName,
+        phone: expertForm.phone.trim(),
       });
 
-      writeDevOverride(username);
+      writeDevOverride(expertForm.email.trim().split('@')[0]);
 
       setExpertPasswordRevealOnce({
-        username,
+        fullName,
         email: expertForm.email.trim(),
         password: expertForm.password,
       });
 
       setExpertForm({
-        username: '',
         email: '',
         fullName: '',
+        phone: '',
         password: '',
         confirmPassword: '',
       });
@@ -155,7 +151,7 @@ export default function CreateExpertPage() {
       uiToast.success(
         notifyLine(
           'Thành công',
-          result.message ?? `Đã tạo tài khoản Chuyên gia "${username}" trên máy chủ.`,
+          result.message ?? `Đã tạo tài khoản Chuyên gia "${fullName}" trên máy chủ.`,
         ),
       );
     } catch (err) {
@@ -189,7 +185,7 @@ export default function CreateExpertPage() {
             </p>
             <p className="mb-1">
               <span className="text-neutral-600">Người dùng:</span>{' '}
-              <span className="font-medium">{expertPasswordRevealOnce.username}</span>
+              <span className="font-medium">{expertPasswordRevealOnce.fullName}</span>
             </p>
             <p className="mb-1">
               <span className="text-neutral-600">Email đăng nhập:</span>{' '}
@@ -232,17 +228,16 @@ export default function CreateExpertPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Tên hiển thị (tham chiếu nội bộ)"
-                  value={expertForm.username}
+                  label="Số điện thoại"
+                  value={expertForm.phone}
                   onChange={(e) => {
-                    setExpertForm({ ...expertForm, username: e.target.value });
-                    if (expertFormErrors.username) {
-                      setExpertFormErrors({ ...expertFormErrors, username: undefined });
+                    setExpertForm({ ...expertForm, phone: e.target.value });
+                    if (expertFormErrors.phone) {
+                      setExpertFormErrors({ ...expertFormErrors, phone: undefined });
                     }
                   }}
-                  error={expertFormErrors.username}
-                  required
-                  placeholder="Nhập tên người dùng"
+                  error={expertFormErrors.phone}
+                  placeholder="Nhập số điện thoại"
                 />
                 <Input
                   label="Email"
@@ -321,9 +316,9 @@ export default function CreateExpertPage() {
                   disabled={isSubmitting}
                   onClick={() => {
                     setExpertForm({
-                      username: '',
                       email: '',
                       fullName: '',
+                      phone: '',
                       password: '',
                       confirmPassword: '',
                     });

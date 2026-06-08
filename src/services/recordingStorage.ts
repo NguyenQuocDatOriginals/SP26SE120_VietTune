@@ -77,11 +77,29 @@ export async function getLocalRecordingFull(id: string): Promise<LocalRecording 
     );
     const envelope = res as Record<string, unknown>;
     const x = (envelope?.data ?? envelope?.Data ?? res) as Record<string, unknown> | null;
-    if (!x || typeof x !== 'object') return null;
-    return mapSubmissionToLocalRecording(x);
+    if (x && typeof x !== 'object') {
+      return mapSubmissionToLocalRecording(x);
+    }
   } catch (err) {
-    return null;
+    // Ignore and try recording fallback
   }
+
+  try {
+    const res = await apiOk(
+      asApiEnvelope<Record<string, unknown>>(
+        apiFetch.GET('/api/Submission/{id}', { params: { path: { id } } }),
+      ),
+    );
+    const envelope = res as Record<string, unknown>;
+    const x = (envelope?.data ?? envelope?.Data ?? res) as Record<string, unknown> | null;
+    if (x && typeof x !== 'object') {
+      return mapSubmissionToLocalRecording(x);
+    }
+  } catch (err) {
+    // Ignore
+  }
+
+  return null;
 }
 
 export async function setLocalRecording(recording: LocalRecording): Promise<void> {

@@ -3,6 +3,9 @@ import type {
   GraphExplorerLinkDto,
   GraphExplorerNodeDto,
   GraphExplorerResponseDto,
+  GraphExplorerNeighborSummaryDto,
+  GraphExplorerNodeDetailDto,
+  GraphExplorerPathResponseDto,
 } from '@/types/graphExplorerApi';
 import type { ApiEntityType, GraphLink, GraphNode, GraphNodeType, KnowledgeGraphData } from '@/types/graph';
 
@@ -119,4 +122,101 @@ export function graphExplorerToViewerData(dto: GraphExplorerResponseDto): Knowle
     value: 1,
   }));
   return { nodes, links };
+}
+
+// ── Node Detail parsers ───────────────────────────────────────────────────────
+
+export function parseGraphExplorerNeighborSummary(raw: unknown): GraphExplorerNeighborSummaryDto | null {
+  const p = pickRecord<GraphExplorerNeighborSummaryDto>(raw, [
+    'id', 'label', 'group', 'relationType', 'direction',
+  ]);
+  const id = typeof p.id === 'string' ? p.id.trim() : '';
+  const group = typeof p.group === 'string' ? p.group.trim() : '';
+  const relationType = typeof p.relationType === 'string' ? p.relationType.trim() : '';
+  const direction = p.direction === 'IN' || p.direction === 'OUT' ? p.direction : 'OUT';
+  if (!id || !group) return null;
+  return {
+    id,
+    label: typeof p.label === 'string' ? p.label.trim() : id,
+    group,
+    relationType: relationType || 'RELATED',
+    direction,
+  };
+}
+
+export function parseGraphExplorerNodeDetail(raw: unknown): GraphExplorerNodeDetailDto | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const id = (o.id ?? o.Id);
+  const label = (o.label ?? o.Label);
+  const group = (o.group ?? o.Group);
+  const degreeCount = (o.degreeCount ?? o.DegreeCount);
+  const neighborsRaw = o.neighbors ?? o.Neighbors;
+  const propertiesRaw = o.properties ?? o.Properties;
+
+  if (typeof id !== 'string' || !id.trim()) return null;
+  if (typeof group !== 'string' || !group.trim()) return null;
+
+  const neighbors = Array.isArray(neighborsRaw)
+    ? (neighborsRaw.map(parseGraphExplorerNeighborSummary).filter(Boolean) as GraphExplorerNeighborSummaryDto[])
+    : [];
+
+  return {
+    id: id.trim(),
+    label: typeof label === 'string' ? label.trim() : id.trim(),
+    group: group.trim(),
+    properties: propertiesRaw && typeof propertiesRaw === 'object'
+      ? (propertiesRaw as Record<string, unknown>)
+      : undefined,
+    degreeCount: typeof degreeCount === 'number' ? degreeCount : 0,
+    neighbors,
+  };
+}
+
+// ── Shortest Path parsers ─────────────────────────────────────────────────────
+
+export function parseGraphExplorerPathResponse(raw: unknown): GraphExplorerPathResponseDto {
+  const empty: GraphExplorerPathResponseDto = { pathFound: false, nodes: [], links: [] };
+  if (!raw || typeof raw !== 'object') return empty;
+  const o = raw as Record<string, unknown>;
+  const pathFound = Boolean(o.pathFound ?? o.PathFound ?? false);
+  const pathLength = typeof (o.pathLength ?? o.PathLength) === 'number'
+    ? (o.pathLength ?? o.PathLength) as number
+    : undefined;
+  
+  const nodesRaw = o.nodes ?? o.Nodes;
+  const linksRaw = o.links ?? o.Links;
+  
+  const rawNodes = Array.isArray(nodesRaw)
+    ? (nodesRaw.map(parseGraphExplorerNode).filter(Boolean) as GraphExplorerNodeDto[])
+    : [];
+    
+  const rawLinks = Array.isArray(linksRaw)
+    ? (linksRaw.map(parseGraphExplorerLink).filter(Boolean) as GraphExplorerLinkDto[])
+    : [];
+    
+  // Map GUIDs to viewerNodeIds
+  const guidToViewerNodeIdMap = new Map<string, string>();
+  const mappedNodes: GraphExplorerNodeDto[] = rawNodes.map((n) => {
+    const entityType = neo4jGroupToApiEntityType(n.group);
+    const viewerNodeId = buildViewerNodeId(entityType, n.id, n.label);
+    guidToViewerNodeIdMap.set(n.id, viewerNodeId);
+    return {
+      ...n,
+      id: viewerNodeId,
+    };
+  });
+  
+  const mappedLinks: GraphExplorerLinkDto[] = rawLinks.map((l) => ({
+    ...l,
+    source: guidToViewerNodeIdMap.get(l.source) ?? l.source,
+    target: guidToViewerNodeIdMap.get(l.target) ?? l.target,
+  }));
+  
+  return {
+    pathFound,
+    pathLength,
+    nodes: mappedNodes,
+    links: mappedLinks,
+  };
 }

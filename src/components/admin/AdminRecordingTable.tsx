@@ -1,6 +1,7 @@
 import { FileWarning } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { ContributorName } from '@/hooks/useUserFullName';
 import type { LocalRecording } from '@/types';
 import { getModerationStatusBadgeClassNames, getModerationStatusLabel } from '@/utils/helpers';
 
@@ -39,8 +40,15 @@ export default function AdminRecordingTable({
               <div>
                 <p className="font-semibold text-neutral-900 mb-1">{title}</p>
                 <p className="text-sm text-neutral-600 font-medium">
-                  Người đóng góp: {(r.uploader as { username?: string })?.username ?? 'Khách'} · Trạng
-                  thái:{' '}
+                  Người đóng góp:{' '}
+                  <ContributorName
+                    userId={r.uploader?.id}
+                    fallback={
+                      (r.uploader as { fullName?: string })?.fullName ||
+                      (r.uploader as { username?: string })?.username
+                    }
+                  />{' '}
+                  · Trạng thái:{' '}
                   <span className={getModerationStatusBadgeClassNames(rawStatus)}>
                     {getModerationStatusLabel(rawStatus)}
                   </span>

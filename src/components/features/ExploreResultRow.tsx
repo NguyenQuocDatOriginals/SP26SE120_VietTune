@@ -119,7 +119,11 @@ export const ExploreResultRow = memo(function ExploreResultRow({
   const openDetail = () =>
     navigate(`/recordings/${r.id}`, { state: { from: returnTo, preloadedRecording: r } });
 
-  const isFullDisplay = userRole === UserRole.RESEARCHER || userRole === UserRole.CONTRIBUTOR;
+  const isFullDisplay =
+    !userRole ||
+    userRole === UserRole.RESEARCHER ||
+    userRole === UserRole.CONTRIBUTOR ||
+    userRole === UserRole.ADMIN;
   const rawPairs = [
     { label: 'Dân tộc', value: getEthnicityLabel(r) },
     { label: 'Vùng miền', value: getRegionLabel(r) },

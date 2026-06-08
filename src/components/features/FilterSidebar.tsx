@@ -138,7 +138,11 @@ function AccordionSection({
 
 function FilterSidebar({ options, selected, onChange, onApply, onReset, userRole }: FilterSidebarProps) {
   const set = (patch: Partial<ExploreFacetDraft>) => onChange({ ...selected, ...patch });
-  const isSimplifiedView = userRole === UserRole.RESEARCHER || userRole === UserRole.CONTRIBUTOR;
+  const isSimplifiedView =
+    !userRole ||
+    userRole === UserRole.RESEARCHER ||
+    userRole === UserRole.CONTRIBUTOR ||
+    userRole === UserRole.ADMIN;
 
   const ethnicityCount = selected.ethnicityIds.length;
   const recordingTypeCount = selected.recordingTypes.length;

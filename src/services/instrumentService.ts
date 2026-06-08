@@ -36,6 +36,15 @@ export const instrumentService = {
     return normalizePagedResponse<ApiInstrumentDto>(res).items;
   },
 
+  searchInstrumentsByName: async (name: string) => {
+    const res = await apiOk(
+      asApiEnvelope(
+        apiFetch.GET('/api/Instrument/search-by-name', { params: { query: { name } } }),
+      ),
+    );
+    return unwrapServiceResponse<ApiInstrumentDto[]>(res) ?? [];
+  },
+
   createInstrument: async (data: Partial<ApiInstrumentDto>) => {
     const res = await apiOk<ApiServiceResponseInstrumentDto>(
       asApiEnvelope<ApiServiceResponseInstrumentDto>(

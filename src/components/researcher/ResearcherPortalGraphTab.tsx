@@ -1,24 +1,12 @@
-/**
- * Phase 3 thin shell — wires the `useKnowledgeGraphController` hook into the existing 3-column
- * Knowledge Graph layout (left list / canvas / details). All non-trivial state lives in the
- * controller; this component only renders the UI and forwards actions.
- */
 import {
   ChevronLeft,
   ChevronRight,
-  Cloud,
-  Laptop,
   Loader2,
-  Network,
   RefreshCw,
   Search,
 } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-
-import { KNOWLEDGE_GRAPH_MAX_SOURCE_RECORDINGS } from '@/config/knowledgeGraphLimits';
-import GraphBreadcrumb from '@/features/knowledge-graph/components/GraphBreadcrumb';
-import GraphInsights from '@/features/knowledge-graph/components/GraphInsights';
-import GraphToolbar from '@/features/knowledge-graph/components/GraphToolbar';
+import { useGraphShortestPath } from '@/features/knowledge-graph/hooks/useGraphShortestPath';
+import GraphNodeDetailPanel from '@/features/knowledge-graph/components/GraphNodeDetailPanel';
 import KnowledgeGraphViewer from '@/features/knowledge-graph/components/KnowledgeGraphViewer';
 import { useKnowledgeGraphController } from '@/features/knowledge-graph/hooks/useKnowledgeGraphController';
 import {
@@ -50,110 +38,61 @@ export interface ResearcherPortalGraphTabProps {
 
 export default function ResearcherPortalGraphTab({
   fallbackGraphData,
-  approvedRecordings,
-  onRecordingDetail,
+  approvedRecordings: _approvedRecordings,
+  onRecordingDetail: _onRecordingDetail,
 }: ResearcherPortalGraphTabProps) {
-  const ctrl = useKnowledgeGraphController({ fallbackGraphData, approvedRecordings });
+  const ctrl = useKnowledgeGraphController({ fallbackGraphData });
 
-  const dataSourceBadge = useMemo(() => {
-    if (ctrl.dataSourceKind === 'neo4j') {
-      return {
-        Icon: Network,
-        label: 'Neo4j',
-        className: 'text-cyan-950 bg-cyan-50/95 border-cyan-200/90 shadow-sm',
-      } as const;
-    }
-    if (ctrl.dataSourceKind === 'explore') {
-      return {
-        Icon: Network,
-        label: 'Mở rộng',
-        className: 'text-blue-800 bg-blue-50/95 border-blue-200/90 shadow-sm',
-      } as const;
-    }
-    if (ctrl.dataSourceKind === 'api') {
-      return {
-        Icon: Cloud,
-        label: 'API',
-        className: 'text-emerald-900 bg-emerald-50/95 border-emerald-200/90 shadow-sm',
-      } as const;
-    }
-    return {
-      Icon: Laptop,
-      label: 'Cục bộ',
-      className: 'text-amber-900 bg-amber-50/95 border-amber-200/90 shadow-sm',
-    } as const;
-  }, [ctrl.dataSourceKind]);
+  const selectedNode = ctrl.selectedNodeId
+    ? ctrl.displayGraph.nodes.find((n) => n.id === ctrl.selectedNodeId)
+    : null;
 
-  const GraphDataSourceIcon = dataSourceBadge.Icon;
+  let selectedEntityId: string | null = null;
+  if (selectedNode) {
+    selectedEntityId = selectedNode.entityId ?? selectedNode.backendId ?? null;
+  } else if (ctrl.selectedNodeId) {
+    const idx = ctrl.selectedNodeId.indexOf(':');
+    selectedEntityId = idx !== -1 ? ctrl.selectedNodeId.slice(idx + 1) : ctrl.selectedNodeId;
+  }
 
-  /** Jump handler used by `GraphInsights` "Bạn có biết" cards to refocus the viewer. */
-  const handleJumpToNode = useCallback(
-    (viewerNodeId: string) => {
-      const node = ctrl.displayGraph.nodes.find((n) => n.id === viewerNodeId);
-      if (!node) return;
-      ctrl.handleGraphNodeClick(node);
-    },
-    [ctrl],
-  );
+  const pinnedNode = ctrl.pinnedNodeId
+    ? ctrl.displayGraph.nodes.find((n) => n.id === ctrl.pinnedNodeId)
+    : null;
 
-  const overviewErrorBanner =
-    ctrl.overview.isError && !ctrl.baseApiGraph ? (
-      <p
-        className={`text-xs rounded-lg px-3 py-1.5 mb-2 border ${
-          fallbackGraphData.nodes.length > 0
-            ? 'text-amber-700 bg-amber-50/80 border-amber-200'
-            : 'text-red-700 bg-red-50 border-red-200'
-        }`}
-      >
-        {fallbackGraphData.nodes.length > 0 ? 'Dùng dữ liệu cục bộ.' : 'Không tải được. Nhấn Làm mới.'}
-      </p>
-    ) : null;
+  let pinnedEntityId: string | null = null;
+  if (pinnedNode) {
+    pinnedEntityId = pinnedNode.entityId ?? pinnedNode.backendId ?? null;
+  } else if (ctrl.pinnedNodeId) {
+    const idx = ctrl.pinnedNodeId.indexOf(':');
+    pinnedEntityId = idx !== -1 ? ctrl.pinnedNodeId.slice(idx + 1) : ctrl.pinnedNodeId;
+  }
 
-  const exploreErrorBanner =
-    ctrl.backendMode === 'pg' && ctrl.explore.isError && ctrl.exploreTarget ? (
-      <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
-        Không mở rộng được nút. Thử nút khác.
-      </p>
-    ) : null;
+  const { data: shortestPathData, isLoading: shortestPathLoading, error: shortestPathError } =
+    useGraphShortestPath(pinnedEntityId, selectedEntityId);
 
-  const neo4jSearchErrorBanner =
-    ctrl.backendMode === 'neo4j' && ctrl.neo4jSearchError ? (
-      <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
-        {ctrl.neo4jSearchError}
-      </p>
-    ) : null;
+  const neo4jSearchErrorBanner = ctrl.neo4jSearchError ? (
+    <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
+      {ctrl.neo4jSearchError}
+    </p>
+  ) : null;
 
-  const neo4jExpandErrorBanner =
-    ctrl.backendMode === 'neo4j' && ctrl.neo4jExpandError ? (
-      <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
-        {ctrl.neo4jExpandError}
-      </p>
-    ) : null;
+  const neo4jExpandErrorBanner = ctrl.neo4jExpandError ? (
+    <p className="text-xs text-red-600 bg-red-50/80 border border-red-200 rounded-lg px-3 py-1.5 mb-2">
+      {ctrl.neo4jExpandError}
+    </p>
+  ) : null;
 
-  const neo4jHintBanner =
-    ctrl.backendMode === 'neo4j' && ctrl.displayGraph.nodes.length === 0 ? (
-      <p className="text-xs text-cyan-900 bg-cyan-50/90 border border-cyan-200 rounded-lg px-3 py-1.5 mb-2">
-        Tìm thực thể (≥2 ký tự) ở danh sách trái, chọn kết quả để khởi tạo đồ thị. Nhấp đúp nút để
-        mở rộng lân cận (Neo4j).
-      </p>
-    ) : null;
-
-  const graphTruncationBanner =
-    ctrl.dataSourceKind === 'local' && ctrl.displayGraph.recordingInputTruncated ? (
-      <p className="text-xs rounded-lg px-3 py-1.5 mb-2 border border-amber-200 bg-amber-50/90 text-amber-950">
-        Đồ thị cục bộ chỉ xử lý tối đa {KNOWLEDGE_GRAPH_MAX_SOURCE_RECORDINGS} bản phân tích đầu tiên
-        {typeof ctrl.displayGraph.recordingInputTotal === 'number'
-          ? ` (${ctrl.displayGraph.recordingInputTotal} bản trong tập)`
-          : ''}{' '}
-        để tránh đơ giao diện. Khi API tổng quan khả dụng, hệ thống sẽ dùng dữ liệu máy chủ.
-      </p>
-    ) : null;
+  const neo4jHintBanner = ctrl.displayGraph.nodes.length === 0 ? (
+    <p className="text-xs text-cyan-900 bg-cyan-50/90 border border-cyan-200 rounded-lg px-3 py-1.5 mb-2">
+      Nhập từ khóa thực thể (tối thiểu 2 ký tự) ở cột trái để tìm kiếm trên Neo4j. Click chọn thực thể từ danh sách để khởi tạo đồ thị.
+    </p>
+  ) : null;
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-3">
       <div className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 shadow-sm backdrop-blur-sm p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-base sm:text-lg font-semibold text-primary-800">Biểu đồ tri thức</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-primary-800">Biểu đồ tri thức (Neo4j)</h2>
           <button
             type="button"
             onClick={ctrl.refreshAll}
@@ -166,30 +105,6 @@ export default function ResearcherPortalGraphTab({
               <RefreshCw className="h-3.5 w-3.5" aria-hidden />
             )}
             Làm mới
-          </button>
-        </div>
-
-        <div
-          className="flex flex-wrap items-center gap-2 mt-3"
-          role="group"
-          aria-label="Nguồn dữ liệu đồ thị"
-        >
-          <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide">
-            Nguồn
-          </span>
-          <button
-            type="button"
-            className={`${TAB_CLASS} ${ctrl.backendMode === 'pg' ? TAB_ACTIVE : TAB_IDLE}`}
-            onClick={ctrl.switchToPg}
-          >
-            PostgreSQL KG
-          </button>
-          <button
-            type="button"
-            className={`${TAB_CLASS} ${ctrl.backendMode === 'neo4j' ? TAB_ACTIVE : TAB_IDLE}`}
-            onClick={ctrl.switchToNeo4j}
-          >
-            Neo4j Explorer
           </button>
         </div>
 
@@ -216,23 +131,9 @@ export default function ResearcherPortalGraphTab({
           ))}
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <GraphToolbar mode={ctrl.semanticMode} onChange={ctrl.setSemanticMode} />
-          {ctrl.history.length > 0 && (
-            <GraphBreadcrumb
-              history={ctrl.history}
-              onJump={ctrl.navigateToHistoryStep}
-              onReset={ctrl.resetToOverview}
-            />
-          )}
-        </div>
-
-        {overviewErrorBanner}
-        {exploreErrorBanner}
         {neo4jSearchErrorBanner}
         {neo4jExpandErrorBanner}
         {neo4jHintBanner}
-        {graphTruncationBanner}
 
         <div className="flex gap-3 mt-3">
           {ctrl.leftOpen ? (
@@ -247,15 +148,9 @@ export default function ResearcherPortalGraphTab({
                     type="search"
                     value={ctrl.listQuery}
                     onChange={(e) => ctrl.setListQuery(e.target.value)}
-                    placeholder={
-                      ctrl.backendMode === 'neo4j'
-                        ? `Tìm thực thể (≥${ctrl.neo4jSearchMinLength} ký tự)...`
-                        : 'Tìm nút...'
-                    }
+                    placeholder="Tìm thực thể..."
                     className="w-full rounded-md border border-neutral-200 bg-white py-1.5 pl-7 pr-2 text-xs text-neutral-800 placeholder:text-neutral-400 focus:border-primary-400 focus:outline-none"
-                    aria-label={
-                      ctrl.backendMode === 'neo4j' ? 'Tìm thực thể Neo4j' : 'Tìm kiếm nút'
-                    }
+                    aria-label="Tìm thực thể Neo4j"
                   />
                 </div>
                 <button
@@ -270,11 +165,7 @@ export default function ResearcherPortalGraphTab({
               <select
                 value={ctrl.typeFilter}
                 onChange={(e) => ctrl.setTypeFilter(e.target.value)}
-                title={
-                  ctrl.backendMode === 'neo4j'
-                    ? 'Lọc tìm kiếm theo loại (tùy chọn). Mở rộng nút chỉ lọc khi chọn loại ở đây.'
-                    : 'Lọc theo loại thực thể'
-                }
+                title="Lọc theo loại thực thể"
                 className="mb-1.5 rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-700"
               >
                 {TYPE_FILTER_OPTIONS.map((o) => (
@@ -284,23 +175,17 @@ export default function ResearcherPortalGraphTab({
                 ))}
               </select>
               <ul className="flex-1 overflow-y-auto space-y-px text-xs min-h-[80px]">
-                {ctrl.backendMode === 'neo4j' &&
-                ctrl.debouncedListQuery.trim().length === 0 &&
+                {ctrl.debouncedListQuery.trim().length === 0 &&
                 ctrl.listNodesFromGraph.length === 0 ? (
                   <li className="text-neutral-500 text-[11px] px-2 py-2 leading-relaxed">
-                    Nhập ít nhất {ctrl.neo4jSearchMinLength} ký tự để tìm trên Neo4j, chọn kết quả
-                    để khởi tạo đồ thị. Nhấp đúp nút để mở rộng lân cận.
+                    Nhập ít nhất 2 ký tự để tìm trên Neo4j, chọn kết quả để khởi tạo đồ thị.
                   </li>
-                ) : ctrl.backendMode === 'neo4j' &&
-                  ctrl.debouncedListQuery.trim().length > 0 &&
-                  ctrl.debouncedListQuery.trim().length < ctrl.neo4jSearchMinLength ? (
+                ) : ctrl.debouncedListQuery.trim().length > 0 &&
+                  ctrl.debouncedListQuery.trim().length < 2 ? (
                   <li className="text-neutral-500 text-[11px] px-2 py-2">
-                    Nhập thêm{' '}
-                    {ctrl.neo4jSearchMinLength - ctrl.debouncedListQuery.trim().length} ký tự (tối
-                    thiểu {ctrl.neo4jSearchMinLength}).
+                    Nhập thêm ký tự để tìm kiếm.
                   </li>
-                ) : ctrl.backendMode === 'neo4j' &&
-                  ctrl.debouncedListQuery.trim().length >= ctrl.neo4jSearchMinLength ? (
+                ) : ctrl.debouncedListQuery.trim().length >= 2 ? (
                   ctrl.neo4jSearchLoading ? (
                     <li className="flex items-center gap-1.5 text-neutral-400 py-3 px-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -310,15 +195,14 @@ export default function ResearcherPortalGraphTab({
                     <li className="text-red-500 text-[11px] px-2 py-2">{ctrl.neo4jSearchError}</li>
                   ) : !ctrl.neo4jSearchResults.length ? (
                     <li className="text-neutral-400 text-[11px] px-2 py-2">
-                      Không có kết quả. Thử bỏ lọc loại hoặc từ khóa khác.
+                      Không có kết quả. Thử bộ lọc khác.
                     </li>
                   ) : (
                     ctrl.neo4jSearchResults.map((hit) => {
                       const viewerNodeId = `${hit.group}:${hit.id}`;
                       const active =
                         ctrl.selection?.source === 'graph' &&
-                        ctrl.selection.id === viewerNodeId &&
-                        ctrl.selection.apiEntityType === hit.group;
+                        ctrl.selection.id === viewerNodeId;
                       return (
                         <li key={`${hit.group}-${hit.id}`}>
                           <button
@@ -333,44 +217,6 @@ export default function ResearcherPortalGraphTab({
                           >
                             <span className="text-[9px] uppercase text-neutral-400 block leading-none mb-px">
                               {hit.group}
-                            </span>
-                            {hit.label}
-                          </button>
-                        </li>
-                      );
-                    })
-                  )
-                ) : ctrl.backendMode === 'pg' && ctrl.debouncedListQuery.trim().length >= 1 ? (
-                  ctrl.search.isLoading ? (
-                    <li className="flex items-center gap-1.5 text-neutral-400 py-3 px-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                      Đang tìm...
-                    </li>
-                  ) : ctrl.search.isError ? (
-                    <li className="text-red-500 text-[11px] px-2 py-2">Lỗi. Thử lại.</li>
-                  ) : !ctrl.search.data?.length ? (
-                    <li className="text-neutral-400 text-[11px] px-2 py-2">Không có kết quả.</li>
-                  ) : (
-                    ctrl.search.data.map((hit) => {
-                      const viewerNodeId = `${hit.type}:${hit.id}`;
-                      const active =
-                        ctrl.selection?.source === 'graph' &&
-                        ctrl.selection.id === viewerNodeId &&
-                        ctrl.selection.apiEntityType === hit.type;
-                      return (
-                        <li key={`${hit.type}-${hit.id}`}>
-                          <button
-                            type="button"
-                            onClick={() => ctrl.handleSearchResultClick(hit)}
-                            className={`w-full truncate text-left px-2 py-1 rounded-md transition-colors ${
-                              active
-                                ? 'bg-primary-100 text-primary-900 font-semibold'
-                                : 'hover:bg-neutral-50'
-                            }`}
-                            title={hit.label}
-                          >
-                            <span className="text-[9px] uppercase text-neutral-400 block leading-none mb-px">
-                              {hit.type}
                             </span>
                             {hit.label}
                           </button>
@@ -421,47 +267,75 @@ export default function ResearcherPortalGraphTab({
                 {ctrl.exploreInFlight ? 'Mở rộng...' : 'Tải...'}
               </div>
             )}
-            {ctrl.exploreInFlight && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/30 backdrop-blur-[1px] pointer-events-none">
-                <div className="flex items-center gap-2 rounded-lg bg-white/95 px-3 py-2 shadow border border-neutral-200 text-xs font-medium text-neutral-700">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary-600 shrink-0" aria-hidden />
-                  Đang mở rộng...
-                </div>
+
+            {pinnedNode && selectedNode && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-lg bg-white/95 px-3 py-1.5 text-xs text-slate-700 shadow-md border border-slate-200/80 backdrop-blur-sm max-w-[90%]">
+                {shortestPathLoading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500 shrink-0" />
+                    <span>
+                      Đang tìm đường đi giữa <strong>{pinnedNode.name}</strong> và{' '}
+                      <strong>{selectedNode.name}</strong>...
+                    </span>
+                  </>
+                ) : shortestPathError ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                    <span className="text-red-600 font-medium">Lỗi: {shortestPathError}</span>
+                  </>
+                ) : shortestPathData?.pathFound ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span>
+                      Đường đi giữa <strong>{pinnedNode.name}</strong> và{' '}
+                      <strong>{selectedNode.name}</strong>:{' '}
+                      <span className="font-semibold text-blue-600">
+                        {shortestPathData.pathLength} bước
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => ctrl.setPinnedNodeId(null)}
+                      className="ml-2 hover:text-red-500 text-slate-400 font-medium"
+                      title="Bỏ ghim"
+                    >
+                      Bỏ ghim
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                    <span>
+                      Không tìm thấy đường đi giữa <strong>{pinnedNode.name}</strong> và{' '}
+                      <strong>{selectedNode.name}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => ctrl.setPinnedNodeId(null)}
+                      className="ml-2 hover:text-red-500 text-slate-400 font-medium"
+                      title="Bỏ ghim"
+                    >
+                      Bỏ ghim
+                    </button>
+                  </>
+                )}
               </div>
             )}
-            <div
-              className={`absolute left-2 top-2 z-20 inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-semibold tracking-tight ${dataSourceBadge.className}`}
-              title="Nguồn dữ liệu đồ thị"
-            >
-              <GraphDataSourceIcon className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-              <span>
-                {dataSourceBadge.label}
-                <span className="font-medium text-neutral-600">
-                  {' '}
-                  · {ctrl.displayGraph.nodes.length} nút
-                </span>
-              </span>
-            </div>
+
             <div className="w-full h-[min(560px,68vh)] min-h-[min(420px,55vh)] pt-9">
               <KnowledgeGraphViewer
                 data={ctrl.displayGraph}
                 onNodeClick={ctrl.handleGraphNodeClick}
-                onNodeDoubleClick={
-                  ctrl.backendMode === 'neo4j' ? ctrl.handleGraphNodeDoubleClick : undefined
-                }
+                onNodeDoubleClick={ctrl.handleGraphNodeDoubleClick}
                 selectedNodeId={ctrl.selectedNodeId}
+                pinnedNodeId={ctrl.pinnedNodeId}
+                shortestPathData={shortestPathData}
                 maxNodes={100}
-                compactLayout={ctrl.backendMode === 'neo4j' ? false : !ctrl.exploreTarget}
+                compactLayout={false}
                 tabFilter={ctrl.graphView}
-                showDirectedLinks={ctrl.backendMode === 'neo4j'}
-                emptyStateMessage={
-                  ctrl.backendMode === 'neo4j' ? 'Chưa có đồ thị Neo4j' : undefined
-                }
-                emptyStateHint={
-                  ctrl.backendMode === 'neo4j'
-                    ? `Tìm thực thể (≥${ctrl.neo4jSearchMinLength} ký tự) ở cột trái và chọn một kết quả. Tab phía trên chỉ gợi ý loại tìm kiếm, không tải tổng quan như PostgreSQL.`
-                    : undefined
-                }
+                showDirectedLinks={true}
+                emptyStateMessage="Chưa có đồ thị Neo4j"
+                emptyStateHint="Tìm kiếm thực thể ở cột bên trái và chọn một kết quả để khởi tạo đồ thị. Nhấp đúp vào nút để mở rộng quan hệ."
               />
             </div>
           </section>
@@ -482,132 +356,30 @@ export default function ResearcherPortalGraphTab({
                     ? ctrl.selection.apiEntityType
                     : viewerTypeToApiEntityType(ctrl.selection.viewerType)}
                 </p>
-                {ctrl.selection.source === 'graph' &&
-                  ctrl.backendMode === 'pg' &&
-                  !ctrl.exploreTarget && (
-                  <button
-                    type="button"
-                    className="w-full rounded-md border border-primary-200 bg-primary-50/80 px-2 py-1.5 text-[11px] font-semibold text-primary-800 hover:bg-primary-100/90"
-                    onClick={ctrl.expandSelected}
-                  >
-                    Mở rộng quanh nút (API)
-                  </button>
-                )}
-                {ctrl.backendMode === 'neo4j' && ctrl.selection.source === 'graph' && (
+                {ctrl.selection.source === 'graph' && (
                   <p className="text-[11px] text-cyan-800 bg-cyan-50/80 border border-cyan-100 rounded-md px-2 py-1.5">
                     Nhấp đúp nút trên đồ thị để mở rộng lân cận (1-hop).
                   </p>
                 )}
-                {ctrl.exploreTarget && (
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      className="text-[11px] font-medium text-primary-600 hover:underline"
-                      onClick={ctrl.navigateBack}
-                    >
-                      ← Lùi
-                    </button>
-                    <span className="text-[11px] text-neutral-300">·</span>
-                    <button
-                      type="button"
-                      className="text-[11px] font-medium text-primary-600 hover:underline"
-                      onClick={ctrl.resetToOverview}
-                    >
-                      Tổng quan
-                    </button>
-                  </div>
-                )}
               </div>
             )}
-
-            <GraphInsights
-              selectedObservations={ctrl.selectedObservations}
-              intelligence={ctrl.intelligence}
-              onJumpToNode={handleJumpToNode}
-            />
-
-            <div className="border-t border-neutral-100 pt-2 mt-auto space-y-2">
-              <h4 className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wide">
-                Bản thu liên quan
-              </h4>
-              {!ctrl.selection ? (
-                <p className="text-[11px] text-neutral-400">Chọn nút để xem.</p>
-              ) : (
-                <>
-                  {ctrl.graphRecordingNeighbors.length > 0 && (
-                    <ul className="space-y-0.5 max-h-28 overflow-y-auto">
-                      {ctrl.graphRecordingNeighbors.map((gn) => {
-                        const lookupId = gn.entityId ?? gn.backendId ?? gn.id;
-                        const rec = approvedRecordings.find(
-                          (r) =>
-                            r.id === lookupId ||
-                            r.id === gn.id ||
-                            `Recording:${r.id}` === gn.id ||
-                            `rec_${r.id}` === gn.id, // legacy alias kept for one release
-                        );
-                        return (
-                          <li key={gn.id}>
-                            {rec ? (
-                              <button
-                                type="button"
-                                onClick={() => onRecordingDetail(rec)}
-                                className="w-full text-left text-[11px] px-1.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-neutral-800 truncate"
-                              >
-                                {rec.title}
-                              </button>
-                            ) : (
-                              <span className="block text-[11px] text-neutral-500 px-1.5 py-0.5 truncate">
-                                {gn.name}
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                  {ctrl.related.length > 0 && (
-                    <ul className="space-y-0.5 max-h-28 overflow-y-auto">
-                      {ctrl.related.slice(0, 5).map((r) => (
-                        <li key={r.id}>
-                          <button
-                            type="button"
-                            onClick={() => onRecordingDetail(r)}
-                            className="w-full text-left text-[11px] px-1.5 py-1 rounded-md bg-primary-50/60 hover:bg-primary-100 text-primary-900 truncate"
-                          >
-                            {r.title}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {ctrl.graphRecordingNeighbors.length === 0 && ctrl.related.length === 0 && (
-                    <p className="text-[11px] text-neutral-400">Chưa có bản thu liên quan.</p>
-                  )}
-                </>
-              )}
-            </div>
           </aside>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-neutral-200/80 bg-white/80 px-4 py-2 text-[11px] text-neutral-600">
-        {ctrl.stats.isSuccess && ctrl.stats.data ? (
-          <>
-            <Stat label="Dân tộc" value={ctrl.stats.data.totalEthnicGroups} />
-            <Stat label="Nhạc cụ" value={ctrl.stats.data.totalInstruments} />
-            <Stat label="Nghi lễ" value={ctrl.stats.data.totalCeremonies} />
-            <Stat label="Bản thu" value={ctrl.stats.data.totalRecordings} />
-            <Stat label="Cạnh" value={ctrl.stats.data.totalEdges} />
-            <Stat label="Hiển thị" value={ctrl.displayGraph.nodes.length} />
-          </>
-        ) : (
-          <>
-            <Stat label="Nút" value={ctrl.displayGraph.nodes.length} />
-            <Stat label="Cạnh" value={ctrl.displayGraph.links.length} />
-            {ctrl.stats.isError && <span className="text-red-400">Thống kê lỗi</span>}
-          </>
-        )}
+        <Stat label="Nút hiển thị" value={ctrl.displayGraph.nodes.length} />
+        <Stat label="Cạnh hiển thị" value={ctrl.displayGraph.links.length} />
       </div>
+
+      <GraphNodeDetailPanel
+        nodeId={selectedEntityId}
+        nodeName={selectedNode?.name}
+        nodeGroup={selectedNode?.apiEntityType}
+        onClose={ctrl.clearSelection}
+        onExpandNode={selectedNode ? () => ctrl.handleGraphNodeDoubleClick(selectedNode) : undefined}
+        onPinForPath={selectedNode ? () => ctrl.setPinnedNodeId(selectedNode.id) : undefined}
+      />
     </div>
   );
 }

@@ -58,7 +58,7 @@ describe('useModerationDetailViewModel', () => {
     expect(result.current.claimedByCurrentUser).toBe(true);
     expect(result.current.showSimilarRecordings).toBe(true);
     expect(result.current.tabVisibility.similar).toBe(true);
-    expect(result.current.tabVisibility.ai).toBe(true);
+    expect(result.current.tabVisibility.ai).toBe(false);
     expect(result.current.defaultTab).toBe('metadata');
   });
 

@@ -1818,6 +1818,44 @@
         }
       }
     },
+    "/api/Ceremony/search-by-name": {
+      "get": {
+        "tags": [
+          "Ceremony"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.CeremonyDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.CeremonyDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.CeremonyDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Chat": {
       "post": {
         "tags": [
@@ -3047,6 +3085,44 @@
         }
       }
     },
+    "/api/EthnicGroup/search-by-name": {
+      "get": {
+        "tags": [
+          "EthnicGroup"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.EthnicGroupDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.EthnicGroupDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.EthnicGroupDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Geocode/reverse": {
       "get": {
         "tags": [
@@ -3550,6 +3626,44 @@
         "parameters": [
           {
             "name": "keyword",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.InstrumentDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.InstrumentDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.InstrumentDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Instrument/search-by-name": {
+      "get": {
+        "tags": [
+          "Instrument"
+        ],
+        "parameters": [
+          {
+            "name": "name",
             "in": "query",
             "schema": {
               "type": "string"
@@ -9285,6 +9399,44 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Boolean, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/VocalStyle/search-by-name": {
+      "get": {
+        "tags": [
+          "VocalStyle"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.VocalStyleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.VocalStyleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VietTuneArchive.Application.Responses.ServiceResponse`1[[System.Collections.Generic.List`1[[VietTuneArchive.Application.Mapper.DTOs.VocalStyleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]], System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
                 }
               }
             }

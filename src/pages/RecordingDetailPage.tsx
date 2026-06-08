@@ -13,6 +13,7 @@ import { RECORDING_TYPE_NAMES } from '@/config/constants';
 import { useRecordingDetail } from '@/hooks/useRecordingDetail';
 import { useAuthStore } from '@/stores/authStore';
 import { Recording } from '@/types';
+import { useUserFullName } from '@/hooks/useUserFullName';
 import type { AnnotationDto, AnnotationType } from '@/types/annotation';
 import { ANNOTATION_TYPE_LABELS } from '@/types/annotation';
 import { COPYRIGHT_DISPUTE_STATUS_LABELS } from '@/types/copyrightDispute';
@@ -113,12 +114,50 @@ export default function RecordingDetailPage() {
     useRecordingDetail(id, preloadedRecording);
 
   const { images } = useRecordingImages(recording?.id);
+  const fetchedFullName = useUserFullName(recording?.uploader?.id);
 
   const topicChips = useMemo(() => (recording ? buildTopicChips(recording) : []), [recording]);
-  const recordingLocation = useMemo(
-    () => readExtraString(recording, ['recordingLocation', 'provinceName']),
-    [recording],
-  );
+  const composer = useMemo(() => {
+    return (
+      (recording as any)?.composer ||
+      (recording as any)?.basicInfo?.composer ||
+      (recording as any)?._originalLocalData?.basicInfo?.composer ||
+      ''
+    );
+  }, [recording]);
+
+  const language = useMemo(() => {
+    return (
+      (recording as any)?.language ||
+      (recording as any)?.basicInfo?.language ||
+      (recording as any)?._originalLocalData?.basicInfo?.language ||
+      ''
+    );
+  }, [recording]);
+
+  const resolvedRecordingLocation = useMemo(() => {
+    return (
+      (recording as any)?.recordingLocation ||
+      (recording as any)?.basicInfo?.recordingLocation ||
+      (recording as any)?._originalLocalData?.basicInfo?.recordingLocation ||
+      readExtraString(recording, ['recordingLocation', 'provinceName']) ||
+      ''
+    );
+  }, [recording]);
+
+  const formattedRecordedDate = useMemo(() => {
+    if (!recording?.recordedDate) return 'Không rõ';
+    const d = new Date(recording.recordedDate);
+    if (isNaN(d.getTime()) || d.getFullYear() === 1970) return 'Không rõ';
+    return formatDate(recording.recordedDate);
+  }, [recording?.recordedDate]);
+
+  const formattedUploadedDate = useMemo(() => {
+    if (!recording?.uploadedDate) return 'Không rõ';
+    const d = new Date(recording.uploadedDate);
+    if (isNaN(d.getTime()) || d.getFullYear() === 1970) return 'Không rõ';
+    return formatDateTime(recording.uploadedDate);
+  }, [recording?.uploadedDate]);
   const gpsLat = useMemo(
     () => readExtraNumber(recording, ['gpsLatitude', 'latitude']),
     [recording],
@@ -347,14 +386,12 @@ export default function RecordingDetailPage() {
             </div>
 
             {/* Description */}
-            {recording.description && (
-              <div className={SURFACE_CARD}>
-                <h2 className="text-base font-semibold mb-3 text-neutral-900">Mô tả</h2>
-                <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                  {recording.description}
-                </p>
-              </div>
-            )}
+            <div className={SURFACE_CARD}>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">Mô tả</h2>
+              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                {recording.description || 'Không rõ'}
+              </p>
+            </div>
 
             {hasGps && gpsEmbedUrl && (
               <div className={SURFACE_CARD}>
@@ -369,56 +406,42 @@ export default function RecordingDetailPage() {
             )}
 
             {/* Metadata */}
-            {recording.metadata &&
-              (recording.metadata.tuningSystem ||
-                recording.metadata.modalStructure ||
-                recording.metadata.ritualContext ||
-                recording.metadata.culturalSignificance) && (
-                <div className={SURFACE_CARD}>
-                  <h2 className="text-base font-semibold mb-3 text-neutral-900">
-                    Thông tin chuyên môn
-                  </h2>
-                  <dl className="space-y-3">
-                    {recording.metadata.tuningSystem && (
-                      <div>
-                        <dt className="font-medium text-neutral-900">Hệ thống điệu thức</dt>
-                        <dd className="text-neutral-700 font-medium">
-                          {recording.metadata.tuningSystem}
-                        </dd>
-                      </div>
-                    )}
-                    {recording.metadata.modalStructure && (
-                      <div>
-                        <dt className="font-medium text-neutral-900">Cấu trúc giai điệu</dt>
-                        <dd className="text-neutral-700 font-medium">
-                          {recording.metadata.modalStructure}
-                        </dd>
-                      </div>
-                    )}
-                    {recording.metadata.ritualContext && (
-                      <div>
-                        <dt className="font-medium text-neutral-900">Ngữ cảnh nghi lễ</dt>
-                        <dd className="text-neutral-700 font-medium">
-                          {recording.metadata.ritualContext}
-                        </dd>
-                      </div>
-                    )}
-                    {recording.metadata.culturalSignificance && (
-                      <div>
-                        <dt className="font-medium text-neutral-900">Ý nghĩa văn hóa</dt>
-                        <dd className="text-neutral-700 font-medium">
-                          {recording.metadata.culturalSignificance}
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
+            <div className={SURFACE_CARD}>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">
+                Thông tin chuyên môn
+              </h2>
+              <dl className="space-y-3">
+                <div>
+                  <dt className="font-medium text-neutral-900">Hệ thống điệu thức</dt>
+                  <dd className="text-neutral-700 font-medium">
+                    {recording.metadata?.tuningSystem || 'Không rõ'}
+                  </dd>
                 </div>
-              )}
+                <div>
+                  <dt className="font-medium text-neutral-900">Cấu trúc giai điệu</dt>
+                  <dd className="text-neutral-700 font-medium">
+                    {recording.metadata?.modalStructure || 'Không rõ'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-neutral-900">Ngữ cảnh nghi lễ</dt>
+                  <dd className="text-neutral-700 font-medium">
+                    {recording.metadata?.ritualContext || 'Không rõ'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-neutral-900">Ý nghĩa văn hóa</dt>
+                  <dd className="text-neutral-700 font-medium">
+                    {recording.metadata?.culturalSignificance || 'Không rõ'}
+                  </dd>
+                </div>
+              </dl>
+            </div>
 
             {/* Expert annotations (read-only) */}
-            {annotationGroups.length > 0 && (
-              <div className={SURFACE_CARD}>
-                <h2 className="text-base font-semibold mb-3 text-neutral-900">Chú thích chuyên gia</h2>
+            <div className={SURFACE_CARD}>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">Chú thích chuyên gia</h2>
+              {annotationGroups.length > 0 ? (
                 <div className="space-y-4">
                   {annotationGroups.map((group) => (
                     <section key={group.key} className="rounded-xl border border-neutral-200 bg-white p-3">
@@ -463,26 +486,22 @@ export default function RecordingDetailPage() {
                     </section>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
+            </div>
 
             {/* Lyrics */}
-            {recording.metadata?.lyrics && (
-              <div className={SURFACE_CARD}>
-                <h2 className="text-base font-semibold mb-3 text-neutral-900">Lời bài hát</h2>
-                <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4">
-                  {recording.metadata.lyrics}
-                </p>
-                {recording.metadata.lyricsTranslation && (
-                  <>
-                    <h3 className="text-sm font-semibold text-neutral-900 mb-2">Dịch nghĩa</h3>
-                    <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                      {recording.metadata.lyricsTranslation}
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
+            <div className={SURFACE_CARD}>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">Lời bài hát</h2>
+              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4">
+                {recording.metadata?.lyrics || 'Không rõ'}
+              </p>
+              <h3 className="text-sm font-semibold text-neutral-900 mb-2">Dịch nghĩa</h3>
+              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                {recording.metadata?.lyricsTranslation || 'Không rõ'}
+              </p>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -496,101 +515,107 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Dân tộc</dt>
                   <dd className="font-medium text-neutral-900">
-                    {recording.ethnicity?.nameVietnamese ?? recording.ethnicity?.name ?? '—'}
+                    {recording.ethnicity?.nameVietnamese ?? recording.ethnicity?.name ?? 'Không rõ'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-sm text-neutral-500">Vùng miền</dt>
                   <dd className="font-medium text-neutral-900">
-                    {getRegionDisplayName(recording.region, undefined)}
+                    {getRegionDisplayName(recording.region, undefined) || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-sm text-neutral-500">Loại hình</dt>
                   <dd className="font-medium text-neutral-900">
-                    {RECORDING_TYPE_NAMES[recording.recordingType]}
+                    {RECORDING_TYPE_NAMES[recording.recordingType] || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-sm text-neutral-500">Thời lượng</dt>
                   <dd className="font-medium text-neutral-900">
-                    {formatDuration(Math.max(0, Math.floor(Number(recording.duration) || 0)))}
+                    {recording.duration
+                      ? formatDuration(Math.max(0, Math.floor(Number(recording.duration) || 0)))
+                      : 'Không rõ'}
                   </dd>
                 </div>
-                {recording.recordedDate && (
-                  <div>
-                    <dt className="text-sm text-neutral-500">Ngày thu âm</dt>
-                    <dd className="font-medium text-neutral-900">
-                      {formatDate(recording.recordedDate)}
-                    </dd>
-                  </div>
-                )}
+                <div>
+                  <dt className="text-sm text-neutral-500">Ngày thu âm</dt>
+                  <dd className="font-medium text-neutral-900">
+                    {formattedRecordedDate}
+                  </dd>
+                </div>
                 <div>
                   <dt className="text-sm text-neutral-500">Thời điểm tải lên</dt>
                   <dd className="font-medium text-neutral-900">
-                    {formatDateTime(recording.uploadedDate)}
+                    {formattedUploadedDate}
                   </dd>
                 </div>
-                {(recordingLocation || hasGps) && (
-                  <div>
-                    <dt className="text-sm text-neutral-500">Vị trí ghi âm</dt>
-                    <dd className="font-medium text-neutral-900 space-y-1">
-                      {recordingLocation && <p>{recordingLocation}</p>}
-                      {hasGps && (
-                        <p>
-                          <span className="inline-flex items-center gap-1 text-neutral-700">
-                            <MapPin className="h-4 w-4 text-primary-600" strokeWidth={2.25} />
-                            {`${gpsLat?.toFixed(6)}, ${gpsLon?.toFixed(6)}`}
-                          </span>
-                          {gpsMapUrl && (
-                            <a
-                              href={gpsMapUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="ml-2 text-primary-700 hover:text-primary-800 underline"
-                            >
-                              Xem bản đồ
-                            </a>
-                          )}
-                        </p>
-                      )}
-                    </dd>
-                  </div>
-                )}
+                <div>
+                  <dt className="text-sm text-neutral-500">Tác giả / Sáng tác</dt>
+                  <dd className="font-medium text-neutral-900">{composer || 'Không rõ'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-neutral-500">Ngôn ngữ</dt>
+                  <dd className="font-medium text-neutral-900">{language || 'Không rõ'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-neutral-500">Vị trí ghi âm</dt>
+                  <dd className="font-medium text-neutral-900 space-y-1">
+                    {resolvedRecordingLocation ? (
+                      <p>{resolvedRecordingLocation}</p>
+                    ) : !hasGps ? (
+                      <p>Không rõ</p>
+                    ) : null}
+                    {hasGps && (
+                      <p>
+                        <span className="inline-flex items-center gap-1 text-neutral-700">
+                          <MapPin className="h-4 w-4 text-primary-600" strokeWidth={2.25} />
+                          {`${gpsLat?.toFixed(6)}, ${gpsLon?.toFixed(6)}`}
+                        </span>
+                        {gpsMapUrl && (
+                          <a
+                            href={gpsMapUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ml-2 text-primary-700 hover:text-primary-800 underline"
+                          >
+                            Xem bản đồ
+                          </a>
+                        )}
+                      </p>
+                    )}
+                  </dd>
+                </div>
               </dl>
             </div>
 
             {/* Images */}
-            {((images && images.length > 0) || recording.coverImage) && (
-              <>
-                {images && images.length > 0 ? (
-                  <RecordingImageGallery recordingId={recording.id} />
-                ) : (
-                  recording.coverImage && (
-                    <div className={SURFACE_CARD}>
-                      <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
-                        Hình ảnh bản thu
-                      </h3>
-                      <figure className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
-                        <img
-                          src={recording.coverImage}
-                          alt="Cover"
-                          className="w-full h-auto object-cover max-h-64"
-                          loading="lazy"
-                        />
-                      </figure>
-                    </div>
-                  )
-                )}
-              </>
-            )}
+            <div className={SURFACE_CARD}>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
+                Hình ảnh bản thu
+              </h3>
+              {images && images.length > 0 ? (
+                <RecordingImageGallery recordingId={recording.id} />
+              ) : recording.coverImage ? (
+                <figure className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+                  <img
+                    src={recording.coverImage}
+                    alt="Cover"
+                    className="w-full h-auto object-cover max-h-64"
+                    loading="lazy"
+                  />
+                </figure>
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
+            </div>
 
             {/* Instruments */}
-            {recording.instruments.length > 0 && (
-              <div className={SURFACE_CARD}>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
-                  Nhạc cụ
-                </h3>
+            <div className={SURFACE_CARD}>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
+                Nhạc cụ
+              </h3>
+              {recording.instruments.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {recording.instruments.map((instrument) => (
                     <Badge key={instrument.id} variant="primary" size="sm">
@@ -598,15 +623,17 @@ export default function RecordingDetailPage() {
                     </Badge>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
+            </div>
 
             {/* Performers */}
-            {recording.performers.length > 0 && (
-              <div className={SURFACE_CARD}>
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
-                  Nghệ nhân
-                </h3>
+            <div className={SURFACE_CARD}>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
+                Nghệ nhân
+              </h3>
+              {recording.performers.length > 0 ? (
                 <ul className="space-y-2">
                   {recording.performers.map((performer) => (
                     <li key={performer.id} className="flex items-center text-neutral-700">
@@ -620,8 +647,10 @@ export default function RecordingDetailPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
+            </div>
 
             {/* Uploader */}
             <div className={SURFACE_CARD}>
@@ -633,7 +662,9 @@ export default function RecordingDetailPage() {
                   <User className="h-6 w-6 text-primary-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-neutral-900">{recording.uploader.fullName}</p>
+                  <p className="font-medium text-neutral-900">
+                    {fetchedFullName || recording.uploader.fullName || recording.uploader.username || 'Không rõ'}
+                  </p>
                   {recording.uploader.username ? (
                     <p className="text-sm text-neutral-500">@{recording.uploader.username}</p>
                   ) : null}

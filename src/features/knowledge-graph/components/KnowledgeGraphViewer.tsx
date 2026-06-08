@@ -25,6 +25,7 @@ import {
   type ResearcherGraphTabView,
 } from '@/features/knowledge-graph/utils/researcherGraphUx';
 import type { GraphLink, GraphNode, KnowledgeGraphData } from '@/types/graph';
+import type { GraphExplorerPathResponseDto } from '@/types/graphExplorerApi';
 
 const ZOOM_PADDING = 60;
 const ZOOM_DURATION_MS = 500;
@@ -64,7 +65,7 @@ function graphLayoutKey(g: KnowledgeGraphData): string {
 
 export interface KnowledgeGraphViewerProps {
   data: KnowledgeGraphData;
-  onNodeClick?: (node: GraphNode) => void;
+  onNodeClick?: (node: GraphNode, event: MouseEvent) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
   maxNodes?: number;
@@ -76,6 +77,8 @@ export interface KnowledgeGraphViewerProps {
   /** Override center message when the graph has no nodes. */
   emptyStateMessage?: string;
   emptyStateHint?: string;
+  pinnedNodeId?: string | null;
+  shortestPathData?: GraphExplorerPathResponseDto | null;
 }
 
 type GraphLinkEdge = GraphLink & {
@@ -94,6 +97,8 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
   showDirectedLinks = false,
   emptyStateMessage,
   emptyStateHint,
+  pinnedNodeId,
+  shortestPathData,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { width, height } = useContainerDimensions(containerRef);
@@ -181,7 +186,7 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
   }, []);
 
   const handleNodeClick = useCallback(
-    (graphNode: GraphNode) => {
+    (graphNode: GraphNode, event: MouseEvent) => {
       const now = Date.now();
       const last = lastNodeClickRef.current;
       const isDouble =
@@ -200,7 +205,7 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
       if (pulseTimerRef.current) clearTimeout(pulseTimerRef.current);
       setClickPulseId(graphNode.id);
       pulseTimerRef.current = setTimeout(() => { setClickPulseId(null); pulseTimerRef.current = null; }, 480);
-      onNodeClick?.(graphNode);
+      onNodeClick?.(graphNode, event);
       if (fgRef.current && graphNode.x !== undefined && graphNode.y !== undefined) {
         fgRef.current.centerAt(graphNode.x, graphNode.y, 480);
         fgRef.current.zoom(FOCUS_ZOOM + 0.15, 560);
@@ -220,49 +225,80 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
 
   const handleNodeHover = useCallback((node: GraphNode | null) => setHoverNode(node), []);
 
+  const isLinkInShortestPath = useCallback(
+    (s: string, t: string) => {
+      if (!shortestPathData || !shortestPathData.pathFound || !shortestPathData.links) return false;
+      return shortestPathData.links.some(
+        (l) => (l.source === s && l.target === t) || (l.source === t && l.target === s),
+      );
+    },
+    [shortestPathData],
+  );
+
   /* ── link styling: lighter, thinner ─────────────────────────────── */
 
   /** Phase 1: edge color follows tier of farther endpoint to focus; LOD hides Tier 3 at low zoom. */
   const getLinkColor = useCallback(
     (link: GraphLinkEdge) => {
-      const activeId = hoverNode?.id ?? selectedNodeId;
-      if (!activeId) return link.color || 'rgba(148, 163, 184, 0.35)';
       const s = nodeIdOf(link.source);
       const t = nodeIdOf(link.target);
+
+      if (isLinkInShortestPath(s, t)) return 'rgba(59, 130, 246, 0.95)'; // bright blue
+
+      const activeId = hoverNode?.id ?? selectedNodeId;
+      if (!activeId) return link.color || 'rgba(148, 163, 184, 0.35)';
+      
       const incident = s === activeId || t === activeId;
       if (incident) return 'rgba(71, 85, 105, 0.78)';
+      
+      const isPinnedIncident = pinnedNodeId && (s === pinnedNodeId || t === pinnedNodeId);
+      if (isPinnedIncident) return 'rgba(71, 85, 105, 0.5)';
+
       // 2-hop edges: subtle
       const oneHop = neighbors.get(activeId);
       if (oneHop && (oneHop.has(s) || oneHop.has(t))) return 'rgba(148, 163, 184, 0.28)';
       return 'rgba(203, 213, 225, 0.16)';
     },
-    [hoverNode, selectedNodeId, neighbors],
+    [hoverNode, selectedNodeId, pinnedNodeId, neighbors, isLinkInShortestPath],
   );
 
   const getLinkWidth = useCallback(
     (link: unknown) => {
       const edge = link as GraphLinkEdge;
+      const s = nodeIdOf(edge.source);
+      const t = nodeIdOf(edge.target);
+
+      if (isLinkInShortestPath(s, t)) return 2.6;
+
       const strength = Math.max(0.5, Math.min(3, (edge.value ?? 1) * 0.8));
       const activeId = hoverNode?.id ?? selectedNodeId;
       if (!activeId) return strength;
-      const s = nodeIdOf(edge.source);
-      const t = nodeIdOf(edge.target);
+      
       if (s === activeId || t === activeId) return Math.max(strength, 1.6);
+      if (pinnedNodeId && (s === pinnedNodeId || t === pinnedNodeId)) return Math.max(strength, 1.25);
+      
       const oneHop = neighbors.get(activeId);
       if (oneHop && (oneHop.has(s) || oneHop.has(t))) return Math.max(0.6, strength * 0.6);
       return 0.35;
     },
-    [hoverNode, selectedNodeId, neighbors],
+    [hoverNode, selectedNodeId, pinnedNodeId, neighbors, isLinkInShortestPath],
   );
 
   /* ── node painting ──────────────────────────────────────────────── */
 
   const paintNode = useCallback(
-    (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale?: number) => {
       const degree = neighbors.get(node.id)?.size ?? 0;
       const r = clampedVisualRadius(node, degree);
       const nx = node.x ?? 0;
       const ny = node.y ?? 0;
+
+      const scale = (typeof globalScale === 'number' && globalScale > 0) ? globalScale : 1;
+
+      const isPinned = pinnedNodeId === node.id;
+      const isInPath =
+        shortestPathData?.pathFound &&
+        shortestPathData.nodes.some((n) => n.id === node.id);
 
       const isHovered = hoverNode?.id === node.id;
       const isSelected = selectedNodeId === node.id;
@@ -277,24 +313,40 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
         // Off-tab nodes always render heavily dimmed (cap at tier 3) but stay on canvas.
         tier = 3;
       }
-      const alpha = isHovered || isSelected ? 1 : tierAlpha(tier);
+      const alpha = isHovered || isSelected || isPinned || isInPath ? 1 : tierAlpha(tier);
       ctx.globalAlpha = alpha;
+
+      if (isPinned) {
+        ctx.beginPath();
+        ctx.arc(nx, ny, r + 5.5 / scale, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#d97706'; // amber-600
+        ctx.lineWidth = 2.5 / scale;
+        ctx.stroke();
+      }
 
       if (isSelected) {
         ctx.beginPath();
-        ctx.arc(nx, ny, r + 3.5 / globalScale, 0, 2 * Math.PI);
+        ctx.arc(nx, ny, r + 3.5 / scale, 0, 2 * Math.PI);
         ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 2.2 / globalScale;
-        ctx.setLineDash([4 / globalScale, 3 / globalScale]);
+        ctx.lineWidth = 2.2 / scale;
+        ctx.setLineDash([4 / scale, 3 / scale]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (isInPath) {
+        ctx.beginPath();
+        ctx.arc(nx, ny, r + 3.5 / scale, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#3b82f6'; // blue-500
+        ctx.lineWidth = 2.0 / scale;
+        ctx.setLineDash([3 / scale, 2 / scale]);
         ctx.stroke();
         ctx.setLineDash([]);
       }
 
       if (isPulse) {
         ctx.beginPath();
-        ctx.arc(nx, ny, r + 7 / globalScale, 0, 2 * Math.PI);
+        ctx.arc(nx, ny, r + 7 / scale, 0, 2 * Math.PI);
         ctx.strokeStyle = 'rgba(37, 99, 235, 0.35)';
-        ctx.lineWidth = 1.6 / globalScale;
+        ctx.lineWidth = 1.6 / scale;
         ctx.stroke();
       }
 
@@ -302,8 +354,8 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
       ctx.arc(nx, ny, r, 0, 2 * Math.PI);
       ctx.fillStyle = nodeColor(node);
       ctx.fill();
-      ctx.strokeStyle = isSelected || isPulse ? '#2563eb' : 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = (isSelected || isPulse ? 2 : 1) / globalScale;
+      ctx.strokeStyle = isSelected || isPulse || isInPath ? '#2563eb' : isPinned ? '#d97706' : 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = (isSelected || isPulse || isInPath || isPinned ? 2 : 1) / scale;
       ctx.stroke();
 
       // Adaptive label: focus / hover / top-K hubs only (no static degree threshold).
@@ -312,11 +364,11 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
         focusId: selectedNodeId ?? null,
         hoverId: hoverNode?.id ?? null,
         topHubIds,
-        scale: globalScale,
+        scale: scale,
       });
       if (showLabel) {
         const maxLen = isHovered || isSelected ? CANVAS_LABEL_MAX_LEN_ACTIVE : CANVAS_LABEL_MAX_LEN;
-        const fontSize = 11 / globalScale;
+        const fontSize = 11 / scale;
         ctx.font = `${isHovered || isSelected ? '600 ' : ''}${fontSize}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -339,8 +391,9 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
    * entity-type cluster so researchers can read graph macrostructure at a glance.
    */
   const renderClusterHullsPre = useCallback(
-    (ctx: CanvasRenderingContext2D, globalScale: number) => {
-      if (globalScale > 0.45) return;
+    (ctx: CanvasRenderingContext2D, globalScale?: number) => {
+      const scale = (typeof globalScale === 'number' && globalScale > 0) ? globalScale : 1;
+      if (scale > 0.45) return;
       const nodes = cleanData.nodes;
       if (nodes.length < 8) return;
       type Bucket = { sx: number; sy: number; n: number; nodes: typeof nodes };
@@ -366,18 +419,18 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
           const r = Math.hypot(dx, dy);
           if (r > maxR) maxR = r;
         }
-        const padding = 18 / globalScale;
+        const padding = 18 / scale;
         const baseColor =
           colorMap[type as keyof typeof colorMap] || '#94a3b8';
         ctx.beginPath();
         ctx.arc(cx, cy, maxR + padding, 0, Math.PI * 2);
         ctx.fillStyle = `${baseColor}22`;
         ctx.strokeStyle = `${baseColor}66`;
-        ctx.lineWidth = 1.5 / globalScale;
+        ctx.lineWidth = 1.5 / scale;
         ctx.fill();
         ctx.stroke();
 
-        const labelFontSize = 11 / globalScale;
+        const labelFontSize = 11 / scale;
         ctx.font = `600 ${labelFontSize}px Inter, system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -385,7 +438,7 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
         ctx.shadowColor = 'rgba(255,255,255,0.85)';
         ctx.shadowBlur = 4;
         const label = TYPE_LABELS[type] ?? type;
-        ctx.fillText(`${label} · ${g.n}`, cx, cy - (maxR + padding) - 4 / globalScale);
+        ctx.fillText(`${label} · ${g.n}`, cx, cy - (maxR + padding) - 4 / scale);
         ctx.shadowBlur = 0;
       }
     },
@@ -393,14 +446,19 @@ const KnowledgeGraphViewer: React.FC<KnowledgeGraphViewerProps> = ({
   );
 
   const paintPointerArea = useCallback(
-    (node: GraphNode, paintColor: string, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    (node: GraphNode, paintColor: string, ctx: CanvasRenderingContext2D, globalScale?: number) => {
+      if (typeof node.x !== 'number' || typeof node.y !== 'number') return;
       const degree = neighbors.get(node.id)?.size ?? 0;
       const r = clampedVisualRadius(node, degree);
-      const hitR = Math.max(r + 6 / globalScale, 10 / globalScale);
-      ctx.fillStyle = paintColor;
-      ctx.beginPath();
-      ctx.arc(node.x ?? 0, node.y ?? 0, hitR, 0, 2 * Math.PI);
-      ctx.fill();
+      const scale = (typeof globalScale === 'number' && globalScale > 0) ? globalScale : 1;
+      const hitR = Math.max(r + 6 / scale, 10 / scale);
+      
+      if (Number.isFinite(hitR) && hitR > 0) {
+        ctx.fillStyle = paintColor;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, hitR, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     },
     [neighbors],
   );

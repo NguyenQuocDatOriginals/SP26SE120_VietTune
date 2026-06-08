@@ -124,7 +124,11 @@ function buildExploreSearchParams(
 export default function ExplorePage() {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const isSimplifiedRole = user?.role === UserRole.RESEARCHER || user?.role === UserRole.CONTRIBUTOR;
+  const isSimplifiedRole =
+    !user ||
+    user.role === UserRole.RESEARCHER ||
+    user.role === UserRole.CONTRIBUTOR ||
+    user.role === UserRole.ADMIN;
   const [searchParams, setSearchParams] = useSearchParams();
   const returnTo = location.pathname + location.search;
   const exploreFilterOptions = useExploreFilterOptions();

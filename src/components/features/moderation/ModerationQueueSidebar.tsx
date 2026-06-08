@@ -1,5 +1,6 @@
 import { Search, MapPin, Music, User as UserIcon } from 'lucide-react';
 
+import { ContributorName } from '@/hooks/useUserFullName';
 import SearchableDropdown from '@/components/common/SearchableDropdown';
 import ModerationStageBadge from '@/components/features/moderation/ModerationStageBadge';
 import { ModerationStageProgressBar } from '@/components/features/moderation/ModerationStageProgressBar';
@@ -312,7 +313,15 @@ export function ModerationQueueSidebar({
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-neutral-600 mt-1">
                     <UserIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span>{it.uploader?.username || 'Khách'}</span>
+                    <span>
+                      <ContributorName
+                        userId={it.uploader?.id}
+                        fallback={
+                          (it.uploader as { fullName?: string })?.fullName ||
+                          it.uploader?.username
+                        }
+                      />
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-neutral-600 mt-0.5">
                     <MapPin className="h-3.5 w-3.5 shrink-0" />

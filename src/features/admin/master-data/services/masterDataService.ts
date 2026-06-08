@@ -9,55 +9,107 @@ import { ritualService } from '@/services/ritualService';
 import { vocalStyleService } from '@/services/vocalStyleService';
 
 export const masterDataService = {
-  list: async (kind: EntityKind, page: number, pageSize: number) => {
+  list: async (kind: EntityKind, page: number, pageSize: number, search?: string) => {
     switch (kind) {
       case 'instruments': {
-        const res = await instrumentService.getInstruments(page, pageSize);
-        return {
-          items: res.items?.map((item) => ({
+        let items: ReferenceEntity<ApiInstrumentDto>[];
+        let total: number;
+        if (search && search.trim()) {
+          const list = await instrumentService.searchInstrumentsByName(search);
+          total = list.length;
+          const start = (page - 1) * pageSize;
+          items = list.slice(start, start + pageSize).map((item) => ({
             id: item.id!,
             name: item.name!,
-            isActive: true, // Assuming true for now, adapt if backend supports soft-delete
+            isActive: true,
             raw: item,
-          })) as ReferenceEntity<ApiInstrumentDto>[],
-          total: res.total || 0,
-        };
+          })) as ReferenceEntity<ApiInstrumentDto>[];
+        } else {
+          const res = await instrumentService.getInstruments(page, pageSize);
+          items = (res.items?.map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) ?? []) as ReferenceEntity<ApiInstrumentDto>[];
+          total = res.total || 0;
+        }
+        return { items, total };
       }
       case 'ethnicities': {
-        const res = await ethnicityService.getEthnicities(page, pageSize);
-        return {
-          items: res.items?.map((item) => ({
+        let items: ReferenceEntity<ApiEthnicGroupDto>[];
+        let total: number;
+        if (search && search.trim()) {
+          const list = await ethnicityService.searchEthnicitiesByName(search);
+          total = list.length;
+          const start = (page - 1) * pageSize;
+          items = list.slice(start, start + pageSize).map((item) => ({
             id: item.id!,
             name: item.name!,
             isActive: true,
             raw: item,
-          })) as ReferenceEntity<ApiEthnicGroupDto>[],
-          total: res.total || 0,
-        };
+          })) as ReferenceEntity<ApiEthnicGroupDto>[];
+        } else {
+          const res = await ethnicityService.getEthnicities(page, pageSize);
+          items = (res.items?.map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) ?? []) as ReferenceEntity<ApiEthnicGroupDto>[];
+          total = res.total || 0;
+        }
+        return { items, total };
       }
       case 'rituals': {
-        const res = await ritualService.getCeremonies(page, pageSize);
-        return {
-          items: res.items?.map((item) => ({
+        let items: ReferenceEntity<ApiCeremonyDto>[];
+        let total: number;
+        if (search && search.trim()) {
+          const list = await ritualService.searchCeremoniesByName(search);
+          total = list.length;
+          const start = (page - 1) * pageSize;
+          items = list.slice(start, start + pageSize).map((item) => ({
             id: item.id!,
             name: item.name!,
             isActive: true,
             raw: item,
-          })) as ReferenceEntity<ApiCeremonyDto>[],
-          total: res.total || 0,
-        };
+          })) as ReferenceEntity<ApiCeremonyDto>[];
+        } else {
+          const res = await ritualService.getCeremonies(page, pageSize);
+          items = (res.items?.map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) ?? []) as ReferenceEntity<ApiCeremonyDto>[];
+          total = res.total || 0;
+        }
+        return { items, total };
       }
       case 'vocalStyles': {
-        const res = await vocalStyleService.getVocalStyles(page, pageSize);
-        return {
-          items: res.items?.map((item) => ({
+        let items: ReferenceEntity<ApiVocalStyleDto>[];
+        let total: number;
+        if (search && search.trim()) {
+          const list = await vocalStyleService.searchVocalStylesByName(search);
+          total = list.length;
+          const start = (page - 1) * pageSize;
+          items = list.slice(start, start + pageSize).map((item) => ({
             id: item.id!,
             name: item.name!,
             isActive: true,
             raw: item,
-          })) as ReferenceEntity<ApiVocalStyleDto>[],
-          total: res.total || 0,
-        };
+          })) as ReferenceEntity<ApiVocalStyleDto>[];
+        } else {
+          const res = await vocalStyleService.getVocalStyles(page, pageSize);
+          items = (res.items?.map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) ?? []) as ReferenceEntity<ApiVocalStyleDto>[];
+          total = res.total || 0;
+        }
+        return { items, total };
       }
       default:
         throw new Error(`Unsupported entity kind: ${kind}`);

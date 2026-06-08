@@ -2,6 +2,8 @@ import { Music, User as UserIcon } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { useUserFullName } from '@/hooks/useUserFullName'; // Resolves from useUserFullName.tsx
+
 import { MODERATION_SIMILAR_RECORDINGS_UI_ENABLED } from '@/config/moderationSimilarRecordingsUi';
 import type { LocalRecordingMini } from '@/features/moderation/types/localRecordingQueue.types';
 import {
@@ -77,6 +79,8 @@ export function useModerationDetailViewModel(input: UseModerationDetailViewModel
     verificationData,
   } = input;
 
+  const fetchedUploaderName = useUserFullName(item.uploader?.id);
+
   return useMemo(() => {
     const { mediaSrc, isVideo } = resolveMediaSource(item);
     const convertedForPlayer = buildConvertedRecording(item, selectedItemFull);
@@ -96,7 +100,7 @@ export function useModerationDetailViewModel(input: UseModerationDetailViewModel
         key: 'uploader',
         icon: UserIcon,
         label: 'Người đóng góp',
-        value: item.uploader?.username || 'Khách',
+        value: fetchedUploaderName || (item.uploader as { fullName?: string })?.fullName || item.uploader?.username || 'Khách',
       },
       {
         key: 'instruments',
@@ -143,7 +147,7 @@ export function useModerationDetailViewModel(input: UseModerationDetailViewModel
     const tabVisibility: Record<ModerationWorkspaceTabId, boolean> = {
       metadata: true,
       similar: showSimilarRecordings,
-      ai: aiViewAvailable,
+      ai: false, // Temporarily hidden
       timeline: hasRecordingId,
       embargo: hasRecordingId,
     };
@@ -177,5 +181,6 @@ export function useModerationDetailViewModel(input: UseModerationDetailViewModel
     userRole,
     currentVerificationStep,
     verificationData,
+    fetchedUploaderName,
   ]);
 }

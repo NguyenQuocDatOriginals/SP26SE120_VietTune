@@ -1,71 +1,30 @@
-/**
- * Phase 3 — Knowledge Graph Controller
- *
- * Single-source-of-truth hook that owns graph state (selection, exploreTarget, history, merged
- * subgraph cache) and exposes derived selectors so consumer components can stay thin.
- *
- * Replaces the in-component state previously hosted by `ResearcherPortalGraphTab.tsx`.
- */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  useKnowledgeGraphExplore,
-  useKnowledgeGraphOverview,
-  useKnowledgeGraphSearch,
-  useKnowledgeGraphStats,
-} from '@/features/knowledge-graph/hooks';
 import { useNeo4jExplore } from '@/features/knowledge-graph/hooks/useNeo4jExplore';
 import {
-  NEO4J_SEARCH_MIN_LENGTH,
   resolveNeo4jExpandLabel,
   resolveNeo4jSearchLabel,
 } from '@/features/knowledge-graph/utils/neo4jSearchLabel';
-import { pickFocusDefaultNode } from '@/features/knowledge-graph/utils/graphViewerHelpers';
-import {
-  computeKgIntelligence,
-  observationsForNode,
-  type SemanticMode,
-} from '@/features/knowledge-graph/utils/kgIntelligence';
 import {
   apiEntityTypeToViewerType,
-  apiTypesQueryForTab,
   enrichGraphWithDegreeVal,
-  getRecordingNeighborNodesInGraph,
-  getRelatedRecordings,
-  resolveKnowledgeGraphExploreNodeId,
-  tabMatchesViewerType,
   viewerTypeToApiEntityType,
   type ResearcherGraphSelection,
   type ResearcherGraphTabView,
 } from '@/features/knowledge-graph/utils/researcherGraphUx';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { Recording } from '@/types';
-import type {
-  GraphLink,
-  GraphNode,
-  KnowledgeGraphBackendMode,
-  KnowledgeGraphData,
-} from '@/types/graph';
+import type { GraphNode, KnowledgeGraphData } from '@/types/graph';
 
-/** A single step in the exploration breadcrumb trail. */
 export interface ExploreHistoryStep {
-  /** API entity GUID used by `/explore`. */
   entityId: string;
-  /** API Pascal entity type (`Recording`, `EthnicGroup`, …). */
   entityType: string;
-  /** Display label captured at click time. */
   label: string;
-  /** Viewer node id (`${Type}:${guid}`) for stable selection. */
   viewerNodeId: string;
 }
 
 export interface KnowledgeGraphControllerOptions {
   fallbackGraphData: KnowledgeGraphData;
-  approvedRecordings: Recording[];
 }
-
-const buildExploreKey = (entityId: string, entityType: string): string =>
-  `${entityType}:${entityId}`;
 
 /**
  * Diff-merge two subgraphs into a stable union (no flicker, deterministic ordering).
@@ -88,7 +47,7 @@ export function mergeSubgraph(
       if (!ext.explorable && n.explorable) ext.explorable = n.explorable;
     }
   }
-  const linkKey = (l: GraphLink) => {
+  const linkKey = (l: any) => {
     const s = typeof l.source === 'string' ? l.source : l.source.id;
     const t = typeof l.target === 'string' ? l.target : l.target.id;
     const lo = s < t ? s : t;
@@ -96,7 +55,7 @@ export function mergeSubgraph(
     return `${lo}\0${hi}\0${l.type}`;
   };
   const linkSeen = new Set<string>();
-  const links: GraphLink[] = [];
+  const links: any[] = [];
   for (const l of [...acc.links, ...next.links]) {
     const k = linkKey(l);
     if (linkSeen.has(k)) continue;
@@ -106,14 +65,11 @@ export function mergeSubgraph(
   return {
     nodes: Array.from(nodeMap.values()),
     links,
-    recordingInputTruncated: Boolean(acc.recordingInputTruncated || next.recordingInputTruncated),
-    recordingInputTotal: acc.recordingInputTotal ?? next.recordingInputTotal,
   };
 }
 
 export function useKnowledgeGraphController({
-  fallbackGraphData,
-  approvedRecordings,
+  fallbackGraphData: _fallbackGraphData,
 }: KnowledgeGraphControllerOptions) {
   // ── Tab + filters ───────────────────────────────────────────────────
   const [graphView, setGraphView] = useState<ResearcherGraphTabView>('overview');
@@ -122,17 +78,12 @@ export function useKnowledgeGraphController({
 
   // ── Selection + exploration ─────────────────────────────────────────
   const [selection, setSelection] = useState<ResearcherGraphSelection>(null);
-  const [exploreTarget, setExploreTarget] = useState<{ id: string; type: string } | null>(null);
-  const [history, setHistory] = useState<ExploreHistoryStep[]>([]);
+  const [pinnedNodeId, setPinnedNodeId] = useState<string | null>(null);
 
   // ── Sidebar collapse state (UX) ─────────────────────────────────────
   const [leftOpen, setLeftOpen] = useState(true);
 
-  // ── Phase 4: semantic mode (focus by relation kind) ─────────────────
-  const [semanticMode, setSemanticMode] = useState<SemanticMode>('free');
-
-  const [backendMode, setBackendMode] = useState<KnowledgeGraphBackendMode>('pg');
-
+  // ── Neo4j Explorer hook ─────────────────────────────────────────────
   const neo4jSearchLabel = useMemo(
     () => resolveNeo4jSearchLabel(typeFilter, graphView),
     [typeFilter, graphView],
@@ -145,192 +96,52 @@ export function useKnowledgeGraphController({
 
   const debouncedListQuery = useDebounce(listQuery, 350);
 
-  /** Cache of subgraphs keyed by `${type}:${guid}` so revisits are instant + merged. */
-  const subgraphCacheRef = useRef<Map<string, KnowledgeGraphData>>(new Map());
-  /** Accumulated merged subgraph as the user explores. Reset on tab/overview. */
-  const mergedSubgraphRef = useRef<KnowledgeGraphData>({ nodes: [], links: [] });
-  const [mergedTick, setMergedTick] = useState(0);
-
-  const overview = useKnowledgeGraphOverview({ maxNodes: 100, cacheTtlMs: 45_000 });
-  const stats = useKnowledgeGraphStats({ cacheTtlMs: 90_000 });
-
-  const searchTypesParam = (typeFilter || apiTypesQueryForTab(graphView)) || undefined;
-  const search = useKnowledgeGraphSearch({
-    query: debouncedListQuery,
-    types: searchTypesParam,
-    limit: 40,
-    enabled: backendMode === 'pg' && debouncedListQuery.trim().length >= 1,
-    minQueryLength: 1,
-  });
-
   const neo4jSearch = neo4j.search;
   useEffect(() => {
-    if (backendMode !== 'neo4j') return;
     void neo4jSearch(debouncedListQuery);
-  }, [backendMode, debouncedListQuery, neo4jSearch]);
+  }, [debouncedListQuery, neo4jSearch]);
 
-  const explore = useKnowledgeGraphExplore({
-    nodeId: exploreTarget?.id ?? '',
-    nodeType: exploreTarget?.type ?? '',
-    depth: 2,
-    maxNodes: 80,
-    enabled:
-      backendMode === 'pg' && Boolean(exploreTarget?.id && exploreTarget?.type),
-  });
-
-  // Reset selection + history when the user switches tab.
+  // Reset selection khi chuyển Tab
   useEffect(() => {
     setSelection(null);
-    setExploreTarget(null);
-    setHistory([]);
-    mergedSubgraphRef.current = { nodes: [], links: [] };
-    subgraphCacheRef.current.clear();
-    setMergedTick((t) => t + 1);
+    setPinnedNodeId(null);
+    neo4j.reset();
   }, [graphView]);
 
-  // Merge each successful explore response into the accumulated subgraph.
-  useEffect(() => {
-    if (!exploreTarget) return;
-    if (!explore.isSuccess) return;
-    const fresh = explore.data?.graph;
-    if (!fresh || !fresh.nodes.length) return;
-    const key = buildExploreKey(exploreTarget.id, exploreTarget.type);
-    subgraphCacheRef.current.set(key, fresh);
-    mergedSubgraphRef.current = mergeSubgraph(mergedSubgraphRef.current, fresh);
-    setMergedTick((t) => t + 1);
-  }, [exploreTarget, explore.isSuccess, explore.data]);
-
-  const baseApiGraph = useMemo(() => {
-    if (overview.isSuccess && overview.data?.graph.nodes.length) return overview.data.graph;
-    return null;
-  }, [overview.isSuccess, overview.data]);
-
-  /**
-   * Display graph: in overview mode → API overview (or fallback). In explore mode →
-   * accumulated diff-merged subgraph (Phase 3) so users keep their context as they navigate.
-   */
   const displayGraph: KnowledgeGraphData = useMemo(() => {
-    if (backendMode === 'neo4j') {
-      return enrichGraphWithDegreeVal(neo4j.graphData);
-    }
-    if (exploreTarget && mergedSubgraphRef.current.nodes.length) {
-      return enrichGraphWithDegreeVal(mergedSubgraphRef.current);
-    }
-    if (exploreTarget && explore.isSuccess && explore.data?.graph.nodes.length) {
-      return enrichGraphWithDegreeVal(explore.data.graph);
-    }
-    return baseApiGraph
-      ? enrichGraphWithDegreeVal(baseApiGraph)
-      : enrichGraphWithDegreeVal(fallbackGraphData);
-    // mergedTick triggers re-evaluation of mergedSubgraphRef.current.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    backendMode,
-    neo4j.graphData,
-    exploreTarget,
-    explore.isSuccess,
-    explore.data,
-    baseApiGraph,
-    fallbackGraphData,
-    mergedTick,
-  ]);
-
-  const dataSourceKind: 'api' | 'local' | 'explore' | 'neo4j' = useMemo(() => {
-    if (backendMode === 'neo4j') return 'neo4j';
-    if (exploreTarget && (mergedSubgraphRef.current.nodes.length || explore.isSuccess)) return 'explore';
-    if (baseApiGraph) return 'api';
-    return 'local';
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backendMode, exploreTarget, explore.isSuccess, baseApiGraph, mergedTick]);
-
-  // Auto-select a sensible default when nothing is selected.
-  useEffect(() => {
-    if (selection !== null || exploreTarget !== null) return;
-    if (!displayGraph.nodes.length) return;
-    const node = pickFocusDefaultNode(displayGraph, (n) => tabMatchesViewerType(graphView, n.type));
-    if (!node) return;
-    const apiType = node.entityType ?? node.apiEntityType ?? viewerTypeToApiEntityType(node.type);
-    setSelection({
-      source: 'graph',
-      id: node.id,
-      apiEntityType: apiType,
-      label: node.name,
-      viewerType: node.type,
-    });
-  }, [displayGraph, graphView, selection, exploreTarget]);
-
-  // If selection no longer exists in display graph (subgraph swap), pick a new default.
-  useEffect(() => {
-    if (!selection) return;
-    const sid = selection.source === 'graph' ? selection.id : selection.id;
-    if (!sid) return;
-    const stillExists = displayGraph.nodes.some((n) => n.id === sid);
-    if (stillExists) return;
-    const node = pickFocusDefaultNode(displayGraph, (n) => tabMatchesViewerType(graphView, n.type));
-    if (node) {
-      const apiType = node.entityType ?? node.apiEntityType ?? viewerTypeToApiEntityType(node.type);
-      setSelection({
-        source: 'graph',
-        id: node.id,
-        apiEntityType: apiType,
-        label: node.name,
-        viewerType: node.type,
-      });
-    } else {
-      setSelection(null);
-    }
-  }, [displayGraph, graphView, selection]);
-
-  // ── Derived collections ─────────────────────────────────────────────
-  const listNodesFromGraph = useMemo(() => {
-    const q = listQuery.trim().toLowerCase();
-    return displayGraph.nodes
-      .filter((n) => tabMatchesViewerType(graphView, n.type))
-      .filter((n) => !q || n.name.toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  }, [displayGraph.nodes, graphView, listQuery]);
-
-  const related = useMemo(
-    () => getRelatedRecordings(approvedRecordings, selection),
-    [approvedRecordings, selection],
-  );
-
-  const graphRecordingNeighbors = useMemo(() => {
-    if (!selection) return [];
-    const sid =
-      selection.source === 'graph'
-        ? selection.id
-        : selection.id ??
-          displayGraph.nodes.find((n) => n.type === selection.viewerType && n.name === selection.name)
-            ?.id ??
-          null;
-    if (!sid) return [];
-    return getRecordingNeighborNodesInGraph(displayGraph, sid, 5);
-  }, [displayGraph, selection]);
+    return enrichGraphWithDegreeVal(neo4j.graphData);
+  }, [neo4j.graphData]);
 
   const selectedNodeId = useMemo(() => {
     if (!selection) return null;
     return selection.source === 'graph' ? selection.id : selection.id ?? null;
   }, [selection]);
 
-  // ── Imperative actions ──────────────────────────────────────────────
-  const pushHistoryFromNode = useCallback((node: GraphNode, exploreId: string, apiType: string) => {
-    setHistory((prev) => {
-      const next: ExploreHistoryStep = {
-        entityId: exploreId,
-        entityType: apiType,
-        label: node.name,
-        viewerNodeId: node.id,
-      };
-      // Avoid pushing duplicate consecutive step.
-      if (prev.length && prev[prev.length - 1].viewerNodeId === next.viewerNodeId) return prev;
-      return [...prev, next];
-    });
-  }, []);
+  // ── Derived collections ─────────────────────────────────────────────
+  const listNodesFromGraph = useMemo(() => {
+    const q = listQuery.trim().toLowerCase();
+    return displayGraph.nodes
+      .filter((n) => !q || n.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  }, [displayGraph.nodes, listQuery]);
 
+  // ── Handlers & Actions ──────────────────────────────────────────────
   const handleGraphNodeClick = useCallback(
-    (node: GraphNode) => {
+    (node: GraphNode, event?: MouseEvent) => {
       const apiType = node.entityType ?? node.apiEntityType ?? viewerTypeToApiEntityType(node.type);
+      
+      // Ctrl+Click/Cmd+Click để Ghim nút nguồn (Shortest Path)
+      if (event && (event.ctrlKey || event.metaKey)) {
+        setPinnedNodeId((prev) => (prev === node.id ? null : node.id));
+        return;
+      }
+
+      // Nhấp thường: Chọn node để xem thông tin
+      // Chỉ huỷ ghim nếu click trùng vào nút đã ghim
+      if (pinnedNodeId === node.id) {
+        setPinnedNodeId(null);
+      }
+
       setSelection({
         source: 'graph',
         id: node.id,
@@ -338,22 +149,15 @@ export function useKnowledgeGraphController({
         label: node.name,
         viewerType: node.type,
       });
-      if (backendMode === 'neo4j') return;
-      const exploreId = resolveKnowledgeGraphExploreNodeId(node);
-      if (exploreId) {
-        setExploreTarget({ id: exploreId, type: apiType });
-        pushHistoryFromNode(node, exploreId, apiType);
-      } else {
-        setExploreTarget(null);
-      }
     },
-    [pushHistoryFromNode, backendMode],
+    [pinnedNodeId],
   );
 
   const handleSearchResultClick = useCallback(
     (hit: { id: string; type: string; label: string }) => {
       const viewerType = apiEntityTypeToViewerType(hit.type);
       const viewerNodeId = `${hit.type}:${hit.id}`;
+      
       setSelection({
         source: 'graph',
         id: viewerNodeId,
@@ -361,37 +165,10 @@ export function useKnowledgeGraphController({
         label: hit.label,
         viewerType,
       });
-      if (backendMode === 'neo4j') {
-        neo4j.seedFromSearchHit({ id: hit.id, label: hit.label, group: hit.type });
-        setHistory((prev) => {
-          if (prev.length && prev[prev.length - 1].viewerNodeId === viewerNodeId) return prev;
-          return [
-            ...prev,
-            {
-              entityId: hit.id,
-              entityType: hit.type,
-              label: hit.label,
-              viewerNodeId,
-            },
-          ];
-        });
-        return;
-      }
-      setExploreTarget({ id: hit.id, type: hit.type });
-      setHistory((prev) => {
-        if (prev.length && prev[prev.length - 1].viewerNodeId === viewerNodeId) return prev;
-        return [
-          ...prev,
-          {
-            entityId: hit.id,
-            entityType: hit.type,
-            label: hit.label,
-            viewerNodeId,
-          },
-        ];
-      });
+
+      neo4j.seedFromSearchHit({ id: hit.id, label: hit.label, group: hit.type });
     },
-    [backendMode, neo4j.seedFromSearchHit],
+    [neo4j],
   );
 
   const handleNeo4jSearchResultClick = useCallback(
@@ -403,128 +180,37 @@ export function useKnowledgeGraphController({
 
   const handleListNodeClick = useCallback(
     (n: GraphNode) => {
-      const apiType = n.entityType ?? n.apiEntityType ?? viewerTypeToApiEntityType(n.type);
       setSelection({ source: 'list', viewerType: n.type, name: n.name, id: n.id });
-      const exploreId = resolveKnowledgeGraphExploreNodeId(n);
-      if (exploreId) {
-        setExploreTarget({ id: exploreId, type: apiType });
-        pushHistoryFromNode(n, exploreId, apiType);
-      } else {
-        setExploreTarget(null);
-      }
     },
-    [pushHistoryFromNode],
+    [],
   );
-
-  /** Walk back to the given history index (truncate history, refocus). */
-  const navigateToHistoryStep = useCallback(
-    (index: number) => {
-      setHistory((prev) => {
-        if (index < 0 || index >= prev.length) return prev;
-        return prev.slice(0, index + 1);
-      });
-      const step = history[index];
-      if (!step) return;
-      setExploreTarget({ id: step.entityId, type: step.entityType });
-      const viewerType = apiEntityTypeToViewerType(step.entityType);
-      setSelection({
-        source: 'graph',
-        id: step.viewerNodeId,
-        apiEntityType: step.entityType,
-        label: step.label,
-        viewerType,
-      });
-    },
-    [history],
-  );
-
-  const navigateBack = useCallback(() => {
-    if (history.length <= 1) {
-      // back to overview
-      setHistory([]);
-      setExploreTarget(null);
-      return;
-    }
-    navigateToHistoryStep(history.length - 2);
-  }, [history.length, navigateToHistoryStep]);
-
-  const resetToOverview = useCallback(() => {
-    setHistory([]);
-    setExploreTarget(null);
-    mergedSubgraphRef.current = { nodes: [], links: [] };
-    subgraphCacheRef.current.clear();
-    setMergedTick((t) => t + 1);
-  }, []);
-
-  const expandSelected = useCallback(() => {
-    if (!selection || selection.source !== 'graph') return;
-    const node = displayGraph.nodes.find((x) => x.id === selection.id);
-    const exploreId = node ? resolveKnowledgeGraphExploreNodeId(node) : null;
-    const apiType = selection.apiEntityType ?? viewerTypeToApiEntityType(selection.viewerType);
-    if (!exploreId) return;
-    setExploreTarget({ id: exploreId, type: apiType });
-    if (node) pushHistoryFromNode(node, exploreId, apiType);
-  }, [selection, displayGraph.nodes, pushHistoryFromNode]);
-
-  const switchToNeo4j = useCallback(() => {
-    setBackendMode('neo4j');
-    setTypeFilter('');
-    setListQuery('');
-    setSelection(null);
-    setExploreTarget(null);
-    setHistory([]);
-    mergedSubgraphRef.current = { nodes: [], links: [] };
-    subgraphCacheRef.current.clear();
-    setMergedTick((t) => t + 1);
-    neo4j.reset();
-  }, [neo4j]);
-
-  const switchToPg = useCallback(() => {
-    setBackendMode('pg');
-    neo4j.reset();
-    resetToOverview();
-    overview.refetch();
-    stats.refetch();
-  }, [neo4j, resetToOverview, overview, stats]);
 
   const handleGraphNodeDoubleClick = useCallback(
     (node: GraphNode) => {
-      if (backendMode !== 'neo4j') return;
       const entityId = node.entityId ?? node.backendId;
       if (!entityId) return;
       void neo4j.expand(entityId);
     },
-    [backendMode, neo4j],
+    [neo4j],
   );
+
+  const resetToOverview = useCallback(() => {
+    setSelection(null);
+    setPinnedNodeId(null);
+    neo4j.reset();
+  }, [neo4j]);
 
   const refreshAll = useCallback(() => {
-    if (backendMode === 'neo4j') {
-      neo4j.reset();
-      setSelection(null);
-      return;
-    }
-    overview.refetch();
-    stats.refetch();
     resetToOverview();
-    search.refetch();
-  }, [backendMode, overview, stats, search, resetToOverview, neo4j]);
+  }, [resetToOverview]);
 
-  const busy =
-    backendMode === 'neo4j'
-      ? neo4j.isSearching || neo4j.isExpanding
-      : overview.isLoading || explore.isLoading;
-  const exploreInFlight =
-    backendMode === 'neo4j'
-      ? neo4j.isExpanding
-      : explore.isLoading && Boolean(exploreTarget);
+  const clearSelection = useCallback(() => {
+    setSelection(null);
+    setPinnedNodeId(null);
+  }, []);
 
-  // ── Phase 4: intelligence selector + observations for current node ──
-  const intelligence = useMemo(() => computeKgIntelligence(displayGraph), [displayGraph]);
-
-  const selectedObservations = useMemo(
-    () => observationsForNode(intelligence, selectedNodeId),
-    [intelligence, selectedNodeId],
-  );
+  const busy = neo4j.isSearching || neo4j.isExpanding;
+  const exploreInFlight = neo4j.isExpanding;
 
   return {
     // state
@@ -537,48 +223,30 @@ export function useKnowledgeGraphController({
     setTypeFilter,
     selection,
     selectedNodeId,
-    exploreTarget,
-    history,
     leftOpen,
     setLeftOpen,
-    semanticMode,
-    setSemanticMode,
-    backendMode,
-    switchToNeo4j,
-    switchToPg,
-    neo4jSearchMinLength: NEO4J_SEARCH_MIN_LENGTH,
+    pinnedNodeId,
+    setPinnedNodeId,
+    // derived data
+    displayGraph,
+    listNodesFromGraph,
+    // queries
     neo4jSearchResults: neo4j.searchResults,
     neo4jSearchLoading: neo4j.isSearching,
     neo4jSearchError: neo4j.searchError,
     neo4jExpandError: neo4j.expandError,
-    // derived data
-    displayGraph,
-    listNodesFromGraph,
-    related,
-    graphRecordingNeighbors,
-    dataSourceKind,
-    intelligence,
-    selectedObservations,
-    // queries
-    overview,
-    stats,
-    search,
-    explore,
     // status flags
     busy,
     exploreInFlight,
-    baseApiGraph,
     // actions
     handleGraphNodeClick,
     handleGraphNodeDoubleClick,
     handleSearchResultClick,
     handleNeo4jSearchResultClick,
     handleListNodeClick,
-    navigateBack,
-    navigateToHistoryStep,
     resetToOverview,
-    expandSelected,
     refreshAll,
+    clearSelection,
   };
 }
 
