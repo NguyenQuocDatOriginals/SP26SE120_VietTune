@@ -77,7 +77,7 @@ export async function getLocalRecordingFull(id: string): Promise<LocalRecording 
     );
     const envelope = res as Record<string, unknown>;
     const x = (envelope?.data ?? envelope?.Data ?? res) as Record<string, unknown> | null;
-    if (x && typeof x !== 'object') {
+    if (x && typeof x === 'object') {
       return mapSubmissionToLocalRecording(x);
     }
   } catch (err) {
@@ -92,7 +92,7 @@ export async function getLocalRecordingFull(id: string): Promise<LocalRecording 
     );
     const envelope = res as Record<string, unknown>;
     const x = (envelope?.data ?? envelope?.Data ?? res) as Record<string, unknown> | null;
-    if (x && typeof x !== 'object') {
+    if (x && typeof x === 'object') {
       return mapSubmissionToLocalRecording(x);
     }
   } catch (err) {

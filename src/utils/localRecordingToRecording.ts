@@ -156,6 +156,11 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
     viewCount: local.viewCount ?? 0,
     likeCount: local.likeCount ?? 0,
     downloadCount: local.downloadCount ?? 0,
+    vocalStyleId: local.vocalStyleId,
+    musicalScaleId: local.musicalScaleId,
+    ceremonyId: local.ceremonyId,
+    performanceContext: local.performanceContext,
+    communeId: local.communeId,
   };
 
   const communeLabel = cc?.province?.trim();

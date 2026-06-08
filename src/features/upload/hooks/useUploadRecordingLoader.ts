@@ -292,7 +292,7 @@ export function useUploadRecordingLoader(
           s.setArchiveOrg(recording.adminInfo?.archiveOrg || '');
           s.setCatalogId(recording.adminInfo?.catalogId || '');
 
-          const storageKey = recording.recordingId ?? recording.id;
+          const storageKey = recording.submissionId ?? recording.id;
           const existing = storageKey
             ? ((await getLocalRecordingFull(storageKey)) as LocalRecordingStorage | null)
             : null;

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ContributorName } from '@/hooks/useUserFullName';
 import BackButton from '@/components/common/BackButton';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
+import LoadingState from '@/components/common/LoadingState';
 import AudioPlayer from '@/components/features/AudioPlayer';
 import VideoPlayer from '@/components/features/VideoPlayer';
 import { formatViDateTimeShortBangkok } from '@/config/datetimeDisplay';
@@ -45,7 +46,7 @@ type RecordingWithLocalData = Recording & {
 export default function ApprovedRecordingsPage() {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-  const { items, load, forwardedDeletes, editSubmissions, refreshRequestQueues } =
+  const { items, load, forwardedDeletes, editSubmissions, refreshRequestQueues, loading } =
     useApprovedRecordings(user?.id);
 
   const [deleteTarget, setDeleteTarget] = useState<
@@ -118,6 +119,14 @@ export default function ApprovedRecordingsPage() {
     return <ForbiddenPage message="Bạn cần tài khoản Chuyên gia để truy cập trang này." />;
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <LoadingState size="lg" padded />
+      </div>
+    );
+  }
+
   // Phân chia bản thu thành 2 nhóm: do expert hiện tại duyệt và do expert khác duyệt
   const myApproved = items.filter((it) => it.moderation?.reviewerId === user?.id);
   const othersApproved = items.filter(
@@ -176,9 +185,6 @@ export default function ApprovedRecordingsPage() {
     }
 
     const isMyReview = it.moderation?.reviewerId === user?.id;
-    const hasPendingDeleteRequest = forwardedDeletes.some(
-      (req) => req.recordingId === (it.id ?? ''),
-    );
 
     return (
       <div
@@ -226,21 +232,6 @@ export default function ApprovedRecordingsPage() {
                 {getModerationStatusLabel(it.moderation?.status)}
               </span>
             </div>
-          </div>
-
-          <div className="ml-4 flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => !hasPendingDeleteRequest && navigate(`/recordings/${it.id}/edit`)}
-              disabled={hasPendingDeleteRequest}
-              className={
-                hasPendingDeleteRequest
-                  ? 'px-4 py-2 rounded-full bg-neutral-100 text-neutral-400 text-sm whitespace-nowrap flex items-center gap-2 cursor-not-allowed'
-                  : 'px-4 py-2 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer'
-              }
-            >
-              <Edit className="h-4 w-4" strokeWidth={2.5} />
-              Chỉnh sửa bản thu
-            </button>
           </div>
         </div>
 

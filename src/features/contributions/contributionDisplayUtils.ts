@@ -41,6 +41,7 @@ export function formatContributionPerformanceType(type: string | null | undefine
   const t = type.trim().toLowerCase();
   if (t === 'vocal_accompaniment' || t === 'hát với nhạc đệm') return 'Hát với nhạc đệm';
   if (t === 'instrumental' || t === 'nhạc cụ') return 'Nhạc cụ';
+  if (t === 'acappella' || t === 'hát không đệm') return 'Hát không đệm';
   return 'Khác';
 }
 

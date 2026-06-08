@@ -86,7 +86,7 @@ export default function ContributionsPage() {
   useEffect(() => {
     const fetchReferenceData = async () => {
       try {
-        const [instruments, ethnicGroups, ceremonies, vocalStyles, communes, musicalScales] =
+        const [instruments, ethnicGroups, ceremonies, vocalStyles, communes, musicalScales, districts, provinces] =
           await Promise.all([
             referenceDataService.getInstruments(),
             referenceDataService.getEthnicGroups(),
@@ -94,6 +94,8 @@ export default function ContributionsPage() {
             referenceDataService.getVocalStyles(),
             referenceDataService.getCommunes(),
             referenceDataService.getMusicalScales(),
+            referenceDataService.getDistricts(),
+            referenceDataService.getProvinces(),
           ]);
         setReferenceMaps(
           buildReferenceNameMaps({
@@ -103,6 +105,8 @@ export default function ContributionsPage() {
             vocalStyles,
             communes,
             musicalScales,
+            districts,
+            provinces,
           }),
         );
       } catch (err) {

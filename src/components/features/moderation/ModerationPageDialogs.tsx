@@ -15,9 +15,7 @@ export interface ModerationPageDialogsProps {
   dialogCurrentRecording: LocalRecordingMini | null;
   allItems: LocalRecordingMini[];
   verificationDialogPanelRef: RefObject<HTMLDivElement | null> | Ref<HTMLDivElement>;
-  expertReviewNotesDraft: Record<string, string>;
   verificationForms: Record<string, ModerationVerificationData | undefined>;
-  onExpertReviewNotesChange: (submissionId: string, text: string) => void;
   onCancelVerification: (id: string) => void;
   onOpenRejectFromWizard: () => void;
   getCurrentVerificationStep: (submissionId: string) => number;
@@ -65,9 +63,7 @@ export default function ModerationPageDialogs({
   dialogCurrentRecording,
   allItems,
   verificationDialogPanelRef,
-  expertReviewNotesDraft,
   verificationForms,
-  onExpertReviewNotesChange,
   onCancelVerification,
   onOpenRejectFromWizard,
   getCurrentVerificationStep,
@@ -113,8 +109,6 @@ export default function ModerationPageDialogs({
           submissionId={sid}
           item={item}
           panelRef={verificationDialogPanelRef as Ref<HTMLDivElement>}
-          expertReviewNotesDraft={expertReviewNotesDraft[sid] ?? ''}
-          onExpertReviewNotesChange={(text) => onExpertReviewNotesChange(sid, text)}
           formSlice={verificationForms[sid]}
           currentStep={currentStep}
           onClose={() => onCancelVerification(sid)}

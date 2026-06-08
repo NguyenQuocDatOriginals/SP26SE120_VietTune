@@ -1,4 +1,4 @@
-import { AlertTriangle, Download, User, MapPin, ShieldAlert } from 'lucide-react';
+import { Download, User, MapPin, ShieldAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
@@ -110,7 +110,7 @@ export default function RecordingDetailPage() {
   const preloadedRecording = state.preloadedRecording;
   const [showDisputeModal, setShowDisputeModal] = useState(false);
 
-  const { recording, loading, notFound, annotations, embargo, disputes, refetchDisputes } =
+  const { recording, loading, notFound, annotations, disputes, refetchDisputes } =
     useRecordingDetail(id, preloadedRecording);
 
   const { images } = useRecordingImages(recording?.id);
@@ -227,7 +227,7 @@ export default function RecordingDetailPage() {
     }
     return ordered;
   }, [annotations]);
-  const isEmbargoActive = embargo?.status === 3;
+
   const activeDisputes = useMemo(
     () => disputes.filter((row) => row.status === 0 || row.status === 1),
     [disputes],
@@ -295,19 +295,6 @@ export default function RecordingDetailPage() {
           >
             {recording.title}
           </h1>
-          {isEmbargoActive && (
-            <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-              <p className="inline-flex items-center gap-2 font-semibold">
-                <AlertTriangle className="h-4 w-4" />
-                Bản ghi đang trong thời hạn hạn chế công bố.
-              </p>
-              {embargo?.embargoEndDate && (
-                <p className="mt-1 text-xs text-amber-800">
-                  Dự kiến kết thúc: {formatDateTime(embargo.embargoEndDate)}
-                </p>
-              )}
-            </div>
-          )}
           {hasActiveDispute && (
             <div className="mt-3 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-900">
               <p className="inline-flex items-center gap-2 font-semibold">
@@ -387,9 +374,13 @@ export default function RecordingDetailPage() {
             {/* Description */}
             <div className={SURFACE_CARD}>
               <h2 className="text-base font-semibold mb-3 text-neutral-900">Mô tả nội dung</h2>
-              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                {recording.description || 'Không rõ'}
-              </p>
+              {recording.description ? (
+                <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                  {recording.description}
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
             </div>
 
             {hasGps && gpsEmbedUrl && (
@@ -411,27 +402,21 @@ export default function RecordingDetailPage() {
               </h2>
               <dl className="space-y-3">
                 <div>
-                  <dt className="font-medium text-neutral-500">Hệ thống điệu thức</dt>
-                  <dd className="text-neutral-700 font-medium">
+                  <dt className="font-medium text-neutral-500">Âm giai (Musical Scale)</dt>
+                  <dd className="font-medium text-neutral-900">
                     {recording.metadata?.tuningSystem || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-neutral-500">Cấu trúc giai điệu</dt>
+                  <dt className="font-medium text-neutral-500">Lối hát / Thể loại</dt>
                   <dd className="font-medium text-neutral-900">
                     {recording.metadata?.modalStructure || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Ngữ cảnh nghi lễ</dt>
+                  <dt className="font-medium text-neutral-500">Loại sự kiện</dt>
                   <dd className="font-medium text-neutral-900">
                     {recording.metadata?.ritualContext || 'Không rõ'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-medium text-neutral-500">Ý nghĩa văn hóa</dt>
-                  <dd className="font-medium text-neutral-900">
-                    {recording.metadata?.culturalSignificance || 'Không rõ'}
                   </dd>
                 </div>
               </dl>
@@ -492,14 +477,22 @@ export default function RecordingDetailPage() {
 
             {/* Lyrics */}
             <div className={SURFACE_CARD}>
-              <h2 className="text-base font-semibold mb-3 text-neutral-900">Lời bài hát</h2>
-              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4">
-                {recording.metadata?.lyrics || 'Không rõ'}
-              </p>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-2">Dịch nghĩa</h3>
-              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                {recording.metadata?.lyricsTranslation || 'Không rõ'}
-              </p>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">Lời bài hát (Nguyên bản)</h2>
+              {recording.metadata?.lyrics ? (
+                <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap mb-4">
+                  {recording.metadata.lyrics}
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-500 mb-4">Không rõ</p>
+              )}
+              <h3 className="text-base font-semibold mb-3 text-neutral-900">Bản dịch nghĩa (Tiếng Việt)</h3>
+              {recording.metadata?.lyricsTranslation ? (
+                <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                  {recording.metadata.lyricsTranslation}
+                </p>
+              ) : (
+                <p className="text-sm text-neutral-500">Không rõ</p>
+              )}
             </div>
           </div>
 
@@ -520,13 +513,39 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Khu vực</dt>
                   <dd className="font-medium text-neutral-900">
-                    {getRegionDisplayName(recording.region, undefined) || 'Không rõ'}
+                    {recording.regionName || getRegionDisplayName(recording.region, undefined) || 'Không rõ'}
                   </dd>
                 </div>
+                {recording.provinceName && (
+                  <div>
+                    <dt className="text-sm text-neutral-500">Tỉnh/Thành phố</dt>
+                    <dd className="font-medium text-neutral-900">{recording.provinceName}</dd>
+                  </div>
+                )}
+                {recording.districtName && (
+                  <div>
+                    <dt className="text-sm text-neutral-500">Quận/Huyện</dt>
+                    <dd className="font-medium text-neutral-900">{recording.districtName}</dd>
+                  </div>
+                )}
+                {recording.communeName && (
+                  <div>
+                    <dt className="text-sm text-neutral-500">Phường/Xã</dt>
+                    <dd className="font-medium text-neutral-900">{recording.communeName}</dd>
+                  </div>
+                )}
                 <div>
                   <dt className="text-sm text-neutral-500">Loại hình biểu diễn</dt>
                   <dd className="font-medium text-neutral-900">
-                    {RECORDING_TYPE_NAMES[recording.recordingType] || 'Không rõ'}
+                    {recording.performanceContext
+                      ? (recording.performanceContext.trim().toLowerCase() === 'vocal_accompaniment'
+                        ? 'Hát với nhạc đệm'
+                        : recording.performanceContext.trim().toLowerCase() === 'instrumental'
+                          ? 'Nhạc cụ'
+                          : recording.performanceContext.trim().toLowerCase() === 'acappella'
+                            ? 'Hát không đệm'
+                            : recording.performanceContext)
+                      : 'Không rõ'}
                   </dd>
                 </div>
                 <div>
@@ -630,9 +649,14 @@ export default function RecordingDetailPage() {
             {/* Performers */}
             <div className={SURFACE_CARD}>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
-                Nghệ nhân
+                Nghệ sĩ/Người biểu diễn
               </h3>
-              {recording.performers.length > 0 ? (
+              {recording.performerName ? (
+                <div className="flex items-center text-neutral-700">
+                  <User className="h-4 w-4 mr-2 text-primary-600" strokeWidth={2.5} />
+                  <span>{recording.performerName}</span>
+                </div>
+              ) : recording.performers && recording.performers.length > 0 ? (
                 <ul className="space-y-2">
                   {recording.performers.map((performer) => (
                     <li key={performer.id} className="flex items-center text-neutral-700">

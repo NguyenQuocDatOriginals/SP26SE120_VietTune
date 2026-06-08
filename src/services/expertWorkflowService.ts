@@ -505,6 +505,22 @@ export const expertWorkflowService = {
     });
   },
 
+  /** Phase 2: POST /Review/create; for arbitrary decisions including Approve. */
+  async syncReviewToServer(
+    submissionId: string,
+    reviewerId: string,
+    decision: ReviewDecision | number,
+    comments: string,
+  ): Promise<MutationResult> {
+    if (!EXPERT_API_PHASE2) return mutationOk();
+    return createReviewDecisionOnServer({
+      submissionId,
+      reviewerId,
+      decision,
+      comments,
+    });
+  },
+
   /** Phase 2: PUT done-stage-one; Phase 1: no-op success. */
   async completeStageOne(submissionId: string): Promise<MutationResult> {
     if (!EXPERT_API_PHASE2) return mutationOk();
@@ -529,6 +545,12 @@ export const expertWorkflowService = {
       if (EXPERT_API_PHASE2) {
         const serverRes = await approveSubmissionOnServer(submissionId);
         if (!serverRes.ok) return false;
+        await createReviewDecisionOnServer({
+          submissionId,
+          reviewerId: expertId,
+          decision: ReviewDecision.Approve,
+          comments: notes,
+        });
       }
       await applyApproveToMap(submissionId, expertId, expertUsername, verificationData, notes);
       return true;

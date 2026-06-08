@@ -44,6 +44,21 @@ describe('normalizeContributorReviewPayload', () => {
     });
   });
 
+  it('supports comment and Comment fields in envelope', () => {
+    const result = normalizeContributorReviewPayload({
+      isSuccess: true,
+      data: {
+        comment: 'Cần sửa đổi âm thanh.',
+        decision: 2,
+      },
+    });
+
+    expect(result).toEqual({
+      comments: 'Cần sửa đổi âm thanh.',
+      decision: 2,
+    });
+  });
+
   it('accepts PascalCase fields on the root payload', () => {
     const result = normalizeContributorReviewPayload({
       Comments: '  Ghi chú từ chuyên gia  ',

@@ -27,6 +27,19 @@ export interface Recording {
   likeCount: number;
   downloadCount: number;
   _semanticScore?: number;
+  performerName?: string;
+  composer?: string;
+  language?: string;
+  recordingLocation?: string;
+  musicalScaleId?: string;
+  vocalStyleId?: string;
+  ceremonyId?: string;
+  performanceContext?: string;
+  communeId?: string;
+  communeName?: string;
+  districtName?: string;
+  provinceName?: string;
+  regionName?: string;
 }
 
 export interface RecordingMetadata {
@@ -143,4 +156,9 @@ export interface LocalRecording {
     contributorEditLocked?: boolean;
   };
   resubmittedForModeration?: boolean;
+  vocalStyleId?: string;
+  musicalScaleId?: string;
+  ceremonyId?: string;
+  performanceContext?: string;
+  communeId?: string;
 }

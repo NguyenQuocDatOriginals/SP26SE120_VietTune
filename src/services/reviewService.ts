@@ -53,7 +53,7 @@ export function normalizeContributorReviewPayload(raw: unknown): ContributorSubm
 
   if (!rec) return null;
 
-  const rawComments = pickStr(rec, ['comments', 'Comments']);
+  const rawComments = pickStr(rec, ['comments', 'Comments', 'comment', 'Comment']);
   const trimmed = rawComments?.trim() ? rawComments.trim() : null;
   const decision = pickNum(rec, ['decision', 'Decision']);
 

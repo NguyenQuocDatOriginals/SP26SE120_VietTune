@@ -5,8 +5,6 @@ import { createPortal } from 'react-dom';
 
 import AudioPlayer from '@/components/features/AudioPlayer';
 import VideoPlayer from '@/components/features/VideoPlayer';
-import { EXPERT_API_PHASE2 } from '@/config/expertWorkflowPhase';
-import { MODERATION_EXPERT_TEXTAREA_MAX_LENGTH } from '@/config/validationConstants';
 import { VERIFICATION_STEPS } from '@/features/moderation/constants/verificationStepDefinitions';
 import {
   getMissingStep2FieldKeys,
@@ -142,8 +140,6 @@ export function ModerationVerificationWizardDialog({
   submissionId,
   item,
   panelRef,
-  expertReviewNotesDraft,
-  onExpertReviewNotesChange,
   formSlice,
   currentStep,
   onClose,
@@ -158,8 +154,6 @@ export function ModerationVerificationWizardDialog({
   submissionId: string;
   item: LocalRecordingMini;
   panelRef: Ref<HTMLDivElement>;
-  expertReviewNotesDraft: string;
-  onExpertReviewNotesChange: (text: string) => void;
   formSlice: ModerationVerificationData | undefined;
   currentStep: number;
   onClose: () => void;
@@ -326,34 +320,7 @@ export function ModerationVerificationWizardDialog({
 
         <div className="flex-1 min-h-0 overflow-y-auto p-6 overscroll-contain">
           <div className="space-y-6">
-            <div
-              className="rounded-2xl border border-neutral-200/80 shadow-md p-4 sm:p-5 bg-surface-panel"
-            >
-              <label
-                htmlFor={`expert-review-notes-dialog-${submissionId}`}
-                className="block text-sm font-semibold text-neutral-900 mb-1"
-              >
-                Ghi chú chuyên gia
-              </label>
-              <p
-                id={`expert-review-notes-dialog-hint-${submissionId}`}
-                className="text-xs text-neutral-600 mb-3 leading-relaxed"
-              >
-                {EXPERT_API_PHASE2
-                  ? 'Nháp lưu trên trình duyệt; sau khi máy chủ ghi nhận phê duyệt/từ chối, nội dung được gửi kèm nhật ký kiểm tra (AuditLog).'
-                  : 'Lưu cục bộ theo từng bản thu (localStorage). Sẽ gộp với ghi chú ở bước xác nhận khi bạn phê duyệt hoặc từ chối.'}
-              </p>
-              <textarea
-                id={`expert-review-notes-dialog-${submissionId}`}
-                value={expertReviewNotesDraft}
-                onChange={(e) => onExpertReviewNotesChange(e.target.value)}
-                rows={4}
-                maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
-                placeholder="Theo dõi ngữ cảnh, nguồn tham chiếu, cảnh báo cho admin…"
-                aria-describedby={`expert-review-notes-dialog-hint-${submissionId}`}
-                className="w-full rounded-xl border border-neutral-200/90 bg-white px-3 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-400/60 resize-y min-h-[96px]"
-              />
-            </div>
+
 
             <div
               className="rounded-2xl border border-neutral-200/80 shadow-lg backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-xl bg-surface-panel"
@@ -824,20 +791,7 @@ export function ModerationVerificationWizardDialog({
                       </p>
                     )}
                   </div>
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                      {VERIFICATION_STEPS[1].notesLabel}{' '}
-                      <span className="text-sm text-neutral-500">(Tùy chọn)</span>
-                    </label>
-                    <textarea
-                      value={formSlice?.step2?.expertNotes || ''}
-                      onChange={(e) => onUpdateVerificationForm(2, VERIFICATION_STEPS[1].notesField, e.target.value)}
-                      rows={4}
-                      maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
-                      placeholder={VERIFICATION_STEPS[1].notesPlaceholder}
-                    />
-                  </div>
+
                 </div>
               )}
 
@@ -862,24 +816,7 @@ export function ModerationVerificationWizardDialog({
                     ))}
 
                   </div>
-                  <div className="mt-4">
-                    <label
-                      htmlFor="verification-final-notes"
-                      className="block text-sm font-medium text-neutral-700 mb-2"
-                    >
-                      {VERIFICATION_STEPS[2].notesLabel}{' '}
-                      <span className="text-sm text-neutral-500">(Tùy chọn)</span>
-                    </label>
-                    <textarea
-                      id="verification-final-notes"
-                      value={formSlice?.step3?.finalNotes || ''}
-                      onChange={(e) => onUpdateVerificationForm(3, VERIFICATION_STEPS[2].notesField, e.target.value)}
-                      rows={4}
-                      maxLength={MODERATION_EXPERT_TEXTAREA_MAX_LENGTH}
-                      className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus:border-primary-500"
-                      placeholder={VERIFICATION_STEPS[2].notesPlaceholder}
-                    />
-                  </div>
+
                 </div>
               )}
             </div>

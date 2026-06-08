@@ -764,9 +764,7 @@ export default function ModerationPage() {
           dialogCurrentRecording={dialogCurrentRecording}
           allItems={allItems}
           verificationDialogPanelRef={verificationDialogPanelRef}
-          expertReviewNotesDraft={expertReviewNotesDraft}
           verificationForms={verificationForms}
-          onExpertReviewNotesChange={handleExpertReviewNotesChange}
           onCancelVerification={cancelVerification}
           onOpenRejectFromWizard={() => {
             if (showVerificationDialog) setShowRejectDialog(showVerificationDialog);

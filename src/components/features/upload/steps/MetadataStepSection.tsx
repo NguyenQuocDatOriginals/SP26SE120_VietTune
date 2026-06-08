@@ -556,7 +556,7 @@ export default function MetadataStepSection({
               }
             >
               <FormFieldComponent
-                label="Lối hát / Thể loại (Vocal Style)"
+                label="Lối hát / Thể loại"
                 required
                 id="field-vocalStyle"
               >

@@ -251,6 +251,15 @@ export function mapSubmissionToLocalRecording(
     String(pickField(rec, 'recordingDate', 'RecordingDate')).trim()
       ? { recordedDate: String(pickField(rec, 'recordingDate', 'RecordingDate')).trim() }
       : {}),
+    vocalStyleId: (pickField(rec, 'vocalStyleId', 'VocalStyleId') as string | undefined) || undefined,
+    musicalScaleId: (pickField(rec, 'musicalScaleId', 'MusicalScaleId') as string | undefined) || undefined,
+    ceremonyId: (pickField(rec, 'ceremonyId', 'CeremonyId') as string | undefined) || undefined,
+    performanceContext: (pickField(rec, 'performanceContext', 'PerformanceContext') as string | undefined) || undefined,
+    communeId: communeId || undefined,
+    metadata: {
+      lyrics: (pickField(rec, 'lyricsOriginal', 'LyricsOriginal') as string | undefined) || undefined,
+      lyricsTranslation: (pickField(rec, 'lyricsVietnamese', 'LyricsVietnamese') as string | undefined) || undefined,
+    },
   };
   return mapped;
 }

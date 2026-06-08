@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
+import { macroRegionDisplayNameFromProvinceRegionCode } from '@/config/provinceRegionCodes';
 
 import AudioPlayer from '@/components/features/AudioPlayer';
 import {
@@ -89,6 +90,41 @@ export default function ContributionsDetailModal({
   referenceMaps: ReferenceNameMaps;
   onQuickEdit: (sub: Submission) => void;
 }) {
+  const rec = detailSubmission?.recording;
+
+  let resolvedCommune = '';
+  let resolvedDistrict = '';
+  let resolvedProvince = '';
+  let resolvedRegion = '';
+
+  if (rec?.communeId && referenceMaps.communesList) {
+    const cId = rec.communeId.trim().toLowerCase();
+    const communeObj = referenceMaps.communesList.find((c) => c.id.toLowerCase() === cId);
+    if (communeObj) {
+      resolvedCommune = communeObj.name;
+      if (communeObj.districtId && referenceMaps.districtsList) {
+        const districtObj = referenceMaps.districtsList.find(
+          (d) => d.id.toLowerCase() === communeObj.districtId.toLowerCase(),
+        );
+        if (districtObj) {
+          resolvedDistrict = districtObj.name;
+          if (districtObj.provinceId && referenceMaps.provincesList) {
+            const provinceObj = referenceMaps.provincesList.find(
+              (p) => p.id.toLowerCase() === districtObj.provinceId.toLowerCase(),
+            );
+            if (provinceObj) {
+              resolvedProvince = provinceObj.name;
+              const regCode = provinceObj.regionCode;
+              if (regCode) {
+                resolvedRegion = macroRegionDisplayNameFromProvinceRegionCode(regCode);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   const effectiveReviewDecision =
     reviewFeedback?.decision ??
     (detailSubmission ? reviewDecisionFromSubmissionStatus(detailSubmission.status) : undefined);
@@ -454,7 +490,7 @@ export default function ContributionsDetailModal({
                             <Tag className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Lối hát / Thể loại (Vocal Style)',
+                            'Lối hát / Thể loại',
                             resolveReferenceLabel(rec?.vocalStyleId, referenceMaps.vocalStyleById),
                             <Mic2 className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
@@ -463,9 +499,24 @@ export default function ContributionsDetailModal({
                             resolveReferenceLabel(rec?.musicalScaleId, referenceMaps.musicalScaleById),
                             <Music className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
-                          {renderDetailField(
+                          {resolvedRegion && renderDetailField(
+                            'Khu vực',
+                            resolvedRegion,
+                            <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {resolvedProvince && renderDetailField(
+                            'Tỉnh/Thành phố',
+                            resolvedProvince,
+                            <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {resolvedDistrict && renderDetailField(
+                            'Quận/Huyện',
+                            resolvedDistrict,
+                            <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {(resolvedCommune || rec?.communeId) && renderDetailField(
                             'Phường/Xã',
-                            resolveReferenceLabel(rec?.communeId, referenceMaps.communeById),
+                            resolvedCommune || resolveReferenceLabel(rec?.communeId, referenceMaps.communeById),
                             <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
@@ -510,12 +561,12 @@ export default function ContributionsDetailModal({
                         )}
                         <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                           {renderDetailField(
-                            'Phiên âm/Bản dịch',
+                            'Lời bài hát (Nguyên bản)',
                             rec?.lyricsOriginal,
                             <FileText className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Lời tiếng Việt',
+                            'Bản dịch nghĩa (Tiếng Việt)',
                             rec?.lyricsVietnamese,
                             <FileText className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}

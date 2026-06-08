@@ -136,6 +136,19 @@ export async function confirmModerationApprove(p: ConfirmModerationApproveParams
       await p.load();
       return;
     }
+    const reviewRes = await expertWorkflowService.syncReviewToServer(
+      subId,
+      user.id,
+      ReviewDecision.Approve,
+      combinedApproveNotes,
+    );
+    if (!reviewRes.ok) {
+      reportError(
+        toReportableError(reviewRes.error, 'syncReviewToServer failed on approve'),
+        undefined,
+        { region: 'moderation', action: 'syncReviewToServer' },
+      );
+    }
     await expertWorkflowService.logExpertModerationDecision({
       submissionId: subId,
       userId: user.id,

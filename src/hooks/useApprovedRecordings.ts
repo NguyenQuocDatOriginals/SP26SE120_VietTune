@@ -10,8 +10,10 @@ export function useApprovedRecordings(userId: string | undefined) {
   const [items, setItems] = useState<LocalRecording[]>([]);
   const [forwardedDeletes, setForwardedDeletes] = useState<DeleteRecordingRequest[]>([]);
   const [editSubmissions, setEditSubmissions] = useState<EditSubmissionForReview[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const list = await fetchApprovedSubmissionsForExpert();
       const migrated = migrateVideoDataToVideoData(list as LocalRecording[]);
@@ -19,6 +21,8 @@ export function useApprovedRecordings(userId: string | undefined) {
     } catch (err) {
       console.error(err);
       setItems([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -51,5 +55,5 @@ export function useApprovedRecordings(userId: string | undefined) {
     return () => clearInterval(t);
   }, [load, refreshRequestQueues, userId]);
 
-  return { items, load, forwardedDeletes, editSubmissions, refreshRequestQueues };
+  return { items, load, forwardedDeletes, editSubmissions, refreshRequestQueues, loading };
 }

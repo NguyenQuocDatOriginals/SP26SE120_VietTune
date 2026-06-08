@@ -6,6 +6,8 @@ function normalizeId(v: unknown): string {
     .toLowerCase();
 }
 
+import type { CommuneItem, DistrictItem, ProvinceItem } from '@/services/referenceDataService';
+
 export type ReferenceNameMaps = {
   ethnicById: Map<string, string>;
   instrumentById: Map<string, string>;
@@ -13,6 +15,9 @@ export type ReferenceNameMaps = {
   vocalStyleById: Map<string, string>;
   communeById: Map<string, string>;
   musicalScaleById: Map<string, string>;
+  communesList?: CommuneItem[];
+  districtsList?: DistrictItem[];
+  provincesList?: ProvinceItem[];
 };
 
 export function buildReferenceNameMaps(input: {
@@ -20,8 +25,10 @@ export function buildReferenceNameMaps(input: {
   instruments?: Array<{ id: string; name: string }>;
   ceremonies?: Array<{ id: string; name: string }>;
   vocalStyles?: Array<{ id: string; name: string }>;
-  communes?: Array<{ id: string; name: string }>;
+  communes?: CommuneItem[];
   musicalScales?: Array<{ id: string; name: string }>;
+  districts?: DistrictItem[];
+  provinces?: ProvinceItem[];
 }): ReferenceNameMaps {
   const toMap = (items: Array<{ id: string; name: string }> | undefined) =>
     new Map((items ?? []).map((item) => [normalizeId(item.id), item.name]));
@@ -33,6 +40,9 @@ export function buildReferenceNameMaps(input: {
     vocalStyleById: toMap(input.vocalStyles),
     communeById: toMap(input.communes),
     musicalScaleById: toMap(input.musicalScales),
+    communesList: input.communes,
+    districtsList: input.districts,
+    provincesList: input.provinces,
   };
 }
 

@@ -97,26 +97,41 @@ export function normalizeRecording(
   metadata.lyricsTranslation =
     metadata.lyricsTranslation ?? normalized.lyricsVietnamese ?? '';
 
-  if (normalized.musicalScaleId && lookups?.musicalScaleById) {
-    metadata.tuningSystem =
-      lookups.musicalScaleById[normalizeId(normalized.musicalScaleId)] || 'Không rõ';
-  } else if (!metadata.tuningSystem) {
-    metadata.tuningSystem = 'Không rõ';
+  let tuningSystem = 'Không rõ';
+  if (normalized.musicalScaleName) {
+    tuningSystem = normalized.musicalScaleName;
+  } else if (normalized.musicalScale && typeof normalized.musicalScale === 'object') {
+    tuningSystem = normalized.musicalScale.name || 'Không rõ';
+  } else if (normalized.musicalScaleId && lookups?.musicalScaleById) {
+    tuningSystem = lookups.musicalScaleById[normalizeId(normalized.musicalScaleId)] || 'Không rõ';
+  } else if (metadata.tuningSystem) {
+    tuningSystem = metadata.tuningSystem;
   }
+  metadata.tuningSystem = tuningSystem;
 
-  if (normalized.vocalStyleId && lookups?.vocalStyleById) {
-    metadata.modalStructure =
-      lookups.vocalStyleById[normalizeId(normalized.vocalStyleId)] || 'Không rõ';
-  } else if (!metadata.modalStructure) {
-    metadata.modalStructure = 'Không rõ';
+  let modalStructure = 'Không rõ';
+  if (normalized.vocalStyleName) {
+    modalStructure = normalized.vocalStyleName;
+  } else if (normalized.vocalStyle && typeof normalized.vocalStyle === 'object') {
+    modalStructure = normalized.vocalStyle.name || 'Không rõ';
+  } else if (normalized.vocalStyleId && lookups?.vocalStyleById) {
+    modalStructure = lookups.vocalStyleById[normalizeId(normalized.vocalStyleId)] || 'Không rõ';
+  } else if (metadata.modalStructure) {
+    modalStructure = metadata.modalStructure;
   }
+  metadata.modalStructure = modalStructure;
 
-  if (normalized.ceremonyId && lookups?.ceremonyById) {
-    metadata.ritualContext =
-      lookups.ceremonyById[normalizeId(normalized.ceremonyId)] || 'Không rõ';
-  } else if (!metadata.ritualContext) {
-    metadata.ritualContext = 'Không rõ';
+  let ritualContext = 'Không rõ';
+  if (normalized.ceremonyName) {
+    ritualContext = normalized.ceremonyName;
+  } else if (normalized.ceremony && typeof normalized.ceremony === 'object') {
+    ritualContext = normalized.ceremony.name || 'Không rõ';
+  } else if (normalized.ceremonyId && lookups?.ceremonyById) {
+    ritualContext = lookups.ceremonyById[normalizeId(normalized.ceremonyId)] || 'Không rõ';
+  } else if (metadata.ritualContext) {
+    ritualContext = metadata.ritualContext;
   }
+  metadata.ritualContext = ritualContext;
 
   if (!metadata.culturalSignificance) {
     metadata.culturalSignificance = 'Không rõ';
@@ -143,6 +158,35 @@ export function normalizeRecording(
     });
   }
 
+  // 8. Resolve geographic hierarchy from communeId
+  const rawCommuneId = normalized.communeId || (normalized.recording && normalized.recording.communeId) || '';
+  let communeName = normalized.communeName || '';
+  let districtName = normalized.districtName || '';
+  let provinceName = normalized.provinceName || '';
+  let regionName = normalized.regionName || '';
+
+  if (rawCommuneId) {
+    const cId = normalizeId(rawCommuneId);
+    if (lookups?.communeById) {
+      communeName = lookups.communeById[cId] || '';
+    }
+    if (lookups?.districtIdByCommuneId && lookups?.districtById) {
+      const dId = lookups.districtIdByCommuneId[cId];
+      if (dId) {
+        districtName = lookups.districtById[dId] || '';
+        if (lookups?.provinceIdByDistrictId && lookups?.provinceById) {
+          const pId = lookups.provinceIdByDistrictId[dId];
+          if (pId) {
+            provinceName = lookups.provinceById[pId] || '';
+            if (lookups?.macroRegionByProvinceId) {
+              regionName = lookups.macroRegionByProvinceId[pId] || '';
+            }
+          }
+        }
+      }
+    }
+  }
+
   return {
     ...normalized,
     id,
@@ -154,5 +198,10 @@ export function normalizeRecording(
     ethnicity,
     metadata,
     instruments,
+    communeId: rawCommuneId || undefined,
+    communeName: communeName || undefined,
+    districtName: districtName || undefined,
+    provinceName: provinceName || undefined,
+    regionName: regionName || undefined,
   };
 }

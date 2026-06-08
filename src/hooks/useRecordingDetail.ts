@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { annotationApi } from '@/services/annotationApi';
 import { copyrightDisputeApi } from '@/services/copyrightDisputeApi';
-import { embargoApi } from '@/services/embargoApi';
 import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import { recordingService } from '@/services/recordingService';
 import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
@@ -11,7 +10,6 @@ import { submissionService } from '@/services/submissionService';
 import type { Recording } from '@/types';
 import type { AnnotationDto } from '@/types/annotation';
 import type { CopyrightDisputeDto } from '@/types/copyrightDispute';
-import type { EmbargoDto } from '@/types/embargo';
 import { enrichRecordingUploaderFromRecord } from '@/utils/contributorFields';
 import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
 import { normalizeRecording } from '@/utils/recordingNormalization';
@@ -56,7 +54,6 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [annotations, setAnnotations] = useState<AnnotationDto[]>([]);
-  const [embargo, setEmbargo] = useState<EmbargoDto | null>(null);
   const [disputes, setDisputes] = useState<CopyrightDisputeDto[]>([]);
 
   useEffect(() => {
@@ -199,26 +196,6 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
     };
   }, [loadDisputesForRecording, recording?.id]);
 
-  useEffect(() => {
-    const recordingId = recording?.id;
-    if (!recordingId) {
-      setEmbargo(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const row = await embargoApi.getByRecordingId(recordingId);
-        if (!cancelled) setEmbargo(row);
-      } catch {
-        if (!cancelled) setEmbargo(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [recording?.id]);
-
   const refetchDisputes = useCallback(async () => {
     const recordingId = recording?.id;
     if (!recordingId) {
@@ -228,5 +205,5 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
     await loadDisputesForRecording(recordingId);
   }, [loadDisputesForRecording, recording?.id]);
 
-  return { recording, loading, notFound, annotations, embargo, disputes, refetchDisputes };
+  return { recording, loading, notFound, annotations, embargo: null, disputes, refetchDisputes };
 }
