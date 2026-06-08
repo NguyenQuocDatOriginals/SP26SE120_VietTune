@@ -116,7 +116,7 @@ namespace VietTuneArchive.Domain.Repositories
 
         public async Task<(int TotalSongs, int TotalViews, int ActiveUsers, int NewSubmissions, double GrowthRate)> GetOverviewMetricsAsync()
         {
-            var totalSongs = await _context.Recordings.CountAsync(r => r.Status == SubmissionStatus.Approved);
+            var totalSongs = await _context.Recordings.CountAsync(r => r.Status == SubmissionStatus.Approved || r.Status == SubmissionStatus.Embargoed);
             
             // views is not stored in DB, so we simulate a realistic number
             var totalViews = totalSongs * 42 + 130;
