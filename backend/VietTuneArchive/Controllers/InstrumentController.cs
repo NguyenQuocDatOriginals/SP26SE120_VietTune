@@ -71,14 +71,17 @@ namespace VietTuneArchive.API.Controllers
         }
 
         /// <summary>
-        /// Search instruments by name with Vietnamese diacritics support
+        /// Search instruments by name with Vietnamese diacritics support and pagination
         /// </summary>
         [HttpGet("search-by-name")]
         [AllowAnonymous]
-        public async Task<ActionResult<ServiceResponse<List<InstrumentDto>>>> SearchByName([FromQuery] string? name)
+        public async Task<ActionResult<PagedResponse<InstrumentDto>>> SearchByName(
+            [FromQuery] string? name,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var result = await _instrumentService.SearchByNameAsync(name);
-            return result.Success ? Ok(result) : NotFound(result);
+            var result = await _instrumentService.SearchByNameAsync(name, page, pageSize);
+            return Ok(result);
         }
 
         /// <summary>

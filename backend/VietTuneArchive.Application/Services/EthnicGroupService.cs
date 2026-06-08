@@ -79,6 +79,49 @@ namespace VietTuneArchive.Application.Services
         }
 
         /// <summary>
+        /// Search ethnic groups by name with Vietnamese diacritics support and pagination
+        /// </summary>
+        public async Task<PagedResponse<EthnicGroupDto>> SearchByNameAsync(string? name, int pageNumber, int pageSize)
+        {
+            try
+            {
+                if (pageNumber < 1)
+                    throw new ArgumentException("Page number must be greater than 0", nameof(pageNumber));
+                if (pageSize < 1)
+                    throw new ArgumentException("Page size must be greater than 0", nameof(pageSize));
+
+                var ethnicGroups = await _ethnicGroupRepository.SearchByNameAsync(name);
+                var ethnicGroupsList = ethnicGroups.ToList();
+                var total = ethnicGroupsList.Count;
+
+                var paginatedEthnicGroups = ethnicGroupsList
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var dtos = _mapper.Map<List<EthnicGroupDto>>(paginatedEthnicGroups);
+                return new PagedResponse<EthnicGroupDto>
+                {
+                    Success = true,
+                    Data = dtos,
+                    Total = total,
+                    Page = pageNumber,
+                    PageSize = pageSize,
+                    Message = $"Found {total} ethnic groups matching: {name}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new PagedResponse<EthnicGroupDto>
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        /// <summary>
         /// Get ethnic groups by primary region
         /// </summary>
         public async Task<ServiceResponse<List<EthnicGroupDto>>> GetByRegionAsync(string region)
