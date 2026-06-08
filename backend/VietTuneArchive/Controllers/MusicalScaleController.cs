@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VietTuneArchive.Application.IServices;
 using VietTuneArchive.Application.Mapper.DTOs;
@@ -30,6 +31,17 @@ namespace VietTuneArchive.API.Controllers
         {
             var result = await _service.GetByIdAsync(id);
             return result.Success ? Ok(result) : NotFound(result);
+        }
+
+        [HttpGet("search-by-name")]
+        [AllowAnonymous]
+        public async Task<ActionResult<PagedResponse<MusicalScaleDto>>> SearchByName(
+            [FromQuery] string? name,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var result = await _service.SearchByNameAsync(name, page, pageSize);
+            return Ok(result);
         }
 
         [HttpPost]
