@@ -71,44 +71,36 @@ export default function SimilarRecordingsPanel({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-neutral-600">
-                  {item.basicInfo?.artist && (
-                    <div>
-                      <span className="font-medium text-neutral-400">Nghệ sĩ:</span>{' '}
-                      <span className="text-neutral-800">{item.basicInfo.artist}</span>
-                    </div>
-                  )}
-                  {item.culturalContext?.ethnicity && (
-                    <div>
-                      <span className="font-medium text-neutral-400">Dân tộc:</span>{' '}
-                      <span className="text-neutral-800">{item.culturalContext.ethnicity}</span>
-                    </div>
-                  )}
-                  {(item.culturalContext?.province || item.culturalContext?.region) && (
-                    <div>
-                      <span className="font-medium text-neutral-400">Địa điểm:</span>{' '}
-                      <span className="text-neutral-800">
-                        {item.culturalContext.province || item.culturalContext.region}
-                      </span>
-                    </div>
-                  )}
-                  {item.basicInfo?.genre && (
-                    <div>
-                      <span className="font-medium text-neutral-400">Thể loại:</span>{' '}
-                      <span className="text-neutral-800">{item.basicInfo.genre}</span>
-                    </div>
-                  )}
-                  {item.culturalContext?.instruments && item.culturalContext.instruments.length > 0 && (
-                    <div className="col-span-1 sm:col-span-2">
-                      <span className="font-medium text-neutral-400">Nhạc cụ:</span>{' '}
-                      <span className="text-neutral-800">
-                        {item.culturalContext.instruments.join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {item.uploader && (
-                    <div className="col-span-1 sm:col-span-2">
-                      <span className="font-medium text-neutral-400">Người đóng góp:</span>{' '}
-                      <span className="text-neutral-800">
+                  <div>
+                    <span className="font-medium text-neutral-400">Nghệ sĩ:</span>{' '}
+                    <span className="text-neutral-800">{item.basicInfo?.artist || 'Không rõ'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-400">Dân tộc:</span>{' '}
+                    <span className="text-neutral-800">{item.culturalContext?.ethnicity || 'Không rõ'}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-400">Địa điểm:</span>{' '}
+                    <span className="text-neutral-800">
+                      {item.culturalContext?.province || item.culturalContext?.region || 'Không rõ'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-neutral-400">Thể loại:</span>{' '}
+                    <span className="text-neutral-800">{item.basicInfo?.genre || 'Không rõ'}</span>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2">
+                    <span className="font-medium text-neutral-400">Nhạc cụ:</span>{' '}
+                    <span className="text-neutral-800">
+                      {item.culturalContext?.instruments && item.culturalContext.instruments.length > 0
+                        ? item.culturalContext.instruments.join(', ')
+                        : 'Không rõ'}
+                    </span>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2">
+                    <span className="font-medium text-neutral-400">Người đóng góp:</span>{' '}
+                    <span className="text-neutral-800">
+                      {item.uploader ? (
                         <ContributorName
                           userId={item.uploader.id}
                           fallback={
@@ -116,9 +108,11 @@ export default function SimilarRecordingsPanel({
                             item.uploader.username
                           }
                         />
-                      </span>
-                    </div>
-                  )}
+                      ) : (
+                        'Không rõ'
+                      )}
+                    </span>
+                  </div>
                 </div>
               </a>
             </li>
