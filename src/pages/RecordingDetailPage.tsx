@@ -180,9 +180,8 @@ export default function RecordingDetailPage() {
   const gpsEmbedUrl = useMemo(
     () =>
       hasGps
-        ? `https://www.openstreetmap.org/export/embed.html?bbox=${gpsLon! - 0.01},${
-            gpsLat! - 0.01
-          },${gpsLon! + 0.01},${gpsLat! + 0.01}&marker=${gpsLat},${gpsLon}`
+        ? `https://www.openstreetmap.org/export/embed.html?bbox=${gpsLon! - 0.01},${gpsLat! - 0.01
+        },${gpsLon! + 0.01},${gpsLat! + 0.01}&marker=${gpsLat},${gpsLon}`
         : null,
     [hasGps, gpsLat, gpsLon],
   );
@@ -387,7 +386,7 @@ export default function RecordingDetailPage() {
 
             {/* Description */}
             <div className={SURFACE_CARD}>
-              <h2 className="text-base font-semibold mb-3 text-neutral-900">Mô tả</h2>
+              <h2 className="text-base font-semibold mb-3 text-neutral-900">Mô tả nội dung</h2>
               <p className="text-neutral-700 text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                 {recording.description || 'Không rõ'}
               </p>
@@ -395,7 +394,7 @@ export default function RecordingDetailPage() {
 
             {hasGps && gpsEmbedUrl && (
               <div className={SURFACE_CARD}>
-                <h2 className="text-base font-semibold mb-3 text-neutral-900">Bản đồ vị trí ghi âm</h2>
+                <h2 className="text-base font-semibold mb-3 text-neutral-900">Bản đồ địa điểm ghi âm</h2>
                 <iframe
                   title="Recording location map"
                   src={gpsEmbedUrl}
@@ -412,26 +411,26 @@ export default function RecordingDetailPage() {
               </h2>
               <dl className="space-y-3">
                 <div>
-                  <dt className="font-medium text-neutral-900">Hệ thống điệu thức</dt>
+                  <dt className="font-medium text-neutral-500">Hệ thống điệu thức</dt>
                   <dd className="text-neutral-700 font-medium">
                     {recording.metadata?.tuningSystem || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-neutral-900">Cấu trúc giai điệu</dt>
-                  <dd className="text-neutral-700 font-medium">
+                  <dt className="font-medium text-neutral-500">Cấu trúc giai điệu</dt>
+                  <dd className="font-medium text-neutral-900">
                     {recording.metadata?.modalStructure || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-neutral-900">Ngữ cảnh nghi lễ</dt>
-                  <dd className="text-neutral-700 font-medium">
+                  <dt className="text-sm text-neutral-500">Ngữ cảnh nghi lễ</dt>
+                  <dd className="font-medium text-neutral-900">
                     {recording.metadata?.ritualContext || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-medium text-neutral-900">Ý nghĩa văn hóa</dt>
-                  <dd className="text-neutral-700 font-medium">
+                  <dt className="font-medium text-neutral-500">Ý nghĩa văn hóa</dt>
+                  <dd className="font-medium text-neutral-900">
                     {recording.metadata?.culturalSignificance || 'Không rõ'}
                   </dd>
                 </div>
@@ -519,13 +518,13 @@ export default function RecordingDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Vùng miền</dt>
+                  <dt className="text-sm text-neutral-500">Khu vực</dt>
                   <dd className="font-medium text-neutral-900">
                     {getRegionDisplayName(recording.region, undefined) || 'Không rõ'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Loại hình</dt>
+                  <dt className="text-sm text-neutral-500">Loại hình biểu diễn</dt>
                   <dd className="font-medium text-neutral-900">
                     {RECORDING_TYPE_NAMES[recording.recordingType] || 'Không rõ'}
                   </dd>
@@ -539,7 +538,7 @@ export default function RecordingDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Ngày thu âm</dt>
+                  <dt className="text-sm text-neutral-500">Ngày ghi âm</dt>
                   <dd className="font-medium text-neutral-900">
                     {formattedRecordedDate}
                   </dd>
@@ -551,7 +550,7 @@ export default function RecordingDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Tác giả / Sáng tác</dt>
+                  <dt className="text-sm text-neutral-500">Nhạc sĩ/Tác giả</dt>
                   <dd className="font-medium text-neutral-900">{composer || 'Không rõ'}</dd>
                 </div>
                 <div>
@@ -559,7 +558,7 @@ export default function RecordingDetailPage() {
                   <dd className="font-medium text-neutral-900">{language || 'Không rõ'}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-neutral-500">Vị trí ghi âm</dt>
+                  <dt className="text-sm text-neutral-500">Địa điểm ghi âm</dt>
                   <dd className="font-medium text-neutral-900 space-y-1">
                     {resolvedRecordingLocation ? (
                       <p>{resolvedRecordingLocation}</p>
@@ -613,7 +612,7 @@ export default function RecordingDetailPage() {
             {/* Instruments */}
             <div className={SURFACE_CARD}>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
-                Nhạc cụ
+                Nhạc cụ sử dụng
               </h3>
               {recording.instruments.length > 0 ? (
                 <div className="flex flex-wrap gap-2">

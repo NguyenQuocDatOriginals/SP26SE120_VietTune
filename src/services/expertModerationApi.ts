@@ -51,13 +51,15 @@ export async function buildSubmissionLookupMaps(): Promise<SubmissionLookupMaps>
   if (lookupInflight) return lookupInflight;
   lookupInflight = (async () => {
     try {
-      const [ethnics, ceremonies, instruments, communes, districts, provinces] = await Promise.all([
+      const [ethnics, ceremonies, instruments, communes, districts, provinces, vocalStyles, musicalScales] = await Promise.all([
         referenceDataService.getEthnicGroups(),
         referenceDataService.getCeremonies(),
         referenceDataService.getInstruments(),
         referenceDataService.getCommunes(),
         referenceDataService.getDistricts(),
         referenceDataService.getProvinces(),
+        referenceDataService.getVocalStyles(),
+        referenceDataService.getMusicalScales(),
       ]);
 
       const macroRegionByProvinceId = Object.fromEntries(
@@ -82,6 +84,8 @@ export async function buildSubmissionLookupMaps(): Promise<SubmissionLookupMaps>
         communeById: Object.fromEntries(communes.map((x) => [normalizeId(x.id), x.name])),
         districtById: Object.fromEntries(districts.map((x) => [normalizeId(x.id), x.name])),
         provinceById: Object.fromEntries(provinces.map((x) => [normalizeId(x.id), x.name])),
+        vocalStyleById: Object.fromEntries(vocalStyles.map((x) => [normalizeId(x.id), x.name])),
+        musicalScaleById: Object.fromEntries(musicalScales.map((x) => [normalizeId(x.id), x.name])),
         macroRegionByProvinceId,
         provinceIdByDistrictId,
         districtIdByCommuneId,

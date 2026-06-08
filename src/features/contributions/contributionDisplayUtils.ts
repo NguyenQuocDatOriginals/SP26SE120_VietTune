@@ -37,13 +37,11 @@ export const CONTRIBUTOR_STAGE_INFO: Record<number, { label: string; color: stri
 };
 
 export function formatContributionPerformanceType(type: string | null | undefined): string {
-  if (!type) return '—';
-  const mapping: Record<string, string> = {
-    instrumental: 'Nhạc cụ',
-    acappella: 'Hát không đệm',
-    vocal_accompaniment: 'Hát với nhạc đệm',
-  };
-  return mapping[type] || type;
+  if (!type) return 'Không rõ';
+  const t = type.trim().toLowerCase();
+  if (t === 'vocal_accompaniment' || t === 'hát với nhạc đệm') return 'Hát với nhạc đệm';
+  if (t === 'instrumental' || t === 'nhạc cụ') return 'Nhạc cụ';
+  return 'Khác';
 }
 
 export function formatContributionDate(dateString: string | null): string {

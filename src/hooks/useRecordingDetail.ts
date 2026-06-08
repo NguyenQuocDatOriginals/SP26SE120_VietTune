@@ -14,6 +14,7 @@ import type { CopyrightDisputeDto } from '@/types/copyrightDispute';
 import type { EmbargoDto } from '@/types/embargo';
 import { enrichRecordingUploaderFromRecord } from '@/utils/contributorFields';
 import { convertLocalToRecording } from '@/utils/localRecordingToRecording';
+import { normalizeRecording } from '@/utils/recordingNormalization';
 
 function isRecordingCandidate(value: unknown): value is Recording {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -65,23 +66,27 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
       setLoading(false);
       return;
     }
-    if (preloadedRecording?.id === id) {
-      setRecording(enrichRecordingUploaderFromRecord(preloadedRecording));
-      setNotFound(false);
-      setLoading(false);
-      return;
-    }
 
     let cancelled = false;
     void (async () => {
       setLoading(true);
       setNotFound(false);
       try {
+        const lookups = await buildSubmissionLookupMaps().catch(() => undefined);
+        if (cancelled) return;
+
+        if (preloadedRecording?.id === id) {
+          const enriched = normalizeRecording(preloadedRecording, lookups);
+          setRecording(enrichRecordingUploaderFromRecord(enriched));
+          return;
+        }
+
         try {
           const response = await recordingService.getRecordingById(id);
           const rec = pickRecordingFromApiBody(response);
           if (rec && !cancelled) {
-            setRecording(enrichRecordingUploaderFromRecord(rec));
+            const enriched = normalizeRecording(rec, lookups);
+            setRecording(enrichRecordingUploaderFromRecord(enriched));
             return;
           }
         } catch (err) {
@@ -92,10 +97,12 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
           const subRes = await submissionService.getSubmissionById(id);
           const row = pickSubmissionDetailRow(subRes);
           if (row && !cancelled) {
-            const lookups = await buildSubmissionLookupMaps();
             const local = mapSubmissionToLocalRecording(row, lookups);
             const rec = await convertLocalToRecording(local);
-            if (!cancelled) setRecording(enrichRecordingUploaderFromRecord(rec));
+            if (!cancelled) {
+              const enriched = normalizeRecording(rec, lookups);
+              setRecording(enrichRecordingUploaderFromRecord(enriched));
+            }
             return;
           }
         } catch {
@@ -107,7 +114,8 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
           const items = extractRecordingListFromApiResponse(listRes);
           const matched = items.find((x) => x.id === id);
           if (matched && !cancelled) {
-            setRecording(enrichRecordingUploaderFromRecord(matched));
+            const enriched = normalizeRecording(matched, lookups);
+            setRecording(enrichRecordingUploaderFromRecord(enriched));
             return;
           }
         } catch {
@@ -118,7 +126,8 @@ export function useRecordingDetail(id: string | undefined, preloadedRecording: R
           const fallback = await fetchVerifiedSubmissionsAsRecordings();
           const matched = fallback.find((x) => x.id === id);
           if (matched && !cancelled) {
-            setRecording(enrichRecordingUploaderFromRecord(matched));
+            const enriched = normalizeRecording(matched, lookups);
+            setRecording(enrichRecordingUploaderFromRecord(enriched));
           } else if (!cancelled) {
             setRecording(null);
             setNotFound(true);

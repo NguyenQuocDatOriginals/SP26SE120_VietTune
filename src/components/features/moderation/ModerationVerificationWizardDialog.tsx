@@ -378,16 +378,16 @@ export function ModerationVerificationWizardDialog({
               <h3 className="text-lg font-semibold text-neutral-900 mb-4">Thông tin cơ bản</h3>
               <div className="space-y-2 text-sm">
                 <div>
-                  <strong>Tiêu đề:</strong> {item.basicInfo?.title || item.title || 'Không có'}
+                  <strong>Tiêu đề/Tên bản nhạc:</strong> {item.basicInfo?.title || item.title || 'Không có'}
                 </div>
                 {item.basicInfo?.artist && (
                   <div>
-                    <strong>Nghệ sĩ:</strong> {item.basicInfo.artist}
+                    <strong>Nghệ sĩ/Người biểu diễn:</strong> {item.basicInfo.artist}
                   </div>
                 )}
                 {item.basicInfo?.composer && (
                   <div>
-                    <strong>Tác giả/Nhạc sĩ:</strong> {item.basicInfo.composer}
+                    <strong>Nhạc sĩ/Tác giả:</strong> {item.basicInfo.composer}
                   </div>
                 )}
                 {item.basicInfo?.language && (
@@ -402,7 +402,7 @@ export function ModerationVerificationWizardDialog({
                 )}
                 {item.basicInfo?.recordingDate && (
                   <div>
-                    <strong>Ngày thu:</strong> {item.basicInfo.recordingDate}
+                    <strong>Ngày ghi âm:</strong> {item.basicInfo.recordingDate}
                     {item.basicInfo.dateEstimated && (
                       <span className="text-neutral-500"> (Ước tính)</span>
                     )}
@@ -415,7 +415,7 @@ export function ModerationVerificationWizardDialog({
                 )}
                 {item.basicInfo?.recordingLocation && (
                   <div>
-                    <strong>Địa điểm thu:</strong> {item.basicInfo.recordingLocation}
+                    <strong>Địa điểm ghi âm:</strong> {item.basicInfo.recordingLocation}
                   </div>
                 )}
               </div>
@@ -434,7 +434,7 @@ export function ModerationVerificationWizardDialog({
                   )}
                   {step1CulturalContext.region && (
                     <div>
-                      <strong>Vùng:</strong> {step1CulturalContext.region}
+                      <strong>Khu vực:</strong> {step1CulturalContext.region}
                     </div>
                   )}
                   {step1CulturalContext.province && (
@@ -449,13 +449,13 @@ export function ModerationVerificationWizardDialog({
                   )}
                   {step1CulturalContext.performanceType && (
                     <div>
-                      <strong>Loại biểu diễn:</strong> {step1CulturalContext.performanceType}
+                      <strong>Loại hình biểu diễn:</strong> {step1CulturalContext.performanceType}
                     </div>
                   )}
                   {step1CulturalContext.instruments &&
                     step1CulturalContext.instruments.length > 0 && (
                       <div>
-                        <strong>Nhạc cụ:</strong> {step1CulturalContext.instruments.join(', ')}
+                        <strong>Nhạc cụ sử dụng:</strong> {step1CulturalContext.instruments.join(', ')}
                       </div>
                     )}
                 </div>
@@ -470,7 +470,7 @@ export function ModerationVerificationWizardDialog({
                 <div className="space-y-2 text-sm">
                   {item.additionalNotes.description && (
                     <div>
-                      <strong>Mô tả:</strong>
+                      <strong>Mô tả nội dung:</strong>
                       <p className="text-neutral-700 mt-1 whitespace-pre-wrap">
                         {item.additionalNotes.description}
                       </p>
@@ -486,7 +486,7 @@ export function ModerationVerificationWizardDialog({
                   )}
                   {item.additionalNotes.transcription && (
                     <div>
-                      <strong>Phiên âm:</strong>
+                      <strong>Phiên âm/Bản dịch:</strong>
                       <p className="text-neutral-700 mt-1 whitespace-pre-wrap">
                         {item.additionalNotes.transcription}
                       </p>
@@ -509,7 +509,7 @@ export function ModerationVerificationWizardDialog({
                 <div className="space-y-2 text-sm">
                   {item.adminInfo.collector && (
                     <div>
-                      <strong>Người thu thập:</strong> {item.adminInfo.collector}
+                      <strong>Người thu thập/Ghi âm:</strong> {item.adminInfo.collector}
                     </div>
                   )}
                   {item.adminInfo.copyright && (
@@ -519,12 +519,12 @@ export function ModerationVerificationWizardDialog({
                   )}
                   {item.adminInfo.archiveOrg && (
                     <div>
-                      <strong>Archive.org:</strong> {item.adminInfo.archiveOrg}
+                      <strong>Tổ chức lưu trữ:</strong> {item.adminInfo.archiveOrg}
                     </div>
                   )}
                   {item.adminInfo.catalogId && (
                     <div>
-                      <strong>Mã catalog:</strong> {item.adminInfo.catalogId}
+                      <strong>Mã định danh:</strong> {item.adminInfo.catalogId}
                     </div>
                   )}
                 </div>

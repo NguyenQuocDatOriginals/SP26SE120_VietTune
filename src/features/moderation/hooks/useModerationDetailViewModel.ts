@@ -105,7 +105,7 @@ export function useModerationDetailViewModel(input: UseModerationDetailViewModel
       {
         key: 'instruments',
         icon: Music,
-        label: 'Nhạc cụ',
+        label: 'Nhạc cụ sử dụng',
         value: instrumentsLabel,
       },
       {

@@ -9,6 +9,8 @@ export interface SubmissionLookupMaps {
   communeById?: Record<string, string>;
   districtById?: Record<string, string>;
   provinceById?: Record<string, string>;
+  vocalStyleById?: Record<string, string>;
+  musicalScaleById?: Record<string, string>;
   /** Normalized province UUID → “vùng/miền” label from `province.regionCode` (not tên phường/xã). */
   macroRegionByProvinceId?: Record<string, string>;
   /** Normalized district UUID → normalized province UUID */

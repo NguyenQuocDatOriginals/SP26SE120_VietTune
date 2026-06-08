@@ -498,6 +498,29 @@ export function useUploadSubmission(options: UseUploadSubmissionOptions) {
 
         await recordingService.updateRecording(targetId, payload);
 
+        // Upload images if any new ones are selected
+        if (options.recordingImages.length > 0 && targetId) {
+          const imageResults = await Promise.allSettled(
+            options.recordingImages.map(async (imageFile) =>
+              recordingImageService.uploadImage(targetId, imageFile),
+            ),
+          );
+          const failedCount = imageResults.filter((result) => result.status === 'rejected').length;
+          if (failedCount > 0) {
+            uiToast.warning('Một số ảnh minh họa chưa tải lên được. Bạn có thể thử lại sau.');
+          }
+
+          // Refresh existing image URLs
+          try {
+            const urls = await fetchRecordingImageDisplayUrls(targetId);
+            options.setExistingRecordingImageUrls(urls);
+          } catch {
+            /* ignore refresh errors */
+          }
+          options.setRecordingImages([]);
+          options.setRecordingImagePreviews([]);
+        }
+
         const createSubmissionVersionBestEffort = async () => {
           const isContributorEdit =
             options.isEditMode &&

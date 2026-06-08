@@ -9,7 +9,7 @@ export const VERIFICATION_STEPS = [
       {
         key: 'infoComplete',
         label:
-          'Thông tin đầy đủ: Tiêu đề, nghệ sĩ, ngày thu, địa điểm, dân tộc, thể loại đã được điền đầy đủ',
+          'Thông tin đầy đủ: Tiêu đề/Tên bản nhạc, nghệ sĩ/người biểu diễn, ngày ghi âm, địa điểm ghi âm, dân tộc, thể loại đã được điền đầy đủ',
       },
       {
         key: 'infoAccurate',

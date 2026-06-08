@@ -6,6 +6,7 @@ import {
   Edit3,
   FileAudio,
   FileText,
+  Globe,
   Headphones,
   Loader2,
   MapPin,
@@ -324,7 +325,7 @@ export default function ContributionsDetailModal({
                     <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />,
                   )}
                   {renderDetailField(
-                    'Ghi chú',
+                    'Ghi chú thực địa',
                     detailSubmission.notes,
                     <StickyNote className="h-3.5 w-3.5" strokeWidth={2} />,
                   )}
@@ -352,22 +353,37 @@ export default function ContributionsDetailModal({
                         </p>
                         <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                           {renderDetailField(
-                            'Tiêu đề',
+                            'Tiêu đề/Tên bản nhạc',
                             rec?.title,
                             <Tag className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Nghệ sĩ',
+                            'Nghệ sĩ/Người biểu diễn',
                             rec?.performerName,
                             <Mic2 className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Mô tả',
+                            'Tuổi nghệ nhân',
+                            rec?.performerAge,
+                            <User className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Nhạc sĩ/Tác giả',
+                            rec?.composer,
+                            <User className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Ngôn ngữ',
+                            rec?.language,
+                            <Globe className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Mô tả nội dung',
                             rec?.description,
                             <StickyNote className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Bối cảnh biểu diễn',
+                            'Loại hình biểu diễn',
                             formatContributionPerformanceType(rec?.performanceContext),
                             <Music className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
@@ -433,23 +449,28 @@ export default function ContributionsDetailModal({
                             <User className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Nghi lễ / Sự kiện',
+                            'Loại sự kiện',
                             resolveReferenceLabel(rec?.ceremonyId, referenceMaps.ceremonyById),
                             <Tag className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Lối hát',
+                            'Lối hát / Thể loại (Vocal Style)',
                             resolveReferenceLabel(rec?.vocalStyleId, referenceMaps.vocalStyleById),
                             <Mic2 className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Thang âm',
+                            'Âm giai (Musical Scale)',
                             resolveReferenceLabel(rec?.musicalScaleId, referenceMaps.musicalScaleById),
                             <Music className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                           {renderDetailField(
-                            'Địa điểm (phường/xã)',
+                            'Phường/Xã',
                             resolveReferenceLabel(rec?.communeId, referenceMaps.communeById),
+                            <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
+                          )}
+                          {renderDetailField(
+                            'Địa điểm ghi âm',
+                            rec?.recordingLocation,
                             <MapPin className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
                         </div>
@@ -467,7 +488,7 @@ export default function ContributionsDetailModal({
                                 className="h-3.5 w-3.5 shrink-0 text-neutral-400"
                                 strokeWidth={2}
                               />
-                              Nhạc cụ
+                              Nhạc cụ sử dụng
                             </span>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {resolveInstrumentLabels(rec.instrumentIds, referenceMaps.instrumentById).map(
@@ -489,7 +510,7 @@ export default function ContributionsDetailModal({
                         )}
                         <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
                           {renderDetailField(
-                            'Lời gốc',
+                            'Phiên âm/Bản dịch',
                             rec?.lyricsOriginal,
                             <FileText className="h-3.5 w-3.5" strokeWidth={2} />,
                           )}
