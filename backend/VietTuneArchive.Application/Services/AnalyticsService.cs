@@ -33,14 +33,14 @@ namespace VietTuneArchive.Application.Services
                 // Map region code to region name (simplified mapping)
                 var regionNames = new Dictionary<string, string>
                 {
-                    { "Northwest", "T�y B?c" },
-                    { "Northeast", "?�ng B?c" },
-                    { "Red River", "S�ng H?ng" },
-                    { "North Central", "B?c Trung B?" },
-                    { "South Central", "Nam Trung B?" },
-                    { "Central Highlands", "T�y Nguy�n" },
-                    { "Southeast", "?�ng Nam B?" },
-                    { "Mekong Delta", "??ng B?ng S�ng C?u Long" }
+                    { "Northwest", "Tây Bắc" },
+                    { "Northeast", "Đông Bắc" },
+                    { "Red River", "Sông Hồng" },
+                    { "North Central", "Bắc Trung Bộ" },
+                    { "South Central", "Nam Trung Bộ" },
+                    { "Central Highlands", "Tây Nguyên" },
+                    { "Southeast", "Đông Nam Bộ" },
+                    { "Mekong Delta", "Đồng Bằng Sông Cửu Long" }
                 };
 
                 var result = coverage
@@ -194,6 +194,69 @@ namespace VietTuneArchive.Application.Services
                 {
                     IsSuccess = false,
                     Message = $"Error retrieving contributor leaderboard: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<Result<OverviewMetricsDto>> GetOverviewAsync()
+        {
+            try
+            {
+                var metrics = await _analyticsRepository.GetOverviewMetricsAsync();
+                var dto = new OverviewMetricsDto
+                {
+                    TotalSongs = metrics.TotalSongs,
+                    TotalViews = metrics.TotalViews,
+                    ActiveUsers = metrics.ActiveUsers,
+                    NewSubmissions = metrics.NewSubmissions,
+                    GrowthRate = metrics.GrowthRate
+                };
+
+                return new Result<OverviewMetricsDto>
+                {
+                    IsSuccess = true,
+                    Data = dto,
+                    Message = "Overview metrics retrieved successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving overview metrics");
+                return new Result<OverviewMetricsDto>
+                {
+                    IsSuccess = false,
+                    Message = $"Error retrieving overview metrics: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<Result<SubmissionAnalyticsDto>> GetSubmissionsAsync()
+        {
+            try
+            {
+                var submissionData = await _analyticsRepository.GetSubmissionAnalyticsAsync();
+                var dto = new SubmissionAnalyticsDto
+                {
+                    Total = submissionData.Total,
+                    ByStatus = submissionData.ByStatus,
+                    AvgReviewTime = submissionData.AvgReviewTime,
+                    TopEthnicGroups = submissionData.TopEthnicGroups
+                };
+
+                return new Result<SubmissionAnalyticsDto>
+                {
+                    IsSuccess = true,
+                    Data = dto,
+                    Message = "Submission analytics retrieved successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving submission analytics");
+                return new Result<SubmissionAnalyticsDto>
+                {
+                    IsSuccess = false,
+                    Message = $"Error retrieving submission analytics: {ex.Message}"
                 };
             }
         }
