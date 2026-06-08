@@ -169,9 +169,6 @@ export default function EditRecordingPage() {
                 loading="lazy"
               />
             )}
-            <p className="mt-2 text-xs text-neutral-500">
-              Bạn có thể cập nhật GPS trong bước metadata của form bên dưới.
-            </p>
           </div>
         )}
 

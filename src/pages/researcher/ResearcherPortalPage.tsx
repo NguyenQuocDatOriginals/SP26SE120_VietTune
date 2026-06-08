@@ -12,11 +12,10 @@ import VideoPlayer from '@/components/features/VideoPlayer';
 import ResearcherExportPanel from '@/components/researcher/ResearcherExportPanel';
 import ResearcherFilterBar from '@/components/researcher/ResearcherFilterBar';
 import ResearcherPortalCompareTab from '@/components/researcher/ResearcherPortalCompareTab';
-import ResearcherPortalGraphTab from '@/components/researcher/ResearcherPortalGraphTab';
 import ResearcherPortalQATab from '@/components/researcher/ResearcherPortalQATab';
 import ResearcherRecordingList from '@/components/researcher/ResearcherRecordingList';
 import { useAuth } from '@/contexts/AuthContext';
-import { useKnowledgeGraphData } from '@/features/knowledge-graph/hooks/useKnowledgeGraphData';
+import SandboxGraphExplorer from '@/features/knowledge-graph/components/SandboxGraphExplorer';
 import { useResearcherData } from '@/features/researcher/hooks/useResearcherData';
 import type { ResearcherPortalChatMessage } from '@/features/researcher/researcherPortalTypes';
 import { buildCitationCandidates } from '@/features/researcher/researcherRecordingUtils';
@@ -60,9 +59,6 @@ export default function ResearcherPortalPage() {
     retryLoadCatalog,
     catalogSource,
     facetOptions,
-    ethnicRefData,
-    instrumentRefData,
-    ceremonyRefData,
     activeFilterCount,
     analysisDataset,
     EVENT_TYPES,
@@ -109,14 +105,6 @@ export default function ResearcherPortalPage() {
       setOptimisticQaConv(null);
     }
   }, [optimisticQaConv, qaHistory]);
-
-  /** Client-side KG fallback when API overview is unavailable. */
-  const fallbackGraphData = useKnowledgeGraphData(
-    analysisDataset,
-    ethnicRefData,
-    instrumentRefData,
-    ceremonyRefData,
-  );
 
   // When Play modal opens, load full local recording to get media src and type
   useEffect(() => {
@@ -498,11 +486,9 @@ export default function ResearcherPortalPage() {
 
           {/* Tab: Biểu đồ tri thức (knowledge graph: dân tộc – nhạc cụ từ bản thu đã kiểm duyệt) */}
           {activeTab === 'graph' && (
-            <ResearcherPortalGraphTab
-              fallbackGraphData={fallbackGraphData}
-              approvedRecordings={approvedRecordings}
-              onRecordingDetail={handleDetail}
-            />
+            <div className="p-2 sm:p-4">
+              <SandboxGraphExplorer embedded />
+            </div>
           )}
 
           {/* Tab: So sánh phân tích — chọn 2 bản thu, xem metadata thật, phát song song (mở modal) */}

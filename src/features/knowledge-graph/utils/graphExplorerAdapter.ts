@@ -1,4 +1,4 @@
-import { buildViewerNodeId, isValidApiEntityType } from '@/features/knowledge-graph/utils/knowledgeGraphApiAdapter';
+import type { ApiEntityType, GraphLink, GraphNode, GraphNodeType, KnowledgeGraphData } from '@/types/graph';
 import type {
   GraphExplorerLinkDto,
   GraphExplorerNodeDto,
@@ -7,7 +7,31 @@ import type {
   GraphExplorerNodeDetailDto,
   GraphExplorerPathResponseDto,
 } from '@/types/graphExplorerApi';
-import type { ApiEntityType, GraphLink, GraphNode, GraphNodeType, KnowledgeGraphData } from '@/types/graph';
+
+const VALID_API_ENTITY_TYPES: ReadonlySet<ApiEntityType> = new Set<ApiEntityType>([
+  'EthnicGroup',
+  'Instrument',
+  'Ceremony',
+  'Recording',
+  'Province',
+  'VocalStyle',
+  'MusicalScale',
+  'Tag',
+]);
+
+function isValidApiEntityType(value: string): value is ApiEntityType {
+  return VALID_API_ENTITY_TYPES.has(value as ApiEntityType);
+}
+
+/** Composite viewer node id: `${entityType}:${entityId}` or `${entityType}:local:${slug}`. */
+function buildViewerNodeId(
+  entityType: ApiEntityType,
+  entityId: string | null | undefined,
+  fallbackSlug?: string,
+): string {
+  if (entityId && entityId.trim()) return `${entityType}:${entityId.trim()}`;
+  return `${entityType}:local:${(fallbackSlug ?? 'unknown').trim() || 'unknown'}`;
+}
 
 const NEO4J_GROUP_TO_VIEWER: Record<string, GraphNodeType> = {
   Recording: 'recording',

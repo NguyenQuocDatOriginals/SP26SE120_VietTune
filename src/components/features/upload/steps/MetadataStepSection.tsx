@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Info, MapPin, Music, Navigation } from 'lucide-react';
+import { AlertCircle, Check, MapPin, Music } from 'lucide-react';
 import { useEffect } from 'react';
 
 import InstrumentConfidenceBar from '@/components/common/InstrumentConfidenceBar';
@@ -157,14 +157,6 @@ type MetadataStepSectionProps = {
   LANGUAGES: string[];
   PERFORMANCE_TYPES: PerformanceTypeOption[];
   getRegionName: (regionCode: string) => string;
-  gpsLoading: boolean;
-  gpsError: string | null;
-  gpsAddressResolved: boolean;
-  gpsReverseLookupCompleted: boolean;
-  capturedGpsLat: number | null;
-  capturedGpsLon: number | null;
-  capturedGpsAccuracy: number | null;
-  handleGetGpsLocation: () => void;
   SectionHeaderComponent: React.ComponentType<SectionHeaderProps>;
   FormFieldComponent: React.ComponentType<FormFieldProps>;
   TextInputComponent: React.ComponentType<TextInputProps>;
@@ -248,14 +240,6 @@ export default function MetadataStepSection({
   LANGUAGES,
   PERFORMANCE_TYPES,
   getRegionName,
-  gpsLoading,
-  gpsError,
-  gpsAddressResolved,
-  gpsReverseLookupCompleted,
-  capturedGpsLat,
-  capturedGpsLon,
-  capturedGpsAccuracy,
-  handleGetGpsLocation,
   SectionHeaderComponent,
   FormFieldComponent,
   TextInputComponent,
@@ -281,28 +265,6 @@ export default function MetadataStepSection({
   if (!show) return null;
 
   const performanceTypeKey = normalizePerformanceTypeKey(performanceType);
-  const hasGps = capturedGpsLat != null && capturedGpsLon != null;
-  const showFatalGps = Boolean(gpsError) && !gpsLoading;
-  const showCoordsNoAddress =
-    hasGps &&
-    !gpsLoading &&
-    !gpsError &&
-    gpsReverseLookupCompleted &&
-    !gpsAddressResolved;
-  const gpsExtrasVisible = hasGps && !gpsLoading && !gpsError;
-  const gpsAccuracyLabel =
-    capturedGpsAccuracy == null
-      ? null
-      : capturedGpsAccuracy < 50
-        ? 'Chính xác cao'
-        : capturedGpsAccuracy <= 200
-          ? 'Trung bình'
-          : 'Thấp — nên kiểm tra lại';
-  const mapEmbedUrl = hasGps
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${capturedGpsLon - 0.01},${
-        capturedGpsLat - 0.01
-      },${capturedGpsLon + 0.01},${capturedGpsLat + 0.01}&marker=${capturedGpsLat},${capturedGpsLon}`
-    : null;
   const predictionByName = new Map(
     instrumentPredictions.map((item) => [item.name.trim().toLowerCase(), item]),
   );
@@ -325,7 +287,7 @@ export default function MetadataStepSection({
     <>
       <div
         id={UPLOAD_WIZARD_BASIC_METADATA_ELEMENT_ID}
-        className="scroll-mt-24 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
+        className="scroll-mt-24 rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-5 sm:p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
       >
         <SectionHeaderComponent
           icon={Music}
@@ -814,65 +776,6 @@ export default function MetadataStepSection({
           </FormFieldComponent>
         </div>
       </CollapsibleSectionComponent>
-
-      <div className="mt-6 space-y-4">
-        <CollapsibleSectionComponent
-          icon={Navigation}
-          title="Gắn vị trí GPS"
-          subtitle="Lấy địa chỉ hiện tại để điền vào 'Địa điểm ghi âm' phía trên"
-          optional
-          defaultOpen={false}
-        >
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleGetGpsLocation}
-                disabled={isFormDisabled || gpsLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white font-medium transition-colors cursor-pointer text-sm"
-              >
-                <Navigation className="w-4 h-4" strokeWidth={2.5} />
-                {gpsLoading ? 'Đang lấy vị trí...' : 'Lấy vị trí hiện tại'}
-              </button>
-            </div>
-            {showFatalGps && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {gpsError}
-              </p>
-            )}
-            {gpsExtrasVisible && showCoordsNoAddress && (
-              <p className="text-xs text-amber-900/90 flex items-center gap-1">
-                <Info className="w-3.5 h-3.5 shrink-0" />
-                Đã lấy tọa độ GPS. Chưa xác định được địa chỉ chi tiết.
-              </p>
-            )}
-            {gpsExtrasVisible && !showCoordsNoAddress && hasGps && (
-              <p className="text-xs text-green-700 flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" />
-                {`Đã gắn GPS: ${capturedGpsLat!.toFixed(6)}, ${capturedGpsLon!.toFixed(6)}`}
-              </p>
-            )}
-            {gpsExtrasVisible && capturedGpsAccuracy != null && (
-              <p className="text-xs text-neutral-700">
-                {`Độ chính xác: ~${Math.round(capturedGpsAccuracy)}m${
-                  gpsAccuracyLabel ? ` (${gpsAccuracyLabel})` : ''
-                }`}
-              </p>
-            )}
-            {gpsExtrasVisible && mapEmbedUrl && (
-              <div className="pt-2">
-                <iframe
-                  title="GPS map preview"
-                  src={mapEmbedUrl}
-                  className="h-44 w-full rounded-xl border border-secondary-200/70"
-                  loading="lazy"
-                />
-              </div>
-            )}
-          </div>
-        </CollapsibleSectionComponent>
-      </div>
     </>
   );
 }

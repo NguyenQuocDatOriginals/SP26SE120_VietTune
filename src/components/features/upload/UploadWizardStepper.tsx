@@ -23,7 +23,7 @@ export default function UploadWizardStepper({
 
   return (
     <div
-      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 p-4 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6"
+      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/50 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl sm:p-6"
       aria-busy={asyncPipelineBusy}
       aria-describedby={asyncPipelineBusy ? 'upload-wizard-async-hint' : undefined}
     >

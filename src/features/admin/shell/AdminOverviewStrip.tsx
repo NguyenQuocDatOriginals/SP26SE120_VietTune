@@ -1,11 +1,10 @@
-import { Bot, Database, Music, Users } from 'lucide-react';
+import { Database, Music, Users } from 'lucide-react';
 
 import { cn } from '@/utils/helpers';
 
 export type AdminOverviewStripProps = {
   remoteTotalRecordings: number;
   allUsersCount: number;
-  aiFlaggedCount: number;
   remoteKbCount: number;
 };
 
@@ -20,7 +19,6 @@ function formatInt(n: number): string {
 export default function AdminOverviewStrip({
   remoteTotalRecordings,
   allUsersCount,
-  aiFlaggedCount,
   remoteKbCount,
 }: AdminOverviewStripProps) {
   const tiles = [
@@ -41,14 +39,6 @@ export default function AdminOverviewStrip({
       iconClass: 'text-secondary-800',
     },
     {
-      key: 'ai',
-      label: 'Cờ AI / QA',
-      value: formatInt(aiFlaggedCount),
-      icon: Bot,
-      tone: 'from-amber-50/95 to-surface-panel ring-amber-200/60',
-      iconClass: 'text-amber-800',
-    },
-    {
       key: 'kb',
       label: 'Mục KB (remote)',
       value: formatInt(remoteKbCount),
@@ -64,7 +54,7 @@ export default function AdminOverviewStrip({
       aria-label="Tóm tắt vận hành nhanh"
     >
       <p className="mb-3 text-sm font-semibold text-primary-800">Tóm tắt nhanh</p>
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         {tiles.map(({ key, label, value, icon: Icon, tone, iconClass }) => (
           <div
             key={key}

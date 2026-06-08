@@ -1,22 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 
-import AdminDashboardAiMonitoringPanel from '@/components/admin/AdminDashboardAiMonitoringPanel';
 import AdminDashboardAnalyticsPanel from '@/components/admin/AdminDashboardAnalyticsPanel';
-import AdminDashboardModerationPanel from '@/components/admin/AdminDashboardModerationPanel';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import type { ContributorLeaderboardLoadState } from '@/components/features/analytics/ContributorLeaderboard';
-import type {
-  AdminDashboardSectionId,
-  AggregatedUser,
-  ExpertPerformanceRow,
-  LegacyAdminPanelId,
-} from '@/features/admin/adminDashboardTypes';
-import type {
-  DeleteRecordingRequest,
-  EditRecordingRequest,
-  ExpertAccountDeletionRequest,
-  LocalRecording,
-} from '@/types';
+import type { AdminDashboardSectionId, AggregatedUser } from '@/features/admin/adminDashboardTypes';
 import type { ContributorRow } from '@/types/analytics';
 
 /** Matches `AdminDashboardAnalyticsPanel` remote instrument list shape. */
@@ -47,50 +34,14 @@ export type AdminDashboardPanelsProps = {
   monthlyTrendIsEstimated: boolean;
   analyticsContributors: ContributorRow[] | null;
   analyticsContributorsLoadState: ContributorLeaderboardLoadState;
-  avgExpertAccuracy: number | null;
-  aiFlaggedCount: number | null;
-  remoteKbCount: number | null;
-  expertPerformanceRows: ExpertPerformanceRow[] | null;
-  onFlaggedCountChange: Dispatch<SetStateAction<number | null>>;
-  currentUserId: string | undefined;
-  legacyPanel: LegacyAdminPanelId | null;
-  setLegacyPanel: Dispatch<SetStateAction<LegacyAdminPanelId | null>>;
-  deleteRecordingRequests: DeleteRecordingRequest[];
-  editRecordingRequests: EditRecordingRequest[];
-  expertOptions: { id: string; username: string; fullName?: string }[];
-  forwardDeleteExpertId: { requestId: string; expertId: string } | null;
-  setForwardDeleteExpertId: Dispatch<
-    SetStateAction<{ requestId: string; expertId: string } | null>
-  >;
-  pendingExpertDeletions: ExpertAccountDeletionRequest[];
-  onRequestExpertDeletionApprove: Dispatch<SetStateAction<ExpertAccountDeletionRequest | null>>;
-  recordings: LocalRecording[];
-  onRequestRemoveRecording: (p: { id: string; title?: string }) => void;
 };
 
 /**
- * Renders the active admin dashboard workspace (users / analytics / AI / moderation).
+ * Renders the active admin dashboard workspace (users / analytics).
  * Keeps `AdminDashboard.tsx` thinner — panels stay in `components/admin/*`.
  */
 export default function AdminDashboardPanels(props: AdminDashboardPanelsProps) {
   const { step } = props;
-
-  if (step === 'users') {
-    return (
-      <AdminUserManagement
-        remoteUsersLoadState={props.remoteUsersLoadState}
-        usersForTable={props.usersForTable}
-        showUsersLoadingHint={props.showUsersLoadingHint}
-        setShowUsersLoadingHint={props.setShowUsersLoadingHint}
-        load={props.load}
-        onOpenGuide={props.onOpenUserGuide}
-        getRoleNameVi={props.getRoleNameVi}
-        onAssignRole={props.onAssignRole}
-        onRequestDeleteUser={props.onRequestDeleteUser}
-        onReactivateUser={props.onReactivateUser}
-      />
-    );
-  }
 
   if (step === 'analytics') {
     return (
@@ -111,33 +62,18 @@ export default function AdminDashboardPanels(props: AdminDashboardPanelsProps) {
     );
   }
 
-  if (step === 'aiMonitoring') {
-    return (
-      <AdminDashboardAiMonitoringPanel
-        avgExpertAccuracy={props.avgExpertAccuracy}
-        aiFlaggedCount={props.aiFlaggedCount}
-        remoteKbCount={props.remoteKbCount}
-        expertPerformanceRows={props.expertPerformanceRows}
-        onFlaggedCountChange={(n) => props.onFlaggedCountChange(n)}
-        currentUserId={props.currentUserId}
-      />
-    );
-  }
-
   return (
-    <AdminDashboardModerationPanel
-      legacyPanel={props.legacyPanel}
-      setLegacyPanel={props.setLegacyPanel}
-      deleteRecordingRequests={props.deleteRecordingRequests}
-      editRecordingRequests={props.editRecordingRequests}
-      expertOptions={props.expertOptions}
-      forwardDeleteExpertId={props.forwardDeleteExpertId}
-      setForwardDeleteExpertId={props.setForwardDeleteExpertId}
-      pendingExpertDeletions={props.pendingExpertDeletions}
-      onRequestExpertDeletionApprove={props.onRequestExpertDeletionApprove}
-      recordings={props.recordings}
-      onRequestRemoveRecording={props.onRequestRemoveRecording}
-      onRefreshRequests={() => props.load()}
+    <AdminUserManagement
+      remoteUsersLoadState={props.remoteUsersLoadState}
+      usersForTable={props.usersForTable}
+      showUsersLoadingHint={props.showUsersLoadingHint}
+      setShowUsersLoadingHint={props.setShowUsersLoadingHint}
+      load={props.load}
+      onOpenGuide={props.onOpenUserGuide}
+      getRoleNameVi={props.getRoleNameVi}
+      onAssignRole={props.onAssignRole}
+      onRequestDeleteUser={props.onRequestDeleteUser}
+      onReactivateUser={props.onReactivateUser}
     />
   );
 }

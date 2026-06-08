@@ -5,26 +5,17 @@ import {
   AggregatedUser,
   asObject,
   DEMO_USERS,
-  ExpertPerformanceRow,
   resolveUserAccountStatus,
 } from '@/features/admin/adminDashboardTypes';
 import { usePollWhileVisible } from '@/hooks/usePollWhileVisible';
-import { accountDeletionService } from '@/services/accountDeletionService';
 import { adminApi } from '@/services/adminApi';
 import { analyticsApi } from '@/services/analyticsApi';
 import { knowledgeBaseApi } from '@/services/knowledgeBaseApi';
-import { fetchAllMessages } from '@/services/qaMessageService';
-import { recordingRequestService } from '@/services/recordingRequestService';
 import { getItem } from '@/services/storageService';
 import { mapSubmissionToLocalRecording } from '@/services/submissionApiMapper';
 import { ModerationStatus } from '@/types';
 import { UserRole } from '@/types';
 import type { LocalRecording } from '@/types';
-import type {
-  DeleteRecordingRequest,
-  EditRecordingRequest,
-  ExpertAccountDeletionRequest,
-} from '@/types';
 import type { ContributorRow } from '@/types/analytics';
 import { toApiSubmissionStatus, toModerationUiStatus } from '@/types/moderation';
 import { resolveOverviewTotalRecordings } from '@/utils/analyticsOverview';
@@ -43,11 +34,6 @@ export function useAdminDashboardData() {
   const [recordings, setRecordings] = useState<LocalRecording[]>([]);
   const [remoteUsers, setRemoteUsers] = useState<AggregatedUser[] | null>(null);
   const [remoteKbCount, setRemoteKbCount] = useState<number | null>(null);
-  const [aiFlaggedCount, setAiFlaggedCount] = useState<number | null>(null);
-  const [expertPerformanceRows, setExpertPerformanceRows] = useState<ExpertPerformanceRow[] | null>(
-    null,
-  );
-  const [avgExpertAccuracy, setAvgExpertAccuracy] = useState<number | null>(null);
   const [remoteMonthlyCounts, setRemoteMonthlyCounts] = useState<Record<string, number> | null>(
     null,
   );
@@ -69,13 +55,6 @@ export function useAdminDashboardData() {
   const [usersOverrides, setUsersOverrides] = useState<
     Record<string, { role?: string; username?: string; fullName?: string }>
   >({});
-  const [pendingExpertDeletions, setPendingExpertDeletions] = useState<
-    ExpertAccountDeletionRequest[]
-  >([]);
-  const [deleteRecordingRequests, setDeleteRecordingRequests] = useState<DeleteRecordingRequest[]>(
-    [],
-  );
-  const [editRecordingRequests, setEditRecordingRequests] = useState<EditRecordingRequest[]>([]);
   const [deletedUserIds, setDeletedUserIds] = useState<Set<string>>(new Set());
   const [lastDashboardRefreshAt, setLastDashboardRefreshAt] = useState<number | null>(null);
   const [analyticsContributors, setAnalyticsContributors] = useState<ContributorRow[] | null>(
@@ -110,8 +89,6 @@ export function useAdminDashboardData() {
         contributorsRes,
         trendRes,
         kbCountRes,
-        expertsRes,
-        flaggedMessagesRes,
         overviewRes,
         instrumentsRes,
         recordingsRes,
@@ -121,8 +98,6 @@ export function useAdminDashboardData() {
         analyticsApi.getContributors(), // also feeds ContributorLeaderboard (no second fetch)
         analyticsApi.getSubmissionsTrend(),
         knowledgeBaseApi.countKnowledgeBaseItems(),
-        analyticsApi.getExperts(),
-        fetchAllMessages(1, 500),
         analyticsApi.getOverview(),
         legacyGet<GenericListResponse>('/Instrument'),
         legacyGet<GenericListResponse>('/Recording'),
@@ -231,48 +206,6 @@ export function useAdminDashboardData() {
       if (kbCountRes.status === 'fulfilled')
         setRemoteKbCount(Number.isFinite(kbCountRes.value) ? kbCountRes.value : null);
       else setRemoteKbCount(null);
-
-      // ---- AI monitoring metrics ----
-      if (expertsRes.status === 'fulfilled') {
-        const rows = expertsRes.value
-          .map((r) => {
-            const o = asObject(r);
-            if (!o) return null;
-            const rawAccuracy = Number(o.accuracy ?? 0);
-            const accuracy = Number.isFinite(rawAccuracy) ? rawAccuracy : 0;
-            const rawReviews = Number(o.reviews ?? 0);
-            const reviews = Number.isFinite(rawReviews) ? rawReviews : 0;
-            const expertId = String(o.expertId ?? o.id ?? '');
-            const name = String((o.name ?? o.fullName ?? o.username ?? expertId) || 'Chuyên gia');
-            const avgTime = String(o.avgTime ?? '').trim();
-            return {
-              expertId: expertId || name,
-              name,
-              reviews,
-              accuracy,
-              avgTime: avgTime || '-',
-            };
-          })
-          .filter((x): x is ExpertPerformanceRow => !!x);
-        const orderedRows = [...rows].sort((a, b) => b.reviews - a.reviews);
-        setExpertPerformanceRows(orderedRows);
-        if (orderedRows.length > 0) {
-          const avg = orderedRows.reduce((sum, row) => sum + row.accuracy, 0) / orderedRows.length;
-          setAvgExpertAccuracy(Number.isFinite(avg) ? avg : null);
-        } else {
-          setAvgExpertAccuracy(null);
-        }
-      } else {
-        setExpertPerformanceRows(null);
-        setAvgExpertAccuracy(null);
-      }
-
-      if (flaggedMessagesRes.status === 'fulfilled') {
-        const flagged = (flaggedMessagesRes.value.data ?? []).filter((m) => m.flaggedByExpert === true);
-        setAiFlaggedCount(flagged.length);
-      } else {
-        setAiFlaggedCount(null);
-      }
 
       // ---- Instruments ----
       if (instrumentsRes.status === 'fulfilled') {
@@ -386,25 +319,8 @@ export function useAdminDashboardData() {
           rows.map((row) => mapSubmissionToLocalRecording(row)) as LocalRecording[],
         );
         setRecordings(migrated);
-
-        const userNameById = new Map<string, string>();
-        if (usersRes.status === 'fulfilled') {
-          usersRes.value.forEach((u) => {
-            const anyU = asObject(u);
-            if (!anyU) return;
-            const id = String(anyU.id ?? anyU.userId ?? '');
-            const name = String(anyU.fullName ?? anyU.username ?? anyU.email ?? id);
-            if (id) userNameById.set(id, name);
-          });
-        }
-        const { deleteRequests, editRequests } =
-          recordingRequestService.deriveRecordingRequestsFromSubmissions(rows, userNameById);
-        setDeleteRecordingRequests(deleteRequests);
-        setEditRecordingRequests(editRequests);
       } catch {
         setRecordings([]);
-        setDeleteRecordingRequests([]);
-        setEditRecordingRequests([]);
       }
       try {
         const usersOverridesRaw = getItem('users_overrides');
@@ -425,7 +341,6 @@ export function useAdminDashboardData() {
       } catch {
         setDeletedUserIds(new Set());
       }
-      setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
       setLastDashboardRefreshAt(Date.now());
     },
     [],
@@ -555,10 +470,6 @@ export function useAdminDashboardData() {
     recordings,
     remoteUsers,
     remoteKbCount,
-    aiFlaggedCount,
-    setAiFlaggedCount,
-    expertPerformanceRows,
-    avgExpertAccuracy,
     remoteMonthlyCounts,
     remoteTotalRecordings,
     remoteInstrumentCount,
@@ -570,12 +481,6 @@ export function useAdminDashboardData() {
     remoteEthnicGroupsLoadState,
     usersOverrides,
     setUsersOverrides,
-    pendingExpertDeletions,
-    setPendingExpertDeletions,
-    deleteRecordingRequests,
-    setDeleteRecordingRequests,
-    editRecordingRequests,
-    setEditRecordingRequests,
     deletedUserIds,
     setDeletedUserIds,
     usersForTable,

@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Bot, Shield, Users, type LucideIcon } from 'lucide-react';
+import { Activity, BarChart3, Users, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import type { AdminDashboardSectionId } from '@/features/admin/adminDashboardTypes';
@@ -8,8 +8,6 @@ import { cn } from '@/utils/helpers';
 const SECTION_ICONS: Record<AdminDashboardSectionId, LucideIcon> = {
   users: Users,
   analytics: BarChart3,
-  aiMonitoring: Bot,
-  moderation: Shield,
 };
 
 export type AdminDashboardRailProps = {

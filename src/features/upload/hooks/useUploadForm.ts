@@ -8,10 +8,9 @@ import {
   PERFORMANCE_TYPE,
 } from '@/features/upload/performanceTypeUtils';
 import type { DetectedInstrument } from '@/types/instrumentDetection';
-import { getAddressFromCoordinates } from '@/services/geocodeService';
 
 /**
- * Contributor metadata fields, GPS, optional “gợi ý metadata” button, and submit/error UI for UploadMusic.
+ * Contributor metadata fields, optional “gợi ý metadata” button, and submit/error UI for UploadMusic.
  * Media file state stays in `useMediaUpload`.
  * Upload-time Gemini advisory (instrument bars + suggestion list) lives in `useUploadAiAdvisory` and is
  * exposed as `aiAdvisory` plus backward-compatible top-level aliases (`instrumentPredictions`, …).
@@ -146,74 +145,12 @@ export function useUploadForm() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [gpsLoading, setGpsLoading] = useState(false);
-  /** Fatal only: no usable coordinates from the device for this attempt (permission, timeout, unsupported). */
-  const [gpsError, setGpsError] = useState<string | null>(null);
-  const [gpsAddressResolved, setGpsAddressResolved] = useState(false);
-  /** True after reverse-geocode attempt finished following a successful `getCurrentPosition` (this session). */
-  const [gpsReverseLookupCompleted, setGpsReverseLookupCompleted] = useState(false);
   const [capturedGpsLat, setCapturedGpsLat] = useState<number | null>(null);
   const [capturedGpsLon, setCapturedGpsLon] = useState<number | null>(null);
   const [capturedGpsAccuracy, setCapturedGpsAccuracy] = useState<number | null>(null);
   const requiresInstruments =
     performanceType === 'instrumental' || performanceType === 'vocal_accompaniment';
   const allowsLyrics = performanceType === 'acappella' || performanceType === 'vocal_accompaniment';
-
-  const handleGetGpsLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setGpsError('Trình duyệt không hỗ trợ GPS.');
-      return;
-    }
-    setGpsError(null);
-    setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        void (async () => {
-          const { latitude, longitude } = pos.coords;
-          setGpsReverseLookupCompleted(false);
-          setCapturedGpsLat(latitude);
-          setCapturedGpsLon(longitude);
-          setCapturedGpsAccuracy(
-            typeof pos.coords.accuracy === 'number' && Number.isFinite(pos.coords.accuracy)
-              ? pos.coords.accuracy
-              : null,
-          );
-          const gpsText = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-          try {
-            const res = await getAddressFromCoordinates(latitude, longitude);
-            const display = res.address?.trim() || `Tọa độ: ${gpsText}`;
-            setRecordingLocation((prev) => (prev ? `${prev}; ${display}` : display));
-            const resolved =
-              res.addressFromService === true &&
-              Boolean(res.address?.trim()) &&
-              !display.startsWith('Tọa độ:');
-            setGpsAddressResolved(resolved);
-            setGpsError(null);
-          } catch {
-            setRecordingLocation((prev) =>
-              prev ? `${prev} (Tọa độ: ${gpsText})` : `Tọa độ: ${gpsText}`,
-            );
-            setGpsAddressResolved(false);
-            setGpsError(null);
-          } finally {
-            setGpsReverseLookupCompleted(true);
-            setGpsLoading(false);
-          }
-        })();
-      },
-      (err) => {
-        setGpsAddressResolved(false);
-        setGpsReverseLookupCompleted(false);
-        setGpsError(
-          err.message === 'User denied Geolocation'
-            ? 'Bạn đã từ chối quyền vị trí.'
-            : 'Không lấy được tọa độ. Kiểm tra quyền vị trí hoặc kết nối.',
-        );
-        setGpsLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
-  }, []);
 
   return {
     title,
@@ -328,19 +265,6 @@ export function useUploadForm() {
     setSubmitMessage,
     isSubmitting,
     setIsSubmitting,
-    gpsLoading,
-    setGpsLoading,
-    gpsError,
-    setGpsError,
-    gpsAddressResolved,
-    setGpsAddressResolved,
-    gpsReverseLookupCompleted,
-    setGpsReverseLookupCompleted,
-    gpsSuccess:
-      capturedGpsLat != null &&
-      capturedGpsLon != null &&
-      Number.isFinite(capturedGpsLat) &&
-      Number.isFinite(capturedGpsLon),
     capturedGpsLat,
     setCapturedGpsLat,
     capturedGpsLon,
@@ -349,6 +273,5 @@ export function useUploadForm() {
     setCapturedGpsAccuracy,
     requiresInstruments,
     allowsLyrics,
-    handleGetGpsLocation,
   };
 }

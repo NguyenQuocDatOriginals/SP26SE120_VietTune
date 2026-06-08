@@ -1,4 +1,4 @@
-import { Users, BarChart3, Shield, ChevronRight, ChevronDown, BookOpen, Bot, Activity } from 'lucide-react';
+import { Users, BarChart3, Shield, ChevronRight, ChevronDown, BookOpen, Activity } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -8,7 +8,6 @@ import Card from '@/components/common/Card';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog';
 import {
   getRoleNameVi,
-  LegacyAdminPanelId,
   ROLE_NAMES_VI,
   type AdminDashboardSectionId,
   isNonEmptyInvalidAdminDashboardSection,
@@ -21,14 +20,10 @@ import AdminDashboardRail from '@/features/admin/shell/AdminDashboardRail';
 import AdminBreadcrumbs from '@/features/admin/shell/AdminBreadcrumbs';
 import { buildAdminBreadcrumbItems } from '@/features/admin/shell/adminBreadcrumbUtils';
 import AdminOverviewStrip from '@/features/admin/shell/AdminOverviewStrip';
-import { accountDeletionService } from '@/services/accountDeletionService';
 import { adminApi } from '@/services/adminApi';
-import { recordingRequestService } from '@/services/recordingRequestService';
-import { removeLocalRecording } from '@/services/recordingStorage';
 import { getItem, setItem } from '@/services/storageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
-import type { ExpertAccountDeletionRequest } from '@/types';
 import { uiToast, notifyLine } from '@/uiToast';
 
 export default function AdminDashboard() {
@@ -41,15 +36,10 @@ export default function AdminDashboard() {
     [searchParams],
   );
   const [showAdminGuide, setShowAdminGuide] = useState(false);
-  const [legacyPanel, setLegacyPanel] = useState<LegacyAdminPanelId | null>(null);
   const {
     load,
     recordings,
     remoteKbCount,
-    aiFlaggedCount,
-    setAiFlaggedCount,
-    expertPerformanceRows,
-    avgExpertAccuracy,
     remoteTotalRecordings,
     remoteInstrumentCount,
     remoteInstruments,
@@ -58,11 +48,6 @@ export default function AdminDashboard() {
     setShowUsersLoadingHint,
     remoteEthnicGroupsLoadState,
     setUsersOverrides,
-    usersOverrides,
-    pendingExpertDeletions,
-    setPendingExpertDeletions,
-    deleteRecordingRequests,
-    editRecordingRequests,
     usersForTable,
     allUsers,
     monthlyCountsFinal,
@@ -73,16 +58,9 @@ export default function AdminDashboard() {
     lastDashboardRefreshAt,
   } = useAdminDashboardData();
 
-  const [removeTarget, setRemoveTarget] = useState<{ id: string; title?: string } | null>(null);
   const [deleteUserTarget, setDeleteUserTarget] = useState<{ id: string; username: string } | null>(
     null,
   );
-  const [expertDeletionApproveTarget, setExpertDeletionApproveTarget] =
-    useState<ExpertAccountDeletionRequest | null>(null);
-  const [forwardDeleteExpertId, setForwardDeleteExpertId] = useState<{
-    requestId: string;
-    expertId: string;
-  } | null>(null);
 
   useEffect(() => {
     if (isNonEmptyInvalidAdminDashboardSection(searchParams.get('section'))) {
@@ -97,12 +75,8 @@ export default function AdminDashboard() {
     }
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    if (step !== 'moderation') setLegacyPanel(null);
-  }, [step]);
-
   const stepIndex = useMemo(() => {
-    const order: AdminDashboardSectionId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
+    const order: AdminDashboardSectionId[] = ['users', 'analytics'];
     return Math.max(0, order.indexOf(step));
   }, [step]);
 
@@ -127,7 +101,7 @@ export default function AdminDashboard() {
   );
 
   const setStepByIndex = (idx: number) => {
-    const order: AdminDashboardSectionId[] = ['users', 'analytics', 'aiMonitoring', 'moderation'];
+    const order: AdminDashboardSectionId[] = ['users', 'analytics'];
     const next = order[Math.max(0, Math.min(order.length - 1, idx))];
     goSection(next);
   };
@@ -199,43 +173,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleRemoveRecording = async () => {
-    const target = removeTarget;
-    if (!target) return;
-    const recordingTitle = target.title?.trim() || 'Bản thu';
-    try {
-      await removeLocalRecording(target.id);
-      void recordingRequestService.addNotification({
-        type: 'recording_deleted',
-        title: 'Bản thu đã bị xóa',
-        body: `"${recordingTitle}" đã bị xóa bởi quản trị viên.`,
-        forRoles: [UserRole.CONTRIBUTOR, UserRole.EXPERT],
-        recordingId: target.id,
-      });
-      setRemoveTarget(null);
-      void load();
-      uiToast.success(notifyLine('Thành công', 'Đã xóa bản ghi khỏi hệ thống.'));
-    } catch {
-      uiToast.error(notifyLine('Lỗi', 'Không thể xóa bản ghi.'));
-    }
-  };
-
-  const expertOptions = useMemo(() => {
-    const experts: { id: string; username: string; fullName?: string }[] = [];
-    Object.entries(usersOverrides).forEach(([id, u]) => {
-      if (u?.role === UserRole.EXPERT) {
-        experts.push({ id, username: u.username ?? id, fullName: u.fullName });
-      }
-    });
-    return experts;
-  }, [usersOverrides]);
-
   const steps: { id: AdminDashboardSectionId; label: string; icon: React.ElementType }[] = useMemo(
     () => [
       { id: 'users', label: 'Quản lý người dùng', icon: Users },
       { id: 'analytics', label: 'Phân tích & thống kê', icon: BarChart3 },
-      { id: 'aiMonitoring', label: 'Giám sát hệ thống AI', icon: Bot },
-      { id: 'moderation', label: 'Kiểm duyệt nội dung', icon: Shield },
     ],
     [],
   );
@@ -313,7 +254,6 @@ export default function AdminDashboard() {
           <AdminOverviewStrip
             remoteTotalRecordings={remoteTotalRecordings ?? 0}
             allUsersCount={allUsers.length}
-            aiFlaggedCount={aiFlaggedCount ?? 0}
             remoteKbCount={remoteKbCount ?? 0}
           />
         </div>
@@ -373,23 +313,6 @@ export default function AdminDashboard() {
             monthlyTrendIsEstimated={monthlyTrendIsEstimated}
             analyticsContributors={analyticsContributors}
             analyticsContributorsLoadState={analyticsContributorsLoadState}
-            avgExpertAccuracy={avgExpertAccuracy}
-            aiFlaggedCount={aiFlaggedCount}
-            remoteKbCount={remoteKbCount}
-            expertPerformanceRows={expertPerformanceRows}
-            onFlaggedCountChange={setAiFlaggedCount}
-            currentUserId={user?.id}
-            legacyPanel={legacyPanel}
-            setLegacyPanel={setLegacyPanel}
-            deleteRecordingRequests={deleteRecordingRequests}
-            editRecordingRequests={editRecordingRequests}
-            expertOptions={expertOptions}
-            forwardDeleteExpertId={forwardDeleteExpertId}
-            setForwardDeleteExpertId={setForwardDeleteExpertId}
-            pendingExpertDeletions={pendingExpertDeletions}
-            onRequestExpertDeletionApprove={setExpertDeletionApproveTarget}
-            recordings={recordings}
-            onRequestRemoveRecording={({ id, title }) => setRemoveTarget({ id, title })}
           />
         </Card>
 
@@ -419,22 +342,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
-      <ConfirmationDialog
-        isOpen={!!removeTarget}
-        onClose={() => setRemoveTarget(null)}
-        onConfirm={() => void handleRemoveRecording()}
-        title="Xóa bản ghi"
-        message={
-          removeTarget
-            ? `Bạn có chắc muốn xóa "${removeTarget.title?.trim() || 'Bản thu'}" khỏi hệ thống?`
-            : ''
-        }
-        description="Hành động này không thể hoàn tác."
-        confirmText="Xóa"
-        cancelText="Hủy"
-        confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
-      />
 
       <ConfirmationDialog
         isOpen={!!deleteUserTarget}
@@ -547,108 +454,11 @@ export default function AdminDashboard() {
                   </ul>
                 </div>
               </div>
-
-              <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
-                <div className="w-1.5 sm:w-2 flex-shrink-0 bg-amber-200/90" aria-hidden />
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-amber-100/90 shadow-sm">
-                      <Bot className="h-5 w-5 text-amber-700" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-neutral-900">
-                      Giám sát hệ thống AI
-                    </h3>
-                  </div>
-                  <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-700 flex-shrink-0">•</span>
-                      <span>Theo dõi accuracy metrics (khi backend sẵn sàng).</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-700 flex-shrink-0">•</span>
-                      <span>Rà soát phản hồi bị cắm cờ và xử lý cảnh báo.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-amber-700 flex-shrink-0">•</span>
-                      <span>Quản lý cập nhật cơ sở tri thức để huấn luyện lại.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex rounded-xl border border-neutral-200/80 bg-white shadow-md overflow-hidden">
-                <div className="w-1.5 sm:w-2 flex-shrink-0 bg-emerald-200/90" aria-hidden />
-                <div className="flex-1 p-4 sm:p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 rounded-lg bg-emerald-100/90 shadow-sm">
-                      <Shield className="h-5 w-5 text-emerald-600" strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-base sm:text-lg font-semibold text-neutral-900">
-                      Kiểm duyệt nội dung
-                    </h3>
-                  </div>
-                  <ul className="space-y-2 text-neutral-700 font-medium leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 flex-shrink-0">•</span>
-                      <span>Giải quyết tranh chấp bản quyền.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 flex-shrink-0">•</span>
-                      <span>Xóa nội dung vi phạm, không phù hợp.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-600 flex-shrink-0">•</span>
-                      <span>
-                        Quản lý thời hạn hạn chế công bố cho bản ghi nhạy cảm (khi backend sẵn
-                        sàng).
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      <ConfirmationDialog
-        isOpen={!!expertDeletionApproveTarget}
-        onClose={() => setExpertDeletionApproveTarget(null)}
-        onConfirm={async () => {
-          if (!expertDeletionApproveTarget) return;
-          try {
-            await accountDeletionService.approveExpertAccountDeletion(
-              expertDeletionApproveTarget.expertId,
-              user?.id,
-              user?.role,
-            );
-            await recordingRequestService.addNotification({
-              type: 'expert_account_deletion_approved',
-              title: 'Đã duyệt xóa tài khoản Chuyên gia',
-              body: `Tài khoản ${expertDeletionApproveTarget.expertFullName ?? expertDeletionApproveTarget.expertUsername} đã được xóa khỏi hệ thống.`,
-              forRoles: [UserRole.EXPERT],
-            });
-            setExpertDeletionApproveTarget(null);
-            setPendingExpertDeletions(accountDeletionService.getPendingExpertDeletionRequests());
-            uiToast.success(
-              notifyLine('Thành công', 'Đã duyệt xóa tài khoản Chuyên gia khỏi hệ thống.'),
-            );
-            void load();
-          } catch (e) {
-            uiToast.error(notifyLine('Lỗi', 'Không thể duyệt xóa tài khoản.'));
-          }
-        }}
-        title="Duyệt xóa tài khoản Chuyên gia"
-        message={
-          expertDeletionApproveTarget
-            ? `Bạn có chắc chắn duyệt xóa tài khoản "${expertDeletionApproveTarget.expertFullName ?? expertDeletionApproveTarget.expertUsername}" khỏi hệ thống?`
-            : ''
-        }
-        description="Chuyên gia này sẽ bị xóa khỏi hệ thống. Nếu đang đăng nhập bằng tài khoản đó, họ sẽ bị đăng xuất. Hành động không thể hoàn tác."
-        confirmText="Duyệt xóa"
-        cancelText="Hủy"
-        confirmButtonStyle="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-full shadow-xl hover:shadow-2xl shadow-red-600/40 hover:scale-110 active:scale-95"
-      />
     </div>
   );
 }

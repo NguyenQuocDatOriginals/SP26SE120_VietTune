@@ -88,12 +88,12 @@ export function SectionHeader({
   required?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 mb-6">
+    <div className="flex items-start gap-3 mb-5">
       <div className="flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100/95 to-secondary-100/90 p-2 shadow-sm ring-1 ring-secondary-200/50">
         <Icon className="h-5 w-5 text-primary-600" strokeWidth={2.5} />
       </div>
       <div>
-        <h3 className="text-xl font-semibold text-neutral-900 flex items-center gap-2">
+        <h3 className="text-base sm:text-lg font-semibold text-neutral-900 flex items-center gap-2">
           {title}
           {required && (
             <span className="text-red-500" aria-hidden="true">
@@ -134,7 +134,7 @@ export function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex min-h-[44px] w-full cursor-pointer items-center justify-between gap-2 bg-gradient-to-r from-surface-panel/95 to-secondary-50/30 p-4 transition-all duration-200 hover:from-secondary-50/40 hover:to-secondary-100/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-panel sm:min-h-0 sm:p-6"
+        className="flex min-h-[44px] w-full cursor-pointer items-center justify-between gap-2 bg-gradient-to-r from-surface-panel/95 to-secondary-50/30 p-5 transition-all duration-200 hover:from-secondary-50/40 hover:to-secondary-100/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-panel sm:min-h-0 sm:p-6"
       >
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <div className="flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100/95 to-secondary-100/90 p-2 shadow-sm ring-1 ring-secondary-200/50">
@@ -159,7 +159,7 @@ export function CollapsibleSection({
           strokeWidth={2.5}
         />
       </button>
-      {isOpen && <div className="p-4 sm:p-6 pt-2 space-y-4 min-w-0">{children}</div>}
+      {isOpen && <div className="p-5 sm:p-6 pt-2 space-y-4 min-w-0">{children}</div>}
     </div>
   );
 }

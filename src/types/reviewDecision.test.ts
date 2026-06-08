@@ -15,9 +15,12 @@ describe('reviewDecisionFromSubmissionStatus', () => {
     expect(reviewDecisionFromSubmissionStatus(4)).toBe(ReviewDecision.RequestUpdate);
   });
 
+  it('maps approved submission status to Approve', () => {
+    expect(reviewDecisionFromSubmissionStatus(2)).toBe(ReviewDecision.Approve);
+  });
+
   it('returns undefined for other statuses', () => {
     expect(reviewDecisionFromSubmissionStatus(0)).toBeUndefined();
-    expect(reviewDecisionFromSubmissionStatus(2)).toBeUndefined();
     expect(reviewDecisionFromSubmissionStatus(99)).toBeUndefined();
   });
 });

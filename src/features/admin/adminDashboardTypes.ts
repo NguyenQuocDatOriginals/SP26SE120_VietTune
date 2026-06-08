@@ -1,7 +1,7 @@
 import { UserRole } from '@/types';
 
 /** Dashboard stepper sections (URL query `?section=` on `/admin`). */
-export const ADMIN_DASHBOARD_SECTION_IDS = ['users', 'analytics', 'aiMonitoring', 'moderation'] as const;
+export const ADMIN_DASHBOARD_SECTION_IDS = ['users', 'analytics'] as const;
 export type AdminDashboardSectionId = (typeof ADMIN_DASHBOARD_SECTION_IDS)[number];
 
 export function parseAdminDashboardSectionParam(raw: string | null): AdminDashboardSectionId {
@@ -18,27 +18,13 @@ export function isNonEmptyInvalidAdminDashboardSection(raw: string | null): bool
   return !ADMIN_DASHBOARD_SECTION_IDS.includes(t as AdminDashboardSectionId);
 }
 
-export type StepId = 'users' | 'analytics' | 'aiMonitoring' | 'moderation' | 'master-data';
-
-export type LegacyAdminPanelId =
-  | 'expertDeletion'
-  | 'recordRequests'
-  | 'embargo'
-  | 'copyrightDispute';
+export type StepId = 'users' | 'analytics' | 'master-data';
 
 export function asObject(input: unknown): Record<string, unknown> | null {
   return input && typeof input === 'object' && !Array.isArray(input)
     ? (input as Record<string, unknown>)
     : null;
 }
-
-export type ExpertPerformanceRow = {
-  expertId: string;
-  name: string;
-  reviews: number;
-  accuracy: number;
-  avgTime: string;
-};
 
 export type UserAccountStatus = 'Active' | 'Inactive';
 

@@ -177,7 +177,7 @@ export default function AdminOperationsPage() {
                   to="/admin"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary-700 hover:text-primary-600"
                 >
-                  Về dashboard quản trị (Giám sát AI → backfill)
+                  Về dashboard quản trị
                   <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} aria-hidden />
                 </Link>
               </li>

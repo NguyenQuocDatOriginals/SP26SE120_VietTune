@@ -38,7 +38,7 @@ test.describe("researcher portal — load, filters, tabs (32)", () => {
     await expect(page.getByRole("heading", { name: "VietTune Intelligence" })).toBeVisible();
 
     await page.getByRole("button", { name: /Biểu đồ tri thức/ }).click();
-    await expect(page.getByRole("heading", { name: "Biểu đồ tri thức tương tác" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Biểu đồ tri thức" })).toBeVisible();
 
     await page.getByRole("button", { name: /Tìm kiếm nâng cao/ }).click();
     await expect(page.getByRole("heading", { name: "Tìm kiếm ngữ nghĩa" })).toBeVisible();

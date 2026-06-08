@@ -44,20 +44,15 @@ test.describe("researcher — QA tab + Knowledge Graph tab (35)", () => {
       .toBe(true);
   });
 
-  test("Biểu đồ tri thức: tab Tổng quan / Nhạc cụ / Dân tộc / Nghi lễ / Bản thu + Làm mới", async ({ page }) => {
+  test("Biểu đồ tri thức: Sandbox explorer (tìm kiếm + tìm đường ngắn nhất)", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Cổng nghiên cứu" })).toBeVisible({
       timeout: 45_000,
     });
 
     await page.getByRole("button", { name: /Biểu đồ tri thức/ }).click();
-    await expect(page.getByRole("heading", { name: "Biểu đồ tri thức tương tác" })).toBeVisible();
-
-    await page.getByRole("button", { name: "Tổng quan" }).click();
-    await page.getByRole("button", { name: "Nhạc cụ" }).click();
-    await page.getByRole("button", { name: "Dân tộc" }).click();
-    await page.getByRole("button", { name: "Nghi lễ" }).click();
-    await page.getByRole("button", { name: "Bản thu" }).click();
-    await expect(page.getByRole("button", { name: "Làm mới" })).toBeVisible();
-    await page.getByRole("button", { name: "Tổng quan" }).click();
+    await expect(page.getByRole("heading", { name: "Biểu đồ tri thức" })).toBeVisible();
+    await expect(page.getByText("Tìm kiếm thực thể")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Tìm đường ngắn nhất/ })).toBeVisible();
+    await expect(page.getByPlaceholder("Dân tộc, nhạc cụ, bản ghi...")).toBeVisible();
   });
 });

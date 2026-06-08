@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { Info } from 'lucide-react';
+import { useMemo } from 'react';
 
 import MetadataSuggestionCard from '@/components/features/upload/metadata-suggestions/MetadataSuggestionCard';
 import type { MetadataSuggestion } from '@/types/instrumentDetection';
@@ -24,23 +24,24 @@ export default function MetadataSuggestionReadOnlyPanel({
 
   return (
     <section
-      className="mt-3 rounded-xl border border-neutral-200/90 bg-surface-muted p-3"
+      data-testid="metadata-suggestion-readonly-panel"
+      className="mt-3 rounded-xl border border-neutral-200/90 bg-surface-muted p-4"
       aria-label="Gợi ý metadata chỉ đọc"
     >
-      <div className="flex items-start gap-2">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" aria-hidden />
+      <div className="flex items-start gap-2 border-b border-neutral-200/70 pb-3">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
         <div>
-          <h3 className="text-sm font-semibold text-neutral-900">Gợi ý metadata (chỉ đọc)</h3>
-          <p className="mt-0.5 text-[11px] leading-snug text-neutral-600">
+          <h3 className="text-base font-semibold text-neutral-900">Gợi ý metadata (chỉ đọc)</h3>
+          <p className="mt-1 text-xs leading-relaxed text-neutral-600 sm:text-sm">
             Đây là gợi ý từ AI dựa trên phân tích nhạc cụ — không phải metadata cuối cùng. Chuyên
             gia sẽ xác minh trước khi công bố.
           </p>
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+      <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
         {groups.map((group) => (
-          <MetadataSuggestionCard key={group.id} group={group} />
+          <MetadataSuggestionCard key={group.id} group={group} layout="readable" />
         ))}
       </div>
     </section>

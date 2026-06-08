@@ -171,7 +171,7 @@ export default function MediaUploadStep({
 
   return (
     <div
-      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-8 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
+      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-br from-surface-panel via-cream-50/80 to-secondary-50/45 p-5 sm:p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-secondary-300/50 hover:shadow-xl"
       aria-disabled={isFormDisabled}
     >
       {(!isEditMode || !existingMediaSrc) && (
@@ -286,7 +286,7 @@ export default function MediaUploadStep({
             if (isFormDisabled || isAnalyzing || file) return;
             fileInputRef.current?.click();
           }}
-          className={`relative rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+          className={`relative rounded-xl border-2 border-dashed p-6 text-center transition-all ${
             errors.file
               ? 'border-red-500/50 bg-red-500/5'
               : file

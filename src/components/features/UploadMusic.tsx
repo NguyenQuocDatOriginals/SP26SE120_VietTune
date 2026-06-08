@@ -191,19 +191,13 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setSubmitMessage,
     isSubmitting,
     setIsSubmitting,
-    gpsLoading,
-    gpsError,
-    gpsAddressResolved,
-    gpsReverseLookupCompleted,
     capturedGpsLat,
     setCapturedGpsLat,
     capturedGpsLon,
     setCapturedGpsLon,
-    capturedGpsAccuracy,
     setCapturedGpsAccuracy,
     requiresInstruments,
     allowsLyrics,
-    handleGetGpsLocation,
   } = useUploadForm();
 
   const {
@@ -842,7 +836,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
 
   return (
     <React.Fragment>
-      <form onSubmit={handleSubmit} className="w-full space-y-6">
+      <form onSubmit={handleSubmit} className="w-full space-y-5">
         {/* Required Fields Note */}
         <div className="flex items-center gap-2 text-sm text-neutral-600 font-medium">
           <span className="text-red-500">*</span>
@@ -1017,14 +1011,6 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
           LANGUAGES={LANGUAGES}
           PERFORMANCE_TYPES={PERFORMANCE_TYPES}
           getRegionName={getRegionName}
-          gpsLoading={gpsLoading}
-          gpsError={gpsError}
-          gpsAddressResolved={gpsAddressResolved}
-          gpsReverseLookupCompleted={gpsReverseLookupCompleted}
-          capturedGpsLat={capturedGpsLat}
-          capturedGpsLon={capturedGpsLon}
-          capturedGpsAccuracy={capturedGpsAccuracy}
-          handleGetGpsLocation={handleGetGpsLocation}
           SectionHeaderComponent={SectionHeader}
           FormFieldComponent={FormField}
           TextInputComponent={TextInput}
