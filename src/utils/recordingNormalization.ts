@@ -1,10 +1,7 @@
 import {
   Recording,
-  Region,
   RecordingType,
   RecordingQuality,
-  VerificationStatus,
-  UserRole,
   InstrumentCategory,
 } from '@/types';
 import type { SubmissionLookupMaps } from '@/services/submissionApiMapper';

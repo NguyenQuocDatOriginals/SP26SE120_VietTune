@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3-force';
+import { zoom, zoomIdentity, ZoomTransform } from 'd3-zoom';
+import { select } from 'd3-selection';
 import { graphExplorerService } from '@/services/graphExplorerService';
 import { graphExplorerNodeToGraphNode } from '@/features/knowledge-graph/utils/graphExplorerAdapter';
 import type { GraphNode, GraphLink, KnowledgeGraphData } from '@/types/graph';
@@ -148,7 +150,29 @@ export default function SandboxGraphPage() {
   // State chế độ tìm đường ngắn nhất — khi bật, click vào node sẽ thêm vào multi-selection
   const [isPathFindingMode, setIsPathFindingMode] = useState(false);
   // State hiển thị hướng dẫn sử dụng
-  const [showHelp, setShowHelp] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // State cho phóng to, thu nhỏ và kéo thả canvas
+  const [transform, setTransform] = useState<ZoomTransform>(zoomIdentity);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Thiết lập d3-zoom
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svgElement = select<SVGSVGElement, unknown>(svgRef.current);
+    
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        setTransform(event.transform);
+      })
+      .filter((event) => {
+        return !event.ctrlKey && !event.button;
+      });
+
+    svgElement.call(zoomBehavior);
+    svgElement.on("dblclick.zoom", null); // Tắt double click zoom để nhường cho việc bung node
+  }, []);
 
   // State xếp hạng node nổi bật (Top 10)
   const [topConnectedNodes, setTopConnectedNodes] = useState<ConnectedNodeRankDto[]>([]);
@@ -207,7 +231,9 @@ export default function SandboxGraphPage() {
       const exists = newLinks.find(existing => {
         const eSource = typeof existing.source === 'object' ? (existing.source as any).id : existing.source;
         const eTarget = typeof existing.target === 'object' ? (existing.target as any).id : existing.target;
-        return eSource === sourceId && eTarget === targetId && existing.type === l.type;
+        // Chỉ lấy 1 link duy nhất giữa 2 node, bất kể loại quan hệ nào để tránh đè chữ
+        return (eSource === sourceId && eTarget === targetId) ||
+               (eSource === targetId && eTarget === sourceId);
       });
 
       if (!exists) {
@@ -256,6 +282,48 @@ export default function SandboxGraphPage() {
     // Lấy chi tiết
     const detail = await graphExplorerService.getNodeDetail(mappedNode.backendId || mappedNode.id);
     setNodeDetail(detail);
+
+    // Bổ sung: Tự động nối kết với các node đang có sẵn trên sơ đồ nếu có quan hệ
+    if (detail && detail.neighbors && detail.neighbors.length > 0) {
+      setGraphData(prev => {
+        let newLinks = [...prev.links];
+        let linksAdded = false;
+
+        detail.neighbors.forEach(neighbor => {
+          // Kiểm tra neighbor có đang nằm trên canvas không
+          // (Dùng mappedNode id hoặc backendId để so khớp)
+          const existingNeighbor = prev.nodes.find(n => n.id === neighbor.id || n.backendId === neighbor.id);
+          
+          if (existingNeighbor) {
+            const isOut = neighbor.direction === 'OUT';
+            const sourceId = isOut ? nodeToSelect.id : existingNeighbor.id;
+            const targetId = isOut ? existingNeighbor.id : nodeToSelect.id;
+
+            const linkExists = newLinks.some(l => {
+              const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
+              const tId = typeof l.target === 'object' ? (l.target as any).id : l.target;
+              // Ngăn render nhiều đường nối giữa cùng 2 node
+              return (sId === sourceId && tId === targetId) || (sId === targetId && tId === sourceId);
+            });
+
+            if (!linkExists) {
+              newLinks.push({
+                source: sourceId,
+                target: targetId,
+                type: neighbor.relationType,
+                value: 1
+              } as D3Link);
+              linksAdded = true;
+            }
+          }
+        });
+
+        if (linksAdded) {
+          return { nodes: prev.nodes, links: newLinks };
+        }
+        return prev;
+      });
+    }
   };
 
 
@@ -440,20 +508,18 @@ export default function SandboxGraphPage() {
         return sId !== nodeId && tId !== nodeId;
       });
 
-      // 3. Quét tìm các node còn lại đang có link
-      const nodesWithLinks = new Set<string>();
-      newLinks.forEach(l => {
-        nodesWithLinks.add(typeof l.source === 'object' ? (l.source as any).id : l.source as string);
-        nodesWithLinks.add(typeof l.target === 'object' ? (l.target as any).id : l.target as string);
-      });
-
-      // 4. Xóa luôn các node bị cô lập (degree = 0) do mất link
-      const cleanedNodes = newNodes.filter(n => nodesWithLinks.has(n.id));
-
-      return { nodes: cleanedNodes, links: newLinks };
+      // Không tự động xoá node bị cô lập để tránh bug mất trắng Canva
+      return { nodes: newNodes, links: newLinks };
     });
 
     setExpandedNodes(prev => {
+      const next = new Set(prev);
+      next.delete(nodeId);
+      return next;
+    });
+
+    // Cập nhật lại danh sách node đang được chọn (xóa node này đi)
+    setSelectedNodeIds(prev => {
       const next = new Set(prev);
       next.delete(nodeId);
       return next;
@@ -464,6 +530,7 @@ export default function SandboxGraphPage() {
       setSelection(null);
       setNodeDetail(null);
       setMultiPaths([]);
+      setActiveDetailNodeId(null);
     }
   };
 
@@ -504,7 +571,7 @@ export default function SandboxGraphPage() {
         const existsLink = prev.links.find(l => {
           const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
           const tId = typeof l.target === 'object' ? (l.target as any).id : l.target;
-          return sId === sourceId && tId === targetId && l.type === i.relationType;
+          return (sId === sourceId && tId === targetId) || (sId === targetId && tId === sourceId);
         });
 
         if (!existsLink) {
@@ -553,8 +620,8 @@ export default function SandboxGraphPage() {
     }
 
     const simulation = d3.forceSimulation<D3Node>(graphData.nodes)
-      .force('link', d3.forceLink<D3Node, d3.SimulationLinkDatum<D3Node>>(graphData.links as any).id(d => d.id).distance(150))
-      .force('charge', d3.forceManyBody().strength(-500))
+      .force('link', d3.forceLink<D3Node, d3.SimulationLinkDatum<D3Node>>(graphData.links as any).id(d => d.id).distance(120))
+      .force('charge', d3.forceManyBody().strength(-250))
       .force('center', d3.forceCenter(width / 2, height / 2))
       .on('tick', () => {
         setGraphData({ nodes: [...simulation.nodes()], links: [...graphData.links] });
@@ -592,8 +659,9 @@ export default function SandboxGraphPage() {
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!draggedNode || !containerRef.current || !simulationRef.current) return;
 
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
+    // Phân bổ khoảng cách theo độ zoom hiện tại
+    const dx = (e.clientX - dragStartRef.current.x) / transform.k;
+    const dy = (e.clientY - dragStartRef.current.y) / transform.k;
 
     Object.entries(dragPositionsRef.current).forEach(([id, initialPos]) => {
       const targetNode = simulationRef.current?.nodes().find(n => n.id === id);
@@ -770,60 +838,81 @@ export default function SandboxGraphPage() {
       {/* Top Bar */}
       <div className="bg-white border-b border-slate-200 p-4 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-xl font-bold text-emerald-600">Bản đồ Tri thức Âm nhạc (VietTune)</h1>
-          {/* Nút ? hướng dẫn sử dụng tiếng Việt (mở ngoặc tiếng Anh) */}
-          <div className="relative">
-            <button
-              onClick={() => setShowHelp(!showHelp)}
-              className="w-7 h-7 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 font-bold text-sm flex items-center justify-center transition-all focus:outline-none"
-              title="Hướng dẫn sử dụng"
-            >
-              ?
-            </button>
-            {showHelp && (
-              <div
-                className="absolute left-0 top-9 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in text-slate-700 text-xs flex flex-col gap-2.5"
+          <h1 className="text-xl font-bold text-slate-800 flex items-start gap-2">
+            Bản đồ Tri thức Âm nhạc (VietTune)
+            {/* Nút ? hướng dẫn sử dụng tiếng Việt (mở ngoặc tiếng Anh) */}
+            <div className="relative mt-0.5">
+              <button
+                onClick={() => setShowHelp(!showHelp)}
+                className="w-5 h-5 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 font-bold text-xs flex items-center justify-center transition-all focus:outline-none"
+                title="Hướng dẫn sử dụng"
               >
-                <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
-                  <h4 className="font-bold text-emerald-600 text-sm">Hướng dẫn tương tác sơ đồ</h4>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowHelp(false);
-                    }}
-                    className="text-slate-400 hover:text-slate-600 font-bold px-1 text-xs"
-                  >
-                    ✕
-                  </button>
+                ?
+              </button>
+              {showHelp && (
+                <div
+                  className="absolute left-0 top-7 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in text-slate-700 text-xs flex flex-col gap-2.5 font-normal"
+                >
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                    <h4 className="font-bold text-emerald-600 text-sm">Hướng dẫn tương tác sơ đồ</h4>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowHelp(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-600 font-bold px-1 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <ul className="flex flex-col gap-2 text-slate-600">
+                    <li className="flex gap-2">
+                      <span className="text-emerald-500 font-semibold shrink-0">👉</span>
+                      <span><strong>Chọn thực thể:</strong> Nhấp chuột (click) vào thực thể để chọn và xem thông tin chi tiết.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-emerald-500 font-semibold shrink-0">👉</span>
+                      <span><strong>Mở rộng kết nối:</strong> Nhấp hai lần (double click) vào thực thể để bung các liên kết liên quan.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-emerald-500 font-semibold shrink-0">👉</span>
+                      <span><strong>Chọn nhiều thực thể:</strong> Giữ phím Ctrl và nhấp chuột (hold Ctrl + click) vào các thực thể trên sơ đồ để chọn đồng thời nhiều thực thể.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-emerald-500 font-semibold shrink-0">👉</span>
+                      <span><strong>Tìm đường ngắn nhất:</strong> Nhấp vào nút <strong>[🔍 Tìm đường ngắn nhất]</strong> (nút nền trắng chữ xám ở góc phải thanh công cụ) để kích hoạt chế độ tìm đường (*shortest path finding mode*), sau đó lần lượt nhấp chuột chọn từ 2 đến 4 thực thể trên sơ đồ.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-emerald-500 font-semibold shrink-0">👉</span>
+                      <span><strong>Bỏ chọn tất cả:</strong> Nhấp chuột vào vùng trống trên sơ đồ (click empty canvas space) để huỷ chọn.</span>
+                    </li>
+                  </ul>
                 </div>
-                <ul className="flex flex-col gap-2 text-slate-600">
-                  <li className="flex gap-2">
-                    <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong>Chọn thực thể:</strong> Nhấp chuột (click) vào thực thể để chọn và xem thông tin chi tiết.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong>Mở rộng kết nối:</strong> Nhấp hai lần (double click) vào thực thể để bung các liên kết liên quan.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong>Chọn nhiều thực thể:</strong> Giữ phím Ctrl và nhấp chuột (hold Ctrl + click) vào các thực thể trên sơ đồ để chọn đồng thời nhiều thực thể.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong></strong> Nhấp vào nút <strong> [🔍 Tìm đường ngắn nhất]</strong> ở góc trên bên phải thanh công cụ để kích hoạt chế độ tìm đường ngắn nhất (*shortest path finding mode*), sau đó lần lượt nhấp chuột chọn từ 2 đến 4 thực thể trên sơ đồ.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong>Bỏ chọn tất cả:</strong> Nhấp chuột vào vùng trống trên sơ đồ (click empty canvas space) để huỷ chọn.</span>
-                  </li>
-                </ul>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </h1>
         </div>
 
         <div className="text-xs text-slate-500 flex items-center gap-2">
+          {/* Nút Làm mới sơ đồ */}
+          {graphData.nodes.length > 0 && (
+            <button
+              onClick={() => {
+                setGraphData({ nodes: [], links: [] });
+                setSelectedNodeIds(new Set());
+                setSelection(null);
+                setNodeDetail(null);
+                setMultiPaths([]);
+                setActiveDetailNodeId(null);
+                setExpandedNodes(new Set());
+              }}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-all flex items-center gap-1.5"
+              title="Xóa toàn bộ sơ đồ hiện tại"
+            >
+              <span>🗑️</span> Làm mới
+            </button>
+          )}
+
           {/* Nút bật/tắt chế độ tìm đường ngắn nhất */}
           <button
             onClick={() => {
@@ -1050,8 +1139,12 @@ export default function SandboxGraphPage() {
           onPointerUp={handlePointerUp}
         >
           <svg
-            className="w-full h-full"
-            onClick={() => {
+            ref={svgRef}
+            className="w-full h-full cursor-grab active:cursor-grabbing"
+            onClick={(e) => {
+              // Bỏ qua nếu sự kiện drag/pan của D3 đã chặn click
+              if (e.defaultPrevented) return;
+              
               // Click vào canvas trắng → bỏ chọn tất cả
               if (selectedNodeIds.size > 0) {
                 setSelectedNodeIds(new Set());
@@ -1062,114 +1155,120 @@ export default function SandboxGraphPage() {
               }
             }}
           >
-            {graphData.links.map((link, i) => {
-              const source = link.source as unknown as D3Node;
-              const target = link.target as unknown as D3Node;
-              if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return null;
+            <g transform={transform.toString()}>
+              {graphData.links.map((link, i) => {
+                const source = link.source as unknown as D3Node;
+                const target = link.target as unknown as D3Node;
+                if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return null;
 
-              const sId = source.id;
-              const tId = target.id;
-              const isPath = isLinkInPath(sId, tId);
+                const sId = source.id;
+                const tId = target.id;
+                const isPath = isLinkInPath(sId, tId);
 
-              return (
-                <g key={`link-${i}`}>
-                  <line
-                    x1={source.x} y1={source.y}
-                    x2={target.x} y2={target.y}
-                    stroke={isPath ? '#3b82f6' : '#cbd5e1'}
-                    strokeWidth={isPath ? 3 : 1.5}
-                  />
-                  {/* Label trên link (relation type) */}
-                  <text
-                    x={(source.x + target.x) / 2}
-                    y={(source.y + target.y) / 2}
-                    textAnchor="middle"
-                    fill={isPath ? '#2563eb' : '#94a3b8'}
-                    className="text-[9px]"
+                return (
+                  <g key={`link-${i}`}>
+                    <line
+                      x1={source.x} y1={source.y}
+                      x2={target.x} y2={target.y}
+                      stroke={isPath ? '#3b82f6' : '#cbd5e1'}
+                      strokeWidth={isPath ? 3 : 1.5}
+                    />
+                    {/* Label trên link (relation type) */}
+                    <text
+                      x={(source.x + target.x) / 2}
+                      y={(source.y + target.y) / 2}
+                      textAnchor="middle"
+                      fill={isPath ? '#2563eb' : '#94a3b8'}
+                      className="text-[9px]"
+                    >
+                      {getLinkLabel(link, graphData.nodes)}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Vẽ đường đứt đỏ cho các cặp không có đường nối */}
+              {noPathPairs.map((pair, i) => {
+                const nodeA = graphData.nodes.find(n => n.id === pair.fromId);
+                const nodeB = graphData.nodes.find(n => n.id === pair.toId);
+                if (!nodeA || !nodeB || nodeA.x === undefined || nodeA.y === undefined || nodeB.x === undefined || nodeB.y === undefined) return null;
+                const midX = (nodeA.x + nodeB.x) / 2;
+                const midY = (nodeA.y + nodeB.y) / 2;
+                return (
+                  <g key={`no-path-${i}`} style={{ pointerEvents: 'none' }}>
+                    {/* Đường đứt đỏ */}
+                    <line
+                      x1={nodeA.x} y1={nodeA.y}
+                      x2={nodeB.x} y2={nodeB.y}
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      strokeDasharray="8 5"
+                      opacity={0.7}
+                    />
+                    {/* Biểu tượng ⚠ ở giữa */}
+                    <circle cx={midX} cy={midY} r={12} fill="#fef2f2" stroke="#ef4444" strokeWidth={1.5} />
+                    <text
+                      x={midX} y={midY}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={11}
+                      fill="#ef4444"
+                      fontWeight="bold"
+                      style={{ userSelect: 'none' }}
+                    >
+                      ✕
+                    </text>
+                    {/* Tooltip nhỏ */}
+                    <text
+                      x={midX} y={midY + 22}
+                      textAnchor="middle"
+                      fontSize={9}
+                      fill="#ef4444"
+                      fontWeight="600"
+                      style={{ userSelect: 'none' }}
+                    >
+                      Không có đường nối
+                    </text>
+                  </g>
+                );
+              })}
+
+              {graphData.nodes.map(node => {
+                if (node.x === undefined || node.y === undefined) return null;
+                const isSelected = selectedNodeIds.has(node.id);
+                const inPath = isNodeInPath(node.id);
+
+                return (
+                  <g
+                    key={node.id}
+                    transform={`translate(${node.x}, ${node.y})`}
+                    className={draggedNode === node.id ? 'cursor-grabbing' : 'cursor-grab'}
+                    onPointerDown={(e) => {
+                      // Chặn không cho D3 zoom/pan nhận event khi người dùng đang kéo thả node
+                      e.stopPropagation();
+                      handlePointerDown(e, node);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={() => handleNodeDoubleClick(node)}
                   >
-                    {getLinkLabel(link, graphData.nodes)}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Vẽ đường đứt đỏ cho các cặp không có đường nối */}
-            {noPathPairs.map((pair, i) => {
-              const nodeA = graphData.nodes.find(n => n.id === pair.fromId);
-              const nodeB = graphData.nodes.find(n => n.id === pair.toId);
-              if (!nodeA || !nodeB || nodeA.x === undefined || nodeA.y === undefined || nodeB.x === undefined || nodeB.y === undefined) return null;
-              const midX = (nodeA.x + nodeB.x) / 2;
-              const midY = (nodeA.y + nodeB.y) / 2;
-              return (
-                <g key={`no-path-${i}`} style={{ pointerEvents: 'none' }}>
-                  {/* Đường đứt đỏ */}
-                  <line
-                    x1={nodeA.x} y1={nodeA.y}
-                    x2={nodeB.x} y2={nodeB.y}
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                    strokeDasharray="8 5"
-                    opacity={0.7}
-                  />
-                  {/* Biểu tượng ⚠ ở giữa */}
-                  <circle cx={midX} cy={midY} r={12} fill="#fef2f2" stroke="#ef4444" strokeWidth={1.5} />
-                  <text
-                    x={midX} y={midY}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={11}
-                    fill="#ef4444"
-                    fontWeight="bold"
-                    style={{ userSelect: 'none' }}
-                  >
-                    ✕
-                  </text>
-                  {/* Tooltip nhỏ */}
-                  <text
-                    x={midX} y={midY + 22}
-                    textAnchor="middle"
-                    fontSize={9}
-                    fill="#ef4444"
-                    fontWeight="600"
-                    style={{ userSelect: 'none' }}
-                  >
-                    Không có đường nối
-                  </text>
-                </g>
-              );
-            })}
-
-            {graphData.nodes.map(node => {
-              if (node.x === undefined || node.y === undefined) return null;
-              const isSelected = selectedNodeIds.has(node.id);
-              const inPath = isNodeInPath(node.id);
-
-              return (
-                <g
-                  key={node.id}
-                  transform={`translate(${node.x}, ${node.y})`}
-                  className={draggedNode === node.id ? 'cursor-grabbing' : 'cursor-grab'}
-                  onPointerDown={(e) => handlePointerDown(e, node)}
-                  onClick={(e) => e.stopPropagation()}
-                  onDoubleClick={() => handleNodeDoubleClick(node)}
-                >
-                  <circle
-                    r={isSelected || inPath ? 24 : 18}
-                    fill={isSelected ? '#ef4444' : inPath ? '#3b82f6' : '#10b981'}
-                    stroke={isSelected || inPath ? '#fff' : '#e2e8f0'}
-                    strokeWidth={3}
-                  />
-                  <text
-                    y={32}
-                    textAnchor="middle"
-                    className={`text-xs font-semibold ${isSelected ? 'fill-red-600 font-bold' : 'fill-slate-700'}`}
-                    style={{ userSelect: 'none' }}
-                  >
-                    {node.name}
-                  </text>
-                </g>
-              );
-            })}
+                    <circle
+                      r={isSelected || inPath ? 24 : 18}
+                      fill={isSelected ? '#ef4444' : inPath ? '#3b82f6' : '#10b981'}
+                      stroke={isSelected || inPath ? '#fff' : '#e2e8f0'}
+                      strokeWidth={3}
+                    />
+                    <text
+                      y={32}
+                      textAnchor="middle"
+                      className={`text-xs font-semibold ${isSelected ? 'fill-red-600 font-bold' : 'fill-slate-700'}`}
+                      style={{ userSelect: 'none' }}
+                    >
+                      {node.name}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
           </svg>
         </div>
 
