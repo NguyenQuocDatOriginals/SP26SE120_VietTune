@@ -33,5 +33,15 @@ namespace VietTuneArchive.Domain.IRepositories
         /// Get contributor leaderboard
         /// </summary>
         Task<List<(Guid UserId, string Email, string FullName, int ContributionCount, int ApprovedCount, int RejectedCount)>> GetContributorLeaderboardAsync();
+
+        /// <summary>
+        /// Get overview metrics including total songs, views, active users, new submissions, growth rate
+        /// </summary>
+        Task<(int TotalSongs, int TotalViews, int ActiveUsers, int NewSubmissions, double GrowthRate)> GetOverviewMetricsAsync();
+
+        /// <summary>
+        /// Get submission analytics including total submissions, status counts, avg review time, top ethnic groups
+        /// </summary>
+        Task<(int Total, Dictionary<string, int> ByStatus, string AvgReviewTime, string[] TopEthnicGroups)> GetSubmissionAnalyticsAsync();
     }
 }

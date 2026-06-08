@@ -24,8 +24,12 @@ namespace VietTuneArchive.API.Controllers
         [HttpGet("overview")]
         public async Task<ActionResult<ServiceResponse<OverviewMetricsDto>>> GetOverview()
         {
-            var data = new OverviewMetricsDto();
-            return Ok(new ServiceResponse<OverviewMetricsDto> { Success = true, Data = data, Message = "Not implemented yet" });
+            var result = await _analyticsService.GetOverviewAsync();
+            if (result.IsSuccess)
+            {
+                return Ok(new ServiceResponse<OverviewMetricsDto> { Success = true, Data = result.Data, Message = result.Message });
+            }
+            return BadRequest(new ServiceResponse<OverviewMetricsDto> { Success = false, Errors = new List<string> { result.Message } });
         }
 
         /// <summary>
@@ -34,8 +38,12 @@ namespace VietTuneArchive.API.Controllers
         [HttpGet("submissions")]
         public async Task<ActionResult<ServiceResponse<SubmissionAnalyticsDto>>> GetSubmissions()
         {
-            var data = new SubmissionAnalyticsDto();
-            return Ok(new ServiceResponse<SubmissionAnalyticsDto> { Success = true, Data = data, Message = "Not implemented yet" });
+            var result = await _analyticsService.GetSubmissionsAsync();
+            if (result.IsSuccess)
+            {
+                return Ok(new ServiceResponse<SubmissionAnalyticsDto> { Success = true, Data = result.Data, Message = result.Message });
+            }
+            return BadRequest(new ServiceResponse<SubmissionAnalyticsDto> { Success = false, Errors = new List<string> { result.Message } });
         }
 
         /// <summary>

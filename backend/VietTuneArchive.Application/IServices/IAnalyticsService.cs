@@ -25,5 +25,15 @@ namespace VietTuneArchive.Application.IServices
         /// Get contributor leaderboard
         /// </summary>
         Task<Result<List<ContributorLeaderboardDto>>> GetContributorLeaderboardAsync();
+
+        /// <summary>
+        /// Get overview metrics for admin dashboard
+        /// </summary>
+        Task<Result<OverviewMetricsDto>> GetOverviewAsync();
+
+        /// <summary>
+        /// Get submission analytics for admin dashboard
+        /// </summary>
+        Task<Result<SubmissionAnalyticsDto>> GetSubmissionsAsync();
     }
 }
