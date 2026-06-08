@@ -12,7 +12,7 @@ namespace VietTuneArchive.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Expert,Admin")]
+    [Authorize(Roles = "Expert,Admin,Researcher,Contributor")]
     public class EmbargoController : ControllerBase
     {
         private readonly IEmbargoService _embargoService;

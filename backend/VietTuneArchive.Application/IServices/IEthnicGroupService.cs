@@ -7,6 +7,7 @@ namespace VietTuneArchive.Application.IServices
     {
         Task<ServiceResponse<List<EthnicGroupDto>>> SearchAsync(string keyword);
         Task<ServiceResponse<List<EthnicGroupDto>>> SearchByNameAsync(string? name);
+        Task<PagedResponse<EthnicGroupDto>> SearchByNameAsync(string? name, int pageNumber, int pageSize);
         Task<ServiceResponse<List<EthnicGroupDto>>> GetByRegionAsync(string region);
         Task<ServiceResponse<List<EthnicGroupDto>>> GetByLanguageFamilyAsync(string languageFamily);
         Task<ServiceResponse<List<string>>> GetAllRegionsAsync();
