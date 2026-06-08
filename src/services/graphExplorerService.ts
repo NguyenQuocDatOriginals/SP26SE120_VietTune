@@ -11,6 +11,8 @@ import type {
   GraphExplorerNodeDto,
   GraphExplorerNodeDetailDto,
   GraphExplorerPathResponseDto,
+  TopConnectedNodesResponseDto,
+  CommonPointsResponseDto,
 } from '@/types/graphExplorerApi';
 import type { KnowledgeGraphData } from '@/types/graph';
 
@@ -101,5 +103,45 @@ export const graphExplorerService = {
       }),
     );
     return parseGraphExplorerPathResponse(raw);
+  },
+
+  async getTopConnected(
+    group?: string,
+    limit = 10,
+    options?: { signal?: AbortSignal },
+  ): Promise<TopConnectedNodesResponseDto> {
+    const raw = await apiOk(
+      apiFetch.GET('/api/graph-explorer/top-connected', {
+        params: {
+          query: openApiQueryRecord({
+            group: group || undefined,
+            limit,
+          }),
+        },
+        signal: options?.signal,
+      }),
+    );
+    return raw as TopConnectedNodesResponseDto;
+  },
+
+  async getCommonPoints(
+    nodeId1: string,
+    nodeId2: string,
+    maxDepth = 2,
+    options?: { signal?: AbortSignal },
+  ): Promise<CommonPointsResponseDto> {
+    const raw = await apiOk(
+      apiFetch.GET('/api/graph-explorer/common-points', {
+        params: {
+          query: openApiQueryRecord({
+            nodeId1,
+            nodeId2,
+            maxDepth,
+          }),
+        },
+        signal: options?.signal,
+      }),
+    );
+    return raw as CommonPointsResponseDto;
   },
 };

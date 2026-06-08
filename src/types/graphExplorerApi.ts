@@ -5,6 +5,8 @@
 
 export interface GraphExplorerNodeDto {
   id: string;
+  /** GUID gốc từ Neo4j (chỉ có khi node được tạo từ shortest-path response). */
+  backendId?: string;
   label: string;
   group: string;
 }
@@ -56,5 +58,29 @@ export interface GraphExplorerPathResponseDto {
   /** Nodes theo thứ tự trên path (empty khi pathFound = false). */
   nodes: GraphExplorerNodeDto[];
   /** Links theo thứ tự trên path (empty khi pathFound = false). */
+  links: GraphExplorerLinkDto[];
+}
+
+// ── Top Connected & Common Points ─────────────────────────────────────────────
+
+export interface ConnectedNodeRankDto {
+  id: string;
+  label: string;
+  group: string;
+  degreeCount: number;
+}
+
+export interface TopConnectedNodesResponseDto {
+  group?: string;
+  limit: number;
+  rankList: ConnectedNodeRankDto[];
+}
+
+export interface CommonPointsResponseDto {
+  nodeId1: string;
+  nodeId2: string;
+  maxDepth: number;
+  commonNodesCount: number;
+  nodes: GraphExplorerNodeDto[];
   links: GraphExplorerLinkDto[];
 }

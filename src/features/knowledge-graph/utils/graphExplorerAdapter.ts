@@ -195,7 +195,7 @@ export function parseGraphExplorerPathResponse(raw: unknown): GraphExplorerPathR
     ? (linksRaw.map(parseGraphExplorerLink).filter(Boolean) as GraphExplorerLinkDto[])
     : [];
     
-  // Map GUIDs to viewerNodeIds
+  // Map GUIDs to viewerNodeIds, đồng thời lưu GUID gốc vào backendId
   const guidToViewerNodeIdMap = new Map<string, string>();
   const mappedNodes: GraphExplorerNodeDto[] = rawNodes.map((n) => {
     const entityType = neo4jGroupToApiEntityType(n.group);
@@ -203,7 +203,8 @@ export function parseGraphExplorerPathResponse(raw: unknown): GraphExplorerPathR
     guidToViewerNodeIdMap.set(n.id, viewerNodeId);
     return {
       ...n,
-      id: viewerNodeId,
+      id: viewerNodeId,      // viewerNodeId để match với graphData
+      backendId: n.id,       // GUID gốc để gọi API (getShortestPath, getNodeDetail...)
     };
   });
   

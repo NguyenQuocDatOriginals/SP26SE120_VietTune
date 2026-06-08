@@ -2933,6 +2933,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/graph-explorer/top-connected": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    group?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VietTuneArchive.Application.DTOs.TopConnectedNodesResponseDto"];
+                        "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.TopConnectedNodesResponseDto"];
+                        "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.TopConnectedNodesResponseDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/graph-explorer/shortest-paths-multi": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathRequestDto"];
+                    "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathRequestDto"];
+                    "application/*+json": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathResponseDto"];
+                        "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathResponseDto"];
+                        "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.MultiShortestPathResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/graph-explorer/common-points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    nodeId1?: string;
+                    nodeId2?: string;
+                    maxDepth?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VietTuneArchive.Application.DTOs.CommonPointsResponseDto"];
+                        "application/json": components["schemas"]["VietTuneArchive.Application.DTOs.CommonPointsResponseDto"];
+                        "text/json": components["schemas"]["VietTuneArchive.Application.DTOs.CommonPointsResponseDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Instrument": {
         parameters: {
             query?: never;
@@ -8169,6 +8293,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/User/GetNameById": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    id?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/User/update-password": {
         parameters: {
             query?: never;
@@ -8597,6 +8756,23 @@ export interface components {
         "VietTuneArchive.API.Controllers.ChatController.ChatRequest": {
             message?: string | null;
         };
+        "VietTuneArchive.Application.DTOs.CommonPointsResponseDto": {
+            nodeId1?: string | null;
+            nodeId2?: string | null;
+            /** Format: int32 */
+            maxDepth?: number;
+            /** Format: int32 */
+            commonNodesCount?: number;
+            nodes?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphNodeDto"][] | null;
+            links?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphLinkDto"][] | null;
+        };
+        "VietTuneArchive.Application.DTOs.ConnectedNodeRankDto": {
+            id?: string | null;
+            label?: string | null;
+            group?: string | null;
+            /** Format: int32 */
+            degreeCount?: number;
+        };
         "VietTuneArchive.Application.DTOs.GraphExplorerNeighborSummaryDto": {
             id?: string | null;
             label?: string | null;
@@ -8631,6 +8807,29 @@ export interface components {
             id?: string | null;
             label?: string | null;
             group?: string | null;
+        };
+        "VietTuneArchive.Application.DTOs.MultiShortestPathRequestDto": {
+            nodeIds?: string[] | null;
+            /** Format: int32 */
+            maxDepth?: number;
+        };
+        "VietTuneArchive.Application.DTOs.MultiShortestPathResponseDto": {
+            pairs?: components["schemas"]["VietTuneArchive.Application.DTOs.PairPathResultDto"][] | null;
+        };
+        "VietTuneArchive.Application.DTOs.PairPathResultDto": {
+            fromId?: string | null;
+            toId?: string | null;
+            pathFound?: boolean;
+            /** Format: int32 */
+            pathLength?: number | null;
+            nodes?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphNodeDto"][] | null;
+            links?: components["schemas"]["VietTuneArchive.Application.DTOs.GraphLinkDto"][] | null;
+        };
+        "VietTuneArchive.Application.DTOs.TopConnectedNodesResponseDto": {
+            group?: string | null;
+            /** Format: int32 */
+            limit?: number;
+            rankList?: components["schemas"]["VietTuneArchive.Application.DTOs.ConnectedNodeRankDto"][] | null;
         };
         "VietTuneArchive.Application.Mapper.DTOs.AdminDto.SubmissionAdminDto": {
             id?: string | null;

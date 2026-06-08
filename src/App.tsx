@@ -50,6 +50,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const RecordingDetailPage = lazy(() => import('./pages/RecordingDetailPage'));
 const UploadPage = lazy(() => import('./pages/UploadPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const SandboxGraphPage = lazy(() => import('./pages/SandboxGraphPage'));
 
 function RouteSuspense({ children }: { children: ReactNode }) {
   return (
@@ -186,6 +187,14 @@ const router = createBrowserRouter(
           element={
             <RouteSuspense>
               <TermsPage />
+            </RouteSuspense>
+          }
+        />
+        <Route
+          path="sandbox/graph"
+          element={
+            <RouteSuspense>
+              <SandboxGraphPage />
             </RouteSuspense>
           }
         />
