@@ -48,37 +48,37 @@ export function getRelationshipLabel(
   switch (relationType) {
     case 'PERFORMED_DURING':
       return isOut ? 'Trình diễn trong nghi lễ' : 'Bao gồm bản ghi âm';
-      
+
     case 'USES_INSTRUMENT':
       return isOut ? 'Sử dụng nhạc cụ' : 'Được sử dụng trong bản ghi';
-      
+
     case 'BELONGS_TO_CULTURE':
       return isOut ? 'Thuộc về dân tộc' : 'Sở hữu bản ghi âm';
-      
+
     case 'HAS_VOCAL_STYLE':
       return isOut ? 'Thể hiện lối hát' : 'Được thể hiện trong bản ghi';
-      
+
     case 'USES_SCALE':
       return isOut ? 'Sử dụng thang âm' : 'Được sử dụng trong bản ghi';
-      
+
     case 'RECORDED_AT':
       return isOut ? 'Được thu âm tại' : 'Nơi thu âm của';
-      
+
     case 'HAS_TAG':
       return isOut ? 'Gắn thẻ' : 'Được gắn cho bản ghi âm';
 
     case 'ORIGINATES_FROM':
       return isOut ? 'Có nguồn gốc từ dân tộc' : 'Là nguồn gốc của nhạc cụ';
-      
+
     case 'USED_BY_ETHNIC_GROUP':
       return isOut ? 'Được sử dụng bởi dân tộc' : 'Sử dụng nhạc cụ';
-      
+
     case 'HAS_CEREMONY':
       return isOut ? 'Có nghi lễ truyền thống' : 'Thuộc về dân tộc';
-      
+
     case 'ASSOCIATED_WITH':
       return isOut ? 'Gắn liền với dân tộc' : 'Đặc trưng bởi lối hát';
-      
+
     case 'PART_OF': {
       const cleanSource = sourceGroup.replace('Location:', '');
       const cleanTarget = targetGroup.replace('Location:', '');
@@ -102,12 +102,12 @@ export function getRelationshipLabel(
 const getLinkLabel = (link: D3Link, nodes: D3Node[]) => {
   const source = typeof link.source === 'object' ? link.source as D3Node : nodes.find(n => n.id === link.source);
   const target = typeof link.target === 'object' ? link.target as D3Node : nodes.find(n => n.id === link.target);
-  
+
   if (!source || !target || !link.type) return link.type || '';
-  
+
   const sourceGroup = source.apiEntityType || source.entityType || '';
   const targetGroup = target.apiEntityType || target.entityType || '';
-  
+
   return getRelationshipLabel(link.type, 'OUT', sourceGroup, targetGroup);
 };
 
@@ -130,7 +130,7 @@ const getGroupLabel = (group: string) => NODE_GROUP_LABELS[group] || group;
 
 export default function SandboxGraphPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // States theo FE_KG.md
   const [graphData, setGraphData] = useState<{ nodes: D3Node[]; links: D3Link[] }>({ nodes: [], links: [] });
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -148,7 +148,7 @@ export default function SandboxGraphPage() {
   // State chế độ tìm đường ngắn nhất — khi bật, click vào node sẽ thêm vào multi-selection
   const [isPathFindingMode, setIsPathFindingMode] = useState(false);
   // State hiển thị hướng dẫn sử dụng
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelp, setShowHelp] = useState(true);
 
   // State xếp hạng node nổi bật (Top 10)
   const [topConnectedNodes, setTopConnectedNodes] = useState<ConnectedNodeRankDto[]>([]);
@@ -203,13 +203,13 @@ export default function SandboxGraphPage() {
     incoming.links.forEach(l => {
       const sourceId = typeof l.source === 'object' ? (l.source as any).id : l.source;
       const targetId = typeof l.target === 'object' ? (l.target as any).id : l.target;
-      
+
       const exists = newLinks.find(existing => {
         const eSource = typeof existing.source === 'object' ? (existing.source as any).id : existing.source;
         const eTarget = typeof existing.target === 'object' ? (existing.target as any).id : existing.target;
         return eSource === sourceId && eTarget === targetId && existing.type === l.type;
       });
-      
+
       if (!exists) {
         newLinks.push({ ...l, source: sourceId, target: targetId } as D3Link);
       }
@@ -228,17 +228,17 @@ export default function SandboxGraphPage() {
   const handleSearchResultClick = async (hit: GraphExplorerNodeDto) => {
     // Chuyển đổi hit (raw GUID) sang định dạng GraphNode (viewerNodeId)
     const mappedNode = graphExplorerNodeToGraphNode(hit);
-    
+
     const refX = containerRef.current ? containerRef.current.offsetWidth / 2 : 100;
     const refY = containerRef.current ? containerRef.current.offsetHeight / 2 : 100;
-    
+
     const existingNode = graphData.nodes.find(gn => gn.id === mappedNode.id || gn.backendId === mappedNode.backendId);
     const nodeToSelect = existingNode || ({
       ...mappedNode,
       x: refX + (Math.random() * 40 - 20),
       y: refY + (Math.random() * 40 - 20)
     } as D3Node);
-    
+
     if (!existingNode) {
       setGraphData(prev => ({
         nodes: [...prev.nodes, nodeToSelect],
@@ -248,11 +248,11 @@ export default function SandboxGraphPage() {
 
     // Reset đường đi ngắn nhất
     setMultiPaths([]);
-    
+
     // Chọn node này
     setSelectedNodeIds(new Set([nodeToSelect.id]));
     setSelection(nodeToSelect);
-    
+
     // Lấy chi tiết
     const detail = await graphExplorerService.getNodeDetail(mappedNode.backendId || mappedNode.id);
     setNodeDetail(detail);
@@ -305,10 +305,11 @@ export default function SandboxGraphPage() {
     });
   };
 
-  const handleCollapseSingleNeighbor = (parent: D3Node, neighborId: string) => {
+  const handleCollapseSingleNeighbor = (parent: D3Node, neighborId: string, relType?: string) => {
     setGraphData(prev => {
-      // 1. Tìm các link nối trực tiếp giữa parent và neighborId
+      // 1. Tìm các link nối trực tiếp giữa parent và neighborId qua relType
       const connectedLinks = prev.links.filter(l => {
+        if (relType && l.type !== relType) return false;
         const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
         const tId = typeof l.target === 'object' ? (l.target as any).id : l.target;
         return (sId === parent.id && tId === neighborId) || (sId === neighborId && tId === parent.id);
@@ -366,7 +367,7 @@ export default function SandboxGraphPage() {
       const newNodes = prev.nodes.filter(n => {
         if (neighborIds.has(n.id) && !nodesWithLinks.has(n.id)) {
           // Bỏ qua (xoá) nếu nó là neighbor và bị cô lập
-          return false; 
+          return false;
         }
         return true;
       });
@@ -392,7 +393,7 @@ export default function SandboxGraphPage() {
 
     // 2. Gom nhóm các loại quan hệ
     const relTypes = new Set(detail.neighbors.map(n => n.relationType));
-    
+
     // 3. Mở popup (mặc định chọn sẵn tất cả)
     setExpandPopupData({
       node,
@@ -404,17 +405,17 @@ export default function SandboxGraphPage() {
   const submitMultiExpand = async () => {
     if (!expandPopupData) return;
     const { node, selectedRels } = expandPopupData;
-    
+
     // Đóng popup
     setExpandPopupData(null);
 
     // Gọi API expand cho TỪNG quan hệ được check (chạy song song)
-    const promises = Array.from(selectedRels).map(relType => 
+    const promises = Array.from(selectedRels).map(relType =>
       graphExplorerService.expandNode(node.backendId || node.id, { relType })
     );
-    
+
     const results = await Promise.all(promises);
-    
+
     // Merge tất cả các kết quả vào canvas
     setGraphData(prev => {
       let merged = prev;
@@ -431,7 +432,7 @@ export default function SandboxGraphPage() {
     setGraphData(prev => {
       // 1. Loại bỏ node đích
       const newNodes = prev.nodes.filter(n => n.id !== nodeId);
-      
+
       // 2. Loại bỏ các link nối với node này
       const newLinks = prev.links.filter(l => {
         const sId = typeof l.source === 'object' ? (l.source as any).id : l.source;
@@ -570,9 +571,9 @@ export default function SandboxGraphPage() {
     e.preventDefault();
     (e.target as Element).setPointerCapture(e.pointerId);
     setDraggedNode(node.id);
-    
+
     dragStartRef.current = { x: e.clientX, y: e.clientY };
-    
+
     const positions: Record<string, { x: number; y: number }> = {};
     if (selectedNodeIds.has(node.id)) {
       graphData.nodes.forEach(n => {
@@ -590,10 +591,10 @@ export default function SandboxGraphPage() {
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!draggedNode || !containerRef.current || !simulationRef.current) return;
-    
+
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
-    
+
     Object.entries(dragPositionsRef.current).forEach(([id, initialPos]) => {
       const targetNode = simulationRef.current?.nodes().find(n => n.id === id);
       if (targetNode) {
@@ -606,21 +607,21 @@ export default function SandboxGraphPage() {
   const handlePointerUp = async (e: React.PointerEvent) => {
     if (!draggedNode || !simulationRef.current) return;
     (e.target as Element).releasePointerCapture(e.pointerId);
-    
+
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
     const dist = Math.hypot(dx, dy);
-    
+
     const node = graphData.nodes.find(n => n.id === draggedNode);
-    
+
     // Lưu tạm các trạng thái kéo hiện tại để dọn dẹp ĐỒNG BỘ ngay lập tức
     const currentDragPositions = { ...dragPositionsRef.current };
-    
+
     // Reset ngay lập tức để tránh dính chuột khi gọi API bất đồng bộ dưới đây
     setDraggedNode(null);
     dragPositionsRef.current = {};
     simulationRef.current.alphaTarget(0);
-    
+
     if (dist < 5 && node) {
       if (isPathFindingMode) {
         // Chế độ tìm đường: click thêm/bỏ node khỏi multi-selection
@@ -655,7 +656,7 @@ export default function SandboxGraphPage() {
                 nodeA.backendId || nodeA.id,
                 nodeB.backendId || nodeB.id
               ).then(res => ({ ...res, fromId: aId, toId: bId } as PairPathResult))
-               .catch(() => null);
+                .catch(() => null);
             })
           ).then(results => {
             const validPaths = results.filter((r): r is PairPathResult => r !== null);
@@ -709,7 +710,7 @@ export default function SandboxGraphPage() {
         // Chế độ bình thường: chọn 1 hoặc nhiều node (nếu giữ Ctrl/Cmd)
         const nextIds = new Set(selectedNodeIds);
         const isMulti = e.ctrlKey || e.metaKey;
-        
+
         if (isMulti) {
           if (nextIds.has(node.id)) {
             nextIds.delete(node.id);
@@ -722,7 +723,7 @@ export default function SandboxGraphPage() {
         }
         setSelectedNodeIds(nextIds);
         setMultiPaths([]);
-        
+
         if (nextIds.size === 1) {
           // Chỉ còn 1 node -> xem chi tiết
           const singleId = Array.from(nextIds)[0];
@@ -768,58 +769,33 @@ export default function SandboxGraphPage() {
     <div className="w-full h-screen bg-slate-50 flex flex-col">
       {/* Top Bar */}
       <div className="bg-white border-b border-slate-200 p-4 shrink-0 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold text-emerald-600">Bản đồ Tri thức Âm nhạc (VietTune)</h1>
-        <div className="text-xs text-slate-500 flex items-center gap-2">
-          {/* Nút bật/tắt chế độ tìm đường ngắn nhất */}
-          <button
-            onClick={() => {
-              const next = !isPathFindingMode;
-              setIsPathFindingMode(next);
-              if (!next) {
-                // Tắt mode: xóa sạch mọi lựa chọn
-                setSelectedNodeIds(new Set());
-                setMultiPaths([]);
-                setActiveDetailNodeId(null);
-              }
-            }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
-              isPathFindingMode
-                ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'
-                : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600'
-            }`}
-          >
-            <span>🔍</span>
-            {isPathFindingMode ? 'Thoát tìm đường' : 'Tìm đường ngắn nhất'}
-            {isPathFindingMode && selectedNodeIds.size > 0 && (
-              <span className="ml-1 bg-white text-blue-600 rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] font-bold">
-                {selectedNodeIds.size}
-              </span>
-            )}
-          </button>
-          {hasAnyPath && (
-            <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-[10px] font-semibold">
-              ✔ Đang hiển thị đường đi
-            </span>
-          )}
-
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl font-bold text-emerald-600">Bản đồ Tri thức Âm nhạc (VietTune)</h1>
           {/* Nút ? hướng dẫn sử dụng tiếng Việt (mở ngoặc tiếng Anh) */}
           <div className="relative">
             <button
               onClick={() => setShowHelp(!showHelp)}
-              onMouseEnter={() => setShowHelp(true)}
-              onMouseLeave={() => setShowHelp(false)}
               className="w-7 h-7 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 font-bold text-sm flex items-center justify-center transition-all focus:outline-none"
               title="Hướng dẫn sử dụng"
             >
               ?
             </button>
             {showHelp && (
-              <div 
-                onMouseEnter={() => setShowHelp(true)}
-                onMouseLeave={() => setShowHelp(false)}
-                className="absolute right-0 top-9 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in text-slate-700 text-xs flex flex-col gap-2.5"
+              <div
+                className="absolute left-0 top-9 w-80 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-50 animate-fade-in text-slate-700 text-xs flex flex-col gap-2.5"
               >
-                <h4 className="font-bold text-emerald-600 border-b border-slate-100 pb-1.5 text-sm">Hướng dẫn tương tác sơ đồ</h4>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                  <h4 className="font-bold text-emerald-600 text-sm">Hướng dẫn tương tác sơ đồ</h4>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowHelp(false);
+                    }}
+                    className="text-slate-400 hover:text-slate-600 font-bold px-1 text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
                 <ul className="flex flex-col gap-2 text-slate-600">
                   <li className="flex gap-2">
                     <span className="text-emerald-500 font-semibold shrink-0">👉</span>
@@ -835,7 +811,7 @@ export default function SandboxGraphPage() {
                   </li>
                   <li className="flex gap-2">
                     <span className="text-emerald-500 font-semibold shrink-0">👉</span>
-                    <span><strong>Tìm đường ngắn nhất:</strong> Bật chế độ tìm đường ngắn nhất (shortest path finding mode) và nhấp chuột chọn từ 2 đến 4 thực thể trên sơ đồ.</span>
+                    <span><strong></strong> Nhấp vào nút <strong> [🔍 Tìm đường ngắn nhất]</strong> ở góc trên bên phải thanh công cụ để kích hoạt chế độ tìm đường ngắn nhất (*shortest path finding mode*), sau đó lần lượt nhấp chuột chọn từ 2 đến 4 thực thể trên sơ đồ.</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-emerald-500 font-semibold shrink-0">👉</span>
@@ -846,6 +822,39 @@ export default function SandboxGraphPage() {
             )}
           </div>
         </div>
+
+        <div className="text-xs text-slate-500 flex items-center gap-2">
+          {/* Nút bật/tắt chế độ tìm đường ngắn nhất */}
+          <button
+            onClick={() => {
+              const next = !isPathFindingMode;
+              setIsPathFindingMode(next);
+              if (!next) {
+                // Tắt mode: xóa sạch mọi lựa chọn
+                setSelectedNodeIds(new Set());
+                setMultiPaths([]);
+                setActiveDetailNodeId(null);
+              }
+            }}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 flex items-center gap-1.5 ${isPathFindingMode
+              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'
+              : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400 hover:text-blue-600'
+              }`}
+          >
+            <span>🔍</span>
+            {isPathFindingMode ? 'Thoát tìm đường' : 'Tìm đường ngắn nhất'}
+            {isPathFindingMode && selectedNodeIds.size > 0 && (
+              <span className="ml-1 bg-white text-blue-600 rounded-full w-4 h-4 inline-flex items-center justify-center text-[10px] font-bold">
+                {selectedNodeIds.size}
+              </span>
+            )}
+          </button>
+          {hasAnyPath && (
+            <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-200 rounded text-[10px] font-semibold">
+              ✔ Đang hiển thị đường đi
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
@@ -854,9 +863,9 @@ export default function SandboxGraphPage() {
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Tìm kiếm thực thể</h3>
             <div className="relative">
-              <input 
-                type="text" 
-                className="w-full border border-slate-300 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors" 
+              <input
+                type="text"
+                className="w-full border border-slate-300 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
                 placeholder="Dân tộc, nhạc cụ, bản ghi..."
                 value={searchKeyword}
                 onChange={e => {
@@ -1034,7 +1043,7 @@ export default function SandboxGraphPage() {
           )}
         </div>
         {/* Canvas SVG */}
-        <div 
+        <div
           ref={containerRef}
           className="flex-1 bg-slate-50 relative"
           onPointerMove={handlePointerMove}
@@ -1057,25 +1066,25 @@ export default function SandboxGraphPage() {
               const source = link.source as unknown as D3Node;
               const target = link.target as unknown as D3Node;
               if (source.x === undefined || source.y === undefined || target.x === undefined || target.y === undefined) return null;
-              
+
               const sId = source.id;
               const tId = target.id;
               const isPath = isLinkInPath(sId, tId);
 
               return (
                 <g key={`link-${i}`}>
-                  <line 
+                  <line
                     x1={source.x} y1={source.y}
                     x2={target.x} y2={target.y}
                     stroke={isPath ? '#3b82f6' : '#cbd5e1'}
                     strokeWidth={isPath ? 3 : 1.5}
                   />
                   {/* Label trên link (relation type) */}
-                  <text 
-                    x={(source.x + target.x) / 2} 
-                    y={(source.y + target.y) / 2} 
-                    textAnchor="middle" 
-                    fill={isPath ? '#2563eb' : '#94a3b8'} 
+                  <text
+                    x={(source.x + target.x) / 2}
+                    y={(source.y + target.y) / 2}
+                    textAnchor="middle"
+                    fill={isPath ? '#2563eb' : '#94a3b8'}
                     className="text-[9px]"
                   >
                     {getLinkLabel(link, graphData.nodes)}
@@ -1129,30 +1138,30 @@ export default function SandboxGraphPage() {
                 </g>
               );
             })}
-            
+
             {graphData.nodes.map(node => {
               if (node.x === undefined || node.y === undefined) return null;
               const isSelected = selectedNodeIds.has(node.id);
               const inPath = isNodeInPath(node.id);
-              
+
               return (
-                <g 
-                  key={node.id} 
+                <g
+                  key={node.id}
                   transform={`translate(${node.x}, ${node.y})`}
                   className={draggedNode === node.id ? 'cursor-grabbing' : 'cursor-grab'}
                   onPointerDown={(e) => handlePointerDown(e, node)}
                   onClick={(e) => e.stopPropagation()}
                   onDoubleClick={() => handleNodeDoubleClick(node)}
                 >
-                  <circle 
-                    r={isSelected || inPath ? 24 : 18} 
-                    fill={isSelected ? '#ef4444' : inPath ? '#3b82f6' : '#10b981'} 
-                    stroke={isSelected || inPath ? '#fff' : '#e2e8f0'} 
+                  <circle
+                    r={isSelected || inPath ? 24 : 18}
+                    fill={isSelected ? '#ef4444' : inPath ? '#3b82f6' : '#10b981'}
+                    stroke={isSelected || inPath ? '#fff' : '#e2e8f0'}
                     strokeWidth={3}
                   />
-                  <text 
-                    y={32} 
-                    textAnchor="middle" 
+                  <text
+                    y={32}
+                    textAnchor="middle"
                     className={`text-xs font-semibold ${isSelected ? 'fill-red-600 font-bold' : 'fill-slate-700'}`}
                     style={{ userSelect: 'none' }}
                   >
@@ -1174,21 +1183,21 @@ export default function SandboxGraphPage() {
                   <h2 className="text-lg font-bold text-slate-800 leading-tight">Đang chọn {selectedNodeIds.size} thực thể</h2>
                   <p className="text-xs text-slate-400 mt-1">Nhấp vào một thực thể bên dưới để xem chi tiết.</p>
                 </div>
-                
+
                 {/* Cảnh báo nếu có cặp nào không tìm được đường */}
                 {multiPaths.length > 0 && hasMissingPath && (
-                   <div className="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded text-sm">
-                     Một số cặp thực thể không có đường nối trực tiếp trong cơ sở dữ liệu.
-                   </div>
+                  <div className="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded text-sm">
+                    Một số cặp thực thể không có đường nối trực tiếp trong cơ sở dữ liệu.
+                  </div>
                 )}
-                
+
                 <div className="border-t border-slate-100 pt-4 flex-1 overflow-y-auto pr-1">
                   <div className="flex flex-col gap-2">
                     {Array.from(selectedNodeIds).map(id => {
                       const node = graphData.nodes.find(gn => gn.id === id);
                       if (!node) return null;
                       return (
-                        <div 
+                        <div
                           key={id}
                           className="p-3 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 border border-slate-200 rounded-lg cursor-pointer transition flex items-center justify-between"
                           onClick={async () => {
@@ -1212,7 +1221,7 @@ export default function SandboxGraphPage() {
                 </div>
 
                 <div className="flex gap-2 border-t border-slate-100 pt-4">
-                  <button 
+                  <button
                     className="flex-1 py-2 bg-slate-200 hover:bg-rose-100 text-slate-700 hover:text-rose-600 font-medium rounded transition"
                     onClick={() => {
                       setGraphData(prev => {
@@ -1259,7 +1268,7 @@ export default function SandboxGraphPage() {
                         <span className="font-semibold text-slate-800">{nodeDetail.degreeCount}</span> liên kết
                       </div>
                     </div>
-                    <button 
+                    <button
                       className="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 rounded text-xs font-semibold transition flex items-center gap-1 shrink-0"
                       onClick={() => handleRemoveNode(selection.id)}
                       title="Xóa thực thể này khỏi sơ đồ"
@@ -1270,9 +1279,9 @@ export default function SandboxGraphPage() {
 
                   {/* Cảnh báo nếu có cặp không tìm được đường */}
                   {multiPaths.length > 0 && hasMissingPath && (
-                     <div className="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded text-sm">
-                       Một số cặp thực thể không có đường nối trực tiếp trong cơ sở dữ liệu.
-                     </div>
+                    <div className="p-3 bg-amber-50 text-amber-800 border border-amber-200 rounded text-sm">
+                      Một số cặp thực thể không có đường nối trực tiếp trong cơ sở dữ liệu.
+                    </div>
                   )}
 
                   {/* Thông tin thuộc tính của node */}
@@ -1282,7 +1291,7 @@ export default function SandboxGraphPage() {
                       <div className="text-xs text-slate-600 flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
                         {Object.entries(nodeDetail.properties).map(([key, val]) => {
                           if (key.toLowerCase() === 'id' || key.toLowerCase() === 'label' || !val) return null;
-                          
+
                           const propLabels: Record<string, string> = {
                             primaryregion: 'Vùng miền chính',
                             languagefamily: 'Ngữ hệ',
@@ -1308,7 +1317,7 @@ export default function SandboxGraphPage() {
                           const normKey = key.toLowerCase();
                           const displayKey = propLabels[normKey] || key;
                           const displayVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
-                          
+
                           return (
                             <div key={key} className="flex flex-col gap-0.5 border-b border-slate-50 pb-1.5">
                               <span className="font-semibold text-slate-500">{displayKey}</span>
@@ -1323,131 +1332,152 @@ export default function SandboxGraphPage() {
                   <div className="border-t border-slate-100 pt-4 flex-1">
                     <h3 className="font-semibold text-slate-800 mb-3 text-sm">Các liên kết liên quan</h3>
                     <div className="flex flex-col gap-3">
-                      {Object.entries(
-                        (nodeDetail.neighbors || []).reduce((acc, curr) => {
-                          const translatedKey = getRelationshipLabel(
-                            curr.relationType,
-                            curr.direction,
-                            nodeDetail.group,
-                            curr.group
-                          );
-                          if (!acc[translatedKey]) {
-                            acc[translatedKey] = [];
-                          }
-                          acc[translatedKey].push(curr);
-                          return acc;
-                        }, {} as Record<string, typeof nodeDetail.neighbors>)
-                      ).map(([translatedLabel, items]) => {
-                        const relType = items[0].relationType;
-                        const isExpanded = expandedRelGroups.has(translatedLabel);
-                        const visibleItems = isExpanded ? items : items.slice(0, 5);
+                      {(() => {
+                        // Helper kiểm tra xem liên kết cụ thể (giữa parent và neighborId qua relType) có đang hiển thị trên graph hay không
+                        const isLinkConnected = (neighborId: string, type: string) => {
+                          return graphData.links.some(l => {
+                            if (l.type !== type) return false;
+                            const sId = typeof l.source === 'object' ? (l.source as any).id : l.source as string;
+                            const tId = typeof l.target === 'object' ? (l.target as any).id : l.target as string;
+                            
+                            // Lấy node nguồn và node đích tương ứng từ graphData
+                            const sNode = graphData.nodes.find(n => n.id === sId);
+                            const tNode = graphData.nodes.find(n => n.id === tId);
+                            if (!sNode || !tNode) return false;
 
-                        // Kiểm tra xem có ít nhất 1 node con thuộc nhóm này đang hiển thị trên Graph
-                        const hasAnyVisible = items.some(i => 
-                          graphData.nodes.some(gn => gn.backendId === i.id || gn.entityId === i.id || gn.id === i.id)
-                        );
+                            const parentMatch = sNode.id === selection!.id || sNode.backendId === selection!.backendId;
+                            const neighborMatch = tNode.id === neighborId || tNode.backendId === neighborId;
+                            
+                            const parentMatchRev = tNode.id === selection!.id || tNode.backendId === selection!.backendId;
+                            const neighborMatchRev = sNode.id === neighborId || sNode.backendId === neighborId;
 
-                        return (
-                          <div key={translatedLabel} className="mb-4">
-                            <div className="flex justify-between items-center mb-1">
-                              <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
-                                {translatedLabel} ({items.length})
-                              </p>
-                              <div className="flex gap-1 shrink-0">
-                                <button 
-                                  className="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 transition"
-                                  onClick={() => handleExpandRelation(selection!, relType)}
-                                  title="Mở rộng tất cả các liên kết này"
-                                >
-                                  + Mở rộng
-                                </button>
-                                {hasAnyVisible && (
-                                  <button 
-                                    className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 transition animate-fade-in"
-                                    onClick={() => handleCollapseRelation(selection!, relType)}
-                                    title="Xóa nhánh liên kết này khỏi sơ đồ"
-                                  >
-                                    ✕ Thu gọn
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            <ul className="text-sm flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 mt-2">
-                              {visibleItems.map(i => {
-                                const isOnGraph = graphData.nodes.some(gn => gn.backendId === i.id || gn.entityId === i.id || gn.id === i.id);
-                                return (
-                                  <li 
-                                    key={i.id} 
-                                    className={`text-slate-700 truncate hover:text-emerald-600 cursor-pointer flex items-center justify-between gap-1 group py-0.5`}
-                                    title={i.label}
-                                    onClick={() => handleNeighborItemClick(i)}
-                                  >
-                                    <span className={`truncate ${isOnGraph ? 'text-emerald-600 font-semibold' : 'text-slate-700'}`}>
-                                      • {i.label}
-                                    </span>
-                                    {isOnGraph ? (
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <span className="text-[9px] bg-emerald-50 text-emerald-600 px-1 py-0.2 rounded border border-emerald-100 font-normal">
-                                          đang hiển thị
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="text-[9px] bg-rose-50 hover:bg-rose-100 text-rose-600 p-0.5 rounded border border-rose-100 transition shrink-0"
-                                          onClick={(e) => {
-                                            e.stopPropagation(); // Không kích hoạt click vào phần tử cha
-                                            const graphNode = graphData.nodes.find(gn => gn.backendId === i.id || gn.entityId === i.id || gn.id === i.id);
-                                            if (graphNode) {
-                                              handleCollapseSingleNeighbor(selection!, graphNode.id);
-                                            }
-                                          }}
-                                          title="Xóa thực thể này khỏi sơ đồ"
-                                        >
-                                          ✕
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <span className="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.2 rounded opacity-0 group-hover:opacity-100 transition shrink-0 font-normal">
-                                        + thêm vào sơ đồ
-                                      </span>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                              {items.length > 5 && (
-                                <li>
+                            return (parentMatch && neighborMatch) || (parentMatchRev && neighborMatchRev);
+                          });
+                        };
+
+                        return Object.entries(
+                          (nodeDetail.neighbors || []).reduce((acc, curr) => {
+                            const translatedKey = getRelationshipLabel(
+                              curr.relationType,
+                              curr.direction,
+                              nodeDetail.group,
+                              curr.group
+                            );
+                            if (!acc[translatedKey]) {
+                              acc[translatedKey] = [];
+                            }
+                            acc[translatedKey].push(curr);
+                            return acc;
+                          }, {} as Record<string, typeof nodeDetail.neighbors>)
+                        ).map(([translatedLabel, items]) => {
+                          const relType = items[0].relationType;
+                          const isExpanded = expandedRelGroups.has(translatedLabel);
+                          const visibleItems = isExpanded ? items : items.slice(0, 5);
+
+                          // Kiểm tra xem có ít nhất 1 node con thuộc nhóm này đang hiển thị trên Graph bằng liên kết có type tương ứng
+                          const hasAnyVisible = items.some(i => isLinkConnected(i.id, relType));
+
+                          return (
+                            <div key={translatedLabel} className="mb-4">
+                              <div className="flex justify-between items-center mb-1">
+                                <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                                  {translatedLabel} ({items.length})
+                                </p>
+                                <div className="flex gap-1 shrink-0">
                                   <button
-                                    type="button"
-                                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline"
-                                    onClick={() => {
-                                      setExpandedRelGroups(prev => {
-                                        const next = new Set(prev);
-                                        if (isExpanded) {
-                                          next.delete(translatedLabel);
-                                        } else {
-                                          next.add(translatedLabel);
-                                        }
-                                        return next;
-                                      });
-                                    }}
+                                    className="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-200 transition"
+                                    onClick={() => handleExpandRelation(selection!, relType)}
+                                    title="Mở rộng tất cả các liên kết này"
                                   >
-                                    {isExpanded ? '↑ Thu gọn bớt' : `+ ${items.length - 5} nữa...`}
+                                    + Mở rộng
                                   </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        );
-                      })}
+                                  {hasAnyVisible && (
+                                    <button
+                                      className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 transition animate-fade-in"
+                                      onClick={() => handleCollapseRelation(selection!, relType)}
+                                      title="Xóa nhánh liên kết này khỏi sơ đồ"
+                                    >
+                                      ✕ Thu gọn
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              <ul className="text-sm flex flex-col gap-1.5 pl-2 border-l-2 border-slate-200 mt-2">
+                                {visibleItems.map(i => {
+                                  const isOnGraph = isLinkConnected(i.id, relType);
+                                  return (
+                                    <li
+                                      key={i.id}
+                                      className={`text-slate-700 truncate hover:text-emerald-600 cursor-pointer flex items-center justify-between gap-1 group py-0.5`}
+                                      title={i.label}
+                                      onClick={() => handleNeighborItemClick(i)}
+                                    >
+                                      <span className={`truncate ${isOnGraph ? 'text-emerald-600 font-semibold' : 'text-slate-700'}`}>
+                                        • {i.label}
+                                      </span>
+                                      {isOnGraph ? (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <span className="text-[9px] bg-emerald-50 text-emerald-600 px-1 py-0.2 rounded border border-emerald-100 font-normal">
+                                            đang hiển thị
+                                          </span>
+                                          <button
+                                            type="button"
+                                            className="text-[9px] bg-rose-50 hover:bg-rose-100 text-rose-600 p-0.5 rounded border border-rose-100 transition shrink-0"
+                                            onClick={(e) => {
+                                              e.stopPropagation(); // Không kích hoạt click vào phần tử cha
+                                              const graphNode = graphData.nodes.find(gn => gn.backendId === i.id || gn.entityId === i.id || gn.id === i.id);
+                                              if (graphNode) {
+                                                handleCollapseSingleNeighbor(selection!, graphNode.id, relType);
+                                              }
+                                            }}
+                                            title="Xóa thực thể này khỏi sơ đồ"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <span className="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.2 rounded opacity-0 group-hover:opacity-100 transition shrink-0 font-normal">
+                                          + thêm vào sơ đồ
+                                        </span>
+                                      )}
+                                    </li>
+                                  );
+                                })}
+                                {items.length > 5 && (
+                                  <li>
+                                    <button
+                                      type="button"
+                                      className="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+                                      onClick={() => {
+                                        setExpandedRelGroups(prev => {
+                                          const next = new Set(prev);
+                                          if (isExpanded) {
+                                            next.delete(translatedLabel);
+                                          } else {
+                                            next.add(translatedLabel);
+                                          }
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      {isExpanded ? '↑ Thu gọn bớt' : `+ ${items.length - 5} nữa...`}
+                                    </button>
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
-                    <button 
-                      className={`flex-1 py-2 font-medium rounded transition text-white ${
-                        expandedNodes.has(selection.id) 
-                          ? 'bg-rose-500 hover:bg-rose-600' 
-                          : 'bg-emerald-600 hover:bg-emerald-700'
-                      }`}
+                    <button
+                      className={`flex-1 py-2 font-medium rounded transition text-white ${expandedNodes.has(selection.id)
+                        ? 'bg-rose-500 hover:bg-rose-600'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                        }`}
                       onClick={() => {
                         if (expandedNodes.has(selection.id)) {
                           handleCollapseNode(selection);
@@ -1472,32 +1502,32 @@ export default function SandboxGraphPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
               <h3 className="font-bold text-slate-800">Mở rộng liên kết của: {expandPopupData.node.name}</h3>
-              <button 
+              <button
                 className="text-slate-400 hover:text-slate-600 font-bold px-2"
                 onClick={() => setExpandPopupData(null)}
               >
                 ✕
               </button>
             </div>
-            
+
             <div className="p-5 overflow-y-auto max-h-[60vh]">
               <p className="text-sm text-slate-600 mb-4">Chọn các mối quan hệ bạn muốn mở rộng trên sơ đồ:</p>
-              
+
               <div className="flex flex-col gap-2">
                 {Array.from(new Set(expandPopupData.detail.neighbors.map(n => n.relationType))).map(relType => {
                   const count = expandPopupData.detail.neighbors.filter(n => n.relationType === relType).length;
                   const isChecked = expandPopupData.selectedRels.has(relType);
-                  
+
                   const neighborsForRel = expandPopupData.detail.neighbors.filter(n => n.relationType === relType);
-                  const labels = Array.from(new Set(neighborsForRel.map(n => 
+                  const labels = Array.from(new Set(neighborsForRel.map(n =>
                     getRelationshipLabel(relType, n.direction, expandPopupData.detail.group, n.group)
                   )));
                   const labelText = labels.join(' / ');
 
                   return (
                     <label key={relType} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
                         checked={isChecked}
                         onChange={(e) => {
@@ -1521,13 +1551,13 @@ export default function SandboxGraphPage() {
             </div>
 
             <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-              <button 
+              <button
                 className="px-4 py-2 rounded text-slate-600 font-medium hover:bg-slate-200 transition"
                 onClick={() => setExpandPopupData(null)}
               >
                 Hủy bỏ
               </button>
-              <button 
+              <button
                 className="px-6 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={expandPopupData.selectedRels.size === 0}
                 onClick={submitMultiExpand}
