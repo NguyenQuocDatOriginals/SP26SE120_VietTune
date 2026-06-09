@@ -108,6 +108,37 @@ public class RecordingServiceTests
         }
 
         [Fact]
+        public async Task UploadRecordInfo_WithSubmissionId_UpdatesSubmissionUpdatedAt()
+        {
+            // Arrange
+            var recordingId = Guid.NewGuid();
+            var submissionId = Guid.NewGuid();
+            var dto = RecordingBuilder.BuildValidDto();
+            var existingEntity = RecordingBuilder.BuildRecording(recordingId);
+            existingEntity.SubmissionId = submissionId;
+            
+            var submission = new Submission { Id = submissionId };
+
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(existingEntity);
+            SetupValidFks();
+
+            _repoMock.Setup(x => x.UpdateAsync(It.IsAny<Recording>())).ReturnsAsync(existingEntity);
+            _mapperMock.Setup(x => x.Map<RecordingDto>(existingEntity)).Returns(dto);
+            _userRepoMock.Setup(x => x.GetAllAsync()).ReturnsAsync(new List<User>());
+
+            _submissionRepoMock.Setup(x => x.GetByIdAsync(submissionId)).ReturnsAsync(submission);
+            _submissionRepoMock.Setup(x => x.UpdateAsync(It.IsAny<Submission>())).ReturnsAsync(submission);
+
+            // Act
+            var result = await _sut.UploadRecordInfo(dto, recordingId);
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+            _submissionRepoMock.Verify(x => x.GetByIdAsync(submissionId), Times.Once);
+            _submissionRepoMock.Verify(x => x.UpdateAsync(It.Is<Submission>(s => s.UpdatedAt.HasValue)), Times.Once);
+        }
+
+        [Fact]
         public async Task UploadRecordInfo_ApprovedRecording_RegeneratesEmbedding()
         {
             // Arrange
