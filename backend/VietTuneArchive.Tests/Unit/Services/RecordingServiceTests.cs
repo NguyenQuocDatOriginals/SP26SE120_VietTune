@@ -29,6 +29,7 @@ public class RecordingServiceTests
     private readonly Mock<IUserRepository> _userRepoMock;
     private readonly Mock<IVectorEmbeddingService> _vectorMock;
     private readonly Mock<ILogger<RecordingService>> _loggerMock;
+    private readonly Mock<ISupabaseStorageService> _storageMock;
     
     private readonly RecordingService _sut;
 
@@ -47,22 +48,24 @@ public class RecordingServiceTests
         _userRepoMock = new Mock<IUserRepository>();
         _vectorMock = new Mock<IVectorEmbeddingService>();
         _loggerMock = new Mock<ILogger<RecordingService>>();
+        _storageMock = new Mock<ISupabaseStorageService>();
 
-        //_sut = new RecordingService(
-        //    _repoMock.Object,
-        //    _mapperMock.Object,
-        //    _communeRepoMock.Object,
-        //    _ethnicGroupRepoMock.Object,
-        //    _ceremonyRepoMock.Object,
-        //    _musicalScaleRepoMock.Object,
-        //    _instrumentRepoMock.Object,
-        //    _vocalStyleRepoMock.Object,
-        //    _submissionRepoMock.Object,
-        //    _notificationMock.Object,
-        //    _userRepoMock.Object,
-        //    _vectorMock.Object,
-        //    _loggerMock.Object
-        //);
+        _sut = new RecordingService(
+            _repoMock.Object,
+            _mapperMock.Object,
+            _communeRepoMock.Object,
+            _ethnicGroupRepoMock.Object,
+            _ceremonyRepoMock.Object,
+            _musicalScaleRepoMock.Object,
+            _instrumentRepoMock.Object,
+            _vocalStyleRepoMock.Object,
+            _submissionRepoMock.Object,
+            _notificationMock.Object,
+            _userRepoMock.Object,
+            _vectorMock.Object,
+            _loggerMock.Object,
+            _storageMock.Object
+        );
     }
 
     private void SetupValidFks()
@@ -85,7 +88,7 @@ public class RecordingServiceTests
             var dto = RecordingBuilder.BuildValidDto();
             var existingEntity = RecordingBuilder.BuildRecording(recordingId);
             
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(existingEntity);
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(existingEntity);
             SetupValidFks();
 
             _repoMock.Setup(x => x.UpdateAsync(It.IsAny<Recording>())).ReturnsAsync(existingEntity);
@@ -128,7 +131,7 @@ public class RecordingServiceTests
             // Arrange
             var recordingId = Guid.NewGuid();
             var dto = RecordingBuilder.BuildValidDto();
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(RecordingBuilder.BuildRecording(recordingId));
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(RecordingBuilder.BuildRecording(recordingId));
             
             SetupValidFks();
             _ethnicGroupRepoMock.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((EthnicGroup?)null);
@@ -146,7 +149,7 @@ public class RecordingServiceTests
         {
             var recordingId = Guid.NewGuid();
             var dto = RecordingBuilder.BuildValidDto();
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(RecordingBuilder.BuildRecording(recordingId));
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(RecordingBuilder.BuildRecording(recordingId));
             
             SetupValidFks();
             _instrumentRepoMock.Setup(x => x.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Instrument?)null);
@@ -191,7 +194,7 @@ public class RecordingServiceTests
             var existingEntity = RecordingBuilder.BuildRecording(recordingId);
             existingEntity.RecordingInstruments = new List<RecordingInstrument> { new RecordingInstrument() };
 
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(existingEntity);
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(existingEntity);
             SetupValidFks();
             _repoMock.Setup(x => x.UpdateAsync(It.IsAny<Recording>())).ReturnsAsync(existingEntity);
 
@@ -209,7 +212,7 @@ public class RecordingServiceTests
             dto.InstrumentIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
             
             var existingEntity = RecordingBuilder.BuildRecording(recordingId);
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(existingEntity);
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(existingEntity);
             SetupValidFks();
             _repoMock.Setup(x => x.UpdateAsync(It.IsAny<Recording>())).ReturnsAsync(existingEntity);
 
@@ -230,7 +233,7 @@ public class RecordingServiceTests
             var existingEntity = RecordingBuilder.BuildRecording(recordingId);
             existingEntity.Status = SubmissionStatus.Draft;
             
-            _repoMock.Setup(x => x.GetByIdAsync(recordingId)).ReturnsAsync(existingEntity);
+            _repoMock.Setup(x => x.GetByIdWithDetailsAsync(recordingId)).ReturnsAsync(existingEntity);
             SetupValidFks();
             _repoMock.Setup(x => x.UpdateAsync(It.IsAny<Recording>())).ReturnsAsync(existingEntity);
 
