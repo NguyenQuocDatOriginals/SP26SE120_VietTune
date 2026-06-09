@@ -51,7 +51,9 @@ export default function ModerationReviewTab({
       id="moderation-panel-review"
       role="tabpanel"
       aria-labelledby="moderation-tab-review"
-      className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-8 xl:gap-10 lg:items-start p-4 pt-3"
+      className={`grid grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] lg:gap-8 xl:gap-10 p-4 pt-3 ${
+        selectedId ? 'lg:items-stretch' : 'lg:items-start'
+      }`}
     >
       <ModerationQueueSidebar
         queueStatusMeta={queueStatusMeta}

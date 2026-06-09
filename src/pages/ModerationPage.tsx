@@ -632,7 +632,7 @@ export default function ModerationPage() {
         <ModerationPageHeader />
 
         {/* Tabs — VietTune UI */}
-        <div className="rounded-3xl overflow-hidden shadow-lg ring-1 ring-amber-200/70 backdrop-blur-sm mb-6 sm:mb-8 transition-all duration-300 min-w-0 overflow-x-hidden bg-white/80">
+        <div className="rounded-3xl shadow-lg ring-1 ring-amber-200/70 backdrop-blur-sm mb-6 sm:mb-8 transition-all duration-300 min-w-0 bg-white/80">
           <ModerationExpertTabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
           {queueLoading ? (

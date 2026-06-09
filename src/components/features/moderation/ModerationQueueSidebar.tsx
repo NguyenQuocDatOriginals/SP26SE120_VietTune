@@ -85,7 +85,11 @@ export function ModerationQueueSidebar({
   return (
     <div
       /* Keep sticky offsets aligned with MainLayout header like Upload/Contributions pages. */
-      className="rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 shadow-lg backdrop-blur-sm flex flex-col overflow-hidden lg:sticky lg:top-32 lg:self-start lg:max-h-[min(100vh-10rem,56rem)] xl:top-40 xl:max-h-[min(100vh-12rem,56rem)]"
+      className={`rounded-2xl border border-secondary-200/50 bg-gradient-to-b from-surface-panel to-secondary-50/55 shadow-lg backdrop-blur-sm flex flex-col overflow-hidden lg:sticky lg:top-24 xl:top-24 ${
+        selectedId
+          ? 'h-full lg:max-h-none xl:max-h-none'
+          : 'lg:self-start lg:max-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-7rem)]'
+      }`}
       aria-label="Hàng đợi kiểm duyệt (sidebar)"
     >
       <div className="p-4 flex-shrink-0 bg-gradient-to-b from-amber-50/40 to-white">

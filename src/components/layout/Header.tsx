@@ -52,6 +52,37 @@ export default function Header() {
     navigate('/', { replace: true });
   };
 
+  // Scroll hide/show navbar logic
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Always show navbar near the top of the page
+      if (currentScrollY < 60) {
+        setIsHeaderVisible(true);
+        return;
+      }
+
+      // Hide navbar when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY.current) {
+        setIsHeaderVisible(false);
+        setIsMobileMenuOpen(false);
+        setIsMenuOpen(false);
+        setIsNotiOpen(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Close menu on outside click and Escape key; update position on resize/scroll
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -89,7 +120,11 @@ export default function Header() {
   const headerFeatureItems = getLayoutFeatureItems(user ?? null);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[60] pt-4 px-4">
+    <header
+      className={`fixed top-0 left-0 right-0 z-[60] pt-4 px-4 transition-transform duration-300 ease-in-out ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
       {/* overflow-visible: dropdown tài khoản + thông báo (absolute) nằm dưới nút; overflow-hidden sẽ cắt mất menu */}
       <nav className="overflow-visible rounded-2xl bg-gradient-to-br from-primary-700 to-primary-800 shadow-lg backdrop-blur-sm">
         <div className="px-6 py-2.5">
@@ -124,7 +159,7 @@ export default function Header() {
                   <Link
                     key={`${item.to}-${index}`}
                     to={item.to}
-                    className="max-w-[10rem] truncate px-1.5 py-1 text-center text-xs font-medium text-white/95 visited:text-white/95 transition-colors hover:text-secondary-300 active:text-secondary-400 xl:max-w-[12rem] xl:text-sm 2xl:max-w-none 2xl:whitespace-nowrap"
+                    className="max-w-[10rem] lg:max-w-[18rem] truncate px-1.5 py-1 text-center text-xs font-medium text-white/95 visited:text-white/95 transition-colors hover:text-secondary-300 active:text-secondary-400 xl:max-w-[22rem] xl:text-sm 2xl:max-w-none 2xl:whitespace-nowrap"
                     title={item.title}
                   >
                     {item.title}

@@ -102,7 +102,7 @@ export function ContributionsDesktopFilterAside({
     <aside
       className={cn(
         'hidden lg:flex lg:flex-col lg:rounded-2xl lg:border lg:border-secondary-200/50 lg:bg-gradient-to-b lg:from-surface-panel lg:to-secondary-50/55 lg:p-6 lg:shadow-lg lg:backdrop-blur-sm lg:transition-all lg:duration-300 lg:hover:border-secondary-300/50 lg:hover:shadow-xl xl:p-8',
-        'lg:sticky lg:top-32 lg:self-start lg:max-h-[min(100vh-10rem,56rem)] lg:overflow-y-auto xl:top-40 xl:max-h-[min(100vh-12rem,56rem)]',
+        'lg:sticky lg:top-24 lg:self-start xl:top-24',
       )}
       aria-label="Bảng điều khiển lọc đóng góp"
     >

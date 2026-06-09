@@ -20,7 +20,7 @@ export function ModerationExpertTabNav({
 }) {
   return (
     <div
-      className="flex flex-wrap gap-2 p-4 sm:p-5 lg:p-6 bg-gradient-to-b from-white to-amber-50/40"
+      className="flex flex-wrap gap-2 p-4 sm:p-5 lg:p-6 bg-gradient-to-b from-white to-amber-50/40 rounded-t-3xl"
       aria-label="Cổng chuyên gia"
       role="tablist"
     >

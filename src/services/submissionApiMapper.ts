@@ -112,11 +112,19 @@ export function mapSubmissionToLocalRecording(
     undefined;
   const statusRaw = pickField(x, 'status', 'Status');
   const apiStatus = mapApiSubmissionStatusToModeration(statusRaw);
-  const moderationStatus = toModerationUiStatus(apiStatus);
+  let moderationStatus = toModerationUiStatus(apiStatus);
   const reviewerId =
     (pickField(x, 'reviewerId', 'ReviewerId') as string | undefined) ??
     (pickField(x, 'assignedReviewerId', 'AssignedReviewerId') as string | undefined) ??
     (pickField(x, 'claimedBy', 'ClaimedBy') as string | undefined);
+
+  if (
+    moderationStatus === ModerationStatus.PENDING_REVIEW &&
+    reviewerId &&
+    String(reviewerId).trim()
+  ) {
+    moderationStatus = ModerationStatus.IN_REVIEW;
+  }
 
   const claimedBy =
     moderationStatus === ModerationStatus.IN_REVIEW && reviewerId ? reviewerId : undefined;
@@ -201,7 +209,7 @@ export function mapSubmissionToLocalRecording(
     audioUrl: audioFileUrl,
     videoData: videoFileUrl,
     moderation: {
-      status: apiStatus,
+      status: moderationStatus as unknown as ApiSubmissionStatus,
       ...(claimedBy ? { claimedBy } : {}),
       /** Pass through when API sends it so expert queue filters (`reviewerId === userId`) match assigned items. */
       ...(reviewerId && String(reviewerId).trim()
