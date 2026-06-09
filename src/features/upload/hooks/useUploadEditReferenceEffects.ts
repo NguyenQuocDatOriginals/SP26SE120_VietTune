@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { PROVINCE_REGION_CODE_TO_NAME as REGION_CODE_TO_NAME } from '@/config/provinceRegionCodes';
 
@@ -55,33 +55,56 @@ export function useUploadEditReferenceEffects(params: {
     setInstruments,
   } = params;
 
+  const initialized = useRef({
+    ethnicity: false,
+    eventType: false,
+    vocalStyle: false,
+    musicalScale: false,
+    instruments: false,
+  });
+
   useEffect(() => {
-    if (isEditMode && initialEthnicGroupId && ethnicGroupsData.length > 0 && !ethnicity) {
+    if (isEditMode && initialEthnicGroupId && ethnicGroupsData.length > 0 && !initialized.current.ethnicity) {
       const match = ethnicGroupsData.find((e) => e.id === initialEthnicGroupId);
-      if (match) setEthnicity(match.name);
+      if (match) {
+        setEthnicity(match.name);
+        initialized.current.ethnicity = true;
+      }
     }
-    if (isEditMode && initialCeremonyId && ceremoniesData.length > 0 && !eventType) {
+    if (isEditMode && initialCeremonyId && ceremoniesData.length > 0 && !initialized.current.eventType) {
       const match = ceremoniesData.find((c) => c.id === initialCeremonyId);
-      if (match) setEventType(match.name);
+      if (match) {
+        setEventType(match.name);
+        initialized.current.eventType = true;
+      }
     }
-    if (isEditMode && initialVocalStyleId && vocalStylesData.length > 0 && !vocalStyle) {
+    if (isEditMode && initialVocalStyleId && vocalStylesData.length > 0 && !initialized.current.vocalStyle) {
       const match = vocalStylesData.find((v) => v.id === initialVocalStyleId);
-      if (match) setVocalStyle(match.name);
+      if (match) {
+        setVocalStyle(match.name);
+        initialized.current.vocalStyle = true;
+      }
     }
-    if (isEditMode && initialMusicalScaleId && musicalScalesData.length > 0 && !musicalScale) {
+    if (isEditMode && initialMusicalScaleId && musicalScalesData.length > 0 && !initialized.current.musicalScale) {
       const match = musicalScalesData.find((m) => m.id === initialMusicalScaleId);
-      if (match) setMusicalScale(match.name);
+      if (match) {
+        setMusicalScale(match.name);
+        initialized.current.musicalScale = true;
+      }
     }
     if (
       isEditMode &&
       initialInstrumentIds.length > 0 &&
       instrumentsData.length > 0 &&
-      instruments.length === 0
+      !initialized.current.instruments
     ) {
       const names = initialInstrumentIds
         .map((id) => instrumentsData.find((i) => i.id === id)?.name)
         .filter((name): name is string => !!name);
-      if (names.length > 0) setInstruments(names);
+      if (names.length > 0) {
+        setInstruments(names);
+        initialized.current.instruments = true;
+      }
     }
   }, [
     isEditMode,
@@ -95,11 +118,6 @@ export function useUploadEditReferenceEffects(params: {
     musicalScalesData,
     initialInstrumentIds,
     instrumentsData,
-    ethnicity,
-    eventType,
-    vocalStyle,
-    musicalScale,
-    instruments,
     setEthnicity,
     setEventType,
     setVocalStyle,
@@ -134,8 +152,10 @@ export function useUploadEditCommuneProvinceEffect(params: {
     setRegion,
   } = params;
 
+  const initialized = useRef(false);
+
   useEffect(() => {
-    if (isEditMode && initialCommuneId && communesData.length > 0 && !commune) {
+    if (isEditMode && initialCommuneId && communesData.length > 0 && !initialized.current) {
       const commMatch = communesData.find((c) => c.id === initialCommuneId);
       if (commMatch) {
         setCommune(commMatch.name);
@@ -148,6 +168,7 @@ export function useUploadEditCommuneProvinceEffect(params: {
             setRegion(REGION_CODE_TO_NAME[provMatch.regionCode] || '');
           }
         }
+        initialized.current = true;
       }
     }
   }, [
@@ -156,7 +177,6 @@ export function useUploadEditCommuneProvinceEffect(params: {
     communesData,
     districtsData,
     provincesData,
-    commune,
     setCommune,
     setDistrict,
     setProvince,
