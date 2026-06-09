@@ -151,6 +151,17 @@ namespace VietTuneArchive.Application.Services
 
                 var updatedRecording = await _recordingRepository.UpdateAsync(existingRecording);
 
+                // Cập nhật lại thời gian UpdatedAt cho Submission chứa Recording này
+                if (existingRecording.SubmissionId.HasValue)
+                {
+                    var submission = await _submissionRepository.GetByIdAsync(existingRecording.SubmissionId.Value);
+                    if (submission != null)
+                    {
+                        submission.UpdatedAt = DateTime.UtcNow;
+                        await _submissionRepository.UpdateAsync(submission);
+                    }
+                }
+
                 // Gửi thông báo cho toàn bộ Expert khi status là Pending (1)
                 if (existingRecording.Status == SubmissionStatus.Pending)
                 {
