@@ -67,7 +67,7 @@ namespace VietTuneArchive.Application.Services
                     throw new ArgumentNullException(nameof(recordingDto), "Recording data cannot be null");
 
                 // Check if recording exists
-                var existingRecording = await _recordingRepository.GetByIdAsync(recordingId);
+                var existingRecording = await _recordingRepository.GetByIdWithDetailsAsync(recordingId);
                 if (existingRecording == null)
                     throw new ArgumentException("Recording not found", nameof(recordingId));
 
@@ -127,24 +127,26 @@ namespace VietTuneArchive.Application.Services
                 existingRecording.Status = SubmissionStatus.Pending;
 
                 // Update instruments
-                if (recordingDto.InstrumentIds != null && recordingDto.InstrumentIds.Any())
+                if (existingRecording.RecordingInstruments == null)
                 {
-                    // Clear old instruments
-                    existingRecording.RecordingInstruments?.Clear();
-
-                    // Add new instruments
-                    var newInstruments = recordingDto.InstrumentIds.Select(instrumentId => new RecordingInstrument
-                    {
-                        RecordingId = recordingId,
-                        InstrumentId = instrumentId
-                    }).ToList();
-
-                    existingRecording.RecordingInstruments = newInstruments;
+                    existingRecording.RecordingInstruments = new List<RecordingInstrument>();
                 }
                 else
                 {
-                    // If no instruments provided, clear them
-                    existingRecording.RecordingInstruments?.Clear();
+                    existingRecording.RecordingInstruments.Clear();
+                }
+
+                if (recordingDto.InstrumentIds != null && recordingDto.InstrumentIds.Any())
+                {
+                    // Add new instruments
+                    foreach (var instrumentId in recordingDto.InstrumentIds)
+                    {
+                        existingRecording.RecordingInstruments.Add(new RecordingInstrument
+                        {
+                            RecordingId = recordingId,
+                            InstrumentId = instrumentId
+                        });
+                    }
                 }
 
                 var updatedRecording = await _recordingRepository.UpdateAsync(existingRecording);
