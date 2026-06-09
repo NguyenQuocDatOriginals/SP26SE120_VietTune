@@ -12,6 +12,38 @@ function normalizeId(v: unknown): string {
     .toLowerCase();
 }
 
+function pickRawString(raw: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const val = raw[key];
+    if (typeof val === 'string' && val.trim()) return val.trim();
+  }
+  return '';
+}
+
+function resolvePerformerName(raw: Record<string, unknown>): string {
+  const fromField = pickRawString(raw, ['performerName', 'PerformerName', 'artistName', 'artist']);
+  if (fromField) return fromField;
+
+  const basicInfo = raw.basicInfo;
+  if (basicInfo && typeof basicInfo === 'object' && !Array.isArray(basicInfo)) {
+    const artist = (basicInfo as Record<string, unknown>).artist;
+    if (typeof artist === 'string' && artist.trim()) return artist.trim();
+  }
+
+  const performers = raw.performers;
+  if (Array.isArray(performers) && performers.length > 0) {
+    const first = performers[0];
+    if (first && typeof first === 'object' && !Array.isArray(first)) {
+      const name =
+        (first as Record<string, unknown>).nameVietnamese ??
+        (first as Record<string, unknown>).name;
+      if (typeof name === 'string' && name.trim()) return name.trim();
+    }
+  }
+
+  return '';
+}
+
 /**
  * Normalizes and enriches a raw recording DTO from the API into a complete FE Recording structure.
  * This fixes missing or unmapped fields such as:
@@ -74,17 +106,41 @@ export function normalizeRecording(
     new Date().toISOString();
 
   // 5. Map Ethnicity
+  const ethnicityObj =
+    normalized.ethnicity &&
+    typeof normalized.ethnicity === 'object' &&
+    !Array.isArray(normalized.ethnicity)
+      ? (normalized.ethnicity as { id?: string; name?: string; nameVietnamese?: string })
+      : null;
+
+  const placeholderEthnicIds = new Set(['local', 'semantic-ethnicity', 'guest-ethnicity']);
+  const ethnicIdFromObject =
+    ethnicityObj?.id && !placeholderEthnicIds.has(ethnicityObj.id) ? ethnicityObj.id : undefined;
+  const ethnicGroupId = normalized.ethnicGroupId || ethnicIdFromObject;
+
+  const existingEthnicName =
+    ethnicityObj?.nameVietnamese?.trim() ||
+    ethnicityObj?.name?.trim() ||
+    pickRawString(normalized as Record<string, unknown>, [
+      'ethnicityName',
+      'ethnicGroupName',
+      'ethnicName',
+    ]);
+
   let ethnicity = normalized.ethnicity;
-  if (!ethnicity || (ethnicity.id === 'local' && normalized.ethnicGroupId)) {
-    const ethId = normalized.ethnicGroupId;
+  const shouldResolveFromLookup =
+    Boolean(ethnicGroupId && lookups?.ethnicById && !existingEthnicName);
+
+  if (shouldResolveFromLookup || !ethnicity || (ethnicity.id === 'local' && ethnicGroupId)) {
+    const ethId = ethnicGroupId;
     const ethName =
       ethId && lookups?.ethnicById
         ? lookups.ethnicById[normalizeId(ethId)]
         : undefined;
     ethnicity = {
       id: ethId || 'local',
-      name: ethName || 'Không xác định',
-      nameVietnamese: ethName || 'Không xác định',
+      name: ethName || existingEthnicName || 'Không xác định',
+      nameVietnamese: ethName || existingEthnicName || 'Không xác định',
       recordingCount: 0,
     };
   }
@@ -187,6 +243,8 @@ export function normalizeRecording(
     }
   }
 
+  const performerName = resolvePerformerName(normalized as Record<string, unknown>);
+
   return {
     ...normalized,
     id,
@@ -203,5 +261,6 @@ export function normalizeRecording(
     districtName: districtName || undefined,
     provinceName: provinceName || undefined,
     regionName: regionName || undefined,
+    ...(performerName ? { performerName } : {}),
   };
 }

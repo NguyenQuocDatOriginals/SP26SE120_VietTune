@@ -11,6 +11,7 @@ export type UploadConfirmDialogsProps = {
   onDismissSuccess: () => void;
   onSuccessHome: () => void;
   onSuccessContributions: () => void;
+  suppressSuccessModal?: boolean;
 };
 
 export default function UploadConfirmDialogs({
@@ -23,6 +24,7 @@ export default function UploadConfirmDialogs({
   onDismissSuccess,
   onSuccessHome,
   onSuccessContributions,
+  suppressSuccessModal = false,
 }: UploadConfirmDialogsProps) {
   return (
     <>
@@ -94,7 +96,7 @@ export default function UploadConfirmDialogs({
           document.body,
         )}
 
-      {submitStatus === 'success' &&
+      {submitStatus === 'success' && !suppressSuccessModal &&
         createPortal(
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto"

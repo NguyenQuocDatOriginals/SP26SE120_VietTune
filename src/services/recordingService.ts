@@ -130,6 +130,7 @@ function mapGuestRowToRecording(row: unknown, index: number, lookups?: Record<st
   const uploaderDisplayName =
     contrib.fullName || pickString(normalized, ['uploaderName', 'uploadedByName']) || 'Guest';
   const uploaderHandle = contrib.username || '';
+  const performerName = pickString(normalized, ['performerName', 'PerformerName']);
 
   return {
     ...normalized,
@@ -159,6 +160,7 @@ function mapGuestRowToRecording(row: unknown, index: number, lookups?: Record<st
       recordingCount: 0,
     })),
     performers: [],
+    ...(performerName ? { performerName } : {}),
     recordedDate: pickString(normalized, ['recordedDate', 'recordingDate']),
     uploadedDate,
     uploader: {

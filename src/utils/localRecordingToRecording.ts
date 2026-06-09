@@ -174,6 +174,8 @@ export async function convertLocalToRecording(local: LocalRecording): Promise<Re
   if (composer) extras.composer = composer;
   const language = local.basicInfo?.language?.trim();
   if (language) extras.language = language;
+  const performerName = local.basicInfo?.artist?.trim();
+  if (performerName) extras.performerName = performerName;
 
   return { ...base, ...extras } as Recording;
 }

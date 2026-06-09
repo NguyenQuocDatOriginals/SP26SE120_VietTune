@@ -31,9 +31,9 @@ export function useContributionsData(userId: string | undefined) {
           filteredData = res.data.filter((s) => s.status === activeStatusTab);
         }
 
-        filteredData = [...filteredData].sort(
-          (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
-        );
+        const activityTime = (s: Submission) =>
+          new Date(s.updatedAt ?? s.submittedAt).getTime();
+        filteredData = [...filteredData].sort((a, b) => activityTime(b) - activityTime(a));
 
         setSubmissions(filteredData);
         setHasMore(res.data.length === pageSize);

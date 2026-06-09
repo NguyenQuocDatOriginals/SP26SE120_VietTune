@@ -1,9 +1,11 @@
 import type { ExploreSearchMode } from '@/components/features/ExploreSearchHeader';
 import { applyGuestFilters } from '@/features/explore/utils/exploreGuestFilters';
+import { buildSubmissionLookupMaps } from '@/services/expertModerationApi';
 import { recordingService } from '@/services/recordingService';
 import { fetchVerifiedSubmissionsAsRecordings } from '@/services/researcherArchiveService';
 import { semanticSearchService } from '@/services/semanticSearchService';
 import type { Recording, SearchFilters } from '@/types';
+import { normalizeRecording } from '@/utils/recordingNormalization';
 
 /** Must match `EXPLORE_PAGE_SIZE` in `ExplorePage.tsx` for correct pagination UI. */
 const EXPLORE_PAGE_SIZE = 20;
@@ -151,13 +153,16 @@ export async function loadExploreRecordings(input: ExploreLoadInput): Promise<Ex
     // ── Semantic search ──────────────────────────────────────────────────
     if (exploreMode === 'semantic' && sqActive) {
       try {
-        const semanticResponse = await semanticSearchService.searchSemantic({
-          q: sqActive,
-          topK: SEMANTIC_SEARCH_TOPK,
-        });
+        const [semanticResponse, lookups] = await Promise.all([
+          semanticSearchService.searchSemantic({
+            q: sqActive,
+            topK: SEMANTIC_SEARCH_TOPK,
+          }),
+          buildSubmissionLookupMaps().catch(() => undefined),
+        ]);
         semanticElapsedMs = semanticResponse.elapsedMs;
         const ranked = semanticResponse.results.map((r) => ({
-          ...r.recording,
+          ...normalizeRecording(r.recording, lookups),
           _semanticScore: r.similarityScore,
         }));
         const needFacet = !isAuthenticated || Object.keys(facetOnly).length > 0;

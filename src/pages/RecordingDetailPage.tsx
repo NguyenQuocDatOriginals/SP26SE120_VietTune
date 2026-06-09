@@ -152,6 +152,16 @@ export default function RecordingDetailPage() {
     return formatDate(recording.recordedDate);
   }, [recording?.recordedDate]);
 
+  const performerDisplay = useMemo(() => {
+    if (!recording) return '';
+    return (
+      recording.performerName?.trim() ||
+      recording.performers?.[0]?.nameVietnamese?.trim() ||
+      recording.performers?.[0]?.name?.trim() ||
+      ''
+    );
+  }, [recording]);
+
   const formattedUploadedDate = useMemo(() => {
     if (!recording?.uploadedDate) return 'Không rõ';
     const d = new Date(recording.uploadedDate);
@@ -329,7 +339,7 @@ export default function RecordingDetailPage() {
                   <VideoPlayer
                     src={recording.audioUrl}
                     title={recording.title}
-                    artist={recording.performers?.[0]?.name}
+                    artist={performerDisplay || undefined}
                     recording={recording}
                     showContainer={true}
                     showMetadataTags={false}
@@ -338,7 +348,7 @@ export default function RecordingDetailPage() {
                   <AudioPlayer
                     src={recording.audioUrl}
                     title={recording.title}
-                    artist={recording.performers?.[0]?.name}
+                    artist={performerDisplay || undefined}
                     recording={recording}
                     showContainer={true}
                     showMetadataTags={false}
@@ -507,7 +517,9 @@ export default function RecordingDetailPage() {
                 <div>
                   <dt className="text-sm text-neutral-500">Dân tộc</dt>
                   <dd className="font-medium text-neutral-900">
-                    {recording.ethnicity?.nameVietnamese ?? recording.ethnicity?.name ?? 'Không rõ'}
+                    {recording.ethnicity?.nameVietnamese?.trim() ||
+                      recording.ethnicity?.name?.trim() ||
+                      'Không rõ'}
                   </dd>
                 </div>
                 <div>
@@ -651,10 +663,10 @@ export default function RecordingDetailPage() {
               <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-800 mb-4">
                 Nghệ sĩ/Người biểu diễn
               </h3>
-              {recording.performerName ? (
+              {performerDisplay ? (
                 <div className="flex items-center text-neutral-700">
                   <User className="h-4 w-4 mr-2 text-primary-600" strokeWidth={2.5} />
-                  <span>{recording.performerName}</span>
+                  <span>{performerDisplay}</span>
                 </div>
               ) : recording.performers && recording.performers.length > 0 ? (
                 <ul className="space-y-2">

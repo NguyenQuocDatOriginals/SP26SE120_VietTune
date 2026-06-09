@@ -51,6 +51,7 @@ import {
 import { fetchRecordingImageDisplayUrls } from '@/services/recordingImageService';
 import { useAuthStore } from '@/stores/authStore';
 import { UserRole } from '@/types';
+import { uiToast } from '@/uiToast/uiToast';
 
 // ===== MAIN COMPONENT =====
 export interface UploadMusicProps {
@@ -705,7 +706,9 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     }
   }, [blocker]);
 
-  const uploadDialogChromeActive = showConfirmDialog || submitStatus === 'success';
+  const suppressSuccessModal = isEditMode && !isApprovedEdit;
+  const uploadDialogChromeActive =
+    showConfirmDialog || (submitStatus === 'success' && !suppressSuccessModal);
   useUploadDialogChrome({
     active: uploadDialogChromeActive,
     onEscape: () => {
@@ -799,6 +802,19 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
     setIsSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  useEffect(() => {
+    if (submitStatus !== 'success' || !suppressSuccessModal) return;
+
+    uiToast.success(submitMessage || 'Cập nhật bản thu thành công!');
+
+    const timeoutId = window.setTimeout(() => {
+      resetForm();
+      navigate('/contributions');
+    }, 1200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [submitStatus, suppressSuccessModal, submitMessage, navigate]);
 
   const isFormComplete = useMemo(
     () =>
@@ -1148,6 +1164,7 @@ export default function UploadMusic({ recordingId, isApprovedEdit }: UploadMusic
         isApprovedEdit={isApprovedEdit}
         submitStatus={submitStatus}
         submitMessage={submitMessage}
+        suppressSuccessModal={suppressSuccessModal}
         onDismissSuccess={() => setSubmitStatus('idle')}
         onSuccessHome={() => {
           resetForm();
