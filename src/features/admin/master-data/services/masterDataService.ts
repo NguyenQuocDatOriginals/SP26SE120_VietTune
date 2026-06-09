@@ -1,10 +1,17 @@
 import type { EntityKind, EntityFormValues, ReferenceEntity } from '../types/masterDataTypes';
 
-import type { ApiInstrumentDto, ApiEthnicGroupDto, ApiCeremonyDto, ApiVocalStyleDto } from '@/api';
+import type {
+  ApiInstrumentDto,
+  ApiEthnicGroupDto,
+  ApiCeremonyDto,
+  ApiVocalStyleDto,
+  ApiMusicalScaleDto,
+} from '@/api';
 import { legacyGet } from '@/api/legacyHttp';
 import { logEvent } from '@/services/errorReporting';
 import { ethnicityService } from '@/services/ethnicityService';
 import { instrumentService } from '@/services/instrumentService';
+import { musicalScaleService } from '@/services/musicalScaleService';
 import { ritualService } from '@/services/ritualService';
 import { vocalStyleService } from '@/services/vocalStyleService';
 
@@ -111,6 +118,31 @@ export const masterDataService = {
         }
         return { items, total };
       }
+      case 'musicalScales': {
+        let items: ReferenceEntity<ApiMusicalScaleDto>[];
+        let total: number;
+        if (search && search.trim()) {
+          const list = await musicalScaleService.searchMusicalScalesByName(search);
+          total = list.length;
+          const start = (page - 1) * pageSize;
+          items = list.slice(start, start + pageSize).map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) as ReferenceEntity<ApiMusicalScaleDto>[];
+        } else {
+          const res = await musicalScaleService.getMusicalScales(page, pageSize);
+          items = (res.items?.map((item) => ({
+            id: item.id!,
+            name: item.name!,
+            isActive: true,
+            raw: item,
+          })) ?? []) as ReferenceEntity<ApiMusicalScaleDto>[];
+          total = res.total || 0;
+        }
+        return { items, total };
+      }
       default:
         throw new Error(`Unsupported entity kind: ${kind}`);
     }
@@ -126,6 +158,8 @@ export const masterDataService = {
         return await ritualService.createCeremony(data);
       case 'vocalStyles':
         return await vocalStyleService.createVocalStyle(data);
+      case 'musicalScales':
+        return await musicalScaleService.createMusicalScale(data);
       default:
         throw new Error(`Unsupported entity kind: ${kind}`);
     }
@@ -141,6 +175,8 @@ export const masterDataService = {
         return await ritualService.updateCeremony(id, data);
       case 'vocalStyles':
         return await vocalStyleService.updateVocalStyle(id, data);
+      case 'musicalScales':
+        return await musicalScaleService.updateMusicalScale(id, data);
       default:
         throw new Error(`Unsupported entity kind: ${kind}`);
     }
@@ -156,6 +192,8 @@ export const masterDataService = {
         return await ritualService.deleteCeremony(id);
       case 'vocalStyles':
         return await vocalStyleService.deleteVocalStyle(id);
+      case 'musicalScales':
+        return await musicalScaleService.deleteMusicalScale(id);
       default:
         throw new Error(`Unsupported entity kind: ${kind}`);
     }

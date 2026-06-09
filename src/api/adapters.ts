@@ -21,6 +21,7 @@ export type ApiEthnicGroupDto = Schemas['VietTuneArchive.Application.Mapper.DTOs
 export type ApiInstrumentDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.InstrumentDto'];
 export type ApiCeremonyDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.CeremonyDto'];
 export type ApiVocalStyleDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.VocalStyleDto'];
+export type ApiMusicalScaleDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.MusicalScaleDto'];
 
 export type ApiRecordingDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.RecordingDto'];
 export type ApiSubmissionDto = Schemas['VietTuneArchive.Application.Mapper.DTOs.SubmissionDto'];
@@ -163,6 +164,11 @@ export type ApiPagedResponseVocalStyleDto =
 export type ApiServiceResponseVocalStyleDto =
   Schemas['VietTuneArchive.Application.Responses.ServiceResponse`1[[VietTuneArchive.Application.Mapper.DTOs.VocalStyleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'];
 
+export type ApiPagedResponseMusicalScaleDto =
+  Schemas['VietTuneArchive.Application.Responses.PagedResponse`1[[VietTuneArchive.Application.Mapper.DTOs.MusicalScaleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'];
+export type ApiServiceResponseMusicalScaleDto =
+  Schemas['VietTuneArchive.Application.Responses.ServiceResponse`1[[VietTuneArchive.Application.Mapper.DTOs.MusicalScaleDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'];
+
 export type ApiPagedResponseRecordingDto =
   Schemas['VietTuneArchive.Application.Responses.PagedResponse`1[[VietTuneArchive.Application.Mapper.DTOs.GetRecordingDto, VietTuneArchive.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'];
 export type ApiServiceResponseRecordingDto =
@@ -206,6 +212,9 @@ export type ApiCeremonyListQuery = NonNullable<
 >;
 export type ApiVocalStyleListQuery = NonNullable<
   ApiPaths['/api/VocalStyle']['get']['parameters']['query']
+>;
+export type ApiMusicalScaleListQuery = NonNullable<
+  ApiPaths['/api/MusicalScale']['get']['parameters']['query']
 >;
 export type ApiDistrictListQuery = NonNullable<
   ApiPaths['/api/District']['get']['parameters']['query']

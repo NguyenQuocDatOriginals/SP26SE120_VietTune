@@ -66,4 +66,14 @@ export const entityConfigs: Record<EntityKind, EntityConfig> = {
       { name: 'ethnicGroupId', label: 'Dân tộc', type: 'select' },
     ],
   },
+  musicalScales: {
+    kind: 'musicalScales',
+    title: 'Thang âm',
+    singularName: 'thang âm',
+    fields: [
+      { name: 'name', label: 'Tên thang âm', type: 'text', required: true, maxLength: 200 },
+      { name: 'notePattern', label: 'Cấu trúc nốt', type: 'text', maxLength: 200 },
+      { name: 'description', label: 'Mô tả', type: 'textarea', maxLength: 1000 },
+    ],
+  },
 };

@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Music, Users, Mic2, Flame, Database } from 'lucide-react';
+import { Music, Music2, Users, Mic2, Flame, Database } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { EntityKind } from '../types/masterDataTypes';
@@ -15,6 +15,7 @@ const icons: Record<EntityKind, LucideIcon> = {
   ethnicities: Users,
   rituals: Flame,
   vocalStyles: Mic2,
+  musicalScales: Music2,
 };
 
 export function EntitySidebar({ currentKind, onSelect }: EntitySidebarProps) {

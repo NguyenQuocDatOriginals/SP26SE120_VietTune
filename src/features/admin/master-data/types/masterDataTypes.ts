@@ -1,6 +1,17 @@
-import type { ApiEthnicGroupDto, ApiInstrumentDto, ApiCeremonyDto, ApiVocalStyleDto } from '@/api';
+import type {
+  ApiEthnicGroupDto,
+  ApiInstrumentDto,
+  ApiCeremonyDto,
+  ApiVocalStyleDto,
+  ApiMusicalScaleDto,
+} from '@/api';
 
-export type EntityKind = 'instruments' | 'ethnicities' | 'rituals' | 'vocalStyles';
+export type EntityKind =
+  | 'instruments'
+  | 'ethnicities'
+  | 'rituals'
+  | 'vocalStyles'
+  | 'musicalScales';
 
 export interface ReferenceEntity<T> {
   id: string;
@@ -35,4 +46,14 @@ export type VocalStyleFormValues = Pick<
   'name' | 'description' | 'ethnicGroupId'
 >;
 
-export type EntityFormValues = InstrumentFormValues | EthnicGroupFormValues | RitualFormValues | VocalStyleFormValues;
+export type MusicalScaleFormValues = Pick<
+  ApiMusicalScaleDto,
+  'name' | 'description' | 'notePattern'
+>;
+
+export type EntityFormValues =
+  | InstrumentFormValues
+  | EthnicGroupFormValues
+  | RitualFormValues
+  | VocalStyleFormValues
+  | MusicalScaleFormValues;
